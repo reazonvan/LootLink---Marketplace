@@ -1,0 +1,53 @@
+# ==================================================
+# MAIN REQUIREMENTS FILE
+# ==================================================
+# 
+# Для разных окружений используйте:
+# - Development: pip install -r requirements/development.txt
+# - Production:  pip install -r requirements/production.txt
+# 
+# Этот файл содержит все зависимости для обратной совместимости
+# ==================================================
+
+# Django Core
+Django>=4.2,<5.0
+django-environ>=0.12.0
+
+# Database
+psycopg2-binary>=2.9.9
+
+# AWS S3 for media storage
+boto3>=1.40.0
+django-storages>=1.14.2
+
+# Image processing
+Pillow>=11.3.0
+
+# Additional utilities
+django-crispy-forms>=2.4
+crispy-bootstrap5>=2024.2
+python-decouple>=3.8
+
+# Production server
+gunicorn>=23.0.0
+
+# Monitoring and error tracking
+sentry-sdk>=2.42.0
+
+# Testing and code quality
+pytest>=7.4.0
+pytest-django>=4.11.0
+pytest-cov>=4.1.0
+flake8>=6.1.0
+black>=23.12.0
+isort>=5.13.0
+
+# Performance and caching
+redis>=7.0.0
+django-redis>=6.0.0
+hiredis>=3.3.0
+
+# Async tasks
+celery>=5.5.0
+
+

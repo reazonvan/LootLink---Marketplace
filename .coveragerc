@@ -1,0 +1,63 @@
+# Configuration for coverage.py
+
+[run]
+source = .
+omit =
+    */migrations/*
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */venv/*
+    */env/*
+    manage.py
+    */wsgi.py
+    */asgi.py
+    */settings.py
+    */urls.py
+    conftest.py
+    setup.py
+    */admin.py
+    */apps.py
+
+[report]
+precision = 2
+show_missing = True
+skip_covered = False
+sort = Cover
+
+# Fail if coverage is below this threshold
+fail_under = 70
+
+exclude_lines =
+    # Standard pragma
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code
+    def __repr__
+    def __str__
+    
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run
+    if 0:
+    if False:
+    if __name__ == .__main__.:
+    
+    # Don't complain about abstract methods
+    @(abc\.)?abstractmethod
+    
+    # Don't complain about TYPE_CHECKING blocks
+    if TYPE_CHECKING:
+    
+    # Don't complain about pass statements
+    pass
+
+[html]
+directory = htmlcov
+title = LootLink Code Coverage Report
+
+[xml]
+output = coverage.xml
+

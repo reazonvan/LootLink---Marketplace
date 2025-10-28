@@ -1,0 +1,19 @@
+# ==================================================
+# BASE REQUIREMENTS - Для всех окружений
+# ==================================================
+
+# Django Core
+Django>=4.2,<5.0
+django-environ>=0.12.0
+
+# Database
+psycopg2-binary>=2.9.9
+
+# Forms
+django-crispy-forms>=2.4
+crispy-bootstrap5>=2024.2
+
+# Utils
+python-decouple>=3.8
+Pillow>=11.3.0
+

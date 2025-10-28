@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+/static_root
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+htmlcov/
+
+# Backup files
+*.bak
+*.backup
+*.sql
+*.sql.gz
+backups/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Project specific
+logs/*.log
+!logs/.gitkeep
+
+# Sensitive data - NEVER commit these!
+env_production.txt
+env_server.txt
+.env
+.env.*
+.env.production
+.env.local
+exports/
+lootlink_backup.dump
+reset_db_password.sql
+*.dump
