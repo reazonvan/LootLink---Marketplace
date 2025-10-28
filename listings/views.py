@@ -146,7 +146,7 @@ def listing_create(request):
             'Для создания объявлений необходимо подтвердить email. '
             'Проверьте почту или запросите новое письмо.'
         )
-        return redirect('accounts:resend_verification_email')
+        return redirect('accounts:resend_verification')
     
     # Проверка лимита активных объявлений
     active_listings_count = request.user.listings.filter(status='active').count()
