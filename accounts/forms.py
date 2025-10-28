@@ -204,7 +204,9 @@ class ProfileUpdateForm(forms.ModelForm):
 class UserUpdateForm(forms.ModelForm):
     """
     Форма обновления базовой информации пользователя.
-    Поля username и email недоступны для изменения (только для чтения).
+    ВАЖНО: Эта форма больше не используется, так как username и email нельзя изменить,
+    а ФИО мы не собираем согласно требованиям проекта.
+    Оставлена для обратной совместимости.
     """
     username = forms.CharField(
         disabled=True,
@@ -225,11 +227,7 @@ class UserUpdateForm(forms.ModelForm):
     
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'first_name', 'last_name']
-        widgets = {
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
-        }
+        fields = ['username', 'email']
 
 
 class PasswordResetRequestForm(forms.Form):

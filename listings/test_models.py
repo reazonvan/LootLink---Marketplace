@@ -115,14 +115,15 @@ class TestListingModel:
     
     def test_price_validation(self, seller, game):
         """Цена должна быть положительной."""
+        listing = Listing(
+            seller=seller,
+            game=game,
+            title='Test',
+            description='Test',
+            price=Decimal('-10.00')
+        )
         with pytest.raises(Exception):
-            Listing.objects.create(
-                seller=seller,
-                game=game,
-                title='Test',
-                description='Test',
-                price=Decimal('-10.00')
-            )
+            listing.full_clean()  # Валидаторы срабатывают при full_clean()
     
     def test_description_max_length(self, seller, game):
         """Описание ограничено 5000 символами."""

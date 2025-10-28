@@ -107,6 +107,11 @@ class Game(models.Model):
         default=True,
         verbose_name='Активна'
     )
+    order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Порядок сортировки',
+        help_text='Меньше число = выше в списке'
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата добавления'
@@ -115,7 +120,7 @@ class Game(models.Model):
     class Meta:
         verbose_name = 'Игра'
         verbose_name_plural = 'Игры'
-        ordering = ['name']
+        ordering = ['order', 'name']
     
     def __str__(self):
         return self.name
@@ -133,6 +138,91 @@ class Game(models.Model):
                 f'Нельзя удалить игру с активными объявлениями! '
                 f'Найдено {active_listings_count} активных объявлений. '
                 f'Сначала завершите или удалите все объявления этой игры.'
+            )
+        super().delete(*args, **kwargs)
+
+
+class Category(models.Model):
+    """
+    Модель категории товаров внутри игры.
+    Например: Brawl Stars → Аккаунты, Гемы, Brawl Pass
+              Steam → Пополнение, Ключи, Подарки
+    """
+    game = models.ForeignKey(
+        Game,
+        on_delete=models.CASCADE,
+        related_name='categories',
+        verbose_name='Игра'
+    )
+    name = models.CharField(
+        max_length=100,
+        verbose_name='Название категории'
+    )
+    slug = models.SlugField(
+        max_length=120,
+        blank=True,
+        verbose_name='URL slug'
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name='Описание категории'
+    )
+    icon = models.CharField(
+        max_length=50,
+        blank=True,
+        default='bi-tag',
+        verbose_name='Иконка Bootstrap Icons',
+        help_text='Например: bi-gem, bi-cart, bi-trophy, bi-star'
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Активна'
+    )
+    order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Порядок сортировки',
+        help_text='Меньше число = выше в списке'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    
+    class Meta:
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
+        ordering = ['game', 'order', 'name']
+        unique_together = [['game', 'name']]
+        indexes = [
+            models.Index(fields=['game', 'is_active']),
+            models.Index(fields=['game', 'order']),
+        ]
+    
+    def __str__(self):
+        return f'{self.game.name} → {self.name}'
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            # Простая транслитерация для русских букв
+            translit_dict = {
+                'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+                'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+                'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+                'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+                'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+            }
+            name_lower = self.name.lower()
+            transliterated = ''.join(translit_dict.get(c, c) for c in name_lower)
+            self.slug = slugify(transliterated)
+        super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        # Проверка на наличие активных объявлений
+        active_listings = self.listings.filter(status='active')
+        if active_listings.exists():
+            raise Exception(
+                f'Невозможно удалить категорию с активными объявлениями! '
+                f'Найдено {active_listings.count()} активных объявлений.'
             )
         super().delete(*args, **kwargs)
 
@@ -159,6 +249,15 @@ class Listing(models.Model):
         on_delete=models.CASCADE,
         related_name='listings',
         verbose_name='Игра'
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        related_name='listings',
+        verbose_name='Категория',
+        null=True,
+        blank=True,
+        help_text='Категория товара (например: Аккаунты, Гемы, Ключи)'
     )
     title = models.CharField(
         max_length=200,

@@ -105,16 +105,21 @@ class TestProfileModel:
         verified_user.profile.update_rating()
         assert verified_user.profile.rating == 0.00
     
-    def test_profile_update_rating_with_reviews(self, verified_user, buyer, active_listing, purchase_request_factory):
+    def test_profile_update_rating_with_reviews(self, verified_user, buyer, active_listing, purchase_request_factory, user_factory, listing_factory):
         """Обновление рейтинга с отзывами."""
         from transactions.models import Review
         
-        # Создаем завершенную сделку
-        purchase = purchase_request_factory(active_listing, buyer, status='completed')
+        # Создаем первую завершенную сделку
+        purchase1 = purchase_request_factory(active_listing, buyer, status='completed')
         
-        # Создаем отзывы
+        # Создаем вторую завершенную сделку (с другим покупателем)
+        buyer2 = user_factory(username='buyer2', email='buyer2@example.com')
+        listing2 = listing_factory(verified_user)
+        purchase2 = purchase_request_factory(listing2, buyer2, status='completed')
+        
+        # Создаем отзывы от разных покупателей
         Review.objects.create(
-            purchase_request=purchase,
+            purchase_request=purchase1,
             reviewer=buyer,
             reviewed_user=verified_user,
             rating=5,
@@ -122,8 +127,8 @@ class TestProfileModel:
         )
         
         Review.objects.create(
-            purchase_request=purchase,
-            reviewer=buyer,
+            purchase_request=purchase2,
+            reviewer=buyer2,
             reviewed_user=verified_user,
             rating=4,
             comment='Good!'
@@ -168,6 +173,13 @@ class TestProfileModel:
         
         with pytest.raises(Exception):
             user2.profile.save()
+    
+    def test_username_unique(self, user_factory):
+        """Никнейм должен быть уникальным."""
+        user_factory(username='testuser', email='test1@example.com')
+        
+        with pytest.raises(Exception):
+            user_factory(username='testuser', email='test2@example.com')
 
 
 @pytest.mark.django_db

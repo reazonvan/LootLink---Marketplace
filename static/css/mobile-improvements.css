@@ -1,144 +1,149 @@
 /* ===================================
-   Улучшенная мобильная адаптация LootLink
+   Современная мобильная адаптация LootLink (Flat Design)
    =================================== */
 
 /* ========== Мобильная навигация ========== */
 .mobile-nav-right {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.375rem;
 }
 
 .mobile-nav-icon {
-    width: 44px;
-    height: 44px;
+    width: 38px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: none;
     background: transparent;
     color: var(--dark, #1e293b);
-    font-size: 1.25rem;
-    border-radius: 50%;
+    font-size: 1.125rem;
+    border-radius: 8px;
     position: relative;
     transition: background-color 0.2s;
 }
 
 .mobile-nav-icon:hover,
 .mobile-nav-icon:active {
-    background-color: var(--light, #f8fafc);
+    background-color: var(--light, #f1f5f9);
 }
 
 .mobile-avatar,
 .mobile-avatar-placeholder {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     object-fit: cover;
 }
 
 .mobile-avatar-placeholder {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #2563eb;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 18px;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .mobile-badge {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    background: var(--danger, #dc2626);
+    top: 6px;
+    right: 6px;
+    background: #dc2626;
     color: white;
     font-size: 0.625rem;
     font-weight: 700;
-    padding: 0.125rem 0.375rem;
-    border-radius: 10px;
-    min-width: 18px;
+    padding: 0.125rem 0.3rem;
+    border-radius: 6px;
+    min-width: 16px;
     text-align: center;
     line-height: 1.2;
 }
 
-/* ========== Мобильное боковое меню ========== */
+/* ========== Мобильное боковое меню (Современный Flat) ========== */
 .offcanvas.offcanvas-end {
-    width: 300px !important;
+    width: 280px !important;
     max-width: 85vw !important;
 }
 
 .offcanvas-header.mobile-menu-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: white !important;
-    padding: 1.5rem 1rem !important;
-    border-bottom: none !important;
+    background: #fff !important;
+    color: #1e293b !important;
+    padding: 1rem !important;
+    border-bottom: 1px solid #e2e8f0 !important;
 }
 
 .mobile-menu-avatar,
 .mobile-menu-avatar-placeholder {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
     object-fit: cover;
-    border: 3px solid rgba(255, 255, 255, 0.3);
+    border: none;
     flex-shrink: 0;
 }
 
 .mobile-menu-avatar-placeholder {
-    background: rgba(255, 255, 255, 0.2);
+    background: #2563eb;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
+    font-size: 18px;
+    font-weight: 600;
     color: white;
 }
 
 .mobile-menu-header h6 {
-    color: white;
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
+    color: #1e293b !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.15rem !important;
 }
 
 .mobile-menu-balance {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.875rem;
-    font-weight: 500;
+    color: #64748b !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
 }
 
 .mobile-menu-header .btn-close {
-    filter: brightness(0) invert(1) !important;
-    opacity: 0.8 !important;
+    filter: none !important;
+    opacity: 0.6 !important;
 }
 
 .offcanvas-body.mobile-menu-body {
-    padding: 0 !important;
-    background-color: white !important;
+    padding: 0.5rem 0 !important;
+    background-color: #fafafa !important;
 }
 
 .mobile-menu-list {
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
+    gap: 2px;
 }
 
 .mobile-menu-item {
     display: flex !important;
     align-items: center !important;
-    padding: 1rem 1.25rem !important;
-    color: var(--dark, #1e293b) !important;
+    padding: 0.75rem 1rem !important;
+    color: #475569 !important;
     text-decoration: none !important;
-    transition: all 0.2s !important;
-    font-size: 1rem !important;
-    border-left: 3px solid transparent !important;
+    transition: all 0.15s !important;
+    font-size: 0.9rem !important;
+    border-radius: 0 !important;
     background-color: white !important;
+    border-left: none !important;
 }
 
 .mobile-menu-item i {
-    font-size: 1.25rem !important;
-    width: 32px !important;
+    font-size: 1.1rem !important;
+    width: 28px !important;
     flex-shrink: 0 !important;
-    margin-right: 0.75rem !important;
+    margin-right: 0.65rem !important;
+    color: #64748b !important;
 }
 
 .mobile-menu-item span {
@@ -147,88 +152,101 @@
 
 .mobile-menu-item:hover,
 .mobile-menu-item:active {
-    background-color: var(--light, #f8fafc) !important;
-    border-left-color: var(--primary, #2563eb) !important;
-    color: var(--primary, #2563eb) !important;
+    background-color: #f8fafc !important;
+    color: #2563eb !important;
+}
+
+.mobile-menu-item:active i {
+    color: #2563eb !important;
 }
 
 .mobile-menu-item-primary {
-    background-color: rgba(37, 99, 235, 0.05) !important;
-    color: var(--primary, #2563eb) !important;
+    background-color: #eff6ff !important;
+    color: #2563eb !important;
     font-weight: 600 !important;
 }
 
+.mobile-menu-item-primary i {
+    color: #2563eb !important;
+}
+
 .mobile-menu-item-primary:hover {
-    background-color: rgba(37, 99, 235, 0.1) !important;
+    background-color: #dbeafe !important;
 }
 
 .mobile-menu-item-danger {
-    color: var(--danger, #dc2626) !important;
+    color: #dc2626 !important;
+}
+
+.mobile-menu-item-danger i {
+    color: #dc2626 !important;
 }
 
 .mobile-menu-item-danger:hover {
-    background-color: rgba(220, 38, 38, 0.05) !important;
-    border-left-color: var(--danger, #dc2626) !important;
+    background-color: #fef2f2 !important;
 }
 
 .mobile-menu-divider {
-    height: 1px !important;
-    background-color: var(--border, #e2e8f0) !important;
-    margin: 0.5rem 0 !important;
+    height: 8px !important;
+    background-color: transparent !important;
+    margin: 0 !important;
 }
 
 /* ========== Аватарка и баланс в навбаре (Desktop) ========== */
 .user-avatar-small {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     object-fit: cover;
-    border: 2px solid var(--border, #e2e8f0);
+    border: none;
 }
 
 .user-avatar-placeholder-small {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #2563eb;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 18px;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .user-name-nav {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: var(--dark, #1e293b);
     line-height: 1.2;
 }
 
 .user-balance-nav {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 500;
-    color: var(--success, #059669);
+    color: #64748b;
     line-height: 1.2;
 }
 
 .nav-link.dropdown-toggle {
-    padding: 0.5rem 0.75rem !important;
+    padding: 0.4rem 0.6rem !important;
 }
 
 .dropdown-menu {
-    min-width: 220px;
-    padding: 0.5rem;
+    min-width: 200px;
+    padding: 0.4rem;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
 }
 
 .dropdown-item {
-    padding: 0.625rem 1rem;
+    padding: 0.55rem 0.85rem;
     border-radius: 6px;
-    transition: all 0.2s;
+    transition: all 0.15s;
     display: flex;
     align-items: center;
+    font-size: 0.875rem;
 }
 
 .dropdown-item:hover {
@@ -238,37 +256,145 @@
 .dropdown-item i {
     width: 20px;
     text-align: center;
+    font-size: 1rem;
 }
 
 .user-avatar-dropdown {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
     object-fit: cover;
-    border: 2px solid var(--border, #e2e8f0);
+    border: none;
 }
 
 .user-avatar-placeholder-dropdown {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    background: #2563eb;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 24px;
+    font-size: 18px;
+    font-weight: 600;
     flex-shrink: 0;
 }
 
 .dropdown-header {
-    padding: 0.75rem 1rem;
+    padding: 0.6rem 0.85rem;
     white-space: normal;
+    font-size: 0.85rem;
 }
 
-/* Общие улучшения для мобильных */
+/* ========== ГЛОБАЛЬНЫЕ РАЗМЕРЫ ДЛЯ МОБИЛЬНЫХ ========== */
 @media (max-width: 768px) {
-    /* Форма поиска - делаем все поля по ширине */
+    /* Базовые размеры шрифтов */
+    body {
+        font-size: 0.9rem !important;
+    }
+    
+    h1 { font-size: 1.5rem !important; }
+    h2 { font-size: 1.3rem !important; }
+    h3 { font-size: 1.1rem !important; }
+    h4 { font-size: 1rem !important; }
+    h5 { font-size: 0.95rem !important; }
+    h6 { font-size: 0.875rem !important; }
+    
+    p, .lead {
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+    }
+    
+    /* Все карточки компактнее */
+    .card {
+        margin-bottom: 0.85rem !important;
+        border-radius: 10px !important;
+    }
+    
+    .card-body {
+        padding: 1rem !important;
+    }
+    
+    .card-header {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.95rem !important;
+    }
+    
+    /* Все отступы уменьшены */
+    .container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+    
+    main {
+        padding: 1rem 0 !important;
+    }
+    
+    .py-4 {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+    
+    .py-5 {
+        padding-top: 1.5rem !important;
+        padding-bottom: 1.5rem !important;
+    }
+    
+    .mb-4 {
+        margin-bottom: 1rem !important;
+    }
+    
+    .mb-5 {
+        margin-bottom: 1.5rem !important;
+    }
+    
+    /* Профиль - уменьшаем аватарку */
+    .profile-avatar,
+    .profile-avatar-placeholder {
+        width: 80px !important;
+        height: 80px !important;
+        font-size: 2.5rem !important;
+    }
+    
+    .profile-username {
+        font-size: 1.3rem !important;
+    }
+    
+    .profile-main-card,
+    .profile-stats-card {
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Статистика профиля */
+    .stats-list {
+        font-size: 0.875rem !important;
+    }
+    
+    .stat-row {
+        padding: 0.6rem 0 !important;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem !important;
+    }
+    
+    .stat-value {
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Рейтинг */
+    .rating-stars i {
+        font-size: 1rem !important;
+    }
+    
+    .rating-value {
+        font-size: 0.95rem !important;
+    }
+    
+    /* Форма поиска */
     .search-form .row > div {
         flex: 0 0 100%;
         max-width: 100%;
@@ -281,13 +407,12 @@
     .search-form .col-md-6 {
         flex: 0 0 100%;
         max-width: 100%;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.65rem;
     }
     
-    /* Кнопка поиска на всю ширину */
     .search-form .col-lg-1 button {
         width: 100% !important;
-        padding: 0.75rem !important;
+        padding: 0.65rem !important;
     }
     
     /* Заголовок страницы */
@@ -299,13 +424,13 @@
     }
     
     .page-header h1 {
-        font-size: 1.75rem !important;
-        margin-bottom: 0.75rem !important;
+        font-size: 1.5rem !important;
+        margin-bottom: 0.65rem !important;
     }
     
     .page-header .lead {
-        font-size: 0.95rem !important;
-        margin-bottom: 1.5rem !important;
+        font-size: 0.9rem !important;
+        margin-bottom: 1.2rem !important;
     }
     
     .page-header .d-flex {
@@ -314,112 +439,116 @@
     }
     
     .page-header .btn-lg {
-        padding: 0.625rem 1.5rem;
-        font-size: 1rem;
+        padding: 0.6rem 1.3rem;
+        font-size: 0.95rem;
     }
     
-    /* Быстрые фильтры - меньшие кнопки */
+    /* Быстрые фильтры */
     .btn-sm {
-        padding: 0.375rem 0.75rem;
-        font-size: 0.8125rem;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.8rem;
     }
     
-    /* Футер - центрируем все колонки */
+    /* Футер */
     footer .row > div {
         text-align: center !important;
-        margin-bottom: 2rem;
+        margin-bottom: 1.8rem;
     }
     
     footer h5, footer h6 {
-        font-size: 1.125rem;
-        margin-bottom: 1rem;
+        font-size: 1.05rem;
+        margin-bottom: 0.85rem;
     }
     
     footer .list-unstyled li {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.4rem;
     }
     
-    /* Пагинация - меньшие кнопки */
+    /* Пагинация */
     .pagination {
-        gap: 0.25rem;
+        gap: 0.2rem;
         flex-wrap: wrap;
         justify-content: center;
     }
     
     .pagination .page-item {
-        margin: 0.125rem;
+        margin: 0.1rem;
     }
     
     .pagination .page-link {
-        padding: 0.375rem 0.625rem;
-        font-size: 0.8125rem;
+        padding: 0.35rem 0.6rem;
+        font-size: 0.8rem;
     }
 }
 
 @media (max-width: 576px) {
-    /* Контейнер - меньше отступы */
+    /* Контейнер */
     .container {
-        padding-left: 0.75rem !important;
-        padding-right: 0.75rem !important;
+        padding-left: 0.65rem !important;
+        padding-right: 0.65rem !important;
     }
     
-    /* Навигация - компактнее */
+    /* Навигация */
     .navbar {
-        padding: 0.5rem 0 !important;
+        padding: 0.4rem 0 !important;
+    }
+    
+    .navbar-brand {
+        font-size: 1.15rem !important;
     }
     
     .navbar-nav .nav-link {
-        padding: 0.625rem 1rem !important;
-        font-size: 0.9375rem;
+        padding: 0.55rem 0.85rem !important;
+        font-size: 0.9rem;
     }
     
     .navbar-toggler {
-        padding: 0.375rem 0.5rem;
-        font-size: 1rem;
+        padding: 0.35rem 0.45rem;
+        font-size: 0.95rem;
     }
     
-    /* Аватарка и баланс на мобильных - чуть меньше */
+    /* Аватарка и баланс на мобильных */
     .user-avatar-small,
     .user-avatar-placeholder-small {
-        width: 32px;
-        height: 32px;
-        font-size: 16px;
+        width: 30px;
+        height: 30px;
+        font-size: 13px;
     }
     
     .user-name-nav {
-        font-size: 0.875rem;
-        max-width: 120px;
+        font-size: 0.85rem;
+        max-width: 100px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
     
     .user-balance-nav {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
     }
     
     .user-menu-toggle {
-        padding: 0.375rem 0.5rem !important;
+        padding: 0.35rem 0.45rem !important;
     }
     
-    /* Dropdown меню - на всю ширину */
+    /* Dropdown меню */
     .navbar .dropdown-menu {
-        width: calc(100vw - 1.5rem);
+        width: calc(100vw - 1.3rem);
         max-width: 100%;
-        left: 0.75rem !important;
-        right: 0.75rem !important;
-        border-radius: 12px;
-        margin-top: 0.5rem;
+        left: 0.65rem !important;
+        right: 0.65rem !important;
+        border-radius: 10px;
+        margin-top: 0.4rem;
     }
     
     .dropdown-item {
-        padding: 0.875rem 1rem;
-        font-size: 0.9375rem;
+        padding: 0.75rem 0.9rem;
+        font-size: 0.9rem;
     }
     
     /* Карточки объявлений */
     .listing-item {
-        border-radius: 12px;
+        border-radius: 10px;
         overflow: hidden;
     }
     
@@ -429,154 +558,158 @@
     }
     
     .listing-content {
-        padding: 1rem !important;
+        padding: 0.85rem !important;
     }
     
     .listing-title {
-        font-size: 1.0625rem !important;
-        line-height: 1.4 !important;
-        margin-bottom: 0.5rem !important;
+        font-size: 0.95rem !important;
+        line-height: 1.35 !important;
+        margin-bottom: 0.4rem !important;
+        font-weight: 600 !important;
     }
     
     .listing-description {
-        font-size: 0.875rem !important;
-        line-height: 1.5 !important;
-        margin-bottom: 0.75rem !important;
+        font-size: 0.825rem !important;
+        line-height: 1.45 !important;
+        margin-bottom: 0.65rem !important;
     }
     
     .listing-price {
-        font-size: 1.375rem !important;
+        font-size: 1.2rem !important;
         font-weight: 700 !important;
     }
     
     .listing-meta {
-        margin-bottom: 0.625rem;
-        font-size: 0.8125rem;
+        margin-bottom: 0.55rem;
+        font-size: 0.775rem;
     }
     
     .listing-footer {
-        margin-top: 0.75rem !important;
+        margin-top: 0.65rem !important;
     }
     
     /* Детальная страница */
     .listing-detail-title {
-        font-size: 1.375rem !important;
+        font-size: 1.25rem !important;
         line-height: 1.3 !important;
     }
     
     .listing-detail-price {
-        font-size: 2rem !important;
-        margin: 1rem 0 !important;
+        font-size: 1.75rem !important;
+        margin: 0.85rem 0 !important;
     }
     
-    /* Кнопки - более тактильные на мобильных */
+    /* Кнопки */
     .btn {
-        min-height: 44px; /* Apple HIG рекомендует минимум 44px для касаний */
+        min-height: 40px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        font-size: 0.9rem;
     }
     
     .btn-lg {
-        min-height: 48px;
-        padding: 0.75rem 1.5rem;
+        min-height: 44px;
+        padding: 0.65rem 1.3rem;
+        font-size: 0.95rem;
     }
     
     .btn-sm {
-        min-height: 36px;
-        padding: 0.5rem 1rem;
+        min-height: 34px;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.825rem;
     }
     
-    /* Формы - больше полей */
+    /* Формы */
     .form-control,
     .form-select {
-        min-height: 44px;
-        font-size: 1rem; /* Предотвращает зум на iOS */
-        padding: 0.625rem 0.75rem;
+        min-height: 40px;
+        font-size: 0.95rem;
+        padding: 0.55rem 0.7rem;
     }
     
     textarea.form-control {
-        min-height: 120px;
+        min-height: 110px;
     }
     
     .form-label {
-        font-size: 0.9375rem;
+        font-size: 0.875rem;
         font-weight: 600;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.4rem;
     }
     
-    /* Карточки - меньше отступов */
+    /* Карточки */
     .card {
-        margin-bottom: 1rem;
+        margin-bottom: 0.85rem;
     }
     
     .card-body {
-        padding: 1.25rem !important;
+        padding: 1rem !important;
     }
     
     .card-header {
-        padding: 0.875rem 1.25rem;
-        font-size: 1rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
         font-weight: 600;
     }
     
     /* Модальные окна */
     .modal-dialog {
-        margin: 0.5rem;
+        margin: 0.4rem;
     }
     
     .modal-content {
-        border-radius: 12px;
+        border-radius: 10px;
     }
     
     .modal-header {
-        padding: 1rem 1.25rem;
+        padding: 0.85rem 1rem;
     }
     
     .modal-body {
-        padding: 1.25rem;
+        padding: 1rem;
     }
     
     .modal-footer {
-        padding: 1rem 1.25rem;
+        padding: 0.85rem 1rem;
     }
     
     /* Чат */
     .messages-container {
-        height: calc(100vh - 350px) !important;
-        min-height: 300px;
+        height: calc(100vh - 320px) !important;
+        min-height: 280px;
     }
     
     .message-bubble {
         max-width: 85% !important;
-        font-size: 0.9375rem;
+        font-size: 0.9rem;
     }
     
     /* Toast уведомления */
     .toast {
-        font-size: 0.9375rem;
+        font-size: 0.9rem;
         border-radius: 8px;
     }
     
     /* Пустое состояние */
     .empty-state {
-        padding: 3rem 1rem;
+        padding: 2.5rem 0.85rem;
     }
     
     .empty-state i {
-        font-size: 3.5rem;
-        opacity: 0.3;
+        font-size: 3rem;
+        opacity: 0.25;
     }
     
     .empty-state h4 {
-        font-size: 1.25rem;
-        margin-top: 1rem;
+        font-size: 1.15rem;
+        margin-top: 0.85rem;
     }
     
-    /* Избранное - иконка */
+    /* Избранное */
     .favorite-button {
-        min-width: 44px;
-        min-height: 44px;
+        min-width: 40px;
+        min-height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -584,65 +717,187 @@
     
     /* Бейджи */
     .badge {
-        font-size: 0.75rem;
-        padding: 0.375rem 0.625rem;
+        font-size: 0.7rem;
+        padding: 0.3rem 0.55rem;
     }
     
     /* Аватары */
     .profile-avatar,
     .seller-avatar img {
-        width: 64px !important;
-        height: 64px !important;
+        width: 56px !important;
+        height: 56px !important;
     }
     
     /* Статистика */
     .stat-item {
-        padding: 1rem;
+        padding: 0.75rem;
         border-radius: 8px;
     }
     
     .stat-box-value {
-        font-size: 1.75rem !important;
+        font-size: 1.3rem !important;
         font-weight: 700;
     }
     
     .stat-box-label {
-        font-size: 0.8125rem;
+        font-size: 0.7rem;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.04em;
+    }
+    
+    /* Hero секция главной страницы */
+    .hero-title {
+        font-size: 1.75rem !important;
+    }
+    
+    .hero-subtitle {
+        font-size: 0.9rem !important;
+    }
+    
+    .hero-stats {
+        padding: 1rem !important;
+    }
+    
+    /* Секции */
+    section {
+        padding: 1.5rem 0 !important;
+    }
+    
+    .section-title {
+        font-size: 1.3rem !important;
+        margin-bottom: 0.85rem !important;
+    }
+    
+    .section-subtitle {
+        font-size: 0.875rem !important;
+    }
+    
+    /* Объявления в каталоге */
+    .listing-grid {
+        gap: 1rem !important;
+    }
+    
+    /* Детальная страница объявления */
+    .listing-detail-image {
+        max-height: 250px !important;
+        border-radius: 10px !important;
+    }
+    
+    .listing-detail-content {
+        padding: 1rem !important;
+    }
+    
+    .listing-detail-description {
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+    }
+    
+    /* Seller info */
+    .seller-info {
+        padding: 0.85rem !important;
+    }
+    
+    .seller-avatar,
+    .seller-avatar-placeholder {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    
+    .seller-name {
+        font-size: 0.95rem !important;
+    }
+    
+    .seller-rating {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Чат */
+    .conversation-item {
+        padding: 0.85rem !important;
+    }
+    
+    .conversation-avatar {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    
+    .conversation-preview {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Транзакции */
+    .purchase-card {
+        padding: 1rem !important;
+    }
+    
+    .purchase-status {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Отзывы */
+    .review-card {
+        padding: 0.85rem !important;
+    }
+    
+    .review-rating i {
+        font-size: 0.9rem !important;
+    }
+    
+    .review-comment {
+        font-size: 0.875rem !important;
     }
 }
 
 /* Очень маленькие экраны */
 @media (max-width: 375px) {
+    body {
+        font-size: 0.85rem !important;
+    }
+    
+    h1 { font-size: 1.3rem !important; }
+    h2 { font-size: 1.15rem !important; }
+    h3 { font-size: 1rem !important; }
+    h4 { font-size: 0.95rem !important; }
+    
     .container {
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
     }
     
     .page-header h1 {
-        font-size: 1.5rem !important;
+        font-size: 1.3rem !important;
     }
     
     .listing-title {
-        font-size: 1rem !important;
+        font-size: 0.875rem !important;
     }
     
     .listing-price {
-        font-size: 1.25rem !important;
+        font-size: 1.05rem !important;
     }
     
     .listing-detail-title {
-        font-size: 1.25rem !important;
+        font-size: 1.1rem !important;
     }
     
     .listing-detail-price {
-        font-size: 1.75rem !important;
+        font-size: 1.5rem !important;
     }
     
     .btn {
-        font-size: 0.875rem;
-        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        padding: 0.45rem 0.9rem;
+    }
+    
+    .profile-avatar,
+    .profile-avatar-placeholder {
+        width: 64px !important;
+        height: 64px !important;
+        font-size: 2rem !important;
+    }
+    
+    .card-body {
+        padding: 0.85rem !important;
     }
     
     /* Супер компактный профиль в навбаре */
@@ -653,12 +908,12 @@
     .user-avatar-small,
     .user-avatar-placeholder-small {
         margin-right: 0 !important;
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
     }
     
     .user-menu-toggle::after {
-        margin-left: 0.25rem;
+        margin-left: 0.2rem;
     }
     
     .navbar .dropdown-menu {
@@ -668,49 +923,47 @@
     }
 }
 
-/* Улучшения для landscape режима на телефонах */
+/* Улучшения для landscape */
 @media (max-height: 500px) and (orientation: landscape) {
     .navbar {
-        padding: 0.375rem 0 !important;
+        padding: 0.35rem 0 !important;
     }
     
     .page-header {
-        padding: 1rem 0 !important;
-        margin-bottom: 1rem !important;
+        padding: 0.85rem 0 !important;
+        margin-bottom: 0.85rem !important;
     }
     
     .page-header h1 {
-        font-size: 1.5rem !important;
-        margin-bottom: 0.5rem !important;
+        font-size: 1.35rem !important;
+        margin-bottom: 0.4rem !important;
     }
     
     .page-header .lead {
-        font-size: 0.875rem !important;
-        margin-bottom: 1rem !important;
+        font-size: 0.85rem !important;
+        margin-bottom: 0.85rem !important;
     }
     
     main {
-        padding: 1rem 0 !important;
+        padding: 0.85rem 0 !important;
     }
     
     footer {
-        padding: 1.5rem 0 !important;
+        padding: 1.3rem 0 !important;
     }
 }
 
-/* Accessibility улучшения для сенсорных экранов */
+/* Accessibility для сенсорных экранов */
 @media (hover: none) and (pointer: coarse) {
-    /* Увеличиваем области касания */
     .nav-link,
     .btn,
     .page-link,
     .dropdown-item {
-        min-height: 44px;
+        min-height: 40px;
         display: flex;
         align-items: center;
     }
     
-    /* Убираем hover эффекты на touch устройствах */
     .listing-item:hover {
         transform: none;
     }
@@ -719,20 +972,13 @@
         transform: none;
     }
     
-    /* Добавляем визуальный фидбек для касаний */
     .btn:active {
         transform: scale(0.98);
         transition: transform 0.1s;
     }
     
     .listing-item:active {
-        opacity: 0.9;
+        opacity: 0.92;
         transition: opacity 0.1s;
     }
 }
-
-/* Темная тема - опционально */
-@media (prefers-color-scheme: dark) {
-    /* Можно добавить поддержку темной темы в будущем */
-}
-

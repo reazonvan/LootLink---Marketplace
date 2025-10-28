@@ -3,120 +3,166 @@
 {% block title %}{{ profile_user.username }} - Профиль{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container profile-container">
+    <!-- Modern Profile Card -->
+    <div class="profile-card-modern">
     <!-- Profile Header -->
-    <div class="profile-header">
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="profile-main-card">
-                    <div class="profile-info">
-                        <div class="profile-avatar-wrapper">
+        <div class="profile-header-modern">
+            <div class="profile-avatar-section">
                             {% if profile.avatar %}
-                                <img src="{{ profile.avatar.url }}" alt="{{ profile_user.username }}" class="profile-avatar">
+                <img src="{{ profile.avatar.url }}" alt="{{ profile_user.username }}" class="profile-avatar-modern">
                             {% else %}
-                                <div class="profile-avatar-placeholder">
+                <div class="profile-avatar-modern profile-avatar-placeholder-modern">
                                     <i class="bi bi-person-fill"></i>
                                 </div>
                             {% endif %}
+                
+                {% if profile.is_verified %}
+                <div class="verified-badge" title="Подтвержденный аккаунт">
+                    <i class="bi bi-patch-check-fill"></i>
+                </div>
+                {% endif %}
                         </div>
-                        <div class="profile-details">
-                            <h1 class="profile-username">{{ profile_user.username }}</h1>
+            
+            <div class="profile-info-section">
+                <div class="profile-name-wrapper">
+                    <h1 class="profile-name-modern">{{ profile_user.username }}</h1>
                             {% if profile_user.first_name or profile_user.last_name %}
-                            <p class="profile-fullname">{{ profile_user.first_name }} {{ profile_user.last_name }}</p>
+                    <p class="profile-fullname-modern">{{ profile_user.first_name }} {{ profile_user.last_name }}</p>
                             {% endif %}
+                </div>
                             
-                            <div class="profile-rating">
-                                <span class="rating-stars">
+                <div class="profile-rating-modern">
+                    <div class="stars-wrapper">
                                     {% for i in "12345" %}
                                         {% if forloop.counter <= profile.rating %}
-                                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill star-filled"></i>
                                         {% else %}
-                                            <i class="bi bi-star"></i>
+                            <i class="bi bi-star star-empty"></i>
                                         {% endif %}
                                     {% endfor %}
-                                </span>
-                                <span class="rating-value">{{ profile.rating }}</span>
-                                <span class="rating-count">({{ reviews.count }})</span>
+                    </div>
+                    <span class="rating-text">{{ profile.rating|floatformat:1 }}</span>
+                    <span class="reviews-count-text">({{ reviews.count }} отзыв{{ reviews.count|pluralize:",а,ов" }})</span>
                             </div>
                             
                             {% if profile.bio %}
-                            <p class="profile-bio">{{ profile.bio }}</p>
-                            {% endif %}
-                            
-                            <div class="profile-contacts">
-                                {% if profile.telegram %}
-                                <span class="contact-badge">
-                                    <i class="bi bi-telegram"></i> {{ profile.telegram }}
-                                </span>
-                                {% endif %}
-                                {% if profile.discord %}
-                                <span class="contact-badge">
-                                    <i class="bi bi-discord"></i> {{ profile.discord }}
-                                </span>
+                <p class="profile-bio-modern">{{ profile.bio }}</p>
                                 {% endif %}
                             </div>
                             
+            <div class="profile-actions-section">
                             {% if is_own_profile %}
-                            <div class="mt-3">
-                    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
-                        <i class="bi bi-pencil"></i> Редактировать профиль
+                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary btn-profile-action">
+                    <i class="bi bi-pencil"></i>
+                    <span>Редактировать</span>
                     </a>
                 {% else %}
-                    <a href="{% url 'listings:report_user' profile_user.username %}" class="btn btn-outline-danger">
-                        <i class="bi bi-flag"></i> Пожаловаться
-                    </a>
+                <a href="{% url 'listings:report_user' profile_user.username %}" class="btn btn-outline-danger btn-profile-action">
+                    <i class="bi bi-flag"></i>
+                    <span>Пожаловаться</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Contacts -->
+        {% if profile.telegram or profile.discord or profile.phone %}
+        <div class="profile-contacts-modern">
+            {% if profile.telegram %}
+            <a href="https://t.me/{{ profile.telegram }}" target="_blank" class="contact-item">
+                <i class="bi bi-telegram"></i>
+                <span>{{ profile.telegram }}</span>
+            </a>
+            {% endif %}
+            {% if profile.discord %}
+            <div class="contact-item">
+                <i class="bi bi-discord"></i>
+                <span>{{ profile.discord }}</span>
+            </div>
+            {% endif %}
+            {% if profile.phone and is_own_profile %}
+            <div class="contact-item">
+                <i class="bi bi-telephone"></i>
+                <span>{{ profile.phone }}</span>
                             </div>
                             {% endif %}
                         </div>
+        {% endif %}
+        
+        <!-- Stats Grid -->
+        <div class="profile-stats-grid">
+            <div class="stat-card-modern">
+                <div class="stat-icon">
+                    <i class="bi bi-box-seam"></i>
                     </div>
+                <div class="stat-content">
+                    <div class="stat-value-modern">{{ profile.total_sales }}</div>
+                    <div class="stat-label-modern">Продаж</div>
                 </div>
             </div>
             
-            <div class="col-lg-4">
-                <div class="profile-stats-card">
-                    <h5 class="stats-title">Статистика</h5>
-                    <div class="stats-list">
-                        <div class="stat-row">
-                            <span class="stat-label">Продаж</span>
-                            <span class="stat-number">{{ profile.total_sales }}</span>
+            <div class="stat-card-modern">
+                <div class="stat-icon">
+                    <i class="bi bi-cart-check"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value-modern">{{ profile.total_purchases }}</div>
+                    <div class="stat-label-modern">Покупок</div>
                         </div>
-                        <div class="stat-row">
-                            <span class="stat-label">Покупок</span>
-                            <span class="stat-number">{{ profile.total_purchases }}</span>
                         </div>
-                        <div class="stat-row">
-                            <span class="stat-label">Рейтинг</span>
-                            <span class="stat-number">{{ profile.rating }}</span>
+            
+            <div class="stat-card-modern">
+                <div class="stat-icon">
+                    <i class="bi bi-star-fill"></i>
                         </div>
-                        <div class="stat-row">
-                            <span class="stat-label">На сайте с</span>
-                            <span class="stat-number">{{ profile_user.date_joined|date:"d.m.Y" }}</span>
+                <div class="stat-content">
+                    <div class="stat-value-modern">{{ profile.rating|floatformat:1 }}</div>
+                    <div class="stat-label-modern">Рейтинг</div>
                         </div>
                     </div>
+            
+            <div class="stat-card-modern">
+                <div class="stat-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value-modern">{{ profile_user.date_joined|date:"d.m.Y" }}</div>
+                    <div class="stat-label-modern">На сайте с</div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Reviews Section -->
-    <div class="profile-reviews-section">
-        <h3 class="section-heading">Отзывы <span class="reviews-count">({{ reviews.count }})</span></h3>
+    {% if reviews %}
+    <div class="reviews-section-modern">
+        <h3 class="section-title-modern">
+            <i class="bi bi-chat-quote"></i>
+            Отзывы <span class="count-badge">{{ reviews.count }}</span>
+        </h3>
         
-        {% if reviews %}
-        <div class="reviews-list">
+        <div class="reviews-grid">
             {% for review in reviews %}
-            <div class="review-card">
-                <div class="review-header">
-                    <div class="review-author">
-                        <a href="{% url 'accounts:profile' review.reviewer.username %}" class="reviewer-link">
-                            {{ review.reviewer.username }}
-                        </a>
+            <div class="review-card-modern">
+                <div class="review-header-modern">
+                    <a href="{% url 'accounts:profile' review.reviewer.username %}" class="reviewer-info">
+                        <div class="reviewer-avatar-small">
+                            {% if review.reviewer.profile.avatar %}
+                            <img src="{{ review.reviewer.profile.avatar.url }}" alt="{{ review.reviewer.username }}">
+                            {% else %}
+                            <div class="reviewer-avatar-placeholder-small">
+                                {{ review.reviewer.username.0|upper }}
                     </div>
-                    <div class="review-date">
-                        {{ review.created_at|date:"d.m.Y" }}
+                            {% endif %}
                     </div>
+                        <div class="reviewer-details">
+                            <div class="reviewer-name">{{ review.reviewer.username }}</div>
+                            <div class="review-date-modern">{{ review.created_at|date:"d.m.Y" }}</div>
                 </div>
-                <div class="review-rating">
+                    </a>
+                    
+                    <div class="review-rating-modern">
                     {% for i in "12345" %}
                         {% if forloop.counter <= review.rating %}
                             <i class="bi bi-star-fill"></i>
@@ -125,17 +171,796 @@
                         {% endif %}
                     {% endfor %}
                 </div>
+                </div>
+                
                 {% if review.comment %}
-                <p class="review-comment">{{ review.comment }}</p>
+                <p class="review-text-modern">{{ review.comment }}</p>
                 {% endif %}
             </div>
             {% endfor %}
         </div>
+        </div>
         {% else %}
-        <div class="empty-reviews">
-            <p class="text-muted">Отзывов пока нет</p>
+    <div class="empty-state-modern">
+        <i class="bi bi-chat-quote"></i>
+        <h4>Отзывов пока нет</h4>
+        <p>Здесь будут отображаться отзывы о пользователе</p>
         </div>
         {% endif %}
     </div>
-</div>
+
+<style>
+/* ========== СОВРЕМЕННЫЙ ДИЗАЙН ПРОФИЛЯ ========== */
+.profile-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.profile-card-modern {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+/* Profile Header */
+.profile-header-modern {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    align-items: start;
+}
+
+.profile-avatar-section {
+    position: relative;
+}
+
+.profile-avatar-modern {
+    width: 88px;
+    height: 88px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid #f3f4f6;
+}
+
+.profile-avatar-placeholder-modern {
+    background: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+}
+
+.verified-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    background: white;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.verified-badge i {
+    color: #10b981;
+    font-size: 1.2rem;
+}
+
+.profile-info-section {
+    min-width: 0;
+}
+
+.profile-name-wrapper {
+    margin-bottom: 0.75rem;
+}
+
+.profile-name-modern {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.2;
+}
+
+.profile-fullname-modern {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.profile-rating-modern {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.stars-wrapper {
+    display: flex;
+    gap: 0.15rem;
+}
+
+.stars-wrapper i {
+    font-size: 1.1rem;
+}
+
+.star-filled {
+    color: #fbbf24;
+}
+
+.star-empty {
+    color: #d1d5db;
+}
+
+.rating-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.reviews-count-text {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.profile-bio-modern {
+    font-size: 0.95rem;
+    color: #4b5563;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.profile-actions-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.btn-profile-action {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    padding: 0.6rem 1.1rem;
+}
+
+.btn-profile-action i {
+    font-size: 1rem;
+}
+
+/* Contacts */
+.profile-contacts-modern {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.85rem;
+    background: white;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #374151;
+    text-decoration: none;
+    border: 1px solid #e5e7eb;
+    transition: all 0.15s;
+}
+
+.contact-item:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.contact-item i {
+    font-size: 1.1rem;
+}
+
+/* Stats Grid */
+.profile-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.stat-card-modern {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.stat-card-modern:hover {
+    background: #f3f4f6;
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.6rem;
+    border: 1px solid #e5e7eb;
+}
+
+.stat-icon i {
+    font-size: 1.2rem;
+    color: #2563eb;
+}
+
+.stat-content {
+    width: 100%;
+}
+
+.stat-value-modern {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label-modern {
+    font-size: 0.8rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Reviews Section */
+.reviews-section-modern {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+}
+
+.section-title-modern {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 1.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-title-modern i {
+    color: #2563eb;
+    font-size: 1.3rem;
+}
+
+.count-badge {
+    background: #eff6ff;
+    color: #2563eb;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.reviews-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.review-card-modern {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s;
+}
+
+.review-card-modern:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.review-header-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.reviewer-info {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.reviewer-info:hover {
+    text-decoration: none;
+}
+
+.reviewer-avatar-small {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.reviewer-avatar-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.reviewer-avatar-placeholder-small {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.reviewer-details {
+    min-width: 0;
+}
+
+.reviewer-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #111827;
+}
+
+.review-date-modern {
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+.review-rating-modern {
+    display: flex;
+    gap: 0.15rem;
+}
+
+.review-rating-modern i {
+    font-size: 0.95rem;
+    color: #fbbf24;
+}
+
+.review-rating-modern .bi-star {
+    color: #d1d5db;
+}
+
+.review-text-modern {
+    font-size: 0.9rem;
+    color: #374151;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Empty State */
+.empty-state-modern {
+    background: white;
+    border-radius: 12px;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+}
+
+.empty-state-modern i {
+    font-size: 3rem;
+    color: #d1d5db;
+    margin-bottom: 1rem;
+}
+
+.empty-state-modern h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 0.5rem 0;
+}
+
+.empty-state-modern p {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* ========== МОБИЛЬНАЯ АДАПТАЦИЯ ========== */
+@media (max-width: 768px) {
+    .profile-header-modern {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+        padding: 1.25rem;
+    }
+    
+    .profile-avatar-section {
+        display: flex;
+        justify-content: center;
+    }
+    
+    .profile-avatar-modern {
+        width: 72px;
+        height: 72px;
+    }
+    
+    .profile-avatar-placeholder-modern {
+        font-size: 2rem;
+    }
+    
+    .verified-badge {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .verified-badge i {
+        font-size: 1rem;
+    }
+    
+    .profile-info-section {
+        text-align: center;
+    }
+    
+    .profile-name-modern {
+        font-size: 1.3rem;
+    }
+    
+    .profile-fullname-modern {
+        font-size: 0.875rem;
+    }
+    
+    .profile-rating-modern {
+        justify-content: center;
+    }
+    
+    .stars-wrapper i {
+        font-size: 1rem;
+    }
+    
+    .rating-text {
+        font-size: 0.9rem;
+    }
+    
+    .reviews-count-text {
+        font-size: 0.8rem;
+    }
+    
+    .profile-bio-modern {
+        font-size: 0.875rem;
+    }
+    
+    .profile-actions-section {
+        width: 100%;
+    }
+    
+    .btn-profile-action {
+        width: 100%;
+        justify-content: center;
+        font-size: 0.875rem;
+        padding: 0.65rem 1rem;
+    }
+    
+    .profile-contacts-modern {
+        padding: 1rem;
+        justify-content: center;
+    }
+    
+    .contact-item {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .contact-item i {
+        font-size: 1rem;
+    }
+    
+    /* Stats Grid - 2x2 на мобильных */
+    .profile-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        padding: 1.25rem;
+    }
+    
+    .stat-card-modern {
+        padding: 0.85rem 0.65rem;
+    }
+    
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-icon i {
+        font-size: 1.1rem;
+    }
+    
+    .stat-value-modern {
+        font-size: 1.3rem;
+    }
+    
+    .stat-label-modern {
+        font-size: 0.75rem;
+    }
+    
+    /* Reviews */
+    .reviews-section-modern {
+        padding: 1.25rem;
+    }
+    
+    .section-title-modern {
+        font-size: 1.15rem;
+        margin-bottom: 1rem;
+    }
+    
+    .section-title-modern i {
+        font-size: 1.2rem;
+    }
+    
+    .count-badge {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.5rem;
+    }
+    
+    .reviews-grid {
+        gap: 0.85rem;
+    }
+    
+    .review-card-modern {
+        padding: 0.9rem;
+    }
+    
+    .reviewer-avatar-small,
+    .reviewer-avatar-placeholder-small {
+        width: 34px;
+        height: 34px;
+    }
+    
+    .reviewer-avatar-placeholder-small {
+        font-size: 0.875rem;
+    }
+    
+    .reviewer-name {
+        font-size: 0.875rem;
+    }
+    
+    .review-date-modern {
+        font-size: 0.75rem;
+    }
+    
+    .review-rating-modern i {
+        font-size: 0.875rem;
+    }
+    
+    .review-text-modern {
+        font-size: 0.85rem;
+    }
+    
+    .empty-state-modern {
+        padding: 2.5rem 1.25rem;
+    }
+    
+    .empty-state-modern i {
+        font-size: 2.5rem;
+    }
+    
+    .empty-state-modern h4 {
+        font-size: 1rem;
+    }
+    
+    .empty-state-modern p {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .profile-card-modern {
+        border-radius: 10px;
+        margin-bottom: 1.25rem;
+    }
+    
+    .profile-header-modern {
+        padding: 1rem;
+        gap: 1rem;
+    }
+    
+    .profile-avatar-modern {
+        width: 64px;
+        height: 64px;
+    }
+    
+    .profile-avatar-placeholder-modern {
+        font-size: 1.75rem;
+    }
+    
+    .verified-badge {
+        width: 22px;
+        height: 22px;
+    }
+    
+    .verified-badge i {
+        font-size: 0.9rem;
+    }
+    
+    .profile-name-modern {
+        font-size: 1.2rem;
+    }
+    
+    .profile-fullname-modern {
+        font-size: 0.825rem;
+    }
+    
+    .stars-wrapper i {
+        font-size: 0.95rem;
+    }
+    
+    .rating-text {
+        font-size: 0.85rem;
+    }
+    
+    .reviews-count-text {
+        font-size: 0.75rem;
+    }
+    
+    .profile-bio-modern {
+        font-size: 0.825rem;
+    }
+    
+    .btn-profile-action {
+        font-size: 0.85rem;
+        padding: 0.6rem 0.95rem;
+    }
+    
+    .profile-contacts-modern {
+        padding: 0.85rem;
+        gap: 0.6rem;
+    }
+    
+    .contact-item {
+        font-size: 0.75rem;
+        padding: 0.45rem 0.65rem;
+    }
+    
+    .contact-item i {
+        font-size: 0.95rem;
+    }
+    
+    .profile-stats-grid {
+        padding: 1rem;
+        gap: 0.6rem;
+    }
+    
+    .stat-card-modern {
+        padding: 0.75rem 0.5rem;
+        border-radius: 8px;
+    }
+    
+    .stat-icon {
+        width: 32px;
+        height: 32px;
+        margin-bottom: 0.4rem;
+    }
+    
+    .stat-icon i {
+        font-size: 1rem;
+    }
+    
+    .stat-value-modern {
+        font-size: 1.15rem;
+    }
+    
+    .stat-label-modern {
+        font-size: 0.7rem;
+    }
+    
+    .reviews-section-modern {
+        padding: 1rem;
+        border-radius: 10px;
+    }
+    
+    .section-title-modern {
+        font-size: 1.05rem;
+        margin-bottom: 0.85rem;
+    }
+    
+    .section-title-modern i {
+        font-size: 1.1rem;
+    }
+    
+    .count-badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.45rem;
+    }
+    
+    .review-card-modern {
+        padding: 0.85rem;
+        border-radius: 8px;
+    }
+    
+    .reviewer-avatar-small,
+    .reviewer-avatar-placeholder-small {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .reviewer-avatar-placeholder-small {
+        font-size: 0.8rem;
+    }
+    
+    .reviewer-name {
+        font-size: 0.825rem;
+    }
+    
+    .review-date-modern {
+        font-size: 0.7rem;
+    }
+    
+    .review-rating-modern i {
+        font-size: 0.85rem;
+    }
+    
+    .review-text-modern {
+        font-size: 0.8rem;
+        line-height: 1.45;
+    }
+    
+    .empty-state-modern {
+        padding: 2rem 1rem;
+        border-radius: 10px;
+    }
+    
+    .empty-state-modern i {
+        font-size: 2.25rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .empty-state-modern h4 {
+        font-size: 0.95rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    .empty-state-modern p {
+        font-size: 0.8rem;
+    }
+}
+
+/* Desktop улучшения */
+@media (min-width: 769px) {
+    .profile-header-modern {
+        grid-template-columns: auto 1fr auto;
+    }
+    
+    .profile-stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+</style>
 {% endblock %}

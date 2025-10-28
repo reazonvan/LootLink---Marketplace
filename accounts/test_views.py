@@ -372,3 +372,97 @@ class TestMySales:
         
         assert response.status_code == 200
 
+
+@pytest.mark.django_db
+class TestAjaxEndpoints:
+    """Тесты AJAX endpoints для проверки уникальности."""
+    
+    def test_check_username_available(self, client):
+        """Проверка доступности никнейма."""
+        response = client.get(reverse('accounts:check_username'), {'username': 'newuser'})
+        assert response.status_code == 200
+        data = response.json()
+        assert data['available'] is True
+        assert 'доступен' in data['message'].lower()
+    
+    def test_check_username_taken(self, client, verified_user):
+        """Проверка занятого никнейма."""
+        response = client.get(reverse('accounts:check_username'), {'username': verified_user.username})
+        assert response.status_code == 200
+        data = response.json()
+        assert data['available'] is False
+        assert 'занят' in data['message'].lower()
+    
+    def test_check_username_empty(self, client):
+        """Проверка пустого никнейма."""
+        response = client.get(reverse('accounts:check_username'), {'username': ''})
+        assert response.status_code == 200
+        data = response.json()
+        assert data['available'] is False
+    
+    def test_check_username_too_short(self, client):
+        """Проверка слишком короткого никнейма."""
+        response = client.get(reverse('accounts:check_username'), {'username': 'ab'})
+        assert response.status_code == 200
+        data = response.json()
+        assert data['available'] is False
+        assert 'минимум' in data['message'].lower()
+    
+    def test_check_username_invalid_chars(self, client):
+        """Проверка никнейма с недопустимыми символами."""
+        response = client.get(reverse('accounts:check_username'), {'username': 'user@#$%'})
+        assert response.status_code == 200
+        data = response.json()
+        assert data['available'] is False
+        assert 'недопустимые' in data['message'].lower()
+    
+    def test_check_email_available(self, client):
+        """Проверка доступности email."""
+        response = client.get(reverse('accounts:check_email'), {'email': 'new@example.com'})
+        assert response.status_code == 200
+        data = response.json()
+        assert data['available'] is True
+        assert 'доступен' in data['message'].lower()
+    
+    def test_check_email_taken(self, client, verified_user):
+        """Проверка занятого email."""
+        response = client.get(reverse('accounts:check_email'), {'email': verified_user.email})
+        assert response.status_code == 200
+        data = response.json()
+        assert data['available'] is False
+        assert 'зарегистрирован' in data['message'].lower()
+    
+    def test_check_email_invalid(self, client):
+        """Проверка некорректного email."""
+        response = client.get(reverse('accounts:check_email'), {'email': 'invalid-email'})
+        assert response.status_code == 200
+        data = response.json()
+        assert data['available'] is False
+        assert 'некорректн' in data['message'].lower()
+    
+    def test_check_phone_available(self, client):
+        """Проверка доступности телефона."""
+        response = client.get(reverse('accounts:check_phone'), {'phone': '+7 (999) 888-77-66'})
+        assert response.status_code == 200
+        data = response.json()
+        assert data['available'] is True
+        assert 'доступен' in data['message'].lower()
+    
+    def test_check_phone_taken(self, client, verified_user):
+        """Проверка занятого телефона."""
+        verified_user.profile.phone = '+7 (999) 123-45-67'
+        verified_user.profile.save()
+        
+        response = client.get(reverse('accounts:check_phone'), {'phone': '+7 (999) 123-45-67'})
+        assert response.status_code == 200
+        data = response.json()
+        assert data['available'] is False
+        assert 'зарегистрирован' in data['message'].lower()
+    
+    def test_check_phone_invalid(self, client):
+        """Проверка некорректного телефона."""
+        response = client.get(reverse('accounts:check_phone'), {'phone': '123'})
+        assert response.status_code == 200
+        data = response.json()
+        assert data['available'] is False
+        assert 'некорректн' in data['message'].lower()
