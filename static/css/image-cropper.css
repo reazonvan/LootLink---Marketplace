@@ -131,3 +131,34 @@
     font-size: 14px;
 }
 
+/* Убеждаемся что crop box видна */
+.cropper-crop-box {
+    display: block !important;
+}
+
+.cropper-view-box {
+    outline: 2px solid rgba(51, 153, 255, 0.75);
+    outline-color: rgba(51, 153, 255, 0.75);
+}
+
+.cropper-face {
+    background-color: transparent !important;
+}
+
+/* Линии crop box */
+.cropper-line,
+.cropper-point {
+    background-color: #3399ff !important;
+}
+
+/* Центральный маркер */
+.cropper-center {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+/* Drag bar */
+.cropper-dashed {
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+

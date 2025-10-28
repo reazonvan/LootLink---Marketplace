@@ -172,25 +172,42 @@ class AvatarCropper {
                 image.onload = () => {
                     this.cropper = new Cropper(image, {
                         aspectRatio: 1, // Квадрат для круглого аватара
-                        viewMode: 2,
-                        dragMode: 'move',
-                        autoCropArea: 0.9,
+                        viewMode: 1,
+                        dragMode: 'crop',
+                        autoCropArea: 0.8,
                         restore: false,
                         guides: true,
                         center: true,
                         highlight: true,
+                        background: true,
                         cropBoxMovable: true,
                         cropBoxResizable: true,
                         toggleDragModeOnDblclick: false,
                         responsive: true,
                         checkOrientation: true,
                         preview: '#avatarPreviewCircle',
-                        minContainerWidth: 200,
-                        minContainerHeight: 200,
+                        minCropBoxWidth: 50,
+                        minCropBoxHeight: 50,
                         ready: function() {
                             console.log('Avatar Cropper готов');
+                            // Принудительно включаем crop mode
+                            this.cropper.crop();
+                        },
+                        cropstart: function(e) {
+                            console.log('Crop start:', e.detail.action);
+                        },
+                        cropmove: function(e) {
+                            console.log('Crop move');
                         }
                     });
+                    
+                    // Дополнительно включаем crop mode через 100ms
+                    setTimeout(() => {
+                        if (this.cropper) {
+                            this.cropper.crop();
+                            console.log('Crop mode активирован');
+                        }
+                    }, 100);
                 };
                 
                 // Если изображение уже загружено
