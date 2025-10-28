@@ -35,21 +35,30 @@ def user_login(request):
         return redirect('listings:home')
     
     if request.method == 'POST':
-        form = CustomAuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                login(request, user)
-                messages.success(request, f'Добро пожаловать, {username}!')
-                # Перенаправление на страницу, с которой пришел пользователь
-                next_page = request.GET.get('next', 'listings:home')
-                return redirect(next_page)
+        try:
+            form = CustomAuthenticationForm(request, data=request.POST)
+            if form.is_valid():
+                username = form.cleaned_data.get('username')
+                password = form.cleaned_data.get('password')
+                user = authenticate(username=username, password=password)
+                if user is not None:
+                    login(request, user)
+                    messages.success(request, f'Добро пожаловать, {username}!')
+                    # Перенаправление на страницу, с которой пришел пользователь
+                    next_page = request.GET.get('next', 'listings:home')
+                    return redirect(next_page)
+                else:
+                    messages.error(request, 'Неверное имя пользователя или пароль.')
             else:
+                # Если форма невалидна, показываем ошибки
                 messages.error(request, 'Неверное имя пользователя или пароль.')
-        else:
-            messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
+        except Exception as e:
+            # Логируем ошибку и показываем пользователю понятное сообщение
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Ошибка при входе: {e}')
+            messages.error(request, 'Произошла ошибка при входе. Попробуйте еще раз.')
+            form = CustomAuthenticationForm()
     else:
         form = CustomAuthenticationForm()
     
@@ -73,9 +82,16 @@ def profile(request, username):
     
     # Исправление: проверка на существование profile (уже реализовано)
     # Используем get_or_create для атомарности
-    profile, created = Profile.objects.get_or_create(user=user)
-    if created:
-        messages.info(request, 'Профиль был создан автоматически.')
+    try:
+        profile, created = Profile.objects.get_or_create(user=user)
+        if created:
+            messages.info(request, 'Профиль был создан автоматически.')
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Ошибка при создании профиля для {username}: {e}')
+        messages.error(request, 'Произошла ошибка при загрузке профиля.')
+        return redirect('listings:home')
     
     # Получаем отзывы о пользователе с оптимизацией
     reviews = Review.objects.filter(reviewed_user=user)\
