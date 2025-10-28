@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои покупки - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Мои покупки</h1>
+        <p class="text-muted">История ваших запросов на покупку</p>
+    </div>
+
+    {% if page_obj %}
+    <div class="purchases-list">
+        {% for purchase in page_obj %}
+        <div class="purchase-card">
+            <div class="purchase-content">
+                <div class="purchase-image">
+                    {% if purchase.listing.image %}
+                    <img src="{{ purchase.listing.image.url }}" alt="{{ purchase.listing.title }}">
+                    {% else %}
+                    <div class="no-image-placeholder-sm">
+                        <i class="bi bi-image"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="purchase-info">
+                    <span class="purchase-status status-{{ purchase.status }}">
+                        {{ purchase.get_status_display }}
+                    </span>
+                    <h4 class="purchase-title">{{ purchase.listing.title }}</h4>
+                    <div class="purchase-meta">
+                        <span>
+                            <i class="bi bi-person"></i>
+                            Продавец: <a href="{% url 'accounts:profile' purchase.seller.username %}">{{ purchase.seller.username }}</a>
+                        </span>
+                        <span>
+                            <i class="bi bi-calendar"></i>
+                            {{ purchase.created_at|date:"d.m.Y H:i" }}
+                        </span>
+                    </div>
+                    <div class="purchase-price">{{ purchase.listing.price }} ₽</div>
+                </div>
+                <div class="purchase-actions">
+                    <a href="{% url 'transactions:purchase_request_detail' purchase.pk %}" class="btn btn-primary">
+                        Детали
+                    </a>
+                    {% if purchase.status in 'pending,accepted' %}
+                    <a href="{% url 'transactions:purchase_request_cancel' purchase.pk %}" class="btn btn-outline-danger">
+                        Отменить
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Пагинация -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1">Первая</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Назад</a>
+            </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Вперед</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Последняя</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-cart-x"></i>
+        <h4 class="mt-3">У вас пока нет покупок</h4>
+        <a href="{% url 'listings:catalog' %}" class="btn btn-primary mt-3">
+            Перейти к каталогу
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.purchases-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.purchase-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.purchase-content {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.purchase-image img {
+    width: 120px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.purchase-info {
+    flex: 1;
+}
+
+.purchase-status {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+.purchase-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.purchase-meta {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.875rem;
+    color: var(--text-light);
+    margin-bottom: 0.75rem;
+}
+
+.purchase-meta a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.purchase-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--success);
+}
+
+.purchase-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .purchase-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .purchase-actions {
+        flex-direction: row;
+    }
+}
+</style>
+{% endblock %}

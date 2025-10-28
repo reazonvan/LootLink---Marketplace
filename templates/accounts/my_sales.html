@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои продажи - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Мои продажи</h1>
+        <p class="text-muted">Запросы на покупку ваших объявлений</p>
+    </div>
+
+    {% if page_obj %}
+    <div class="purchases-list">
+        {% for sale in page_obj %}
+        <div class="purchase-card">
+            <div class="purchase-content">
+                <div class="purchase-image">
+                    {% if sale.listing.image %}
+                    <img src="{{ sale.listing.image.url }}" alt="{{ sale.listing.title }}">
+                    {% else %}
+                    <div class="no-image-placeholder-sm">
+                        <i class="bi bi-image"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="purchase-info">
+                    <span class="purchase-status status-{{ sale.status }}">
+                        {{ sale.get_status_display }}
+                    </span>
+                    <h4 class="purchase-title">{{ sale.listing.title }}</h4>
+                    <div class="purchase-meta">
+                        <span>
+                            <i class="bi bi-person"></i>
+                            Покупатель: <a href="{% url 'accounts:profile' sale.buyer.username %}">{{ sale.buyer.username }}</a>
+                        </span>
+                        <span>
+                            <i class="bi bi-calendar"></i>
+                            {{ sale.created_at|date:"d.m.Y H:i" }}
+                        </span>
+                    </div>
+                    <div class="purchase-price">{{ sale.listing.price }} ₽</div>
+                </div>
+                <div class="purchase-actions">
+                    <a href="{% url 'transactions:purchase_request_detail' sale.pk %}" class="btn btn-primary">
+                        Детали
+                    </a>
+                    {% if sale.status == 'pending' %}
+                    <a href="{% url 'transactions:purchase_request_accept' sale.pk %}" class="btn btn-success">
+                        Принять
+                    </a>
+                    <a href="{% url 'transactions:purchase_request_reject' sale.pk %}" class="btn btn-outline-danger">
+                        Отклонить
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Пагинация -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1">Первая</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Назад</a>
+            </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Вперед</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Последняя</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-bag-x"></i>
+        <h4 class="mt-3">У вас пока нет продаж</h4>
+        <p class="text-muted">Когда покупатели будут интересоваться вашими товарами, запросы появятся здесь</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

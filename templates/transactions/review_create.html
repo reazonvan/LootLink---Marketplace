@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Оставить отзыв - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="page-header">
+                <h1>Оставить отзыв</h1>
+                <p class="text-muted">Оцените сделку с {{ reviewed_user.username }}</p>
+            </div>
+
+            <div class="review-transaction-card">
+                <h5>Информация о сделке</h5>
+                <div class="transaction-info">
+                    <span><strong>Предмет:</strong> {{ purchase_request.listing.title }}</span>
+                    <span><strong>Цена:</strong> {{ purchase_request.listing.price }} ₽</span>
+                    <span><strong>Оценка для:</strong> <a href="{% url 'accounts:profile' reviewed_user.username %}">{{ reviewed_user.username }}</a></span>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Ваша оценка</label>
+                        <div class="star-rating-input">
+                            {% for i in "12345" %}
+                            <input type="radio" name="rating" id="rating{{ i }}" value="{{ i }}" required hidden>
+                            <label for="rating{{ i }}" class="star-label">
+                                <i class="bi bi-star-fill"></i>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        <small class="form-text text-muted">Нажмите на звезду для выбора оценки (1-5)</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Комментарий (опционально)</label>
+                        {{ form.comment }}
+                    </div>
+                    
+                    <div class="form-actions">
+                        <a href="{% url 'transactions:purchase_request_detail' purchase_request.pk %}" class="btn btn-outline-secondary btn-lg">
+                            Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            Оставить отзыв
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.review-transaction-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.transaction-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.star-rating-input {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 2rem;
+}
+
+.star-label {
+    cursor: pointer;
+    color: #e2e8f0;
+    transition: all 0.2s;
+}
+
+.star-label:hover,
+.star-label:hover ~ .star-label {
+    color: #fbbf24;
+}
+
+input[type="radio"]:checked ~ .star-label,
+input[type="radio"]:checked + .star-label {
+    color: #fbbf24;
+}
+</style>
+{% endblock %}

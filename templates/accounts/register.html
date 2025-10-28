@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Регистрация - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="auth-container">
+                <div class="row">
+                    <!-- Left side - Form -->
+                    <div class="col-md-6">
+                        <div class="auth-form">
+                            <h2 class="auth-title">Регистрация</h2>
+                            <p class="auth-subtitle">Создайте аккаунт для начала торговли</p>
+                            
+                            <form method="post">
+                                {% csrf_token %}
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.username.id_for_label }}" class="form-label">Имя пользователя</label>
+                                    {{ form.username }}
+                                    {% if form.username.errors %}
+                                    <div class="text-danger small mt-1">{{ form.username.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                    <div class="text-danger small mt-1">{{ form.email.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.phone.id_for_label }}" class="form-label">Телефон</label>
+                                    {{ form.phone }}
+                                    {% if form.phone.errors %}
+                                    <div class="text-danger small mt-1">{{ form.phone.errors }}</div>
+                                    {% endif %}
+                                    {% if form.phone.help_text %}
+                                    <small class="form-text text-muted">{{ form.phone.help_text }}</small>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.password1.id_for_label }}" class="form-label">Пароль</label>
+                                    {{ form.password1 }}
+                                    {% if form.password1.errors %}
+                                    <div class="text-danger small mt-1">{{ form.password1.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.password2.id_for_label }}" class="form-label">Подтверждение пароля</label>
+                                    {{ form.password2 }}
+                                    {% if form.password2.errors %}
+                                    <div class="text-danger small mt-1">{{ form.password2.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary w-100 btn-lg mb-3">
+                                    Зарегистрироваться
+                                </button>
+                                
+                                <p class="text-center mb-0">
+                                    Уже есть аккаунт? 
+                                    <a href="{% url 'accounts:login' %}" class="link-primary">Войти</a>
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Right side - Info -->
+                    <div class="col-md-6">
+                        <div class="auth-info">
+                            <h3 class="info-title">Присоединяйтесь к LootLink</h3>
+                            <ul class="info-list">
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Размещайте объявления бесплатно</span>
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Торгуйте напрямую с другими игроками</span>
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Получайте отзывы и повышайте рейтинг</span>
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Используйте встроенный чат</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

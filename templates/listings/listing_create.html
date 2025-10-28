@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Создать объявление - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="page-header">
+                <h1>Создать объявление</h1>
+                <p class="text-muted">Заполните информацию о предмете, который хотите продать</p>
+            </div>
+
+            <div class="form-card">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.game.id_for_label }}" class="form-label fw-semibold">Игра *</label>
+                        {{ form.game }}
+                        {% if form.game.errors %}
+                        <div class="text-danger small mt-1">{{ form.game.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.title.id_for_label }}" class="form-label fw-semibold">Название предмета *</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                        <div class="text-danger small mt-1">{{ form.title.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Укажите четкое и понятное название</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold">Описание *</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="text-danger small mt-1">{{ form.description.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Подробно опишите предмет и условия передачи</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.price.id_for_label }}" class="form-label fw-semibold">Цена (₽) *</label>
+                        {{ form.price }}
+                        {% if form.price.errors %}
+                        <div class="text-danger small mt-1">{{ form.price.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Укажите справедливую цену</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.image.id_for_label }}" class="form-label fw-semibold">Изображение (необязательно)</label>
+                        {{ form.image }}
+                        {% if form.image.errors %}
+                        <div class="text-danger small mt-1">{{ form.image.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Вы можете загрузить изображение предмета</small>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>Советы для успешной продажи:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Используйте четкое название</li>
+                            <li>Подробно опишите предмет</li>
+                            <li>Загрузите качественное фото (по желанию)</li>
+                            <li>Укажите реальную рыночную цену</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <a href="{% url 'listings:catalog' %}" class="btn btn-outline-secondary btn-lg">
+                            Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            Создать объявление
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

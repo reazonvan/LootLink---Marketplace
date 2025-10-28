@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Пожаловаться на объявление - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="bi bi-flag-fill"></i> Пожаловаться на объявление
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Объявление:</strong> {{ listing.title }}<br>
+                        <strong>Продавец:</strong> {{ listing.seller.username }}<br>
+                        <strong>Цена:</strong> {{ listing.price }} ₽
+                    </div>
+                    
+                    <p class="text-muted">
+                        Если вы обнаружили нарушение правил или мошенничество, пожалуйста, сообщите нам.
+                        Ваша жалоба будет рассмотрена администрацией.
+                    </p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="bi bi-send-fill"></i> Отправить жалобу
+                            </button>
+                            <a href="{% url 'listings:listing_detail' listing.pk %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Отмена
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="alert alert-warning mt-3">
+                <strong><i class="bi bi-exclamation-triangle-fill"></i> Важно:</strong>
+                <ul class="mb-0 mt-2">
+                    <li>Ложные жалобы могут привести к блокировке вашего аккаунта</li>
+                    <li>Администрация рассматривает жалобы в течение 24-48 часов</li>
+                    <li>Вы получите уведомление о результате рассмотрения</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

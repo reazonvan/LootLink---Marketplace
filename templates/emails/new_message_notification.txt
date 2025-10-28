@@ -1,0 +1,13 @@
+Здравствуйте!
+
+У вас новое сообщение от {{ sender.username }}:
+
+{{ message.content }}
+
+Ответить:
+http://127.0.0.1:8000{% url 'chat:conversation_detail' conversation.pk %}
+
+---
+С уважением,
+Команда LootLink
+
