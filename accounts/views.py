@@ -204,7 +204,7 @@ def my_sales(request):
 
 
 def password_reset_request(request):
-    """Запрос на сброс пароля - отправка кода на email."""
+    """Запрос на сброс пароля - отправка кода на email и SMS."""
     if request.method == 'POST':
         form = PasswordResetRequestForm(request.POST)
         if form.is_valid():
@@ -216,7 +216,7 @@ def password_reset_request(request):
             
             # Отправляем email с кодом
             subject = 'Код сброса пароля - LootLink'
-            message = f"""
+            email_message = f"""
 Здравствуйте, {user.username}!
 
 Вы запросили сброс пароля на сайте LootLink.
@@ -231,19 +231,50 @@ def password_reset_request(request):
 Команда LootLink
             """
             
+            email_sent = False
+            sms_sent = False
+            
+            # Отправляем email
             try:
                 send_mail(
                     subject,
-                    message,
+                    email_message,
                     settings.DEFAULT_FROM_EMAIL,
                     [email],
                     fail_silently=False,
                 )
-                messages.success(request, f'Код подтверждения отправлен на {email}')
-                request.session['reset_email'] = email
-                return redirect('accounts:password_reset_confirm')
+                email_sent = True
             except Exception as e:
-                messages.error(request, f'Ошибка отправки email: {e}')
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f'Ошибка отправки email: {e}')
+            
+            # Отправляем СМС если у пользователя указан телефон
+            if user.profile.phone:
+                try:
+                    from core.sms_service import send_password_reset_sms
+                    sms_sent = send_password_reset_sms(
+                        user.profile.phone, 
+                        reset_code.code,
+                        user.username
+                    )
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f'Ошибка отправки СМС: {e}')
+            
+            # Формируем сообщение пользователю
+            if email_sent and sms_sent:
+                messages.success(request, f'Код отправлен на {email} и {user.profile.phone}')
+            elif email_sent:
+                messages.success(request, f'Код отправлен на {email}')
+            elif sms_sent:
+                messages.success(request, f'Код отправлен на {user.profile.phone}')
+            else:
+                messages.warning(request, 'Код создан, но возникли проблемы с отправкой. Проверьте консоль сервера.')
+            
+            request.session['reset_email'] = email
+            return redirect('accounts:password_reset_confirm')
     else:
         form = PasswordResetRequestForm()
     

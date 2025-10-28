@@ -50,4 +50,7 @@ hiredis>=3.3.0
 # Async tasks
 celery>=5.5.0
 
+# HTTP requests (для SMS API)
+requests>=2.31.0
+
 

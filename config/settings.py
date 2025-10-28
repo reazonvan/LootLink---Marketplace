@@ -193,6 +193,10 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@lootlink.com')
 
+# SMS Settings (SMS.ru для отправки СМС в России)
+SMS_ENABLED = config('SMS_ENABLED', default=False, cast=bool)
+SMS_RU_API_KEY = config('SMS_RU_API_KEY', default='')
+
 # Security settings for production
 if not DEBUG:
     # SSL/HTTPS настройки (можно отключить через .env если нет сертификата)
