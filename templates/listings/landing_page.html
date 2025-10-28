@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}LootLink - Маркетплейс игровых предметов{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-landing" style="margin-top: 2rem;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="hero-title">Покупайте и продавайте игровые предметы безопасно</h1>
+                <p class="hero-subtitle">P2P маркетплейс для прямой торговли между игроками. Без посредников, без скрытых комиссий.</p>
+                <div class="hero-actions">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'listings:listing_create' %}" class="btn btn-primary btn-lg">Создать объявление</a>
+                    <a href="{% url 'listings:catalog' %}" class="btn btn-outline-primary btn-lg">Смотреть каталог</a>
+                    {% else %}
+                    <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg">Начать продавать</a>
+                    <a href="{% url 'listings:catalog' %}" class="btn btn-outline-primary btn-lg">Посмотреть объявления</a>
+                    {% endif %}
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ stats.total_users }}</div>
+                        <div class="stat-label">Зарегистрировано пользователей</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ stats.total_listings }}</div>
+                        <div class="stat-label">Активных объявлений</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ stats.total_deals }}</div>
+                        <div class="stat-label">Завершено сделок</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-illustration">
+                    <!-- Анимированные карточки товаров -->
+                    <div class="floating-card floating-card-1">
+                        <div class="card-mini-image">
+                            <i class="bi bi-gem"></i>
+                        </div>
+                        <div class="card-mini-content">
+                            <div class="card-mini-title">Dragon Lore AWP</div>
+                            <div class="card-mini-price">15,000 ₽</div>
+                        </div>
+                    </div>
+                    
+                    <div class="floating-card floating-card-2">
+                        <div class="card-mini-image">
+                            <i class="bi bi-trophy-fill"></i>
+                        </div>
+                        <div class="card-mini-content">
+                            <div class="card-mini-title">Arcana Pack</div>
+                            <div class="card-mini-price">3,500 ₽</div>
+                        </div>
+                    </div>
+                    
+                    <div class="floating-card floating-card-3">
+                        <div class="card-mini-image">
+                            <i class="bi bi-shield-fill-check"></i>
+                        </div>
+                        <div class="card-mini-content">
+                            <div class="card-mini-title">Rare Skin</div>
+                            <div class="card-mini-price">999 ₽</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Центральный элемент -->
+                    <div class="hero-center-badge">
+                        <i class="bi bi-bag-check-fill"></i>
+                        <div class="hero-center-text">Безопасно</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Почему выбирают LootLink</h2>
+            <p class="section-subtitle">Безопасная торговля игровыми предметами</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h3 class="feature-title">Безопасность</h3>
+                    <p class="feature-description">Система рейтингов и отзывов помогает выбрать надежных продавцов</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <h3 class="feature-title">Без комиссий</h3>
+                    <p class="feature-description">Прямая торговля между игроками. Вся прибыль остается у вас</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-chat-dots"></i>
+                    </div>
+                    <h3 class="feature-title">Удобный чат</h3>
+                    <p class="feature-description">Встроенная система сообщений для быстрой связи с продавцом</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Latest Listings Section -->
+{% if latest_listings %}
+<section class="latest-listings-section">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title mb-0">Последние объявления</h2>
+            <a href="{% url 'listings:catalog' %}" class="btn btn-outline-primary">Смотреть все</a>
+        </div>
+        <div class="listings-grid">
+            {% for listing in latest_listings %}
+            <article class="listing-item">
+                <a href="{% url 'listings:listing_detail' listing.pk %}" class="listing-link">
+                    <div class="listing-image">
+                        {% if listing.image %}
+                        <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
+                        {% else %}
+                        <div class="no-image-placeholder-sm">
+                            <i class="bi bi-image"></i>
+                        </div>
+                        {% endif %}
+                        <div class="listing-badge">{{ listing.game.name }}</div>
+                    </div>
+                    <div class="listing-content">
+                        <div class="listing-meta">
+                            <span class="seller-name">{{ listing.seller.username }}</span>
+                            <span class="listing-date">{{ listing.created_at|date:"d.m.Y" }}</span>
+                        </div>
+                        <h3 class="listing-title">{{ listing.title }}</h3>
+                        <p class="listing-description">{{ listing.description|truncatewords:15 }}</p>
+                        <div class="listing-footer">
+                            <div class="listing-price">{{ listing.price }} ₽</div>
+                            <span class="listing-action">Подробнее <i class="bi bi-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </a>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Games Section -->
+{% if games %}
+<section class="games-section">
+    <div class="container">
+        <div class="text-center mb-4">
+            <h2 class="section-title">Популярные игры</h2>
+            <p class="section-subtitle">Выберите свою игру и найдите нужные предметы</p>
+        </div>
+        <div class="row g-4">
+            {% for game in games %}
+            <div class="col-md-4 col-lg-2">
+                <a href="{% url 'listings:game_listings' game.slug %}" class="game-card">
+                    <div class="game-icon-placeholder">
+                        <i class="bi bi-controller"></i>
+                    </div>
+                    <div class="game-name">{{ game.name }}</div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'listings:catalog' %}" class="btn btn-primary">Смотреть все объявления</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-content">
+            <h2 class="cta-title">Готовы начать?</h2>
+            <p class="cta-subtitle">Присоединяйтесь к тысячам игроков, которые уже торгуют на LootLink</p>
+            {% if not user.is_authenticated %}
+            <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg">Создать аккаунт</a>
+            {% else %}
+            <a href="{% url 'listings:listing_create' %}" class="btn btn-light btn-lg">Создать объявление</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+

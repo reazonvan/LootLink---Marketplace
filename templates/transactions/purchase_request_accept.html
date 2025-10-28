@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Принять запрос - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="bi bi-check-circle"></i> Подтверждение принятия</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Вы уверены, что хотите принять этот запрос?</h5>
+                    
+                    <div class="alert alert-info mt-3">
+                        <p class="mb-1"><strong>Покупатель:</strong> {{ purchase_request.buyer.username }}</p>
+                        <p class="mb-1"><strong>Предмет:</strong> {{ purchase_request.listing.title }}</p>
+                        <p class="mb-0"><strong>Цена:</strong> {{ purchase_request.listing.price }} ₽</p>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        После принятия запроса:
+                        <ul class="mb-0 mt-2">
+                            <li>Объявление будет зарезервировано</li>
+                            <li>Свяжитесь с покупателем для передачи предмета</li>
+                            <li>После передачи подтвердите завершение сделки</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'transactions:purchase_request_detail' purchase_request.pk %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Принять
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

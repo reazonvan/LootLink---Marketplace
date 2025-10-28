@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои объявления - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1>Мои объявления</h1>
+                <p class="text-muted">Управляйте своими активными объявлениями</p>
+            </div>
+            <a href="{% url 'listings:listing_create' %}" class="btn btn-primary">
+                Создать объявление
+            </a>
+        </div>
+    </div>
+
+    {% if page_obj %}
+    <div class="listings-grid">
+        {% for listing in page_obj %}
+        <article class="listing-item">
+            <a href="{% url 'listings:listing_detail' listing.pk %}" class="listing-link">
+                <div class="listing-image">
+                    {% if listing.image %}
+                    <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
+                    {% else %}
+                    <div class="no-image-placeholder-sm">
+                        <i class="bi bi-image"></i>
+                        <p>Нет изображения</p>
+                    </div>
+                    {% endif %}
+                    <div class="listing-badge">{{ listing.game.name }}</div>
+                    <div class="listing-status-badge status-{{ listing.status }}">
+                        {{ listing.get_status_display }}
+                    </div>
+                </div>
+                <div class="listing-content">
+                    <div class="listing-meta">
+                        <span class="seller-name">Вы</span>
+                        <span class="listing-date">{{ listing.created_at|date:"d.m.Y" }}</span>
+                    </div>
+                    <h3 class="listing-title">{{ listing.title }}</h3>
+                    <p class="listing-description">{{ listing.description|truncatewords:15 }}</p>
+                    <div class="listing-footer">
+                        <div class="listing-price">{{ listing.price }} ₽</div>
+                        <div class="listing-actions">
+                            <a href="{% url 'listings:listing_edit' listing.pk %}" class="action-btn" onclick="event.preventDefault(); event.stopPropagation(); window.location.href=this.href;">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </article>
+        {% endfor %}
+    </div>
+    
+    <!-- Пагинация -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1">Первая</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Назад</a>
+            </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Вперед</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Последняя</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <h4 class="mt-3">У вас пока нет объявлений</h4>
+        <p class="text-muted">Создайте первое объявление прямо сейчас</p>
+        <a href="{% url 'listings:listing_create' %}" class="btn btn-primary mt-3">
+            Создать объявление
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.listing-status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.listing-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--light);
+    border-radius: 6px;
+    color: var(--text);
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+</style>
+{% endblock %}

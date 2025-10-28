@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Запрос #{{ purchase_request.pk }} - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Request Status -->
+            <div class="request-status-card">
+                <div class="request-header">
+                    <h2>Запрос на покупку #{{ purchase_request.pk }}</h2>
+                    <span class="request-status-badge status-{{ purchase_request.status }}">
+                        {{ purchase_request.get_status_display }}
+                    </span>
+                </div>
+                
+                <div class="request-timeline">
+                    <div class="timeline-step {% if purchase_request.status == 'pending' or purchase_request.status == 'accepted' or purchase_request.status == 'completed' %}active{% endif %}">
+                        <div class="timeline-icon"><i class="bi bi-send"></i></div>
+                        <div class="timeline-content">
+                            <h5>Запрос отправлен</h5>
+                            <p class="text-muted">{{ purchase_request.created_at|date:"d.m.Y H:i" }}</p>
+                        </div>
+                    </div>
+                    <div class="timeline-step {% if purchase_request.status == 'accepted' or purchase_request.status == 'completed' %}active{% endif %}">
+                        <div class="timeline-icon"><i class="bi bi-check-circle"></i></div>
+                        <div class="timeline-content">
+                            <h5>Запрос принят</h5>
+                            <p class="text-muted">{% if purchase_request.status == 'accepted' or purchase_request.status == 'completed' %}{{ purchase_request.updated_at|date:"d.m.Y H:i" }}{% else %}-{% endif %}</p>
+                        </div>
+                    </div>
+                    <div class="timeline-step {% if purchase_request.status == 'completed' %}active{% endif %}">
+                        <div class="timeline-icon"><i class="bi bi-check2-all"></i></div>
+                        <div class="timeline-content">
+                            <h5>Сделка завершена</h5>
+                            <p class="text-muted">{% if purchase_request.completed_at %}{{ purchase_request.completed_at|date:"d.m.Y H:i" }}{% else %}-{% endif %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Listing Info -->
+            <div class="transaction-listing-card">
+                <div class="listing-preview-image">
+                    {% if purchase_request.listing.image %}
+                    <img src="{{ purchase_request.listing.image.url }}" alt="{{ purchase_request.listing.title }}">
+                    {% else %}
+                    <div class="no-image-placeholder-sm">
+                        <i class="bi bi-image"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="listing-preview-info">
+                    <span class="game-tag">{{ purchase_request.listing.game.name }}</span>
+                    <h3 class="listing-preview-title">{{ purchase_request.listing.title }}</h3>
+                    <p class="listing-preview-description">{{ purchase_request.listing.description|truncatewords:30 }}</p>
+                    <div class="listing-preview-price">{{ purchase_request.listing.price }} ₽</div>
+                    <a href="{% url 'listings:listing_detail' purchase_request.listing.pk %}" class="btn btn-outline-primary">
+                        Посмотреть объявление
+                    </a>
+                </div>
+            </div>
+
+            <!-- Message -->
+            {% if purchase_request.message %}
+            <div class="message-card">
+                <h5>Сообщение от покупателя</h5>
+                <p>{{ purchase_request.message }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Participants -->
+            <div class="participants-card">
+                <h5>Участники сделки</h5>
+                <div class="participant">
+                    <div class="participant-label">Покупатель</div>
+                    <a href="{% url 'accounts:profile' purchase_request.buyer.username %}" class="participant-info">
+                        <div class="participant-name">{{ purchase_request.buyer.username }}</div>
+                        <div class="participant-rating">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= purchase_request.buyer.profile.rating %}
+                                    <i class="bi bi-star-fill"></i>
+                                {% else %}
+                                    <i class="bi bi-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                            {{ purchase_request.buyer.profile.rating }}
+                        </div>
+                    </a>
+                </div>
+                <div class="participant">
+                    <div class="participant-label">Продавец</div>
+                    <a href="{% url 'accounts:profile' purchase_request.seller.username %}" class="participant-info">
+                        <div class="participant-name">{{ purchase_request.seller.username }}</div>
+                        <div class="participant-rating">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= purchase_request.seller.profile.rating %}
+                                    <i class="bi bi-star-fill"></i>
+                                {% else %}
+                                    <i class="bi bi-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                            {{ purchase_request.seller.profile.rating }}
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions-card">
+                <h5 class="mb-3">Действия</h5>
+                
+                {% if user == purchase_request.seller %}
+                    {% if purchase_request.status == 'pending' %}
+                        <a href="{% url 'transactions:purchase_request_accept' purchase_request.pk %}" class="btn btn-success w-100 mb-2">
+                            Принять запрос
+                        </a>
+                        <a href="{% url 'transactions:purchase_request_reject' purchase_request.pk %}" class="btn btn-outline-danger w-100 mb-2">
+                            Отклонить
+                        </a>
+                    {% elif purchase_request.status == 'accepted' %}
+                        <a href="{% url 'transactions:purchase_request_complete' purchase_request.pk %}" class="btn btn-primary w-100 mb-2">
+                            Завершить сделку
+                        </a>
+                    {% endif %}
+                {% elif user == purchase_request.buyer %}
+                    {% if purchase_request.status in 'pending,accepted' %}
+                        <a href="{% url 'transactions:purchase_request_cancel' purchase_request.pk %}" class="btn btn-outline-danger w-100 mb-2">
+                            Отменить запрос
+                        </a>
+                    {% endif %}
+                {% endif %}
+
+                <a href="{% url 'chat:conversation_start' purchase_request.listing.pk %}" class="btn btn-primary w-100 mb-2">
+                    Перейти в чат
+                </a>
+
+                {% if can_leave_review %}
+                <a href="{% url 'transactions:review_create' purchase_request.pk %}" class="btn btn-warning w-100">
+                    Оставить отзыв
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

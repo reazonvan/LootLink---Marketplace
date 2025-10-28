@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}404 - Страница не найдена - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center text-center" style="min-height: 60vh; display: flex; align-items: center;">
+        <div class="col-md-8">
+            <div class="error-page">
+                <h1 class="display-1" style="font-size: 8rem; font-weight: bold; color: #4361ee;">404</h1>
+                <h2 class="mb-4">Страница не найдена</h2>
+                <p class="text-muted mb-5">
+                    К сожалению, запрашиваемая вами страница не существует или была удалена.
+                </p>
+                
+                <div class="error-actions">
+                    <a href="{% url 'listings:home' %}" class="btn btn-primary btn-lg me-2">
+                        <i class="bi bi-house"></i> На главную
+                    </a>
+                    <a href="{% url 'listings:catalog' %}" class="btn btn-outline-primary btn-lg">
+                        <i class="bi bi-grid"></i> Каталог
+                    </a>
+                </div>
+                
+                <div class="mt-5">
+                    <p class="text-muted small">
+                        Если вы считаете, что это ошибка, пожалуйста, 
+                        <a href="mailto:support@lootlink.com">свяжитесь с нами</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-page {
+    padding: 3rem 0;
+}
+
+.display-1 {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+</style>
+{% endblock %}
+

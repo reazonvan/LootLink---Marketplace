@@ -1,0 +1,18 @@
+Здравствуйте, {{ purchase_request.buyer.username }}!
+
+Продавец принял ваш запрос на покупку!
+
+Объявление: {{ listing.title }}
+Продавец: {{ seller.username }}
+Цена: {{ listing.price }} ₽
+
+Свяжитесь с продавцом для завершения сделки:
+http://127.0.0.1:8000{% url 'chat:conversation_start' listing.pk %}
+
+Детали запроса:
+http://127.0.0.1:8000{% url 'transactions:purchase_request_detail' purchase_request.pk %}
+
+---
+С уважением,
+Команда LootLink
+

@@ -1,0 +1,16 @@
+Здравствуйте, {{ review.reviewed_user.username }}!
+
+Пользователь {{ reviewer.username }} оставил вам отзыв!
+
+Оценка: {{ review.rating }} из 5
+{% if review.comment %}
+Комментарий: {{ review.comment }}
+{% endif %}
+
+Посмотреть ваш профиль:
+http://127.0.0.1:8000{% url 'accounts:profile' review.reviewed_user.username %}
+
+---
+С уважением,
+Команда LootLink
+

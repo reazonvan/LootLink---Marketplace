@@ -1,0 +1,21 @@
+Здравствуйте, {{ purchase_request.seller.username }}!
+
+У вас новый запрос на покупку вашего объявления:
+
+Объявление: {{ listing.title }}
+Игра: {{ listing.game.name }}
+Цена: {{ listing.price }} ₽
+
+Покупатель: {{ buyer.username }}
+{% if purchase_request.message %}
+Сообщение от покупателя:
+{{ purchase_request.message }}
+{% endif %}
+
+Посмотреть детали запроса:
+http://127.0.0.1:8000{% url 'transactions:purchase_request_detail' purchase_request.pk %}
+
+---
+С уважением,
+Команда LootLink
+

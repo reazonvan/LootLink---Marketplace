@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Беседа с {{ other_user.username }} - LootLink{% endblock %}
+
+{% block content %}
+<div class="container" data-conversation-id="{{ conversation.pk }}">
+    <!-- Chat Header -->
+    <div class="chat-header-card">
+        <div class="chat-header-content">
+            <a href="{% url 'chat:conversations_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Назад
+            </a>
+            <div class="chat-header-info">
+                <h5 class="chat-username">
+                    <a href="{% url 'accounts:profile' other_user.username %}">{{ other_user.username }}</a>
+                </h5>
+                {% if conversation.listing %}
+                <p class="chat-listing">
+                    <a href="{% url 'listings:listing_detail' conversation.listing.pk %}">{{ conversation.listing.title }}</a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Messages -->
+    <div class="chat-messages-card">
+        <div class="messages-container messages-list" id="messagesList">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="message-wrapper {% if message.sender == user %}sent{% else %}received{% endif %}" data-message-id="{{ message.id }}">
+                    <div class="message-bubble {% if message.sender == user %}sent{% else %}received{% endif %}">
+                        {{ message.content }}
+                    </div>
+                    <div class="message-time">{{ message.created_at|date:"H:i" }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-chat">
+                    <i class="bi bi-chat-left-text"></i>
+                    <p>Начните беседу, отправив первое сообщение</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Message Form -->
+        <div class="message-form-container">
+            <form method="post" class="message-form" id="message-form" onsubmit="console.log('FORM SUBMIT'); return true;">
+                {% csrf_token %}
+                <input 
+                    type="text"
+                    id="id_content"
+                    name="content" 
+                    class="form-control message-input" 
+                    placeholder="Введите сообщение и нажмите Enter"
+                    required
+                    autocomplete="off"
+                    style="width: 100%; padding: 12px; font-size: 16px;"
+                />
+                <button type="submit" class="btn btn-primary mt-2">
+                    <i class="bi bi-send"></i> Отправить
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+console.log('=== CHAT SCRIPT LOADED ===');
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('CHAT: DOMContentLoaded');
+    
+    // Автоскролл
+    const messagesList = document.getElementById('messagesList');
+    if (messagesList) {
+        messagesList.scrollTop = messagesList.scrollHeight;
+        console.log('SCROLL: OK');
+    }
+    
+    // Проверяем форму
+    const form = document.getElementById('message-form');
+    const input = document.getElementById('id_content');
+    
+    if (form && input) {
+        console.log('FORM FOUND:', form);
+        console.log('INPUT FOUND:', input);
+        console.log('INPUT TYPE:', input.type);
+        
+        // Тестовый обработчик
+        input.addEventListener('keypress', function(e) {
+            console.log('KEYPRESS:', e.key, 'Code:', e.keyCode);
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                console.log('ENTER DETECTED!');
+            }
+        });
+        
+        form.addEventListener('submit', function(e) {
+            console.log('SUBMIT EVENT!', 'Value:', input.value);
+        });
+    } else {
+        console.error('FORM OR INPUT NOT FOUND!');
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}О нас - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>О LootLink</h1>
+        <p class="text-muted">Узнайте больше о нашем маркетплейсе</p>
+    </div>
+
+    <!-- Статистика -->
+    <div class="stats-banner">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="stat-box">
+                    <div class="stat-box-value">{{ total_users }}</div>
+                    <div class="stat-box-label">Пользователей</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-box">
+                    <div class="stat-box-value">{{ total_listings }}</div>
+                    <div class="stat-box-label">Активных объявлений</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-box">
+                    <div class="stat-box-value">{{ total_deals }}</div>
+                    <div class="stat-box-label">Завершено сделок</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-box">
+                    <div class="stat-box-value">{{ total_games }}</div>
+                    <div class="stat-box-label">Поддерживаемых игр</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <h2>Что такое LootLink?</h2>
+        <p>LootLink - это современный P2P маркетплейс для прямой торговли внутриигровыми предметами между игроками. Мы создали платформу, где геймеры могут безопасно покупать и продавать игровые предметы без посредников и скрытых комиссий.</p>
+        <p><strong>На данный момент:</strong> {{ total_users }} пользователей разместили {{ total_listings }} активных объявлений и совершили {{ total_deals }} успешных сделок!</p>
+
+        <h3 class="mt-4">Наша миссия</h3>
+        <p>Сделать торговлю игровыми предметами простой, безопасной и доступной для всех игроков. Мы верим в прямую коммуникацию между продавцами и покупателями без лишних посредников.</p>
+
+        <h3 class="mt-4">Преимущества LootLink</h3>
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <div class="about-feature">
+                    <div class="about-feature-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h4>Безопасность</h4>
+                    <p>Система рейтингов и отзывов помогает выбрать надежных продавцов. Проверенные продавцы получают специальный значок.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="about-feature">
+                    <div class="about-feature-icon">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <h4>Без комиссий</h4>
+                    <p>Вся прибыль остается у вас. Мы не берем комиссии с продаж - торгуйте напрямую.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="about-feature">
+                    <div class="about-feature-icon">
+                        <i class="bi bi-chat-dots"></i>
+                    </div>
+                    <h4>Удобный чат</h4>
+                    <p>Встроенная система сообщений для быстрой связи с продавцом. Обсуждайте детали сделки прямо на сайте.</p>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="mt-5">Как это работает?</h3>
+        <div class="how-it-works">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h5>Регистрация</h5>
+                    <p>Создайте бесплатный аккаунт за 1 минуту</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h5>Размещение объявления</h5>
+                    <p>Опишите предмет, загрузите фото, укажите цену</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h5>Продажа</h5>
+                    <p>Получайте запросы, общайтесь с покупателями, совершайте сделки</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h5>Отзывы</h5>
+                    <p>Получайте отзывы и повышайте свой рейтинг</p>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="mt-5">Поддерживаемые игры</h3>
+        <p>Мы поддерживаем широкий спектр популярных игр, включая:</p>
+        <ul class="games-list">
+            <li>Dota 2</li>
+            <li>CS:GO</li>
+            <li>World of Warcraft</li>
+            <li>League of Legends</li>
+            <li>Fortnite</li>
+            <li>Valorant</li>
+            <li>Minecraft</li>
+            <li>Rust</li>
+            <li>И многие другие...</li>
+        </ul>
+
+        <h3 class="mt-5">Контакты</h3>
+        <p>Если у вас есть вопросы или предложения, свяжитесь с нами:</p>
+        <ul>
+            <li><strong>Email:</strong> support@lootlink.com</li>
+            <li><strong>Техническая поддержка:</strong> tech@lootlink.com</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+

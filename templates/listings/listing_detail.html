@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ listing.title }} - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'listings:home' %}">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'listings:catalog' %}">Каталог</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'listings:game_listings' listing.game.slug %}">{{ listing.game.name }}</a></li>
+            <li class="breadcrumb-item active">{{ listing.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Listing Card -->
+            <div class="listing-detail-card">
+                <div class="listing-detail-header">
+                    <span class="listing-game-badge">{{ listing.game.name }}</span>
+                    <span class="listing-status-badge status-{{ listing.status }}">
+                        {{ listing.get_status_display }}
+                    </span>
+                </div>
+                
+                {% if listing.image %}
+                <div class="listing-detail-image">
+                    <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
+                </div>
+                {% else %}
+                <div class="listing-detail-image listing-no-image">
+                    <div class="no-image-placeholder">
+                        <i class="bi bi-image"></i>
+                        <p>Изображение не загружено</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="listing-detail-content">
+                    <h1 class="listing-detail-title">{{ listing.title }}</h1>
+                    <div class="listing-detail-price">{{ listing.price }} ₽</div>
+                    
+                    <div class="listing-detail-meta">
+                        <span><i class="bi bi-calendar"></i> Опубликовано: {{ listing.created_at|date:"d.m.Y" }}</span>
+                        <span><i class="bi bi-clock"></i> Обновлено: {{ listing.updated_at|date:"d.m.Y" }}</span>
+                    </div>
+                    
+                    <div class="listing-detail-description">
+                        <h3>Описание</h3>
+                        <p>{{ listing.description }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Seller Card -->
+            <div class="seller-card">
+                <h5 class="seller-card-title">Продавец</h5>
+                <div class="seller-info">
+                    <div class="seller-avatar">
+                        {% if listing.seller.profile.avatar %}
+                        <img src="{{ listing.seller.profile.avatar.url }}" alt="{{ listing.seller.username }}">
+                        {% else %}
+                        <div class="seller-avatar-placeholder">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="seller-details">
+                        <h6 class="seller-username">
+                            <a href="{% url 'accounts:profile' listing.seller.username %}">{{ listing.seller.username }}</a>
+                        </h6>
+                        <div class="seller-rating">
+                            <span class="rating-stars">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= listing.seller.profile.rating %}
+                                        <i class="bi bi-star-fill"></i>
+                                    {% else %}
+                                        <i class="bi bi-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                            <span class="rating-value">{{ listing.seller.profile.rating }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="seller-stats">
+                    <div class="seller-stat">
+                        <span class="stat-label">Продаж</span>
+                        <span class="stat-value">{{ listing.seller.profile.total_sales }}</span>
+                    </div>
+                    <div class="seller-stat">
+                        <span class="stat-label">Покупок</span>
+                        <span class="stat-value">{{ listing.seller.profile.total_purchases }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions Card -->
+            <div class="actions-card">
+                {% if user.is_authenticated %}
+                    {% if user == listing.seller %}
+                        <a href="{% url 'listings:listing_edit' listing.pk %}" class="btn btn-warning w-100 mb-2">
+                            Редактировать
+                        </a>
+                        <a href="{% url 'listings:listing_delete' listing.pk %}" class="btn btn-outline-danger w-100">
+                            Удалить
+                        </a>
+                    {% else %}
+                        {% if listing.is_available %}
+                            {% if user_has_request %}
+                                <div class="alert alert-info mb-2">
+                                    У вас уже есть активный запрос на это объявление
+                                </div>
+                            {% else %}
+                                <a href="{% url 'transactions:purchase_request_create' listing.pk %}" class="btn btn-success w-100 mb-2">
+                                    Купить
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <button class="btn btn-secondary w-100 mb-2" disabled>
+                                Недоступно
+                            </button>
+                        {% endif %}
+                        
+                        <a href="{% url 'chat:conversation_start' listing.pk %}" class="btn btn-primary w-100">
+                            Написать продавцу
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-warning">
+                        <a href="{% url 'accounts:login' %}?next={{ request.path }}">Войдите</a> 
+                        или 
+                        <a href="{% url 'accounts:register' %}">зарегистрируйтесь</a> 
+                        для покупки
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

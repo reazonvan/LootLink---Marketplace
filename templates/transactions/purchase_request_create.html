@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Запрос на покупку - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="page-header">
+                <h1>Запрос на покупку</h1>
+                <p class="text-muted">Отправьте запрос продавцу на покупку этого предмета</p>
+            </div>
+
+            <!-- Listing Preview -->
+            <div class="listing-preview-card">
+                <div class="listing-preview-image">
+                    {% if listing.image %}
+                    <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
+                    {% else %}
+                    <div class="no-image-placeholder-sm">
+                        <i class="bi bi-image"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="listing-preview-info">
+                    <span class="game-tag">{{ listing.game.name }}</span>
+                    <h3 class="listing-preview-title">{{ listing.title }}</h3>
+                    <div class="listing-preview-meta">
+                        <span>Продавец: <a href="{% url 'accounts:profile' listing.seller.username %}">{{ listing.seller.username }}</a></span>
+                    </div>
+                    <div class="listing-preview-price">{{ listing.price }} ₽</div>
+                </div>
+            </div>
+
+            <!-- Request Form -->
+            <div class="form-card">
+                <h4 class="mb-3">Сообщение продавцу</h4>
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.message }}
+                    
+                    <div class="alert alert-info mt-3">
+                        <strong>Обратите внимание:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>После отправки продавец получит ваш запрос</li>
+                            <li>Если продавец примет, вы сможете общаться в чате</li>
+                            <li>После получения предмета подтвердите завершение</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <a href="{% url 'listings:listing_detail' listing.pk %}" class="btn btn-outline-secondary btn-lg">
+                            Отмена
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            Отправить запрос
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
