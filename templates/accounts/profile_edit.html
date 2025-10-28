@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
 
 {% block title %}Редактирование профиля - LootLink{% endblock %}
 
@@ -15,12 +14,38 @@
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         
-                        <h5 class="mb-3">Основная информация</h5>
-                        {{ user_form|crispy }}
+                        <h5 class="mb-3">Неизменяемые данные</h5>
+                        <div class="alert alert-info">
+                            <small>
+                                <i class="bi bi-info-circle"></i> 
+                                <strong>Важно:</strong> Никнейм, email и телефон задаются один раз при регистрации и не могут быть изменены.
+                            </small>
+                        </div>
+                        
+                        <!-- Никнейм (readonly) -->
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Никнейм</strong></label>
+                            <input type="text" class="form-control bg-light" value="{{ user.username }}" readonly disabled>
+                            <small class="form-text text-muted">Никнейм нельзя изменить</small>
+                        </div>
+                        
+                        <!-- Email (readonly) -->
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Email</strong></label>
+                            <input type="text" class="form-control bg-light" value="{{ user.email }}" readonly disabled>
+                            <small class="form-text text-muted">Email нельзя изменить</small>
+                        </div>
+                        
+                        <!-- Телефон (readonly) -->
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Телефон</strong></label>
+                            <input type="text" class="form-control bg-light" value="{{ user.profile.phone|default:'Не указан' }}" readonly disabled>
+                            <small class="form-text text-muted">Телефон нельзя изменить</small>
+                        </div>
                         
                         <hr class="my-4">
                         
-                        <h5 class="mb-3">Дополнительная информация</h5>
+                        <h5 class="mb-3">Изменяемая информация</h5>
                         
                         <!-- Текущий аватар -->
                         {% if user.profile.avatar %}
@@ -36,30 +61,40 @@
                         <div class="mb-3">
                             <label for="id_avatar" class="form-label">Аватар</label>
                             {{ profile_form.avatar }}
-                            <small class="form-text text-muted">Загрузите ваше фото (необязательно). Рекомендуемый размер: 300x300px</small>
+                            {% if profile_form.avatar.errors %}
+                                <div class="text-danger small mt-1">{{ profile_form.avatar.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">Загрузите ваше фото (необязательно). Рекомендуемый размер: 300x300px. Максимум 2 МБ.</small>
                         </div>
                         
-                        <!-- Неизменяемый телефон -->
-                        <div class="mb-3">
-                            <label class="form-label">Телефон</label>
-                            <input type="text" class="form-control" value="{{ user.profile.phone|default:'Не указан' }}" readonly disabled>
-                            <small class="form-text text-muted">Телефон нельзя изменить</small>
-                        </div>
-                        
-                        <!-- Остальные поля профиля -->
+                        <!-- О себе -->
                         <div class="mb-3">
                             <label for="id_bio" class="form-label">О себе</label>
                             {{ profile_form.bio }}
+                            {% if profile_form.bio.errors %}
+                                <div class="text-danger small mt-1">{{ profile_form.bio.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">Расскажите о себе (до 500 символов)</small>
                         </div>
                         
+                        <!-- Telegram -->
                         <div class="mb-3">
                             <label for="id_telegram" class="form-label">Telegram</label>
                             {{ profile_form.telegram }}
+                            {% if profile_form.telegram.errors %}
+                                <div class="text-danger small mt-1">{{ profile_form.telegram.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">Ваш Telegram username (например, @username)</small>
                         </div>
                         
+                        <!-- Discord -->
                         <div class="mb-3">
                             <label for="id_discord" class="form-label">Discord</label>
                             {{ profile_form.discord }}
+                            {% if profile_form.discord.errors %}
+                                <div class="text-danger small mt-1">{{ profile_form.discord.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">Ваш Discord username (например, username#1234)</small>
                         </div>
                         
                         <div class="d-flex justify-content-between mt-4">

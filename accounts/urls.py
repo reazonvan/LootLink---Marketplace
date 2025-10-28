@@ -17,5 +17,9 @@ urlpatterns = [
     # Email верификация
     path('verify-email/<str:token>/', views.verify_email, name='verify_email'),
     path('resend-verification/', views.resend_verification_email, name='resend_verification'),
+    # AJAX endpoints для проверки уникальности
+    path('api/check-username/', views.check_username_available, name='check_username'),
+    path('api/check-email/', views.check_email_available, name='check_email'),
+    path('api/check-phone/', views.check_phone_available, name='check_phone'),
 ]
 

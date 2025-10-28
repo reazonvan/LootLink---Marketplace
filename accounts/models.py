@@ -132,6 +132,11 @@ class Profile(models.Model):
         blank=True,
         verbose_name='Дата верификации'
     )
+    is_moderator = models.BooleanField(
+        default=False,
+        verbose_name='Модератор',
+        help_text='Права модератора (просмотр жалоб, удаление контента)'
+    )
     
     created_at = models.DateTimeField(
         auto_now_add=True,

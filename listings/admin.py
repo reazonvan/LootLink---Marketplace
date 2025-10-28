@@ -1,19 +1,90 @@
 from django.contrib import admin
-from .models import Listing, Game, Favorite, Report
+from django.utils.html import format_html
+from .models import Listing, Game, Category, Favorite, Report
+
+
+class CategoryInline(admin.TabularInline):
+    """Inline редактор категорий внутри игры"""
+    model = Category
+    extra = 1
+    fields = ['name', 'slug', 'icon', 'order', 'is_active']
+    prepopulated_fields = {'slug': ('name',)}
 
 
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
-    list_display = ['name', 'slug', 'is_active']
-    list_filter = ['is_active']
-    search_fields = ['name']
+    list_display = ['name', 'slug', 'categories_count', 'listings_count', 'is_active', 'order']
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['name', 'description']
     prepopulated_fields = {'slug': ('name',)}
+    list_editable = ['is_active', 'order']
+    inlines = [CategoryInline]
+    
+    def categories_count(self, obj):
+        """Количество категорий"""
+        count = obj.categories.filter(is_active=True).count()
+        return format_html('<span style="background: #eff6ff; color: #2563eb; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{}</span>', count)
+    categories_count.short_description = 'Категорий'
+    
+    def listings_count(self, obj):
+        """Количество объявлений"""
+        count = obj.listings.filter(status='active').count()
+        if count > 0:
+            return format_html('<span style="background: #10b981; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{}</span>', count)
+        return format_html('<span style="color: #9ca3af;">{}</span>', count)
+    listings_count.short_description = 'Объявлений'
+    
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('name', 'slug', 'description', 'icon')
+        }),
+        ('Настройки', {
+            'fields': ('is_active', 'order')
+        }),
+    )
+
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'game', 'icon_display', 'listings_count', 'is_active', 'order']
+    list_filter = ['game', 'is_active', 'created_at']
+    search_fields = ['name', 'game__name', 'description']
+    prepopulated_fields = {'slug': ('name',)}
+    list_editable = ['is_active', 'order']
+    
+    def icon_display(self, obj):
+        """Отображение иконки"""
+        if obj.icon:
+            return format_html('<i class="bi {}"></i> {}', obj.icon, obj.icon)
+        return '-'
+    icon_display.short_description = 'Иконка'
+    
+    def listings_count(self, obj):
+        """Количество объявлений в категории"""
+        count = obj.listings.filter(status='active').count()
+        if count > 0:
+            return format_html('<span style="background: #10b981; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{}</span>', count)
+        return format_html('<span style="color: #9ca3af;">{}</span>', count)
+    listings_count.short_description = 'Объявлений'
+    
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('game', 'name', 'slug', 'description')
+        }),
+        ('Оформление', {
+            'fields': ('icon',),
+            'description': 'Используйте иконки Bootstrap Icons: https://icons.getbootstrap.com/'
+        }),
+        ('Настройки', {
+            'fields': ('is_active', 'order')
+        }),
+    )
 
 
 @admin.register(Listing)
 class ListingAdmin(admin.ModelAdmin):
-    list_display = ['title', 'game', 'seller', 'price', 'status', 'favorites_count', 'created_at']
-    list_filter = ['status', 'game', 'created_at']
+    list_display = ['title', 'game', 'category', 'seller', 'price', 'status', 'favorites_count', 'created_at']
+    list_filter = ['status', 'game', 'category', 'created_at']
     search_fields = ['title', 'description', 'seller__username']
     list_editable = ['status']
     readonly_fields = ['created_at', 'updated_at', 'favorites_count']
@@ -24,7 +95,7 @@ class ListingAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Основная информация', {
-            'fields': ('title', 'game', 'seller', 'description', 'price')
+            'fields': ('title', 'game', 'category', 'seller', 'description', 'price')
         }),
         ('Медиа', {
             'fields': ('image',)

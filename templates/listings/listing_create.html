@@ -25,6 +25,15 @@
                     </div>
                     
                     <div class="mb-4">
+                        <label for="{{ form.category.id_for_label }}" class="form-label fw-semibold">Категория</label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                        <div class="text-danger small mt-1">{{ form.category.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Выберите категорию товара (необязательно)</small>
+                    </div>
+                    
+                    <div class="mb-4">
                         <label for="{{ form.title.id_for_label }}" class="form-label fw-semibold">Название предмета *</label>
                         {{ form.title }}
                         {% if form.title.errors %}
@@ -83,4 +92,8 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% load static %}{% static 'js/category-selector.js' %}"></script>
 {% endblock %}

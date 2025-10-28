@@ -169,8 +169,8 @@
 
 /* ========== Hero секция - чистая и современная ========== */
 .hero-landing {
-    background: linear-gradient(180deg, var(--gray-50) 0%, white 100%) !important;
-    padding: 4rem 0 !important;
+    background: var(--gray-50) !important;
+    padding: 3rem 0 !important;
 }
 
 /* Hero иллюстрация - анимированные карточки */
@@ -332,8 +332,8 @@
 }
 
 .stat-value {
-    font-size: 2.5rem;
-    font-weight: 800;
+    font-size: 2rem;
+    font-weight: 700;
     color: var(--primary);
     line-height: 1;
 }
@@ -364,19 +364,19 @@
 }
 
 .feature-icon {
-    width: 64px !important;
-    height: 64px !important;
+    width: 52px !important;
+    height: 52px !important;
     background: var(--primary-light) !important;
     color: var(--primary) !important;
-    border-radius: var(--radius-lg) !important;
+    border-radius: var(--radius) !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1.5rem !important;
+    margin-bottom: 1.2rem !important;
 }
 
 .feature-icon i {
-    font-size: 2rem !important;
+    font-size: 1.5rem !important;
 }
 
 .feature-title {
@@ -419,8 +419,8 @@
 }
 
 .game-icon-placeholder {
-    width: 64px !important;
-    height: 64px !important;
+    width: 52px !important;
+    height: 52px !important;
     background: var(--primary-light) !important;
     color: var(--primary) !important;
     border-radius: var(--radius) !important;
@@ -746,7 +746,6 @@ section {
 
 /* ========== Адаптивность ========== */
 @media (max-width: 991px) {
-    /* Скрываем иллюстрацию на планшетах и мобильных */
     .hero-illustration {
         display: none;
     }
@@ -754,15 +753,71 @@ section {
 
 @media (max-width: 768px) {
     .hero-landing {
-        padding: 2rem 0 !important;
+        padding: 1.5rem 0 !important;
     }
     
     section {
-        padding: 2rem 0;
+        padding: 1.5rem 0;
     }
     
     .hero-stats {
-        padding: 1.5rem;
+        padding: 1.2rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+    }
+    
+    .feature-icon {
+        width: 44px !important;
+        height: 44px !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .feature-icon i {
+        font-size: 1.25rem !important;
+    }
+    
+    .feature-card {
+        padding: 1.2rem !important;
+    }
+    
+    .game-icon-placeholder {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    
+    .cta-section {
+        padding: 2.5rem 1.5rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar-brand {
+        font-size: 1.15rem !important;
+    }
+    
+    .logo-svg {
+        width: 26px !important;
+        height: 26px !important;
+    }
+    
+    .stat-value {
+        font-size: 1.3rem;
+    }
+    
+    .hero-center-badge {
+        width: 100px;
+        height: 100px;
+        padding: 1.2rem;
+    }
+    
+    .hero-center-badge i {
+        font-size: 2rem;
     }
 }
 

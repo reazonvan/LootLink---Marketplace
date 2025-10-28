@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Регистрация - LootLink{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/registration-validator.js' %}"></script>
+{% endblock %}
 
 {% block content %}
 <div class="container">

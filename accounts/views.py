@@ -46,6 +46,10 @@ def user_login(request):
                 # Перенаправление на страницу, с которой пришел пользователь
                 next_page = request.GET.get('next', 'listings:home')
                 return redirect(next_page)
+            else:
+                messages.error(request, 'Неверное имя пользователя или пароль.')
+        else:
+            messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
     else:
         form = CustomAuthenticationForm()
     
@@ -98,29 +102,30 @@ def profile(request, username):
 
 @login_required
 def profile_edit(request):
-    """Редактирование профиля."""
+    """
+    Редактирование профиля.
+    
+    ВАЖНО: Username, Email и Phone нельзя изменить.
+    Редактируется только дополнительная информация профиля.
+    """
     # Проверяем наличие профиля
     profile, created = Profile.objects.get_or_create(user=request.user)
     
     if request.method == 'POST':
-        user_form = UserUpdateForm(request.POST, instance=request.user)
         profile_form = ProfileUpdateForm(
             request.POST,
             request.FILES,
             instance=request.user.profile
         )
         
-        if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
+        if profile_form.is_valid():
             profile_form.save()
             messages.success(request, 'Профиль успешно обновлен!')
             return redirect('accounts:profile', username=request.user.username)
     else:
-        user_form = UserUpdateForm(instance=request.user)
         profile_form = ProfileUpdateForm(instance=request.user.profile)
     
     context = {
-        'user_form': user_form,
         'profile_form': profile_form,
     }
     
@@ -364,3 +369,77 @@ def password_reset_confirm(request):
     
     return render(request, 'accounts/password_reset_confirm.html', context)
 
+
+def check_username_available(request):
+    """AJAX endpoint для проверки доступности никнейма."""
+    from django.http import JsonResponse
+    
+    username = request.GET.get('username', '').strip()
+    
+    if not username:
+        return JsonResponse({'available': False, 'message': 'Введите имя пользователя'})
+    
+    if len(username) < 3:
+        return JsonResponse({'available': False, 'message': 'Минимум 3 символа'})
+    
+    if len(username) > 150:
+        return JsonResponse({'available': False, 'message': 'Максимум 150 символов'})
+    
+    # Проверяем что username содержит только допустимые символы
+    import re
+    if not re.match(r'^[\w.@+-]+$', username):
+        return JsonResponse({'available': False, 'message': 'Недопустимые символы. Разрешены: буквы, цифры, @/./+/-/_'})
+    
+    exists = CustomUser.objects.filter(username=username).exists()
+    
+    if exists:
+        return JsonResponse({'available': False, 'message': 'Этот никнейм уже занят'})
+    
+    return JsonResponse({'available': True, 'message': 'Никнейм доступен'})
+
+
+def check_email_available(request):
+    """AJAX endpoint для проверки доступности email."""
+    from django.http import JsonResponse
+    
+    email = request.GET.get('email', '').strip()
+    
+    if not email:
+        return JsonResponse({'available': False, 'message': 'Введите email'})
+    
+    # Простая валидация email
+    import re
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, email):
+        return JsonResponse({'available': False, 'message': 'Некорректный формат email'})
+    
+    exists = CustomUser.objects.filter(email=email).exists()
+    
+    if exists:
+        return JsonResponse({'available': False, 'message': 'Этот email уже зарегистрирован'})
+    
+    return JsonResponse({'available': True, 'message': 'Email доступен'})
+
+
+def check_phone_available(request):
+    """AJAX endpoint для проверки доступности телефона."""
+    from django.http import JsonResponse
+    
+    phone = request.GET.get('phone', '').strip()
+    
+    if not phone:
+        return JsonResponse({'available': False, 'message': 'Введите номер телефона'})
+    
+    # Проверка формата
+    import re
+    phone_digits = re.sub(r'\D', '', phone)
+    
+    if len(phone_digits) < 10 or len(phone_digits) > 11:
+        return JsonResponse({'available': False, 'message': 'Некорректный номер телефона'})
+    
+    exists = Profile.objects.filter(phone=phone).exists()
+    
+    if exists:
+        return JsonResponse({'available': False, 'message': 'Этот номер уже зарегистрирован'})
+    
+    return JsonResponse({'available': True, 'message': 'Номер доступен'})

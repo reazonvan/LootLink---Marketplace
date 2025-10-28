@@ -17,5 +17,8 @@ urlpatterns = [
     # Жалобы
     path('listing/<int:pk>/report/', views.report_listing, name='report_listing'),
     path('user/<str:username>/report/', views.report_user, name='report_user'),
+    
+    # API endpoints
+    path('api/categories/', views.get_categories_by_game, name='api_categories'),
 ]
 
