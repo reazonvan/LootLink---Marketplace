@@ -89,6 +89,14 @@ class ListingUpdateForm(forms.ModelForm):
         model = Listing
         fields = ['game', 'category', 'title', 'description', 'price', 'image', 'status']
         widgets = {
+            'game': forms.Select(attrs={
+                'class': 'form-select',
+                'id': 'id_game'
+            }),
+            'category': forms.Select(attrs={
+                'class': 'form-select',
+                'id': 'id_category'
+            }),
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -106,12 +114,44 @@ class ListingUpdateForm(forms.ModelForm):
             'status': forms.Select(attrs={'class': 'form-select'})
         }
         labels = {
+            'game': 'Игра',
+            'category': 'Категория',
             'title': 'Название предмета',
             'description': 'Описание',
             'price': 'Цена (₽)',
-            'image': 'Изображение (оставьте пустым, чтобы не менять)',
+            'image': 'Изображение (загрузить новое)',
             'status': 'Статус'
         }
+        help_texts = {
+            'image': 'Оставьте пустым, чтобы сохранить текущее изображение',
+            'category': 'Выберите категорию товара'
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Изображение необязательно при редактировании
+        self.fields['image'].required = False
+        self.fields['image'].widget.is_required = False
+        # Категория необязательна
+        self.fields['category'].required = False
+        
+        # Если редактируем объявление и есть игра, показываем категории этой игры
+        if self.instance.pk and self.instance.game:
+            self.fields['category'].queryset = Category.objects.filter(
+                game=self.instance.game,
+                is_active=True
+            )
+        elif 'game' in self.data:
+            try:
+                game_id = int(self.data.get('game'))
+                self.fields['category'].queryset = Category.objects.filter(
+                    game_id=game_id,
+                    is_active=True
+                )
+            except (ValueError, TypeError):
+                self.fields['category'].queryset = Category.objects.none()
+        else:
+            self.fields['category'].queryset = Category.objects.none()
 
 
 class ListingFilterForm(forms.Form):
