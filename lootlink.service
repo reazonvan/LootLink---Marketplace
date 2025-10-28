@@ -1,0 +1,17 @@
+[Unit]
+Description=LootLink Gunicorn Daemon
+After=network.target postgresql.service redis.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/lootlink
+Environment="PATH=/opt/lootlink/venv/bin"
+EnvironmentFile=/opt/lootlink/.env
+ExecStart=/opt/lootlink/venv/bin/gunicorn --workers 5 --bind unix:/opt/lootlink/lootlink.sock --timeout 60 --access-logfile /var/log/lootlink/gunicorn-access.log --error-logfile /var/log/lootlink/gunicorn-error.log --log-level info config.wsgi:application
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
