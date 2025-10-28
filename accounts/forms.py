@@ -1,0 +1,325 @@
+from django import forms
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from .models import CustomUser, Profile, PasswordResetCode
+
+
+class CustomUserCreationForm(UserCreationForm):
+    """
+    Форма регистрации нового пользователя.
+    """
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Email'
+        })
+    )
+    username = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Имя пользователя'
+        })
+    )
+    phone = forms.CharField(
+        required=True,
+        max_length=20,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '+7 (999) 123-45-67'
+        }),
+        label='Телефон',
+        help_text='Введите номер телефона. Он будет неизменным.'
+    )
+    password1 = forms.CharField(
+        label='Пароль',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Пароль'
+        })
+    )
+    password2 = forms.CharField(
+        label='Подтверждение пароля',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Повторите пароль'
+        })
+    )
+    
+    class Meta:
+        model = CustomUser
+        fields = ('username', 'email', 'phone', 'password1', 'password2')
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if CustomUser.objects.filter(email=email).exists():
+            raise forms.ValidationError('Пользователь с таким email уже существует.')
+        return email
+    
+    def clean_phone(self):
+        """Валидация номера телефона с проверкой формата."""
+        import re
+        phone = self.cleaned_data.get('phone')
+        
+        if not phone:
+            raise forms.ValidationError('Номер телефона обязателен для заполнения.')
+        
+        # Удаляем все символы кроме цифр для проверки
+        phone_digits = re.sub(r'\D', '', phone)
+        
+        # Проверка длины (10-11 цифр для российских номеров)
+        if len(phone_digits) < 10 or len(phone_digits) > 11:
+            raise forms.ValidationError(
+                'Некорректный номер телефона. Введите номер в формате: +7 (999) 123-45-67'
+            )
+        
+        # Проверка что номер начинается с 7 или 8 (для России)
+        if len(phone_digits) == 11 and phone_digits[0] not in ['7', '8']:
+            raise forms.ValidationError(
+                'Номер должен начинаться с 7 или 8'
+            )
+        
+        # Проверка на уникальность
+        if Profile.objects.filter(phone=phone).exists():
+            raise forms.ValidationError('Пользователь с таким номером телефона уже существует.')
+        
+        return phone
+    
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        if commit:
+            # Обновляем профиль пользователя с номером телефона
+            user.profile.phone = self.cleaned_data.get('phone')
+            user.profile.save()
+            
+            # Создаем токен верификации email
+            from .models import EmailVerification
+            verification = EmailVerification.create_for_user(user)
+            
+            # Отправляем письмо с подтверждением
+            from django.core.mail import send_mail
+            from django.conf import settings
+            from django.urls import reverse
+            
+            # Формируем ссылку верификации
+            domain = settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else 'localhost:8000'
+            protocol = 'https' if not settings.DEBUG else 'http'
+            verification_url = f"{protocol}://{domain}{reverse('accounts:verify_email', kwargs={'token': verification.token})}"
+            
+            subject = 'Подтвердите ваш email - LootLink'
+            message = f"""
+Здравствуйте, {user.username}!
+
+Спасибо за регистрацию на LootLink!
+
+Для завершения регистрации подтвердите ваш email адрес, перейдя по ссылке:
+
+{verification_url}
+
+Ссылка действительна в течение 24 часов.
+
+Если вы не регистрировались на LootLink, проигнорируйте это письмо.
+
+С уважением,
+Команда LootLink
+"""
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False
+                )
+            except Exception as e:
+                # Логируем ошибку но не ломаем регистрацию
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f'Ошибка отправки email верификации: {e}')
+        
+        return user
+
+
+class CustomAuthenticationForm(AuthenticationForm):
+    """
+    Форма входа в систему.
+    """
+    username = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Имя пользователя'
+        })
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Пароль'
+        })
+    )
+
+
+class ProfileUpdateForm(forms.ModelForm):
+    """
+    Форма редактирования профиля пользователя.
+    ВАЖНО: Телефон можно указать только один раз!
+    """
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Если телефон уже указан - запрещаем его изменение
+        if self.instance and self.instance.phone:
+            self.fields['phone'].disabled = True
+            self.fields['phone'].widget.attrs['readonly'] = 'readonly'
+            self.fields['phone'].help_text = 'Телефон нельзя изменить после первого указания'
+    
+    class Meta:
+        model = Profile
+        fields = ['avatar', 'bio', 'phone', 'telegram', 'discord']
+        widgets = {
+            'bio': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Расскажите о себе...'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '+7 (999) 123-45-67'
+            }),
+            'telegram': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '@username'
+            }),
+            'discord': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'username#1234'
+            }),
+            'avatar': forms.FileInput(attrs={
+                'class': 'form-control'
+            })
+        }
+        help_texts = {
+            'phone': 'Телефон можно указать один раз. После этого его нельзя будет изменить.',
+        }
+
+
+class UserUpdateForm(forms.ModelForm):
+    """
+    Форма обновления базовой информации пользователя.
+    Поля username и email недоступны для изменения (только для чтения).
+    """
+    username = forms.CharField(
+        disabled=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'readonly': 'readonly'
+        }),
+        help_text='Имя пользователя нельзя изменить'
+    )
+    email = forms.EmailField(
+        disabled=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'readonly': 'readonly'
+        }),
+        help_text='Email нельзя изменить'
+    )
+    
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'email', 'first_name', 'last_name']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+
+class PasswordResetRequestForm(forms.Form):
+    """
+    Форма запроса сброса пароля.
+    Пользователь вводит email для получения кода.
+    """
+    email = forms.EmailField(
+        label='Email',
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Введите ваш email'
+        }),
+        help_text='На этот email будет отправлен код подтверждения'
+    )
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not CustomUser.objects.filter(email=email).exists():
+            raise forms.ValidationError('Пользователь с таким email не найден.')
+        return email
+
+
+class PasswordResetConfirmForm(forms.Form):
+    """
+    Форма подтверждения сброса пароля с кодом.
+    """
+    code = forms.CharField(
+        label='Код подтверждения',
+        max_length=6,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '123456',
+            'maxlength': '6'
+        }),
+        help_text='Введите 6-значный код из письма'
+    )
+    new_password1 = forms.CharField(
+        label='Новый пароль',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Новый пароль'
+        })
+    )
+    new_password2 = forms.CharField(
+        label='Подтверждение пароля',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Повторите пароль'
+        })
+    )
+    
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+    
+    def clean_code(self):
+        code = self.cleaned_data.get('code')
+        if not self.user:
+            raise forms.ValidationError('Ошибка валидации.')
+        
+        try:
+            reset_code = PasswordResetCode.objects.get(
+                user=self.user,
+                code=code,
+                is_used=False
+            )
+            if not reset_code.is_valid():
+                raise forms.ValidationError('Код истёк или уже использован.')
+            self.reset_code = reset_code
+        except PasswordResetCode.DoesNotExist:
+            raise forms.ValidationError('Неверный код.')
+        
+        return code
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get('new_password1')
+        password2 = cleaned_data.get('new_password2')
+        
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError('Пароли не совпадают.')
+        
+        return cleaned_data
+    
+    def save(self):
+        """Сохраняет новый пароль и помечает код как использованный."""
+        password = self.cleaned_data.get('new_password1')
+        self.user.set_password(password)
+        self.user.save()
+        self.reset_code.mark_as_used()
+        return self.user
+
