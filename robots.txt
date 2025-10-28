@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /accounts/login/
+Disallow: /accounts/register/
+Disallow: /accounts/profile-edit/
+Disallow: /chat/
+Disallow: /transactions/
+
+# Sitemap
+Sitemap: https://lootlink.com/sitemap.xml
+
