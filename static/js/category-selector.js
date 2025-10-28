@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         
         // AJAX запрос для получения категорий
-        fetch(`/listing/api/categories/?game=${gameId}`, {
+        fetch(`/api/categories/?game=${gameId}`, {
             method: 'GET',
             headers: {
                 'X-CSRFToken': csrfToken,
