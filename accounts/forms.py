@@ -92,8 +92,11 @@ class CustomUserCreationForm(UserCreationForm):
             user.profile.save()
             
             # Создаем токен верификации email
-            from .models import EmailVerification
+            from .models import EmailVerification, PasswordResetCode
             verification = EmailVerification.create_for_user(user)
+            
+            # Создаем код для SMS верификации (6-значный)
+            sms_code = PasswordResetCode.create_code(user)
             
             # Отправляем письмо с подтверждением
             from django.core.mail import send_mail
@@ -106,7 +109,7 @@ class CustomUserCreationForm(UserCreationForm):
             verification_url = f"{protocol}://{domain}{reverse('accounts:verify_email', kwargs={'token': verification.token})}"
             
             subject = 'Подтвердите ваш email - LootLink'
-            message = f"""
+            email_message = f"""
 Здравствуйте, {user.username}!
 
 Спасибо за регистрацию на LootLink!
@@ -115,17 +118,21 @@ class CustomUserCreationForm(UserCreationForm):
 
 {verification_url}
 
-Ссылка действительна в течение 24 часов.
+Или введите код подтверждения: {sms_code.code}
+
+Ссылка и код действительны в течение 24 часов.
 
 Если вы не регистрировались на LootLink, проигнорируйте это письмо.
 
 С уважением,
 Команда LootLink
 """
+            
+            # Отправляем email
             try:
                 send_mail(
                     subject,
-                    message,
+                    email_message,
                     settings.DEFAULT_FROM_EMAIL,
                     [user.email],
                     fail_silently=False
@@ -135,6 +142,17 @@ class CustomUserCreationForm(UserCreationForm):
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.error(f'Ошибка отправки email верификации: {e}')
+            
+            # Отправляем СМС с кодом подтверждения
+            if user.profile.phone:
+                try:
+                    from core.sms_service import send_sms
+                    sms_message = f'LootLink: Добро пожаловать, {user.username}! Ваш код подтверждения: {sms_code.code}'
+                    send_sms(user.profile.phone, sms_message)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f'Ошибка отправки SMS: {e}')
         
         return user
 
