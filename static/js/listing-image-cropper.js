@@ -222,25 +222,42 @@ class ListingImageCropper {
                 image.onload = () => {
                     this.cropper = new Cropper(image, {
                         aspectRatio: 16 / 9,
-                        viewMode: 2,
-                        dragMode: 'move',
-                        autoCropArea: 0.9,
+                        viewMode: 1,
+                        dragMode: 'crop',
+                        autoCropArea: 0.8,
                         restore: false,
                         guides: true,
                         center: true,
                         highlight: true,
+                        background: true,
                         cropBoxMovable: true,
                         cropBoxResizable: true,
                         toggleDragModeOnDblclick: false,
                         responsive: true,
                         checkOrientation: true,
                         preview: '#listingPreviewRect',
-                        minContainerWidth: 300,
-                        minContainerHeight: 300,
+                        minCropBoxWidth: 100,
+                        minCropBoxHeight: 100,
                         ready: function() {
                             console.log('Listing Cropper готов');
+                            // Принудительно включаем crop mode
+                            this.cropper.crop();
+                        },
+                        cropstart: function(e) {
+                            console.log('Crop start:', e.detail.action);
+                        },
+                        cropmove: function(e) {
+                            console.log('Crop move');
                         }
                     });
+                    
+                    // Дополнительно включаем crop mode через 100ms
+                    setTimeout(() => {
+                        if (this.cropper) {
+                            this.cropper.crop();
+                            console.log('Crop mode активирован');
+                        }
+                    }, 100);
                 };
                 
                 // Если изображение уже загружено
