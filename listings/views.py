@@ -6,15 +6,20 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.core.mail import mail_admins
-from django.views.decorators.cache import cache_page
-from .models import Listing, Game, Favorite, Report
+from django.views.decorators.http import require_http_methods
+from .models import Listing, Game, Category, Favorite, Report
 from .forms import ListingCreateForm, ListingUpdateForm, ListingFilterForm
 from .forms_reports import ReportForm
 
 
-@cache_page(60 * 5)  # Кеш на 5 минут
 def landing_page(request):
-    """Главная страница (Landing Page)."""
+    """
+    Главная страница (Landing Page).
+    
+    ВАЖНО: Эта страница НЕ должна кэшироваться полностью, так как содержит
+    персонализированный контент (информацию о пользователе в навигации).
+    Кэшируется только статистика.
+    """
     from accounts.models import CustomUser
     from transactions.models import PurchaseRequest
     from django.core.cache import cache
@@ -241,8 +246,16 @@ def game_listings(request, slug):
     listings = Listing.objects.filter(
         game=game,
         status='active'
-    ).select_related('seller', 'seller__profile')\
+    ).select_related('seller', 'seller__profile', 'category')\
      .order_by('-created_at')
+    
+    # Получаем категории для фильтрации
+    categories = game.categories.filter(is_active=True).order_by('order', 'name')
+    
+    # Фильтр по категории
+    category_slug = request.GET.get('category')
+    if category_slug:
+        listings = listings.filter(category__slug=category_slug)
     
     # Пагинация
     paginator = Paginator(listings, 12)
@@ -251,10 +264,32 @@ def game_listings(request, slug):
     
     context = {
         'game': game,
+        'categories': categories,
         'page_obj': page_obj,
     }
     
     return render(request, 'listings/game_listings.html', context)
+
+
+@require_http_methods(["GET"])
+def get_categories_by_game(request):
+    """API endpoint для получения категорий по игре (для AJAX)"""
+    game_id = request.GET.get('game')
+    
+    if not game_id:
+        return JsonResponse({'error': 'game_id required'}, status=400)
+    
+    try:
+        categories = Category.objects.filter(
+            game_id=game_id,
+            is_active=True
+        ).order_by('order', 'name').values('id', 'name', 'icon')
+        
+        return JsonResponse({
+            'categories': list(categories)
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 @login_required
