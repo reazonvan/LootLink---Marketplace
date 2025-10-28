@@ -1,0 +1,133 @@
+/**
+ * Стили для Image Cropper
+ * Исправляет проблемы с размерами и адаптивностью
+ */
+
+/* Модальное окно для cropper */
+#listingCropModal .modal-body,
+#avatarCropModal .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Контейнер для изображения */
+.crop-container {
+    max-height: 500px;
+    overflow: hidden;
+    background: #f8f9fa;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.crop-container img {
+    max-width: 100%;
+    max-height: 500px;
+    display: block;
+}
+
+/* Предпросмотр для аватара (круглый) */
+#avatarPreviewCircle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #dee2e6;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#avatarPreviewCircle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Предпросмотр для объявления (прямоугольный) */
+#listingPreviewRect {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#listingPreviewRect img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Кнопки управления */
+.aspect-ratio-btn {
+    margin-bottom: 5px !important;
+}
+
+.aspect-ratio-btn.active {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    #listingCropModal .modal-dialog,
+    #avatarCropModal .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+    
+    .crop-container {
+        max-height: 300px;
+    }
+    
+    .crop-container img {
+        max-height: 300px;
+    }
+    
+    #listingPreviewRect {
+        height: 150px;
+    }
+    
+    #avatarPreviewCircle {
+        width: 120px;
+        height: 120px;
+    }
+}
+
+/* Исправление для cropper.js */
+.cropper-container {
+    direction: ltr;
+    font-size: 0;
+    line-height: 0;
+    position: relative;
+    touch-action: none;
+    user-select: none;
+}
+
+.cropper-container img {
+    display: block;
+    height: 100%;
+    image-orientation: 0deg;
+    max-height: none !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
+    width: 100%;
+}
+
+/* Предпросмотр пустого состояния */
+#avatarPreviewCircle:empty::before,
+#listingPreviewRect:empty::before {
+    content: 'Предпросмотр';
+    color: #6c757d;
+    font-size: 14px;
+}
+

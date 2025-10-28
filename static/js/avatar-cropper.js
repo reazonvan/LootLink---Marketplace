@@ -150,29 +150,55 @@ class AvatarCropper {
     }
     
     showCropModal(imageUrl) {
-        const modal = new bootstrap.Modal(document.getElementById('avatarCropModal'));
+        const modalElement = document.getElementById('avatarCropModal');
+        const modal = new bootstrap.Modal(modalElement);
         const image = document.getElementById('avatarCropImage');
         
+        // Уничтожаем старый cropper если есть
+        if (this.cropper) {
+            this.cropper.destroy();
+            this.cropper = null;
+        }
+        
+        // Устанавливаем изображение
         image.src = imageUrl;
+        
+        // Показываем модальное окно
         modal.show();
         
-        // Инициализируем cropper после показа модального окна
-        setTimeout(() => {
-            this.cropper = new Cropper(image, {
-                aspectRatio: 1, // Квадрат для круглого аватара
-                viewMode: 1,
-                dragMode: 'move',
-                autoCropArea: 1,
-                restore: false,
-                guides: true,
-                center: true,
-                highlight: false,
-                cropBoxMovable: true,
-                cropBoxResizable: true,
-                toggleDragModeOnDblclick: false,
-                preview: '#avatarPreviewCircle'
-            });
-        }, 300);
+        // Инициализируем cropper после полной загрузки изображения
+        modalElement.addEventListener('shown.bs.modal', () => {
+            if (!this.cropper) {
+                image.onload = () => {
+                    this.cropper = new Cropper(image, {
+                        aspectRatio: 1, // Квадрат для круглого аватара
+                        viewMode: 2,
+                        dragMode: 'move',
+                        autoCropArea: 0.9,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: true,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                        toggleDragModeOnDblclick: false,
+                        responsive: true,
+                        checkOrientation: true,
+                        preview: '#avatarPreviewCircle',
+                        minContainerWidth: 200,
+                        minContainerHeight: 200,
+                        ready: function() {
+                            console.log('Avatar Cropper готов');
+                        }
+                    });
+                };
+                
+                // Если изображение уже загружено
+                if (image.complete) {
+                    image.onload();
+                }
+            }
+        }, {once: true});
     }
     
     cropImage() {

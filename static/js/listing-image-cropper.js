@@ -200,29 +200,55 @@ class ListingImageCropper {
     }
     
     showCropModal(imageUrl) {
-        const modal = new bootstrap.Modal(document.getElementById('listingCropModal'));
+        const modalElement = document.getElementById('listingCropModal');
+        const modal = new bootstrap.Modal(modalElement);
         const image = document.getElementById('listingCropImage');
         
+        // Уничтожаем старый cropper если есть
+        if (this.cropper) {
+            this.cropper.destroy();
+            this.cropper = null;
+        }
+        
+        // Устанавливаем изображение
         image.src = imageUrl;
+        
+        // Показываем модальное окно
         modal.show();
         
-        // Инициализируем cropper после показа модального окна
-        setTimeout(() => {
-            this.cropper = new Cropper(image, {
-                aspectRatio: 16 / 9, // По умолчанию 16:9
-                viewMode: 1,
-                dragMode: 'move',
-                autoCropArea: 1,
-                restore: false,
-                guides: true,
-                center: true,
-                highlight: false,
-                cropBoxMovable: true,
-                cropBoxResizable: true,
-                toggleDragModeOnDblclick: false,
-                preview: '#listingPreviewRect'
-            });
-        }, 300);
+        // Инициализируем cropper после полной загрузки изображения
+        modalElement.addEventListener('shown.bs.modal', () => {
+            if (!this.cropper) {
+                image.onload = () => {
+                    this.cropper = new Cropper(image, {
+                        aspectRatio: 16 / 9,
+                        viewMode: 2,
+                        dragMode: 'move',
+                        autoCropArea: 0.9,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: true,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                        toggleDragModeOnDblclick: false,
+                        responsive: true,
+                        checkOrientation: true,
+                        preview: '#listingPreviewRect',
+                        minContainerWidth: 300,
+                        minContainerHeight: 300,
+                        ready: function() {
+                            console.log('Listing Cropper готов');
+                        }
+                    });
+                };
+                
+                // Если изображение уже загружено
+                if (image.complete) {
+                    image.onload();
+                }
+            }
+        }, {once: true});
     }
     
     cropImage() {
