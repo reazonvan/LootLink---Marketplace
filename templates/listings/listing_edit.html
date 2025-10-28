@@ -78,6 +78,9 @@
                         {% if form.image.help_text %}
                         <small class="form-text text-muted d-block mt-1">{{ form.image.help_text }}</small>
                         {% endif %}
+                        <small class="form-text text-muted d-block mt-1">После выбора нового изображения вы сможете его обрезать.</small>
+                        <!-- Контейнер для предпросмотра -->
+                        <div id="listingImagePreviewContainer"></div>
                     </div>
                     
                     <div class="mb-4">
@@ -111,6 +114,8 @@
 {% endblock %}
 
 {% block extra_js %}
+{% load static %}
+<script src="{% static 'js/listing-image-cropper.js' %}"></script>
 <script>
 // Динамическая загрузка категорий при выборе игры
 document.addEventListener('DOMContentLoaded', function() {
