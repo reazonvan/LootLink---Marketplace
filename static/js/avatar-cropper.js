@@ -55,10 +55,10 @@ class AvatarCropper {
                                         </div>
                                         <div class="mt-2">
                                             <button type="button" class="btn btn-sm btn-outline-secondary" id="avatarZoomIn">
-                                                <i class="bi bi-zoom-in"></i>
+                                                <i class="bi bi-zoom-in"></i> +
                                             </button>
                                             <button type="button" class="btn btn-sm btn-outline-secondary" id="avatarZoomOut">
-                                                <i class="bi bi-zoom-out"></i>
+                                                <i class="bi bi-zoom-out"></i> -
                                             </button>
                                             <button type="button" class="btn btn-sm btn-outline-secondary" id="avatarReset">
                                                 <i class="bi bi-arrow-clockwise"></i> Сброс
@@ -172,9 +172,9 @@ class AvatarCropper {
                 image.onload = () => {
                     this.cropper = new Cropper(image, {
                         aspectRatio: 1, // Квадрат для круглого аватара
-                        viewMode: 2, // Изображение заполняет canvas, canvas меньше контейнера
+                        viewMode: 1, // Crop box не может выходить за пределы canvas
                         dragMode: 'move',
-                        autoCropArea: 1, // 100% - используем всю доступную область
+                        autoCropArea: 0.9, // 90% области - оптимально для лица
                         restore: false,
                         guides: true,
                         center: true,
@@ -186,21 +186,40 @@ class AvatarCropper {
                         responsive: true,
                         checkOrientation: true,
                         preview: '#avatarPreviewCircle',
-                        minCropBoxWidth: 50,
-                        minCropBoxHeight: 50,
+                        minCropBoxWidth: 100,
+                        minCropBoxHeight: 100,
                         initialAspectRatio: 1,
                         zoomOnWheel: true,
                         zoomOnTouch: true,
                         ready: function() {
                             console.log('Avatar Cropper готов');
-                            // Принудительно включаем crop mode
+                            // Принудительно включаем crop mode и центрируем
                             this.cropper.crop();
+                            
+                            // ФИКС: Центрируем crop box
+                            const containerData = this.cropper.getContainerData();
+                            const imageData = this.cropper.getImageData();
+                            const cropBoxSize = Math.min(containerData.width, containerData.height) * 0.8;
+                            
+                            this.cropper.setCropBoxData({
+                                left: (containerData.width - cropBoxSize) / 2,
+                                top: (containerData.height - cropBoxSize) / 2,
+                                width: cropBoxSize,
+                                height: cropBoxSize
+                            });
+                            
+                            console.log('Crop box центрирован');
                         },
                         cropstart: function(e) {
                             console.log('Crop start:', e.detail.action);
                         },
                         cropmove: function(e) {
                             console.log('Crop move');
+                            // ФИКС: Принудительно обновляем preview при каждом движении
+                            const previewElement = document.getElementById('avatarPreviewCircle');
+                            if (previewElement) {
+                                previewElement.style.display = 'block';
+                            }
                         }
                     });
                     
