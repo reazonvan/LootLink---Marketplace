@@ -223,8 +223,8 @@ class ListingImageCropper {
                     this.cropper = new Cropper(image, {
                         aspectRatio: 16 / 9,
                         viewMode: 1,
-                        dragMode: 'crop',
-                        autoCropArea: 0.8,
+                        dragMode: 'move',
+                        autoCropArea: 0.95, // 95% для объявлений - показываем больше
                         restore: false,
                         guides: true,
                         center: true,
@@ -237,17 +237,38 @@ class ListingImageCropper {
                         checkOrientation: true,
                         preview: '#listingPreviewRect',
                         minCropBoxWidth: 100,
-                        minCropBoxHeight: 100,
+                        minCropBoxHeight: 75,
+                        zoomOnWheel: true,
+                        zoomOnTouch: true,
                         ready: function() {
                             console.log('Listing Cropper готов');
-                            // Принудительно включаем crop mode
+                            // Принудительно включаем crop mode и центрируем
                             this.cropper.crop();
+                            
+                            // ФИКС: Центрируем crop box для объявлений
+                            const containerData = this.cropper.getContainerData();
+                            const cropBoxWidth = containerData.width * 0.9;
+                            const cropBoxHeight = cropBoxWidth * (9 / 16); // 16:9 ratio
+                            
+                            this.cropper.setCropBoxData({
+                                left: (containerData.width - cropBoxWidth) / 2,
+                                top: (containerData.height - cropBoxHeight) / 2,
+                                width: cropBoxWidth,
+                                height: cropBoxHeight
+                            });
+                            
+                            console.log('Listing crop box центрирован');
                         },
                         cropstart: function(e) {
                             console.log('Crop start:', e.detail.action);
                         },
                         cropmove: function(e) {
                             console.log('Crop move');
+                            // ФИКС: Принудительно обновляем preview
+                            const previewElement = document.getElementById('listingPreviewRect');
+                            if (previewElement) {
+                                previewElement.style.display = 'block';
+                            }
                         }
                     });
                     
