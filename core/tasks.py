@@ -105,18 +105,25 @@ def update_user_ratings():
     """
     Периодическая задача для обновления рейтингов всех пользователей.
     Запускается раз в час для поддержания актуальности рейтингов.
+    
+    ФИКС: Используем iterator() для экономии памяти при большом количестве пользователей.
     """
     from accounts.models import Profile
     
-    profiles = Profile.objects.all()
+    # ФИКС: iterator() загружает по 1000 объектов за раз вместо всех сразу
+    profiles = Profile.objects.all().iterator(chunk_size=100)
     updated_count = 0
+    errors_count = 0
     
     for profile in profiles:
         try:
             profile.update_rating()
             updated_count += 1
         except Exception as e:
-            print(f'Ошибка обновления рейтинга для {profile.user.username}: {e}')
+            errors_count += 1
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Ошибка обновления рейтинга для {profile.user.username}: {e}')
     
-    return f'Обновлено рейтингов: {updated_count}'
+    return f'Обновлено рейтингов: {updated_count}, ошибок: {errors_count}'
 
