@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Каталог игр - LootLink{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="page-header mb-5">
+        <h1 class="display-4 fw-bold mb-2">Каталог игр</h1>
+        <p class="lead text-muted">Выберите игру и категорию товара</p>
+    </div>
+
+    <!-- Games List -->
+    <div class="games-catalog">
+        {% for game in games %}
+        <div class="game-card mb-4">
+            <div class="game-header">
+                <h2 class="game-title">
+                    <i class="bi bi-controller"></i>
+                    {{ game.name }}
+                </h2>
+                {% if game.description %}
+                <p class="game-description text-muted">{{ game.description }}</p>
+                {% endif %}
+            </div>
+            
+            {% if game.categories.all %}
+            <div class="categories-grid">
+                {% for category in game.categories.all %}
+                <a href="{% url 'listings:category_listings' game.slug category.slug %}" class="category-link">
+                    <i class="{{ category.icon }}"></i>
+                    <span>{{ category.name }}</span>
+                    {% if category.count %}
+                    <span class="badge bg-primary">{{ category.count }}</span>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">Категории пока не добавлены</p>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="empty-state text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <h4 class="mt-3">Игры пока не добавлены</h4>
+            <p class="text-muted">Администратор добавит игры через админ-панель</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.games-catalog {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.game-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: box-shadow 0.3s;
+}
+
+.game-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.game-header {
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 1rem;
+}
+
+.game-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.game-title i {
+    color: #3b82f6;
+    margin-right: 0.5rem;
+}
+
+.game-description {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.95rem;
+}
+
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.category-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1rem;
+    background: #f8f9fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #1e293b;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.category-link:hover {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.category-link i {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.category-link .badge {
+    margin-left: auto;
+    font-size: 0.75rem;
+}
+
+.empty-state {
+    background: white;
+    border-radius: 12px;
+    padding: 3rem;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .game-card {
+        padding: 1.5rem;
+    }
+    
+    .game-title {
+        font-size: 1.5rem;
+    }
+    
+    .categories-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
