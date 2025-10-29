@@ -79,6 +79,31 @@ class ListingCreateForm(forms.ModelForm):
                 self.fields['category'].queryset = Category.objects.none()
         else:
             self.fields['category'].queryset = Category.objects.none()
+    
+    def clean_title(self):
+        """Валидация названия объявления."""
+        title = self.cleaned_data.get('title')
+        if len(title) < 5:
+            raise forms.ValidationError('Название должно содержать минимум 5 символов.')
+        if len(title) > 200:
+            raise forms.ValidationError('Название слишком длинное (максимум 200 символов).')
+        return title
+    
+    def clean_description(self):
+        """Валидация описания объявления."""
+        description = self.cleaned_data.get('description')
+        if len(description) < 20:
+            raise forms.ValidationError('Описание должно содержать минимум 20 символов для полной информации о предмете.')
+        return description
+    
+    def clean_price(self):
+        """Валидация цены."""
+        price = self.cleaned_data.get('price')
+        if price is None or price <= 0:
+            raise forms.ValidationError('Цена должна быть больше 0.')
+        if price > 10000000:  # 10 миллионов максимум
+            raise forms.ValidationError('Цена не может превышать 10 000 000 ₽.')
+        return price
 
 
 class ListingUpdateForm(forms.ModelForm):
@@ -152,6 +177,31 @@ class ListingUpdateForm(forms.ModelForm):
                 self.fields['category'].queryset = Category.objects.none()
         else:
             self.fields['category'].queryset = Category.objects.none()
+    
+    def clean_title(self):
+        """Валидация названия объявления."""
+        title = self.cleaned_data.get('title')
+        if len(title) < 5:
+            raise forms.ValidationError('Название должно содержать минимум 5 символов.')
+        if len(title) > 200:
+            raise forms.ValidationError('Название слишком длинное (максимум 200 символов).')
+        return title
+    
+    def clean_description(self):
+        """Валидация описания объявления."""
+        description = self.cleaned_data.get('description')
+        if len(description) < 20:
+            raise forms.ValidationError('Описание должно содержать минимум 20 символов для полной информации о предмете.')
+        return description
+    
+    def clean_price(self):
+        """Валидация цены."""
+        price = self.cleaned_data.get('price')
+        if price is None or price <= 0:
+            raise forms.ValidationError('Цена должна быть больше 0.')
+        if price > 10000000:  # 10 миллионов максимум
+            raise forms.ValidationError('Цена не может превышать 10 000 000 ₽.')
+        return price
 
 
 class ListingFilterForm(forms.Form):

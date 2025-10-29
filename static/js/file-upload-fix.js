@@ -3,6 +3,15 @@
  * Создаём кастомную кнопку которая ТОЧНО работает
  */
 
+/**
+ * Экранирование HTML для защиты от XSS
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 File upload fix загружен');
     
@@ -82,12 +91,16 @@ document.addEventListener('DOMContentLoaded', function() {
             reader.onload = function(e) {
                 console.log('🖼️ Показываем превью');
                 
+                // ЗАЩИТА ОТ XSS: экранируем имя файла
+                const safeFileName = escapeHtml(file.name);
+                const fileSizeKB = (file.size / 1024).toFixed(2);
+                
                 previewDiv.innerHTML = `
                     <div class="preview-container">
                         <img src="${e.target.result}" class="preview-image" alt="Preview">
                         <div class="preview-info">
-                            <p class="mb-1"><strong>${file.name}</strong></p>
-                            <p class="text-muted small mb-2">${(file.size / 1024).toFixed(2)} КБ</p>
+                            <p class="mb-1"><strong>${safeFileName}</strong></p>
+                            <p class="text-muted small mb-2">${fileSizeKB} КБ</p>
                             <button type="button" class="btn btn-sm btn-danger remove-file-btn">
                                 <i class="bi bi-trash"></i> Удалить
                             </button>
