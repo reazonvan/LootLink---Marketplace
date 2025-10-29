@@ -78,7 +78,8 @@ def profile(request, username):
     """Просмотр профиля пользователя с оптимизацией запросов."""
     from django.core.paginator import Paginator
     
-    user = get_object_or_404(CustomUser, username=username)
+    # Case-insensitive поиск (argear = Argear)
+    user = get_object_or_404(CustomUser, username__iexact=username)
     
     # Исправление: проверка на существование profile (уже реализовано)
     # Используем get_or_create для атомарности
@@ -437,7 +438,8 @@ def check_username_available(request):
     if not re.match(r'^[\w.@+-]+$', username):
         return JsonResponse({'available': False, 'message': 'Недопустимые символы. Разрешены: буквы, цифры, @/./+/-/_'})
     
-    exists = CustomUser.objects.filter(username=username).exists()
+    # Case-insensitive проверка (argear = Argear)
+    exists = CustomUser.objects.filter(username__iexact=username).exists()
     
     if exists:
         return JsonResponse({'available': False, 'message': 'Этот никнейм уже занят'})
