@@ -124,7 +124,12 @@ function loadNewMessages(conversationId) {
             'X-CSRFToken': csrftoken
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.messages && data.messages.length > 0) {
             console.log(`📬 Получено новых сообщений: ${data.messages.length}`);
