@@ -61,6 +61,30 @@ def landing_page(request):
     return render(request, 'listings/landing_page.html', context)
 
 
+def games_catalog(request):
+    """Каталог игр с категориями (как на Funpay)."""
+    # Получаем все активные игры с их категориями
+    games = Game.objects.filter(is_active=True).prefetch_related(
+        'categories'
+    ).order_by('name')
+    
+    # Добавляем счетчик объявлений для каждой категории
+    from django.db.models import Count
+    for game in games:
+        for category in game.categories.all():
+            category.count = Listing.objects.filter(
+                game=game,
+                category=category,
+                status='active'
+            ).count()
+    
+    context = {
+        'games': games,
+    }
+    
+    return render(request, 'listings/games_catalog.html', context)
+
+
 def catalog(request):
     """Главная страница с каталогом объявлений."""
     listings = Listing.objects.filter(status='active').select_related('game', 'seller')
@@ -269,6 +293,32 @@ def listing_delete(request, pk):
     }
     
     return render(request, 'listings/listing_delete.html', context)
+
+
+def category_listings(request, game_slug, category_slug):
+    """Объявления конкретной категории игры."""
+    game = get_object_or_404(Game, slug=game_slug, is_active=True)
+    category = get_object_or_404(Category, slug=category_slug, game=game, is_active=True)
+    
+    # Получаем объявления этой категории
+    listings = Listing.objects.filter(
+        game=game,
+        category=category,
+        status='active'
+    ).select_related('seller', 'seller__profile').order_by('-created_at')
+    
+    # Пагинация
+    paginator = Paginator(listings, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'game': game,
+        'category': category,
+        'page_obj': page_obj,
+    }
+    
+    return render(request, 'listings/category_listings.html', context)
 
 
 def game_listings(request, slug):
