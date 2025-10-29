@@ -85,59 +85,7 @@ def games_catalog(request):
     return render(request, 'listings/games_catalog.html', context)
 
 
-def catalog(request):
-    """Главная страница с каталогом объявлений."""
-    listings = Listing.objects.filter(status='active').select_related('game', 'seller')
-    
-    # Фильтрация
-    filter_form = ListingFilterForm(request.GET)
-    
-    if filter_form.is_valid():
-        # Фильтр по игре
-        game = filter_form.cleaned_data.get('game')
-        if game:
-            listings = listings.filter(game=game)
-        
-        # Фильтр по цене
-        min_price = filter_form.cleaned_data.get('min_price')
-        if min_price:
-            listings = listings.filter(price__gte=min_price)
-        
-        max_price = filter_form.cleaned_data.get('max_price')
-        if max_price:
-            listings = listings.filter(price__lte=max_price)
-        
-        # Поиск по названию (используем PostgreSQL Full-Text Search)
-        search = filter_form.cleaned_data.get('search')
-        if search:
-            # Создаем поисковый запрос с русской морфологией
-            search_query = SearchQuery(search, config='russian')
-            
-            # Используем search_vector для Full-Text Search
-            listings = listings.annotate(
-                rank=SearchRank('search_vector', search_query)
-            ).filter(search_vector=search_query).order_by('-rank', '-created_at')
-        
-        # Сортировка
-        sort = filter_form.cleaned_data.get('sort')
-        if sort:
-            listings = listings.order_by(sort)
-    
-    # Пагинация
-    paginator = Paginator(listings, 12)  # 12 объявлений на страницу
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    # Список игр для быстрого доступа
-    games = Game.objects.filter(is_active=True)
-    
-    context = {
-        'page_obj': page_obj,
-        'filter_form': filter_form,
-        'games': games,
-    }
-    
-    return render(request, 'listings/catalog.html', context)
+# Старая функция catalog() удалена - теперь используем games_catalog()
 
 
 @ensure_csrf_cookie
