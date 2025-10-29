@@ -8,9 +8,13 @@ from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.core.mail import mail_admins
 from django.views.decorators.http import require_http_methods, require_POST
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.core.exceptions import ObjectDoesNotExist
 from .models import Listing, Game, Category, Favorite, Report
 from .forms import ListingCreateForm, ListingUpdateForm, ListingFilterForm
 from .forms_reports import ReportForm
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def landing_page(request):
@@ -153,7 +157,7 @@ def listing_create(request):
     # Проверяем наличие профиля и создаем его если нужно
     try:
         profile = request.user.profile
-    except Exception:
+    except (AttributeError, ObjectDoesNotExist):
         from accounts.models import Profile
         profile = Profile.objects.create(user=request.user)
     
@@ -428,7 +432,7 @@ def report_listing(request, pk):
                     fail_silently=True
                 )
             except Exception as e:
-                print(f'Ошибка отправки email админам: {e}')
+                logger.error(f'Ошибка отправки email админам при жалобе на объявление: {e}')
             
             messages.success(request, 'Жалоба отправлена. Администрация рассмотрит её в ближайшее время.')
             return redirect('listings:listing_detail', pk=pk)
@@ -501,7 +505,7 @@ def report_user(request, username):
                     fail_silently=True
                 )
             except Exception as e:
-                print(f'Ошибка отправки email админам: {e}')
+                logger.error(f'Ошибка отправки email админам при жалобе на объявление: {e}')
             
             messages.success(request, 'Жалоба отправлена. Администрация рассмотрит её в ближайшее время.')
             return redirect('accounts:profile', username=username)
