@@ -74,9 +74,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Получение CSRF токена из cookies
+ * Получение CSRF токена из meta тега или cookies
  */
 function getCookie(name) {
+    // Сначала пробуем из meta тега
+    const metaToken = document.querySelector('meta[name="csrf-token"]');
+    if (metaToken) {
+        return metaToken.content;
+    }
+    
+    // Если нет в meta, пробуем из cookies
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');
