@@ -72,15 +72,23 @@ class PurchaseRequest(models.Model):
     
     def accept(self):
         """Принимает запрос на покупку."""
-        self.status = 'accepted'
-        self.listing.status = 'reserved'
-        self.listing.save()
-        self.save()
+        from django.db import transaction
+        
+        # ФИКС: Используем atomic для предотвращения race conditions
+        with transaction.atomic():
+            self.status = 'accepted'
+            self.listing.status = 'reserved'
+            self.listing.save()
+            self.save()
     
     def reject(self):
         """Отклоняет запрос на покупку."""
-        self.status = 'rejected'
-        self.save()
+        # Простая операция, но все равно используем atomic для консистентности
+        from django.db import transaction
+        
+        with transaction.atomic():
+            self.status = 'rejected'
+            self.save()
     
     def complete(self):
         """Завершает сделку."""
