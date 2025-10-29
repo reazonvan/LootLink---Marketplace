@@ -120,6 +120,8 @@ def listing_detail(request, pk):
     
     # Проверяем, есть ли активный запрос на покупку от текущего пользователя
     user_has_request = False
+    is_favorited = False
+    
     if request.user.is_authenticated:
         from transactions.models import PurchaseRequest
         user_has_request = PurchaseRequest.objects.filter(
@@ -127,10 +129,17 @@ def listing_detail(request, pk):
             buyer=request.user,
             status__in=['pending', 'accepted']
         ).exists()
+        
+        # Проверяем, добавлено ли объявление в избранное
+        is_favorited = Favorite.objects.filter(
+            user=request.user,
+            listing=listing
+        ).exists()
     
     context = {
         'listing': listing,
         'user_has_request': user_has_request,
+        'is_favorited': is_favorited,
     }
     
     return render(request, 'listings/listing_detail.html', context)

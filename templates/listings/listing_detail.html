@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ listing.title }} - LootLink{% endblock %}
 
@@ -129,9 +130,20 @@
                             </button>
                         {% endif %}
                         
-                        <a href="{% url 'chat:conversation_start' listing.pk %}" class="btn btn-primary w-100">
+                        <a href="{% url 'chat:conversation_start' listing.pk %}" class="btn btn-primary w-100 mb-2">
                             Написать продавцу
                         </a>
+                        
+                        <!-- Кнопка избранного -->
+                        <button 
+                            id="favorite-btn" 
+                            class="btn btn-outline-danger w-100"
+                            data-listing-id="{{ listing.pk }}"
+                            data-is-favorited="{{ is_favorited|yesno:'true,false' }}"
+                        >
+                            <i class="bi {% if is_favorited %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                            <span id="favorite-text">{% if is_favorited %}В избранном{% else %}В избранное{% endif %}</span>
+                        </button>
                     {% endif %}
                 {% else %}
                     <div class="alert alert-warning">
@@ -145,4 +157,8 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/favorites.js' %}"></script>
 {% endblock %}

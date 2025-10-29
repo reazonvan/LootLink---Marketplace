@@ -151,40 +151,33 @@ def conversation_start(request, listing_pk):
 @login_required
 @require_http_methods(["GET"])
 def get_new_messages(request, conversation_pk):
-    """API endpoint для получения новых сообщений (AJAX) с rate limiting."""
-    from core.decorators import api_rate_limit
+    """API endpoint для получения новых сообщений (AJAX)."""
+    conversation = get_object_or_404(Conversation, pk=conversation_pk)
     
-    # Применяем rate limiting: максимум 60 запросов в минуту
-    @api_rate_limit(max_requests=60, time_window=60)
-    def _get_messages():
-        conversation = get_object_or_404(Conversation, pk=conversation_pk)
-        
-        # Проверяем доступ
-        if request.user not in [conversation.participant1, conversation.participant2]:
-            return JsonResponse({'error': 'Доступ запрещён'}, status=403)
-        
-        # Получаем ID последнего сообщения
-        after_id = request.GET.get('after', 0)
-        
-        # Загружаем новые сообщения с оптимизацией
-        new_messages = conversation.messages.filter(
-            id__gt=after_id
-        ).select_related('sender').order_by('created_at')
-        
-        messages_data = []
-        for message in new_messages:
-            messages_data.append({
-                'id': message.id,
-                'content': message.content,
-                'sender': message.sender.username,
-                'is_own': message.sender == request.user,
-                'created_at': message.created_at.strftime('%H:%M'),
-            })
-        
-        return JsonResponse({
-            'messages': messages_data,
-            'count': len(messages_data)
+    # Проверяем доступ
+    if request.user not in [conversation.participant1, conversation.participant2]:
+        return JsonResponse({'error': 'Доступ запрещён'}, status=403)
+    
+    # Получаем ID последнего сообщения
+    after_id = request.GET.get('after', 0)
+    
+    # Загружаем новые сообщения с оптимизацией
+    new_messages = conversation.messages.filter(
+        id__gt=after_id
+    ).select_related('sender').order_by('created_at')
+    
+    messages_data = []
+    for message in new_messages:
+        messages_data.append({
+            'id': message.id,
+            'content': message.content,
+            'sender': message.sender.username,
+            'is_own': message.sender == request.user,
+            'created_at': message.created_at.strftime('%H:%M'),
         })
     
-    return _get_messages()
+    return JsonResponse({
+        'messages': messages_data,
+        'count': len(messages_data)
+    })
 
