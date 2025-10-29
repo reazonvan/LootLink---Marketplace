@@ -225,6 +225,41 @@ class ProfileUpdateForm(forms.ModelForm):
         help_texts = {
             'phone': 'Телефон можно указать один раз. После этого его нельзя будет изменить.',
         }
+    
+    def clean_bio(self):
+        """Валидация описания профиля."""
+        bio = self.cleaned_data.get('bio')
+        if bio and len(bio) > 500:
+            raise forms.ValidationError('Описание не должно превышать 500 символов.')
+        return bio
+    
+    def clean_telegram(self):
+        """Валидация Telegram username."""
+        telegram = self.cleaned_data.get('telegram')
+        if telegram:
+            telegram = telegram.strip()
+            # Проверка формата @username
+            if not telegram.startswith('@'):
+                telegram = '@' + telegram
+            # Проверка длины
+            if len(telegram) < 6 or len(telegram) > 33:  # @username минимум 5 символов username
+                raise forms.ValidationError('Telegram username должен быть от 5 до 32 символов (без @).')
+            # Проверка только разрешенные символы
+            import re
+            if not re.match(r'^@[a-zA-Z0-9_]{5,32}$', telegram):
+                raise forms.ValidationError('Telegram username может содержать только латинские буквы, цифры и подчеркивание.')
+        return telegram
+    
+    def clean_discord(self):
+        """Валидация Discord username."""
+        discord = self.cleaned_data.get('discord')
+        if discord:
+            discord = discord.strip()
+            # Проверка формата username#1234
+            import re
+            if not re.match(r'^.{2,32}#\d{4}$', discord):
+                raise forms.ValidationError('Discord username должен быть в формате: username#1234')
+        return discord
 
 
 class UserUpdateForm(forms.ModelForm):
