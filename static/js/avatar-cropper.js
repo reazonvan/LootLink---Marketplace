@@ -172,9 +172,9 @@ class AvatarCropper {
                 image.onload = () => {
                     this.cropper = new Cropper(image, {
                         aspectRatio: 1, // Квадрат для круглого аватара
-                        viewMode: 1,
-                        dragMode: 'crop',
-                        autoCropArea: 0.8,
+                        viewMode: 2, // Изображение заполняет canvas, canvas меньше контейнера
+                        dragMode: 'move',
+                        autoCropArea: 1, // 100% - используем всю доступную область
                         restore: false,
                         guides: true,
                         center: true,
@@ -188,6 +188,9 @@ class AvatarCropper {
                         preview: '#avatarPreviewCircle',
                         minCropBoxWidth: 50,
                         minCropBoxHeight: 50,
+                        initialAspectRatio: 1,
+                        zoomOnWheel: true,
+                        zoomOnTouch: true,
                         ready: function() {
                             console.log('Avatar Cropper готов');
                             // Принудительно включаем crop mode
