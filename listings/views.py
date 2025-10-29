@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.core.mail import mail_admins
 from django.views.decorators.http import require_http_methods, require_POST
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from .models import Listing, Game, Category, Favorite, Report
 from .forms import ListingCreateForm, ListingUpdateForm, ListingFilterForm
 from .forms_reports import ReportForm
@@ -321,6 +321,7 @@ def get_categories_by_game(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@csrf_exempt
 @login_required
 @require_POST
 def toggle_favorite(request, pk):
