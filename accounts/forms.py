@@ -49,6 +49,14 @@ class CustomUserCreationForm(UserCreationForm):
         model = CustomUser
         fields = ('username', 'email', 'phone', 'password1', 'password2')
     
+    def clean_username(self):
+        """Проверка уникальности username (case-insensitive)."""
+        username = self.cleaned_data.get('username')
+        # Case-insensitive проверка (argear = Argear = ARGEAR)
+        if CustomUser.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError('Пользователь с таким именем уже существует (регистр не учитывается).')
+        return username
+    
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if CustomUser.objects.filter(email=email).exists():

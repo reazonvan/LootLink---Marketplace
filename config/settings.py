@@ -113,6 +113,12 @@ DATABASES = {
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
+# Authentication Backends (case-insensitive username)
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.CaseInsensitiveModelBackend',  # Кастомный backend для case-insensitive логина
+    'django.contrib.auth.backends.ModelBackend',  # Fallback на стандартный
+]
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
