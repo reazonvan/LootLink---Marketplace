@@ -6,7 +6,8 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.core.mail import mail_admins
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import Listing, Game, Category, Favorite, Report
 from .forms import ListingCreateForm, ListingUpdateForm, ListingFilterForm
 from .forms_reports import ReportForm
@@ -111,6 +112,7 @@ def catalog(request):
     return render(request, 'listings/catalog.html', context)
 
 
+@ensure_csrf_cookie
 def listing_detail(request, pk):
     """Детальная страница объявления."""
     listing = get_object_or_404(
@@ -320,6 +322,7 @@ def get_categories_by_game(request):
 
 
 @login_required
+@require_POST
 def toggle_favorite(request, pk):
     """Добавить/убрать из избранного (AJAX)."""
     listing = get_object_or_404(Listing, pk=pk)
