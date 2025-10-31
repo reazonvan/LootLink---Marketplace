@@ -54,12 +54,15 @@
             
             {% if game.categories.all %}
             <div class="categories-compact">
-                {% for category in game.categories.all %}
+                {% for category in game.categories.all|slice:":8" %}
                 <a href="{% url 'listings:category_listings' game.slug category.slug %}" class="category-chip">
                     <i class="{{ category.icon }}"></i>
                     {{ category.name }}
                 </a>
                 {% endfor %}
+                {% if game.categories.all|length > 8 %}
+                <span class="text-muted small">+{{ game.categories.all|length|add:"-8" }} еще</span>
+                {% endif %}
             </div>
             {% endif %}
         </div>
@@ -150,64 +153,69 @@
     max-width: 1400px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
 }
 
-/* Компактная карточка игры */
+/* Карточка игры */
 .game-card-compact {
     background: white;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
-    padding: 1rem 1.25rem;
+    padding: 1.25rem;
     transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
 }
 
 .game-card-compact:hover {
     border-color: #3b82f6;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12);
+    transform: translateY(-4px);
 }
 
 .game-compact-header {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.625rem;
-    border-bottom: 1px solid #f1f5f9;
+    text-align: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f1f5f9;
 }
 
 .game-icon {
     color: #3b82f6;
-    font-size: 1.25rem;
-    flex-shrink: 0;
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
 }
 
 .game-compact-title {
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #1e293b;
     margin: 0;
+    line-height: 1.3;
 }
 
-/* Компактные категории - chips */
+/* Компактные категории - список */
 .categories-compact {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 0.375rem;
+    flex: 1;
 }
 
 .category-chip {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 0.375rem;
-    padding: 0.375rem 0.75rem;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
     background: #f8f9fa;
-    border: 1px solid #e5e7eb;
-    border-radius: 20px;
+    border: 1px solid transparent;
+    border-radius: 8px;
     text-decoration: none;
     color: #475569;
-    font-size: 0.875rem;
+    font-size: 0.813rem;
     font-weight: 500;
     transition: all 0.15s;
 }
@@ -216,11 +224,11 @@
     background: #3b82f6;
     color: white;
     border-color: #3b82f6;
-    transform: scale(1.05);
 }
 
 .category-chip i {
     font-size: 0.875rem;
+    opacity: 0.8;
 }
 
 .empty-state {
@@ -392,10 +400,24 @@
     box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
 }
 
+/* Large screens */
+@media (min-width: 1400px) {
+    .games-catalog {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+/* Laptop */
+@media (max-width: 1200px) {
+    .games-catalog {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
 /* Tablet */
 @media (max-width: 992px) {
     .games-catalog {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
@@ -405,12 +427,22 @@
         margin-bottom: 1.5rem;
     }
     
+    .games-catalog {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
     .game-card-compact {
-        padding: 0.875rem 1rem;
+        padding: 1rem;
+        min-height: auto;
     }
     
     .game-compact-title {
-        font-size: 1rem;
+        font-size: 0.95rem;
+    }
+    
+    .game-icon {
+        font-size: 1.5rem;
     }
     
     .letter-header {
