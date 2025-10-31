@@ -5,14 +5,30 @@
 {% block content %}
 <div class="container">
     <!-- Header -->
-    <div class="page-header mb-5">
+    <div class="page-header mb-4">
         <h1 class="display-4 fw-bold mb-2">Каталог игр</h1>
         <p class="lead text-muted">Выберите игру и категорию товара</p>
     </div>
 
+    <!-- Алфавитная навигация -->
+    {% if alphabet %}
+    <div class="alphabet-nav mb-4">
+        <div class="alphabet-letters">
+            {% for letter in alphabet %}
+            <a href="#letter-{{ letter }}" class="alphabet-letter">{{ letter }}</a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Games List -->
     <div class="games-catalog">
         {% for game in games %}
+        {% if game.first_in_letter %}
+        <div class="letter-anchor" id="letter-{{ game.first_letter }}">
+            <h2 class="letter-header">{{ game.first_letter }}</h2>
+        </div>
+        {% endif %}
         <div class="game-card mb-4">
             <div class="game-header">
                 <h2 class="game-title">
@@ -51,6 +67,61 @@
 </div>
 
 <style>
+/* Алфавитная навигация */
+.alphabet-nav {
+    position: sticky;
+    top: 70px;
+    z-index: 100;
+    background: white;
+    padding: 1rem 0;
+    border-bottom: 2px solid #e5e7eb;
+    margin: 0 -15px;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.alphabet-letters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.alphabet-letter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #1e293b;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.alphabet-letter:hover {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    transform: scale(1.1);
+}
+
+/* Якоря букв */
+.letter-anchor {
+    scroll-margin-top: 150px;
+}
+
+.letter-header {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #3b82f6;
+    margin: 2rem 0 1.5rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 3px solid #3b82f6;
+}
+
 .games-catalog {
     max-width: 1200px;
     margin: 0 auto;
