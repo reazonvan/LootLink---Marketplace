@@ -68,9 +68,30 @@ def games_catalog(request):
         'categories'
     ).order_by('name')
     
-    # Добавляем счетчик объявлений для каждой категории
-    from django.db.models import Count
+    # Собираем алфавит и помечаем первую игру каждой буквы
+    alphabet = []
+    last_letter = None
+    
     for game in games:
+        # Определяем первую букву
+        first_char = game.name[0].upper()
+        
+        # Для латиницы и кириллицы
+        if first_char.isalpha() or first_char.isdigit():
+            game.first_letter = first_char
+        else:
+            game.first_letter = '#'
+        
+        # Помечаем если это первая игра с этой буквой
+        if game.first_letter != last_letter:
+            game.first_in_letter = True
+            if game.first_letter not in alphabet:
+                alphabet.append(game.first_letter)
+            last_letter = game.first_letter
+        else:
+            game.first_in_letter = False
+        
+        # Добавляем счетчик объявлений для каждой категории
         for category in game.categories.all():
             category.count = Listing.objects.filter(
                 game=game,
@@ -80,6 +101,7 @@ def games_catalog(request):
     
     context = {
         'games': games,
+        'alphabet': alphabet,
     }
     
     return render(request, 'listings/games_catalog.html', context)
