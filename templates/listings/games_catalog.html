@@ -5,13 +5,13 @@
 {% block content %}
 <div class="container">
     <!-- Header -->
-    <div class="page-header mb-4">
-        <h1 class="display-4 fw-bold mb-2">Каталог игр</h1>
-        <p class="lead text-muted">Выберите игру и категорию товара</p>
+    <div class="page-header mb-3">
+        <h1 class="h2 fw-bold mb-1">Каталог игр</h1>
+        <p class="text-muted small mb-0">Выберите игру и категорию</p>
     </div>
 
     <!-- Поиск игр -->
-    <div class="game-search-container mb-4">
+    <div class="game-search-container mb-3">
         <div class="search-wrapper">
             <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
@@ -29,7 +29,7 @@
 
     <!-- Алфавитная навигация -->
     {% if alphabet %}
-    <div class="alphabet-nav mb-4">
+    <div class="alphabet-nav mb-3">
         <div class="alphabet-letters">
             {% for letter in alphabet %}
             <a href="#letter-{{ letter }}" class="alphabet-letter">{{ letter }}</a>
@@ -38,39 +38,29 @@
     </div>
     {% endif %}
 
-    <!-- Games List -->
+    <!-- Games List - компактная сетка -->
     <div class="games-catalog">
         {% for game in games %}
         {% if game.first_in_letter %}
         <div class="letter-anchor" id="letter-{{ game.first_letter }}">
-            <h2 class="letter-header">{{ game.first_letter }}</h2>
+            <h3 class="letter-header">{{ game.first_letter }}</h3>
         </div>
         {% endif %}
-        <div class="game-card mb-4">
-            <div class="game-header">
-                <h2 class="game-title">
-                    <i class="bi bi-controller"></i>
-                    {{ game.name }}
-                </h2>
-                {% if game.description %}
-                <p class="game-description text-muted">{{ game.description }}</p>
-                {% endif %}
+        <div class="game-card-compact">
+            <div class="game-compact-header">
+                <i class="bi bi-controller game-icon"></i>
+                <h4 class="game-compact-title">{{ game.name }}</h4>
             </div>
             
             {% if game.categories.all %}
-            <div class="categories-grid">
+            <div class="categories-compact">
                 {% for category in game.categories.all %}
-                <a href="{% url 'listings:category_listings' game.slug category.slug %}" class="category-link">
+                <a href="{% url 'listings:category_listings' game.slug category.slug %}" class="category-chip">
                     <i class="{{ category.icon }}"></i>
-                    <span>{{ category.name }}</span>
-                    {% if category.count %}
-                    <span class="badge bg-primary">{{ category.count }}</span>
-                    {% endif %}
+                    {{ category.name }}
                 </a>
                 {% endfor %}
             </div>
-            {% else %}
-            <p class="text-muted">Категории пока не добавлены</p>
             {% endif %}
         </div>
         {% empty %}
@@ -147,90 +137,90 @@
 }
 
 .letter-header {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 700;
     color: #3b82f6;
-    margin: 2rem 0 1.5rem 0;
-    padding-bottom: 0.5rem;
-    border-bottom: 3px solid #3b82f6;
+    margin: 1.5rem 0 1rem 0;
+    padding-bottom: 0.375rem;
+    border-bottom: 2px solid #3b82f6;
+    grid-column: 1 / -1;
 }
 
 .games-catalog {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-}
-
-.game-card {
-    background: white;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    transition: box-shadow 0.3s;
-}
-
-.game-card:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-}
-
-.game-header {
-    margin-bottom: 1.5rem;
-    border-bottom: 2px solid #e5e7eb;
-    padding-bottom: 1rem;
-}
-
-.game-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0;
-}
-
-.game-title i {
-    color: #3b82f6;
-    margin-right: 0.5rem;
-}
-
-.game-description {
-    margin: 0.5rem 0 0 0;
-    font-size: 0.95rem;
-}
-
-.categories-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 1rem;
 }
 
-.category-link {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.875rem 1rem;
-    background: #f8f9fa;
+/* Компактная карточка игры */
+.game-card-compact {
+    background: white;
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    text-decoration: none;
-    color: #1e293b;
-    font-weight: 500;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
     transition: all 0.2s;
 }
 
-.category-link:hover {
-    background: #3b82f6;
-    color: white;
+.game-card-compact:hover {
     border-color: #3b82f6;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
 }
 
-.category-link i {
+.game-compact-header {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.625rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.game-icon {
+    color: #3b82f6;
     font-size: 1.25rem;
     flex-shrink: 0;
 }
 
-.category-link .badge {
-    margin-left: auto;
-    font-size: 0.75rem;
+.game-compact-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+/* Компактные категории - chips */
+.categories-compact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.category-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    background: #f8f9fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    text-decoration: none;
+    color: #475569;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.15s;
+}
+
+.category-chip:hover {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    transform: scale(1.05);
+}
+
+.category-chip i {
+    font-size: 0.875rem;
 }
 
 .empty-state {
@@ -402,18 +392,30 @@
     box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
 }
 
+/* Tablet */
+@media (max-width: 992px) {
+    .games-catalog {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Mobile */
 @media (max-width: 768px) {
-    .game-card {
-        padding: 1.5rem;
+    .page-header {
+        margin-bottom: 1.5rem;
     }
     
-    .game-title {
+    .game-card-compact {
+        padding: 0.875rem 1rem;
+    }
+    
+    .game-compact-title {
+        font-size: 1rem;
+    }
+    
+    .letter-header {
         font-size: 1.5rem;
-    }
-    
-    .categories-grid {
-        grid-template-columns: 1fr;
+        margin: 1rem 0 0.75rem 0;
     }
     
     .modern-search-input {
