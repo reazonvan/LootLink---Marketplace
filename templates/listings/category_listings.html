@@ -8,7 +8,7 @@
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'listings:home' %}">Главная</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'listings:games_catalog' %}">Игры</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'listings:catalog' %}">Игры</a></li>
             <li class="breadcrumb-item"><a href="{% url 'listings:game_listings' game.slug %}">{{ game.name }}</a></li>
             <li class="breadcrumb-item active">{{ category.name }}</li>
         </ol>
