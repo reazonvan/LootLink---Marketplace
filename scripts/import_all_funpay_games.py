@@ -17,6 +17,28 @@ from listings.models import Game, Category
 from django.db import transaction
 
 
+# Транслитерация кириллицы в латиницу для slug
+TRANSLIT_MAP = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
+    'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+    'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts',
+    'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu',
+    'я': 'ya',
+}
+
+def transliterate(text):
+    """Транслитерация кириллицы."""
+    result = []
+    for char in text.lower():
+        result.append(TRANSLIT_MAP.get(char, char))
+    return ''.join(result)
+
+def make_slug(text):
+    """Создает безопасный slug."""
+    translit = transliterate(text)
+    return slugify(translit)[:120]
+
+
 # Маппинг категорий на иконки
 ICON_MAP = {
     'аккаунты': 'bi-person-circle', 'ключи': 'bi-key-fill', 'донат': 'bi-gem',
@@ -46,7 +68,7 @@ def add_game(name, categories, order):
     game, created = Game.objects.get_or_create(
         name=name,
         defaults={
-            'slug': slugify(name, allow_unicode=True),
+            'slug': make_slug(name),  # Транслитерация!
             'is_active': True,
             'order': order,
             'icon': 'bi-controller'
@@ -59,7 +81,7 @@ def add_game(name, categories, order):
             game=game,
             name=cat_name,
             defaults={
-                'slug': slugify(f"{name}-{cat_name}", allow_unicode=True)[:120],
+                'slug': make_slug(cat_name),  # Транслитерация!
                 'icon': get_icon(cat_name),
                 'order': idx,
                 'is_active': True
