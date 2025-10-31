@@ -330,13 +330,46 @@ document.addEventListener('DOMContentLoaded', function() {
     const gameCards = document.querySelectorAll('.game-card');
     const letterHeaders = document.querySelectorAll('.letter-header');
     
+    // Транслитерация для поиска по-русски
+    const translitMap = {
+        'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ы':'y','э':'e','ю':'yu','я':'ya'
+    };
+    const translitReverse = Object.fromEntries(Object.entries(translitMap).map(([k,v]) => [v,k]));
+    
+    function transliterate(text) {
+        return text.split('').map(c => translitMap[c] || translitReverse[c] || c).join('');
+    }
+    
+    // Алиасы для популярных игр (кириллица → латиница)
+    const gameAliases = {
+        'доту': 'dota', 'дота': 'dota', 'дотку': 'dota',
+        'майнкрафт': 'minecraft', 'майн': 'minecraft',
+        'кс': 'counter-strike', 'ксго': 'cs:go', 'кс2': 'counter-strike 2',
+        'вов': 'world of warcraft', 'варкрафт': 'warcraft',
+        'valorant': 'valorant', 'вало': 'valorant', 'валорант': 'valorant',
+        'пубг': 'pubg', 'пабг': 'pubg',
+        'тарков': 'tarkov', 'тарк': 'tarkov',
+        'геншин': 'genshin', 'генш': 'genshin',
+        'роблокс': 'roblox', 'робл': 'roblox',
+        'гта': 'gta', 'гтаха': 'gta',
+        'танки': 'world of tanks', 'вот': 'world of tanks',
+        'лол': 'league of legends', 'лига': 'league of legends',
+        'фортнайт': 'fortnite', 'форт': 'fortnite',
+        'стим': 'steam', 'стім': 'steam',
+        'тг': 'telegram', 'телега': 'telegram',
+    };
+    
     // Создаем индекс игр для быстрого поиска
     const gamesIndex = Array.from(gameCards).map((card, index) => {
         const titleElement = card.querySelector('.game-title');
         const gameName = titleElement ? titleElement.textContent.trim().replace(/\s+/g, ' ') : '';
+        const nameLower = gameName.toLowerCase();
+        const nameTranslit = transliterate(nameLower);
+        
         return {
             name: gameName,
-            nameLower: gameName.toLowerCase(),
+            nameLower: nameLower,
+            nameTranslit: nameTranslit,
             card: card,
             index: index
         };
@@ -355,9 +388,25 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Ищем совпадения
+        // Проверяем алиасы
+        let searchQuery = queryLower;
+        for (const [alias, real] of Object.entries(gameAliases)) {
+            if (queryLower.includes(alias)) {
+                searchQuery = real;
+                break;
+            }
+        }
+        
+        // Транслитерируем запрос для поиска
+        const queryTranslit = transliterate(searchQuery);
+        
+        // Ищем совпадения (по оригиналу, транслиту, и всем вариантам)
         const matches = gamesIndex.filter(game => 
-            game.nameLower.includes(queryLower)
+            game.nameLower.includes(queryLower) ||
+            game.nameLower.includes(searchQuery) ||
+            game.nameTranslit.includes(queryLower) ||
+            game.nameTranslit.includes(queryTranslit) ||
+            game.nameLower.includes(queryTranslit)
         );
         
         // Показываем dropdown с результатами
@@ -395,10 +444,16 @@ document.addEventListener('DOMContentLoaded', function() {
             searchResults.classList.add('active');
         }
         
-        // Фильтруем видимые карточки (опционально)
+        // Фильтруем видимые карточки (с учетом всех вариантов поиска)
         gameCards.forEach(card => {
             const game = gamesIndex.find(g => g.card === card);
-            if (game && game.nameLower.includes(queryLower)) {
+            if (game && (
+                game.nameLower.includes(queryLower) ||
+                game.nameLower.includes(searchQuery) ||
+                game.nameTranslit.includes(queryLower) ||
+                game.nameTranslit.includes(queryTranslit) ||
+                game.nameLower.includes(queryTranslit)
+            )) {
                 card.classList.remove('search-hidden');
             } else {
                 card.classList.add('search-hidden');
