@@ -10,6 +10,21 @@
         <p class="lead text-muted">Выберите игру и категорию товара</p>
     </div>
 
+    <!-- Поиск игр -->
+    <div class="game-search-container mb-4">
+        <div class="position-relative">
+            <input 
+                type="text" 
+                id="gameSearchInput" 
+                class="form-control form-control-lg" 
+                placeholder="🔍 Поиск игры... (например: brawl, доту, майнкрафт)"
+                autocomplete="off"
+            >
+            <div id="searchResults" class="search-results-dropdown"></div>
+        </div>
+        <small class="text-muted">Введите название игры на любом языке</small>
+    </div>
+
     <!-- Алфавитная навигация -->
     {% if alphabet %}
     <div class="alphabet-nav mb-4">
@@ -206,6 +221,87 @@
     padding: 3rem;
 }
 
+/* Поиск игр */
+.game-search-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+#gameSearchInput {
+    border-radius: 12px;
+    border: 2px solid #e5e7eb;
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    transition: border-color 0.2s;
+}
+
+#gameSearchInput:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-results-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    margin-top: 0.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    display: none;
+    z-index: 1000;
+}
+
+.search-results-dropdown.active {
+    display: block;
+}
+
+.search-result-item {
+    padding: 0.875rem 1.25rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background: #eff6ff;
+}
+
+.search-result-icon {
+    color: #3b82f6;
+    font-size: 1.25rem;
+}
+
+.search-result-name {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.search-no-results {
+    padding: 1.5rem;
+    text-align: center;
+    color: #9ca3af;
+}
+
+.game-card.search-hidden {
+    display: none;
+}
+
+.letter-header.search-hidden {
+    display: none;
+}
+
 /* Mobile */
 @media (max-width: 768px) {
     .game-card {
@@ -219,7 +315,143 @@
     .categories-grid {
         grid-template-columns: 1fr;
     }
+    
+    #gameSearchInput {
+        font-size: 1rem;
+        padding: 0.875rem 1.25rem;
+    }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('gameSearchInput');
+    const searchResults = document.getElementById('searchResults');
+    const gameCards = document.querySelectorAll('.game-card');
+    const letterHeaders = document.querySelectorAll('.letter-header');
+    
+    // Создаем индекс игр для быстрого поиска
+    const gamesIndex = Array.from(gameCards).map((card, index) => {
+        const titleElement = card.querySelector('.game-title');
+        const gameName = titleElement ? titleElement.textContent.trim().replace(/\s+/g, ' ') : '';
+        return {
+            name: gameName,
+            nameLower: gameName.toLowerCase(),
+            card: card,
+            index: index
+        };
+    });
+    
+    // Функция поиска и фильтрации
+    function searchGames(query) {
+        const queryLower = query.toLowerCase().trim();
+        
+        if (!queryLower) {
+            // Показываем все если поиск пустой
+            gameCards.forEach(card => card.classList.remove('search-hidden'));
+            letterHeaders.forEach(header => header.classList.remove('search-hidden'));
+            searchResults.classList.remove('active');
+            searchResults.innerHTML = '';
+            return;
+        }
+        
+        // Ищем совпадения
+        const matches = gamesIndex.filter(game => 
+            game.nameLower.includes(queryLower)
+        );
+        
+        // Показываем dropdown с результатами
+        if (matches.length > 0) {
+            searchResults.innerHTML = matches.slice(0, 10).map(game => `
+                <div class="search-result-item" data-game-index="${game.index}">
+                    <i class="bi bi-controller search-result-icon"></i>
+                    <span class="search-result-name">${game.name}</span>
+                </div>
+            `).join('');
+            searchResults.classList.add('active');
+            
+            // Добавляем обработчики клика
+            searchResults.querySelectorAll('.search-result-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const gameIndex = parseInt(this.dataset.gameIndex);
+                    const targetGame = gamesIndex[gameIndex];
+                    
+                    // Скроллим к игре
+                    targetGame.card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Подсвечиваем
+                    targetGame.card.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.5)';
+                    setTimeout(() => {
+                        targetGame.card.style.boxShadow = '';
+                    }, 2000);
+                    
+                    // Закрываем dropdown
+                    searchResults.classList.remove('active');
+                    searchInput.value = targetGame.name;
+                });
+            });
+        } else {
+            searchResults.innerHTML = '<div class="search-no-results">Игры не найдены 😢</div>';
+            searchResults.classList.add('active');
+        }
+        
+        // Фильтруем видимые карточки (опционально)
+        gameCards.forEach(card => {
+            const game = gamesIndex.find(g => g.card === card);
+            if (game && game.nameLower.includes(queryLower)) {
+                card.classList.remove('search-hidden');
+            } else {
+                card.classList.add('search-hidden');
+            }
+        });
+        
+        // Скрываем пустые заголовки букв
+        letterHeaders.forEach(header => {
+            const letterId = header.id.replace('letter-', '');
+            const hasVisibleGames = Array.from(gameCards).some(card => {
+                const game = gamesIndex.find(g => g.card === card);
+                return game && 
+                       !card.classList.contains('search-hidden') && 
+                       game.name[0].toUpperCase() === letterId;
+            });
+            
+            if (hasVisibleGames) {
+                header.classList.remove('search-hidden');
+            } else {
+                header.classList.add('search-hidden');
+            }
+        });
+    }
+    
+    // Обработчик ввода
+    searchInput.addEventListener('input', function() {
+        searchGames(this.value);
+    });
+    
+    // Закрываем dropdown при клике вне
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.classList.remove('active');
+        }
+    });
+    
+    // Показываем dropdown при фокусе если есть текст
+    searchInput.addEventListener('focus', function() {
+        if (this.value.trim()) {
+            searchGames(this.value);
+        }
+    });
+    
+    // Очистка по Escape
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            this.value = '';
+            searchGames('');
+        }
+    });
+    
+    console.log('🔍 Game search initialized with', gamesIndex.length, 'games');
+});
+</script>
 {% endblock %}
 
