@@ -424,12 +424,13 @@
     display: inline-block;
 }
 
-/* Seller card enhanced */
+/* Seller card enhanced - НЕ sticky */
 .seller-card-enhanced {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border-radius: 12px;
     padding: 25px;
     margin-top: 20px;
+    position: relative;
 }
 
 .seller-header {
