@@ -6,7 +6,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('listings', '0012_alter_listing_options_alter_listing_managers_and_more'),
+        ('listings', '0011_alter_game_options_game_order'),
     ]
 
     operations = [
