@@ -7,18 +7,32 @@
     <!-- Chat Header -->
     <div class="chat-header-card">
         <div class="chat-header-content">
-            <a href="{% url 'chat:conversations_list' %}" class="btn btn-outline-secondary">
+            <a href="{% url 'chat:conversations_list' %}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left"></i> Назад
             </a>
-            <div class="chat-header-info">
-                <h5 class="chat-username">
-                    <a href="{% url 'accounts:profile' other_user.username %}">{{ other_user.username }}</a>
-                </h5>
-                {% if conversation.listing %}
-                <p class="chat-listing">
-                    <a href="{% url 'listings:listing_detail' conversation.listing.pk %}">{{ conversation.listing.title }}</a>
-                </p>
-                {% endif %}
+            <div class="chat-user-info">
+                <div class="chat-avatar-wrapper">
+                    {% if other_user.profile.avatar %}
+                    <img src="{{ other_user.profile.avatar.url }}" alt="{{ other_user.username }}" class="chat-avatar">
+                    {% else %}
+                    <div class="chat-avatar chat-avatar-placeholder">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    {% endif %}
+                    <span class="chat-online-status {{ other_user.profile.get_online_status }}"></span>
+                </div>
+                <div class="chat-header-info">
+                    <h5 class="chat-username">
+                        <a href="{% url 'accounts:profile' other_user.username %}">{{ other_user.username }}</a>
+                    </h5>
+                    <p class="chat-last-seen">{{ other_user.profile.get_last_seen_display }}</p>
+                    {% if conversation.listing %}
+                    <p class="chat-listing">
+                        <i class="bi bi-box"></i>
+                        <a href="{% url 'listings:listing_detail' conversation.listing.pk %}">{{ conversation.listing.title }}</a>
+                    </p>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
@@ -29,10 +43,21 @@
             {% if messages %}
                 {% for message in messages %}
                 <div class="message-wrapper {% if message.sender == user %}sent{% else %}received{% endif %}" data-message-id="{{ message.id }}">
-                    <div class="message-bubble {% if message.sender == user %}sent{% else %}received{% endif %}">
-                        {{ message.content }}
+                    {% if message.sender != user %}
+                    <div class="message-avatar-sm">
+                        {% if message.sender.profile.avatar %}
+                        <img src="{{ message.sender.profile.avatar.url }}" alt="{{ message.sender.username }}">
+                        {% else %}
+                        <i class="bi bi-person-fill"></i>
+                        {% endif %}
                     </div>
-                    <div class="message-time">{{ message.created_at|date:"H:i" }}</div>
+                    {% endif %}
+                    <div class="message-content-wrapper">
+                        <div class="message-bubble {% if message.sender == user %}sent{% else %}received{% endif %}">
+                            {{ message.content }}
+                        </div>
+                        <div class="message-time">{{ message.created_at|date:"H:i" }}</div>
+                    </div>
                 </div>
                 {% endfor %}
             {% else %}

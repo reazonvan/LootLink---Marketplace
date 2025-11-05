@@ -70,6 +70,8 @@ MIDDLEWARE = [
     # Кастомные middleware для безопасности
     'core.middleware.SimpleRateLimitMiddleware',
     'core.middleware.SecurityHeadersMiddleware',
+    # Обновление last_seen
+    'core.middleware_activity.UpdateLastSeenMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'

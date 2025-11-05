@@ -1,0 +1,218 @@
+/**
+ * Chat Improvements V2 - Avatar and Online Status
+ */
+
+/* ============================================
+   CHAT HEADER WITH AVATAR
+   ============================================ */
+.chat-header-card {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.chat-header-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.chat-user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+}
+
+.chat-avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.chat-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #E5E7EB;
+}
+
+.chat-avatar-placeholder {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #F3F4F6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #9CA3AF;
+    border: 2px solid #E5E7EB;
+}
+
+.chat-online-status {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+}
+
+.chat-online-status.online {
+    background: #10B981;
+}
+
+.chat-online-status.away {
+    background: #F59E0B;
+}
+
+.chat-online-status.offline {
+    background: #9CA3AF;
+}
+
+.chat-header-info {
+    flex: 1;
+}
+
+.chat-username {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.chat-username a {
+    color: #111827;
+    text-decoration: none;
+}
+
+.chat-username a:hover {
+    color: #0066FF;
+}
+
+.chat-last-seen {
+    margin: 2px 0 5px 0;
+    font-size: 13px;
+    color: #6B7280;
+}
+
+.chat-listing {
+    margin: 0;
+    font-size: 13px;
+    color: #6B7280;
+}
+
+.chat-listing i {
+    font-size: 12px;
+}
+
+.chat-listing a {
+    color: #0066FF;
+    text-decoration: none;
+}
+
+.chat-listing a:hover {
+    text-decoration: underline;
+}
+
+/* ============================================
+   MESSAGE BUBBLES WITH AVATARS
+   ============================================ */
+.message-wrapper {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    align-items: flex-end;
+}
+
+.message-wrapper.sent {
+    flex-direction: row-reverse;
+}
+
+.message-avatar-sm {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #F3F4F6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.message-avatar-sm img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.message-avatar-sm i {
+    font-size: 16px;
+    color: #9CA3AF;
+}
+
+.message-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    max-width: 70%;
+}
+
+.message-wrapper.sent .message-content-wrapper {
+    align-items: flex-end;
+}
+
+.message-bubble {
+    padding: 10px 14px;
+    border-radius: 12px;
+    word-wrap: break-word;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.message-bubble.received {
+    background: #F3F4F6;
+    color: #111827;
+    border-bottom-left-radius: 4px;
+}
+
+.message-bubble.sent {
+    background: #0066FF;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message-time {
+    font-size: 11px;
+    color: #9CA3AF;
+    margin-top: 4px;
+    padding: 0 4px;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    .chat-header-content {
+        flex-wrap: wrap;
+    }
+    
+    .message-content-wrapper {
+        max-width: 80%;
+    }
+    
+    .chat-avatar,
+    .chat-avatar-placeholder {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .chat-avatar-placeholder i {
+        font-size: 24px;
+    }
+}
+
