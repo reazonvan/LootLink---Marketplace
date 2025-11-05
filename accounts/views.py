@@ -6,7 +6,7 @@ from django.db.models import Avg
 from django.core.mail import send_mail
 from django.conf import settings
 from .forms import (CustomUserCreationForm, CustomAuthenticationForm, ProfileUpdateForm, 
-                    UserUpdateForm, PasswordResetRequestForm, PasswordResetConfirmForm)
+                    PasswordResetRequestForm, PasswordResetConfirmForm)
 from .models import CustomUser, Profile, PasswordResetCode
 from transactions.models import Review
 
@@ -421,6 +421,21 @@ def password_reset_confirm(request):
 def check_username_available(request):
     """AJAX endpoint для проверки доступности никнейма."""
     from django.http import JsonResponse
+    from core.decorators import api_rate_limit
+    from django.core.cache import cache
+    
+    # Rate limiting: 30 запросов в минуту на IP
+    ip = request.META.get('REMOTE_ADDR', '')
+    cache_key = f'username_check_rate_{ip}'
+    requests_count = cache.get(cache_key, 0)
+    
+    if requests_count >= 30:
+        return JsonResponse({
+            'available': False, 
+            'message': 'Слишком много запросов. Подождите минуту.'
+        }, status=429)
+    
+    cache.set(cache_key, requests_count + 1, 60)
     
     username = request.GET.get('username', '').strip()
     
@@ -450,6 +465,20 @@ def check_username_available(request):
 def check_email_available(request):
     """AJAX endpoint для проверки доступности email."""
     from django.http import JsonResponse
+    from django.core.cache import cache
+    
+    # Rate limiting: 30 запросов в минуту на IP
+    ip = request.META.get('REMOTE_ADDR', '')
+    cache_key = f'email_check_rate_{ip}'
+    requests_count = cache.get(cache_key, 0)
+    
+    if requests_count >= 30:
+        return JsonResponse({
+            'available': False, 
+            'message': 'Слишком много запросов. Подождите минуту.'
+        }, status=429)
+    
+    cache.set(cache_key, requests_count + 1, 60)
     
     email = request.GET.get('email', '').strip()
     
@@ -473,6 +502,20 @@ def check_email_available(request):
 def check_phone_available(request):
     """AJAX endpoint для проверки доступности телефона."""
     from django.http import JsonResponse
+    from django.core.cache import cache
+    
+    # Rate limiting: 30 запросов в минуту на IP
+    ip = request.META.get('REMOTE_ADDR', '')
+    cache_key = f'phone_check_rate_{ip}'
+    requests_count = cache.get(cache_key, 0)
+    
+    if requests_count >= 30:
+        return JsonResponse({
+            'available': False, 
+            'message': 'Слишком много запросов. Подождите минуту.'
+        }, status=429)
+    
+    cache.set(cache_key, requests_count + 1, 60)
     
     phone = request.GET.get('phone', '').strip()
     

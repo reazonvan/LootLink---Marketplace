@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import Listing, Game, Category, Favorite, Report
+from .models_filters import CategoryFilter, FilterOption, ListingFilterValue
+# Импортируем админки фильтров
+from . import admin_filters
 
 
 class CategoryInline(admin.TabularInline):

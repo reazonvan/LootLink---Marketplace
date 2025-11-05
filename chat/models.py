@@ -48,6 +48,14 @@ class Conversation(models.Model):
         ordering = ['-updated_at']
         # Уникальная пара участников для конкретного объявления
         unique_together = ['participant1', 'participant2', 'listing']
+        # Constraint: participant1.id всегда должен быть меньше participant2.id
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(participant1_id__lt=models.F('participant2_id')),
+                name='participant1_less_than_participant2',
+                violation_error_message='participant1 должен быть меньше participant2 (сортировка по ID)'
+            ),
+        ]
     
     def __str__(self):
         return f'Беседа: {self.participant1.username} ↔ {self.participant2.username}'
