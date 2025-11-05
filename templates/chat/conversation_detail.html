@@ -39,23 +39,28 @@
         right: 0;
         background: white;
         border-bottom: 1px solid #E5E7EB;
-        padding: 15px 20px;
+        padding: 16px 24px;
         z-index: 100;
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .chat-avatar-wrapper {
+        position: relative;
     }
     
     /* Messages Area - Scrollable */
     .chat-messages-area {
         flex: 1;
         overflow-y: auto;
-        padding: 80px 20px 90px 20px;
+        padding: 90px 24px 100px 24px;
         background: #F9FAFB;
     }
     
     .chat-messages-container {
-        max-width: 900px;
+        max-width: 1000px;
         margin: 0 auto;
     }
     
@@ -67,35 +72,39 @@
         right: 0;
         background: white;
         border-top: 1px solid #E5E7EB;
-        padding: 15px 20px;
+        padding: 18px 24px;
         z-index: 100;
+        box-shadow: 0 -1px 3px rgba(0,0,0,0.05);
     }
     
     .chat-input-wrapper {
-        max-width: 900px;
+        max-width: 1000px;
         margin: 0 auto;
         display: flex;
-        gap: 10px;
+        gap: 12px;
+        align-items: center;
     }
     
     .chat-input-field {
         flex: 1;
-        border: 1px solid #E5E7EB;
+        border: 2px solid #E5E7EB;
         border-radius: 24px;
-        padding: 12px 20px;
+        padding: 14px 22px;
         font-size: 15px;
         outline: none;
         transition: all 0.2s;
+        background: #F9FAFB;
     }
     
     .chat-input-field:focus {
         border-color: #0066FF;
-        box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.1);
+        background: white;
     }
     
     .chat-send-btn {
-        width: 48px;
-        height: 48px;
+        width: 52px;
+        height: 52px;
         border-radius: 50%;
         background: #0066FF;
         border: none;
@@ -106,18 +115,23 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0;
     }
     
     .chat-send-btn:hover {
         background: #0052CC;
-        transform: scale(1.05);
+        transform: scale(1.08);
     }
     
-    /* Message Bubbles - Improved */
+    .chat-send-btn:active {
+        transform: scale(0.95);
+    }
+    
+    /* Message Bubbles - Improved Size */
     .message-item {
         display: flex;
-        gap: 10px;
-        margin-bottom: 16px;
+        gap: 12px;
+        margin-bottom: 20px;
         align-items: flex-end;
     }
     
@@ -126,8 +140,8 @@
     }
     
     .message-avatar-chat {
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         background: #E5E7EB;
         flex-shrink: 0;
@@ -144,14 +158,15 @@
     }
     
     .message-avatar-chat i {
-        font-size: 18px;
+        font-size: 20px;
         color: #9CA3AF;
     }
     
     .message-content-box {
         display: flex;
         flex-direction: column;
-        max-width: 50%; /* Desktop - до середины экрана */
+        max-width: 55%; /* Desktop - чуть больше половины */
+        min-width: 120px;
     }
     
     .message-item.sent .message-content-box {
@@ -159,32 +174,33 @@
     }
     
     .message-bubble-chat {
-        padding: 12px 16px;
-        border-radius: 16px;
+        padding: 14px 18px;
+        border-radius: 18px;
         font-size: 15px;
-        line-height: 1.5;
+        line-height: 1.6;
         word-wrap: break-word;
         word-break: break-word;
+        overflow-wrap: break-word;
     }
     
     .message-bubble-chat.received {
         background: white;
         color: #111827;
         border: 1px solid #E5E7EB;
-        border-bottom-left-radius: 4px;
+        border-bottom-left-radius: 6px;
     }
     
     .message-bubble-chat.sent {
         background: #0066FF;
         color: white;
-        border-bottom-right-radius: 4px;
+        border-bottom-right-radius: 6px;
     }
     
     .message-timestamp {
-        font-size: 12px;
+        font-size: 11px;
         color: #9CA3AF;
-        margin-top: 4px;
-        padding: 0 4px;
+        margin-top: 6px;
+        padding: 0 6px;
     }
     
     /* Mobile Adjustments */
@@ -228,22 +244,26 @@
             <i class="bi bi-arrow-left"></i>
         </a>
         
-        <div class="chat-avatar-wrapper">
+        <div class="chat-avatar-wrapper" style="position:relative;">
             {% if other_user.profile.avatar %}
-            <img src="{{ other_user.profile.avatar.url }}" alt="{{ other_user.username }}" class="chat-avatar" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+            <img src="{{ other_user.profile.avatar.url }}" alt="{{ other_user.username }}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #E5E7EB;">
             {% else %}
-            <div class="chat-avatar chat-avatar-placeholder" style="width:44px;height:44px;border-radius:50%;background:#F3F4F6;display:flex;align-items:center;justify-content:center;">
-                <i class="bi bi-person-fill" style="font-size:20px;color:#9CA3AF;"></i>
+            <div style="width:48px;height:48px;border-radius:50%;background:#F3F4F6;display:flex;align-items:center;justify-content:center;border:2px solid #E5E7EB;">
+                <i class="bi bi-person-fill" style="font-size:22px;color:#9CA3AF;"></i>
             </div>
             {% endif %}
-            <span class="chat-online-status {{ other_user.profile.get_online_status }}" style="position:absolute;bottom:0;right:0;width:12px;height:12px;border-radius:50%;border:2px solid white;"></span>
+            {% if other_user.profile.get_online_status == 'online' %}
+            <span style="position:absolute;bottom:2px;right:2px;width:14px;height:14px;border-radius:50%;border:3px solid white;background:#10B981;"></span>
+            {% else %}
+            <span style="position:absolute;bottom:2px;right:2px;width:14px;height:14px;border-radius:50%;border:3px solid white;background:#9CA3AF;"></span>
+            {% endif %}
         </div>
         
-        <div style="flex:1;">
-            <h6 style="margin:0;font-weight:600;font-size:16px;">
+        <div style="flex:1;min-width:0;">
+            <h6 style="margin:0;font-weight:600;font-size:17px;line-height:1.3;">
                 <a href="{% url 'accounts:profile' other_user.username %}" style="color:#111827;text-decoration:none;">{{ other_user.username }}</a>
             </h6>
-            <p style="margin:0;font-size:13px;color:#6B7280;">{{ other_user.profile.get_last_seen_display }}</p>
+            <p style="margin:2px 0 0 0;font-size:13px;color:#6B7280;line-height:1.2;">{{ other_user.profile.get_last_seen_display }}</p>
         </div>
         
         {% if conversation.listing %}
