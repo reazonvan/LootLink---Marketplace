@@ -347,6 +347,30 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
+/* Кнопка избранного на странице детального просмотра - НЕ абсолютная */
+.favorite-btn-detail {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    background: white !important;
+    padding: 12px !important;
+}
+
+.favorite-btn-detail:hover {
+    background: #FEE2E2 !important;
+    transform: none !important;
+}
+
+.favorite-btn-detail.active {
+    background: #FEE2E2 !important;
+    border-color: #EF4444 !important;
+}
+
+.favorite-btn-detail i {
+    margin-right: 8px;
+}
+
 .listing-price-large {
     font-size: 36px;
     font-weight: 700;

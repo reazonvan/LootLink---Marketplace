@@ -99,7 +99,7 @@
                             
                             <button 
                                 id="favorite-btn" 
-                                class="btn btn-outline-danger w-100 favorite-btn {% if is_favorited %}active{% endif %}"
+                                class="btn btn-outline-danger w-100 favorite-btn-detail {% if is_favorited %}active{% endif %}"
                                 data-listing-id="{{ listing.pk }}"
                                 data-is-favorited="{{ is_favorited|yesno:'true,false' }}"
                             >
