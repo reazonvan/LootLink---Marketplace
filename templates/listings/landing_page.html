@@ -82,14 +82,14 @@
 <section class="how-it-works-section">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="section-title">🚀 Как это работает</h2>
+            <h2 class="section-title">Как это работает</h2>
             <p class="section-subtitle">Всего 4 простых шага до успешной сделки</p>
         </div>
         <div class="row g-4">
             <div class="col-md-3 col-6">
                 <div class="step-card">
                     <div class="step-number">1</div>
-                    <div class="step-icon">🎮</div>
+                    <div class="step-icon"><i class="bi bi-search"></i></div>
                     <h4 class="step-title">Выбираете товар</h4>
                     <p class="step-description">Находите нужный предмет в каталоге игр</p>
                 </div>
@@ -97,7 +97,7 @@
             <div class="col-md-3 col-6">
                 <div class="step-card">
                     <div class="step-number">2</div>
-                    <div class="step-icon">💬</div>
+                    <div class="step-icon"><i class="bi bi-chat-dots"></i></div>
                     <h4 class="step-title">Связываетесь</h4>
                     <p class="step-description">Пишете продавцу через встроенный чат</p>
                 </div>
@@ -105,7 +105,7 @@
             <div class="col-md-3 col-6">
                 <div class="step-card">
                     <div class="step-number">3</div>
-                    <div class="step-icon">✅</div>
+                    <div class="step-icon"><i class="bi bi-check-circle"></i></div>
                     <h4 class="step-title">Безопасная сделка</h4>
                     <p class="step-description">Получаете товар с гарантией</p>
                 </div>
@@ -113,7 +113,7 @@
             <div class="col-md-3 col-6">
                 <div class="step-card">
                     <div class="step-number">4</div>
-                    <div class="step-icon">⭐</div>
+                    <div class="step-icon"><i class="bi bi-star"></i></div>
                     <h4 class="step-title">Оставляете отзыв</h4>
                     <p class="step-description">Делитесь опытом с сообществом</p>
                 </div>
@@ -126,7 +126,7 @@
 <section class="guarantees-section">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="section-title">🛡️ Гарантии безопасности</h2>
+            <h2 class="section-title">Гарантии безопасности</h2>
             <p class="section-subtitle">Мы защищаем каждую сделку на платформе</p>
         </div>
         <div class="row g-4">
@@ -188,44 +188,7 @@
     </div>
 </section>
 
-<!-- Features Section -->
-<section class="features-section">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="section-title">Почему выбирают LootLink</h2>
-            <p class="section-subtitle">Безопасная торговля игровыми предметами</p>
-        </div>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-shield-check"></i>
-                    </div>
-                    <h3 class="feature-title">Безопасность</h3>
-                    <p class="feature-description">Система рейтингов и отзывов помогает выбрать надежных продавцов</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-cash-stack"></i>
-                    </div>
-                    <h3 class="feature-title">Без комиссий</h3>
-                    <p class="feature-description">Прямая торговля между игроками. Вся прибыль остается у вас</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-chat-dots"></i>
-                    </div>
-                    <h3 class="feature-title">Удобный чат</h3>
-                    <p class="feature-description">Встроенная система сообщений для быстрой связи с продавцом</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+<!-- Removed duplicate Features Section -->
 
 <!-- Latest Listings Section -->
 {% if latest_listings %}
@@ -253,7 +216,7 @@
                         <div class="listing-badge-corner badge-new">НОВОЕ</div>
                         {% endif %}
                         {% if listing.price < 500 %}
-                        <div class="listing-badge-corner badge-hot" style="top:45px;">🔥 ХИТ</div>
+                        <div class="listing-badge-corner badge-hot" style="top:45px;">ХИТ</div>
                         {% endif %}
                     </div>
                     <div class="listing-content">
@@ -280,18 +243,22 @@
 <section class="testimonials-section">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="section-title">💬 Что говорят наши пользователи</h2>
+            <h2 class="section-title">Отзывы клиентов</h2>
             <p class="section-subtitle">Реальные отзывы игроков о LootLink</p>
         </div>
         <div class="row g-4">
             <div class="col-md-4">
                 <div class="testimonial-card">
                     <div class="testimonial-rating">
-                        ⭐⭐⭐⭐⭐
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
                     </div>
                     <p class="testimonial-text">"Купил аккаунт CS2 за 5 минут! Продавец оказался честным, всё прошло гладко. Рекомендую!"</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar">👤</div>
+                        <div class="author-avatar"><i class="bi bi-person-fill"></i></div>
                         <div>
                             <div class="author-name">Ivan_Pro</div>
                             <div class="author-meta">Купил CS2 аккаунт</div>
@@ -302,11 +269,15 @@
             <div class="col-md-4">
                 <div class="testimonial-card">
                     <div class="testimonial-rating">
-                        ⭐⭐⭐⭐⭐
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
                     </div>
                     <p class="testimonial-text">"Лучший маркетплейс для Dota 2! Продал несколько arcana дороже чем на Steam Market. Спасибо!"</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar">🎮</div>
+                        <div class="author-avatar"><i class="bi bi-controller"></i></div>
                         <div>
                             <div class="author-name">ProGamer2024</div>
                             <div class="author-meta">Продал 15+ предметов</div>
@@ -317,11 +288,15 @@
             <div class="col-md-4">
                 <div class="testimonial-card">
                     <div class="testimonial-rating">
-                        ⭐⭐⭐⭐⭐
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
                     </div>
                     <p class="testimonial-text">"Безопасно и удобно! Поддержка быстро помогла разобраться. Буду пользоваться ещё!"</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar">⚡</div>
+                        <div class="author-avatar"><i class="bi bi-lightning-fill"></i></div>
                         <div>
                             <div class="author-name">Dmitry_88</div>
                             <div class="author-meta">Новый пользователь</div>
@@ -337,14 +312,14 @@
 <section class="top-sellers-section">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="section-title">🏆 Топ продавцов месяца</h2>
+            <h2 class="section-title">Топ продавцов месяца</h2>
             <p class="section-subtitle">Проверенные продавцы с лучшей репутацией</p>
         </div>
         <div class="row g-4">
             <div class="col-md-4">
                 <div class="top-seller-card">
-                    <div class="seller-rank gold">🥇</div>
-                    <div class="seller-avatar-large">👑</div>
+                    <div class="seller-rank gold">#1</div>
+                    <div class="seller-avatar-large"><i class="bi bi-person-fill"></i></div>
                     <h4 class="seller-name-large">TrustedSeller</h4>
                     <div class="seller-rating-large">
                         <span class="rating-stars">⭐⭐⭐⭐⭐</span>
@@ -368,8 +343,8 @@
             </div>
             <div class="col-md-4">
                 <div class="top-seller-card">
-                    <div class="seller-rank silver">🥈</div>
-                    <div class="seller-avatar-large">💎</div>
+                    <div class="seller-rank silver">#2</div>
+                    <div class="seller-avatar-large"><i class="bi bi-person-fill"></i></div>
                     <h4 class="seller-name-large">ReliableTrader</h4>
                     <div class="seller-rating-large">
                         <span class="rating-stars">⭐⭐⭐⭐⭐</span>
@@ -393,8 +368,8 @@
             </div>
             <div class="col-md-4">
                 <div class="top-seller-card">
-                    <div class="seller-rank bronze">🥉</div>
-                    <div class="seller-avatar-large">⚡</div>
+                    <div class="seller-rank bronze">#3</div>
+                    <div class="seller-avatar-large"><i class="bi bi-person-fill"></i></div>
                     <h4 class="seller-name-large">FastDeals</h4>
                     <div class="seller-rating-large">
                         <span class="rating-stars">⭐⭐⭐⭐⭐</span>
@@ -461,7 +436,7 @@
 <section class="faq-section">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="section-title">❓ Частые вопросы</h2>
+            <h2 class="section-title">Частые вопросы</h2>
             <p class="section-subtitle">Ответы на популярные вопросы о LootLink</p>
         </div>
         <div class="row justify-content-center">
@@ -470,7 +445,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                                🛒 Как купить товар на LootLink?
+                                Как купить товар на LootLink?
                             </button>
                         </h2>
                         <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
@@ -489,7 +464,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                                💰 Есть ли комиссии на платформе?
+                                Есть ли комиссии на платформе?
                             </button>
                         </h2>
                         <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
@@ -507,7 +482,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                                🛡️ Как защищены сделки?
+                                Как защищены сделки?
                             </button>
                         </h2>
                         <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
@@ -527,7 +502,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                                ⭐ Как стать проверенным продавцом?
+                                Как стать проверенным продавцом?
                             </button>
                         </h2>
                         <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
@@ -546,7 +521,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
-                                📱 Что делать если продавец не отвечает?
+                                Что делать если продавец не отвечает?
                             </button>
                         </h2>
                         <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
@@ -565,7 +540,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
-                                🎮 Какие игры поддерживаются?
+                                Какие игры поддерживаются?
                             </button>
                         </h2>
                         <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">

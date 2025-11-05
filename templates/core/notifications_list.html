@@ -150,7 +150,7 @@
     </div>
 </div>
 
-<!-- JavaScript для AJAX и анимаций -->
+<!-- JavaScript для автоматического прочтения при просмотре -->
 <script>
 function getCookie(name) {
     let cookieValue = null;
@@ -170,42 +170,68 @@ function getCookie(name) {
 document.addEventListener('DOMContentLoaded', function() {
     const csrfToken = getCookie('csrftoken');
     
-    // Анимация появления карточек
-    const cards = document.querySelectorAll('.notification-card');
-    cards.forEach((card, index) => {
-        card.style.animationDelay = `${index * 0.05}s`;
-    });
+    // Intersection Observer для автоматического прочтения
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.5 // 50% карточки должно быть видимо
+    };
     
-    // Отметка одного уведомления как прочитанного
-    const markReadBtns = document.querySelectorAll('.mark-read-btn');
-    markReadBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const notificationId = this.getAttribute('data-notification-id');
-            const card = this.closest('.notification-card');
-            
-            fetch(`/notifications/mark-read/${notificationId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrfToken
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Плавное удаление класса unread
-                    card.classList.add('marking-read');
-                    setTimeout(() => {
-                        card.classList.remove('unread');
-                        card.classList.remove('marking-read');
-                        this.remove();
-                        // Обновляем счетчик в navbar
-                        location.reload();
-                    }, 300);
-                }
-            })
-            .catch(error => console.error('Error:', error));
+    const autoMarkAsRead = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && entry.target.classList.contains('unread')) {
+                const notificationId = entry.target.getAttribute('data-notification-id');
+                
+                // Отмечаем как прочитанное через 1 секунду просмотра
+                setTimeout(() => {
+                    if (entry.target.classList.contains('unread')) {
+                        markNotificationAsRead(notificationId, entry.target);
+                    }
+                }, 1000);
+            }
         });
+    }, observerOptions);
+    
+    // Функция отметки как прочитанного
+    function markNotificationAsRead(notificationId, card) {
+        fetch(`/notifications/mark-read/${notificationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                card.classList.add('marking-read');
+                setTimeout(() => {
+                    card.classList.remove('unread', 'marking-read');
+                    // Обновляем счетчик в navbar
+                    updateNotificationCount();
+                }, 300);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+    
+    // Обновление счетчика уведомлений
+    function updateNotificationCount() {
+        const badge = document.querySelector('.notification-badge-count');
+        if (badge) {
+            const unreadCount = document.querySelectorAll('.notification-card.unread').length;
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+            } else {
+                badge.remove();
+            }
+        }
+    }
+    
+    // Наблюдаем за всеми непрочитанными уведомлениями
+    const unreadCards = document.querySelectorAll('.notification-card.unread');
+    unreadCards.forEach(card => {
+        autoMarkAsRead.observe(card);
     });
     
     // Отметка всех уведомлений
@@ -222,25 +248,34 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Плавное обновление всех карточек
                     const unreadCards = document.querySelectorAll('.notification-card.unread');
                     unreadCards.forEach((card, index) => {
                         setTimeout(() => {
                             card.classList.add('marking-read');
                             setTimeout(() => {
-                                card.classList.remove('unread');
-                                card.classList.remove('marking-read');
+                                card.classList.remove('unread', 'marking-read');
                             }, 300);
                         }, index * 50);
                     });
-                    
-                    // Обновляем UI через 2 секунды
-                    setTimeout(() => location.reload(), 2000);
+                    setTimeout(() => updateNotificationCount(), 1000);
                 }
             })
             .catch(error => console.error('Error:', error));
         });
     }
+    
+    // Клик по карточке уведомления - переход по ссылке
+    document.querySelectorAll('.notification-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Если клик не по кнопке или ссылке
+            if (!e.target.closest('.notification-action-btn') && !e.target.closest('a')) {
+                const link = this.querySelector('.notification-action-btn.primary');
+                if (link) {
+                    link.click();
+                }
+            }
+        });
+    });
 });
 </script>
 
