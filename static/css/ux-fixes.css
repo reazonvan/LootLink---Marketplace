@@ -109,51 +109,71 @@
 }
 
 /* ============================================
-   IMPROVED LISTING PLACEHOLDERS
+   IMPROVED LISTING PLACEHOLDERS - Clean Design
    ============================================ */
 .no-image-placeholder-sm {
     width: 100%;
     height: 200px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 12px 12px 0 0;
+    position: relative;
+    overflow: hidden;
 }
 
+/* Убираем иконку полностью */
 .no-image-placeholder-sm i {
-    font-size: 64px;
-    color: rgba(255,255,255,0.4);
+    display: none;
+}
+
+/* Добавляем тонкий паттерн вместо иконки */
+.no-image-placeholder-sm::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255,255,255,0.1) 10px,
+        rgba(255,255,255,0.1) 20px
+    );
 }
 
 /* Для детальной страницы */
 .listing-detail-image.listing-no-image .no-image-placeholder {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
     height: 400px;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     border-radius: 12px;
+    position: relative;
+    overflow: hidden;
 }
 
-.listing-detail-image.listing-no-image .no-image-placeholder i {
-    font-size: 120px;
-    color: rgba(255, 255, 255, 0.3);
-    margin-bottom: 20px;
-}
-
-.listing-detail-image.listing-no-image .no-image-placeholder p {
-    color: white;
-    font-size: 18px;
-    font-weight: 600;
-    margin: 0;
-    opacity: 0.8;
-}
-
-/* Убираем отображение текста "Изображение не загружено" */
+/* Убираем иконку и текст полностью */
+.listing-detail-image.listing-no-image .no-image-placeholder i,
 .listing-detail-image.listing-no-image .no-image-placeholder p {
     display: none;
+}
+
+/* Добавляем тонкий паттерн */
+.listing-detail-image.listing-no-image .no-image-placeholder::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255,255,255,0.15) 10px,
+        rgba(255,255,255,0.15) 20px
+    );
 }
 
 /* ============================================
