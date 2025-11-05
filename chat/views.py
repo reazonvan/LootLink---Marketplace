@@ -56,10 +56,7 @@ def conversations_list(request):
 @login_required
 def conversation_detail(request, pk):
     """Детальный просмотр беседы с возможностью отправки сообщений."""
-    conversation = get_object_or_404(
-        Conversation.objects.select_related('listing', 'listing__game').prefetch_related('listing__images'),
-        pk=pk
-    )
+    conversation = get_object_or_404(Conversation, pk=pk)
     
     # Проверяем, является ли пользователь участником беседы
     if request.user not in [conversation.participant1, conversation.participant2]:
@@ -147,8 +144,13 @@ def conversation_start(request, listing_pk):
                 }
             )
             
-            # Беседа создается без автоматических сообщений
-            # Только карточка товара будет видна в чате
+            # Если беседа только что создана - создаем приветственное сообщение
+            if created:
+                Message.objects.create(
+                    conversation=conversation,
+                    sender=request.user,
+                    content=f'Здравствуйте! Интересует товар: {listing.title}'
+                )
     except IntegrityError:
         # На случай если все равно создался дубликат (крайне редко)
         conversation = Conversation.objects.filter(
