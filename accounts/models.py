@@ -147,9 +147,10 @@ class Profile(models.Model):
         verbose_name='Дата обновления'
     )
     last_seen = models.DateTimeField(
-        auto_now=True,
+        null=True,
+        blank=True,
         verbose_name='Последняя активность',
-        help_text='Автоматически обновляется при каждом запросе'
+        help_text='Обновляется middleware при каждом запросе пользователя'
     )
     
     class Meta:

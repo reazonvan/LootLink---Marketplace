@@ -14,18 +14,20 @@ class UpdateLastSeenMiddleware(MiddlewareMixin):
     
     def process_request(self, request):
         if request.user.is_authenticated:
-            # Проверяем когда last_seen обновлялся последний раз
+            # Обновляем last_seen при каждом запросе (оптимизация через cache)
             try:
-                profile = request.user.profile
-                now = timezone.now()
+                from django.core.cache import cache
+                from accounts.models import Profile
                 
-                # Обновляем только если прошло больше 5 минут
-                if not profile.last_seen or (now - profile.last_seen) > timedelta(minutes=5):
-                    # Используем update для избежания сигналов и save()
-                    from accounts.models import Profile
-                    Profile.objects.filter(id=profile.id).update(last_seen=now)
-                    # Обновляем объект в памяти
-                    profile.last_seen = now
+                # Используем кэш чтобы не обновлять БД при каждом запросе
+                cache_key = f'last_seen_updated_{request.user.id}'
+                
+                # Обновляем только если кэш отсутствует (раз в 2 минуты)
+                if not cache.get(cache_key):
+                    now = timezone.now()
+                    Profile.objects.filter(user=request.user).update(last_seen=now)
+                    # Ставим флаг на 2 минуты
+                    cache.set(cache_key, True, 120)
             except Exception:
                 # Если профиля нет или ошибка - не ломаем запрос
                 pass
