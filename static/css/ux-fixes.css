@@ -1,0 +1,232 @@
+/**
+ * UX Fixes - Clean and Modern Design
+ * Упрощенный минималистичный дизайн без emoji и градиентов
+ */
+
+/* ============================================
+   STEP CARDS - Simplified
+   ============================================ */
+.step-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    color: #0066FF;
+}
+
+.step-icon i {
+    font-size: 48px;
+}
+
+/* ============================================
+   TOP SELLERS - Cleaner Design
+   ============================================ */
+.seller-rank {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    font-weight: 700;
+    background: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.seller-rank.gold {
+    background: #FFD700;
+    color: #000;
+    border: 2px solid #FFA500;
+}
+
+.seller-rank.silver {
+    background: #C0C0C0;
+    color: #000;
+    border: 2px solid #A8A8A8;
+}
+
+.seller-rank.bronze {
+    background: #CD7F32;
+    color: #fff;
+    border: 2px solid #B87333;
+}
+
+.seller-avatar-large {
+    background: #F3F4F6;
+    color: #6B7280;
+}
+
+.seller-avatar-large i {
+    font-size: 40px;
+}
+
+/* ============================================
+   TESTIMONIALS - No Gradients
+   ============================================ */
+.testimonials-section {
+    background: #F9FAFB;
+}
+
+.testimonials-section .section-title,
+.testimonials-section .section-subtitle {
+    color: #111827;
+}
+
+.testimonial-rating {
+    color: #FFA726;
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+.author-avatar {
+    background: #E5E7EB;
+    color: #6B7280;
+}
+
+.author-avatar i {
+    font-size: 24px;
+}
+
+/* ============================================
+   HOW IT WORKS - Simple Background
+   ============================================ */
+.how-it-works-section {
+    background: white;
+}
+
+.step-number {
+    background: #0066FF;
+}
+
+/* ============================================
+   GUARANTEES - Cleaner
+   ============================================ */
+.guarantees-section {
+    background: #F9FAFB;
+}
+
+/* ============================================
+   IMPROVED LISTING PLACEHOLDERS
+   ============================================ */
+.no-image-placeholder-sm {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px 12px 0 0;
+}
+
+.no-image-placeholder-sm i {
+    font-size: 64px;
+    color: rgba(255,255,255,0.4);
+}
+
+/* Для детальной страницы */
+.listing-detail-image.listing-no-image .no-image-placeholder {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.listing-detail-image.listing-no-image .no-image-placeholder i {
+    font-size: 120px;
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 20px;
+}
+
+.listing-detail-image.listing-no-image .no-image-placeholder p {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    opacity: 0.8;
+}
+
+/* Убираем отображение текста "Изображение не загружено" */
+.listing-detail-image.listing-no-image .no-image-placeholder p {
+    display: none;
+}
+
+/* ============================================
+   SIMPLIFIED RATINGS - Icons instead of Emoji
+   ============================================ */
+.rating-stars {
+    color: #FFA726;
+}
+
+/* ============================================
+   CLEANER BADGES
+   ============================================ */
+.urgency-badge {
+    background: #FF5252;
+    border-radius: 6px;
+    font-size: 12px;
+    padding: 6px 12px;
+}
+
+.badge-hot {
+    background: #FF5252;
+}
+
+/* ============================================
+   SELLER AVATAR MEDIUM
+   ============================================ */
+.seller-avatar-medium {
+    background: #F3F4F6;
+    color: #6B7280;
+}
+
+.seller-avatar-medium i {
+    font-size: 32px;
+}
+
+/* ============================================
+   TESTIMONIALS RATING - Icons
+   ============================================ */
+.testimonial-rating i {
+    color: #FFA726;
+    font-size: 18px;
+}
+
+/* ============================================
+   CLEANER ANIMATIONS
+   ============================================ */
+.step-card:hover {
+    transform: translateY(-4px);
+}
+
+.guarantee-card:hover {
+    transform: translateY(-3px);
+}
+
+.top-seller-card:hover {
+    transform: translateY(-4px);
+}
+
+/* Убираем анимацию пульсации */
+.seller-rank.gold {
+    animation: none;
+}
+
+/* ============================================
+   RESPONSIVE IMPROVEMENTS
+   ============================================ */
+@media (max-width: 768px) {
+    .no-image-placeholder-sm {
+        height: 150px;
+    }
+    
+    .no-image-placeholder-sm i {
+        font-size: 48px;
+    }
+}
+
