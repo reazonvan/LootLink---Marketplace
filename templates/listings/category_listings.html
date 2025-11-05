@@ -72,13 +72,12 @@
                         </label>
                         
                         {% if filter.filter_type == 'select' %}
-                            <select name="{{ filter.field_name }}" class="form-select form-select-sm" {% if not filter.is_required %}{% endif %} onchange="this.form.submit()">
+                            <select name="{{ filter.field_name }}" class="form-select form-select-sm" onchange="this.form.submit()">
                                 <option value="">Все</option>
                                 {% for option in filter.options.all %}
                                     {% if option.is_active %}
-                                    <option value="{{ option.value }}" 
-                                        {% if applied_filters|get_item:filter.field_name == option.value %}selected{% endif %}>
-                                        {{ option.get_display_name }}
+                                    <option value="{{ option.value }}">
+                                        {{ option.value }}
                                     </option>
                                     {% endif %}
                                 {% endfor %}
@@ -88,7 +87,6 @@
                             <div class="form-check">
                                 <input type="checkbox" name="{{ filter.field_name }}" value="true" 
                                     class="form-check-input" id="filter_{{ filter.field_name }}"
-                                    {% if applied_filters|get_item:filter.field_name %}checked{% endif %}
                                     onchange="this.form.submit()">
                                 <label class="form-check-label" for="filter_{{ filter.field_name }}">
                                     Да
@@ -100,10 +98,9 @@
                                 {% if option.is_active %}
                                 <div class="form-check">
                                     <input type="checkbox" name="{{ filter.field_name }}" value="{{ option.value }}" 
-                                        class="form-check-input" id="opt_{{ option.id }}"
-                                        {% if option.value in applied_filters|get_item:filter.field_name %}checked{% endif %}>
+                                        class="form-check-input" id="opt_{{ option.id }}">
                                     <label class="form-check-label" for="opt_{{ option.id }}">
-                                        {{ option.get_display_name }}
+                                        {{ option.value }}
                                     </label>
                                 </div>
                                 {% endif %}
