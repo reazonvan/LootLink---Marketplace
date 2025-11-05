@@ -47,7 +47,9 @@ def rules(request):
 
 @login_required
 def notifications_list(request):
-    """Список уведомлений пользователя с пагинацией."""
+    """Список уведомлений пользователя с пагинацией и автопрочтением."""
+    from django.core.cache import cache
+    
     notifications = Notification.objects.filter(
         user=request.user
     ).order_by('-created_at')
@@ -56,6 +58,22 @@ def notifications_list(request):
     paginator = Paginator(notifications, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    # Автоматически отмечаем видимые уведомления как прочитанные (первая страница)
+    if not page_number or page_number == '1':
+        # Отмечаем первые 10 уведомлений как прочитанные (верхние на странице)
+        unread_on_page = [n for n in page_obj.object_list if not n.is_read][:10]
+        if unread_on_page:
+            # Используем update для массового обновления
+            from django.utils import timezone
+            notification_ids = [n.id for n in unread_on_page]
+            Notification.objects.filter(id__in=notification_ids).update(
+                is_read=True,
+                read_at=timezone.now()
+            )
+            # Инвалидируем кэш
+            cache_key = f'unread_notif_count_{request.user.id}'
+            cache.delete(cache_key)
     
     context = {
         'page_obj': page_obj,
