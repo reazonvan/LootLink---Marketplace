@@ -813,12 +813,31 @@
     
     /* Чат */
     .conversation-item {
-        padding: 0.85rem !important;
+        padding: 12px 14px !important;
+        gap: 12px !important;
     }
     
-    .conversation-avatar {
-        width: 44px !important;
-        height: 44px !important;
+    .conversation-avatar img,
+    .conversation-avatar .avatar-placeholder {
+        width: 48px !important;
+        height: 48px !important;
+    }
+    
+    .avatar-placeholder i {
+        font-size: 22px !important;
+    }
+    
+    .conversation-username {
+        font-size: 16px !important;
+    }
+    
+    .conversation-listing,
+    .conversation-preview {
+        font-size: 13px !important;
+    }
+    
+    .conversation-time {
+        font-size: 12px !important;
     }
     
     .conversation-preview {
