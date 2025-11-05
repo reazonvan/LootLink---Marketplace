@@ -167,7 +167,7 @@
                         {% else %}
                         <i class="bi bi-person-fill"></i>
                         {% endif %}
-                        <span class="online-status online" title="Онлайн"></span>
+                        <span class="online-status {{ listing.seller.profile.get_online_status }}" title="{{ listing.seller.profile.get_last_seen_display }}"></span>
                     </div>
                     <div class="seller-info-main">
                         <h5>
