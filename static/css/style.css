@@ -1946,6 +1946,12 @@ footer a:hover {
     border-color: var(--primary);
 }
 
+.conversation-avatar {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+}
+
 .conversation-avatar img,
 .avatar-placeholder {
     width: 60px;
@@ -1968,19 +1974,26 @@ footer a:hover {
 
 .conversation-content {
     flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .conversation-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
+    gap: 0.5rem;
 }
 
 .conversation-username {
     font-size: 1.125rem;
     font-weight: 600;
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .unread-badge {
@@ -1990,18 +2003,25 @@ footer a:hover {
     border-radius: 12px;
     font-size: 0.75rem;
     font-weight: 700;
+    flex-shrink: 0;
 }
 
 .conversation-listing {
     color: var(--text-light);
     font-size: 0.875rem;
-    margin-bottom: 0.5rem;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .conversation-preview {
     color: var(--text);
     font-size: 0.875rem;
-    margin-bottom: 0.25rem;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .conversation-time {
