@@ -73,10 +73,16 @@ class Notification(models.Model):
     def mark_as_read(self):
         """Отметить уведомление как прочитанное."""
         from django.utils import timezone
+        from django.core.cache import cache
+        
         if not self.is_read:
             self.is_read = True
             self.read_at = timezone.now()
             self.save(update_fields=['is_read', 'read_at'])
+            
+            # Инвалидируем кэш количества уведомлений
+            cache_key = f'unread_notif_count_{self.user.id}'
+            cache.delete(cache_key)
     
     @classmethod
     def create_notification(cls, user, notification_type, title, message, link=''):
@@ -93,8 +99,14 @@ class Notification(models.Model):
     def mark_all_as_read(cls, user):
         """Отметить все уведомления пользователя как прочитанные."""
         from django.utils import timezone
+        from django.core.cache import cache
+        
         cls.objects.filter(user=user, is_read=False).update(
             is_read=True,
             read_at=timezone.now()
         )
+        
+        # Инвалидируем кэш количества уведомлений
+        cache_key = f'unread_notif_count_{user.id}'
+        cache.delete(cache_key)
 

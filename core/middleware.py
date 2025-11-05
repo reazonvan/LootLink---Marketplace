@@ -5,6 +5,10 @@ from django.core.cache import cache
 from django.http import HttpResponseForbidden
 from django.conf import settings
 import time
+import logging
+
+# Логгер для безопасности
+security_logger = logging.getLogger('django.security')
 
 
 class SimpleRateLimitMiddleware:
@@ -46,6 +50,12 @@ class SimpleRateLimitMiddleware:
         
         if should_check:
             if not self._check_rate_limit(request):
+                # Логируем подозрительную активность
+                ip = self._get_client_ip(request)
+                user = request.user if request.user.is_authenticated else 'Anonymous'
+                security_logger.warning(
+                    f'Rate limit exceeded: {request.path} | User: {user} | IP: {ip}'
+                )
                 return HttpResponseForbidden(
                     '❌ Слишком много попыток. Пожалуйста, подождите несколько минут.'
                 )

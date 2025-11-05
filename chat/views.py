@@ -152,6 +152,20 @@ def conversation_start(request, listing_pk):
 @require_http_methods(["GET"])
 def get_new_messages(request, conversation_pk):
     """API endpoint для получения новых сообщений (AJAX)."""
+    from django.core.cache import cache
+    
+    # Rate limiting: 60 запросов в минуту на пользователя
+    cache_key = f'chat_poll_rate_{request.user.id}'
+    requests_count = cache.get(cache_key, 0)
+    
+    if requests_count >= 60:
+        return JsonResponse({
+            'error': 'Слишком много запросов. Подождите минуту.',
+            'messages': []
+        }, status=429)
+    
+    cache.set(cache_key, requests_count + 1, 60)
+    
     conversation = get_object_or_404(Conversation, pk=conversation_pk)
     
     # Проверяем доступ

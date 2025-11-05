@@ -262,33 +262,8 @@ class ProfileUpdateForm(forms.ModelForm):
         return discord
 
 
-class UserUpdateForm(forms.ModelForm):
-    """
-    Форма обновления базовой информации пользователя.
-    ВАЖНО: Эта форма больше не используется, так как username и email нельзя изменить,
-    а ФИО мы не собираем согласно требованиям проекта.
-    Оставлена для обратной совместимости.
-    """
-    username = forms.CharField(
-        disabled=True,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'readonly': 'readonly'
-        }),
-        help_text='Имя пользователя нельзя изменить'
-    )
-    email = forms.EmailField(
-        disabled=True,
-        widget=forms.EmailInput(attrs={
-            'class': 'form-control',
-            'readonly': 'readonly'
-        }),
-        help_text='Email нельзя изменить'
-    )
-    
-    class Meta:
-        model = CustomUser
-        fields = ['username', 'email']
+# UserUpdateForm УДАЛЕНА - не используется, так как username и email нельзя изменить
+# Вся функциональность редактирования профиля в ProfileUpdateForm
 
 
 class PasswordResetRequestForm(forms.Form):

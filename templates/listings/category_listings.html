@@ -35,6 +35,94 @@
         </div>
     </div>
 
+    <div class="row">
+        <!-- Filters Sidebar -->
+        {% if category_filters %}
+        <div class="col-lg-3 mb-4">
+            <div class="filters-sidebar">
+                <div class="filters-header">
+                    <h5><i class="bi bi-funnel"></i> Фильтры</h5>
+                    {% if applied_filters %}
+                    <a href="{% url 'listings:category_listings' game.slug category.slug %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Сбросить
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <form method="get" id="filtersForm">
+                    <!-- Сортировка -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <i class="bi bi-sort-down"></i> Сортировка
+                        </label>
+                        <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Сначала новые</option>
+                            <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Сначала старые</option>
+                            <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Дешевле</option>
+                            <option value="-price" {% if sort_by == '-price' %}selected{% endif %}>Дороже</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Динамические фильтры -->
+                    {% for filter in category_filters %}
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            {{ filter.name }}
+                            {% if filter.is_required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        
+                        {% if filter.filter_type == 'select' %}
+                            <select name="{{ filter.field_name }}" class="form-select form-select-sm" {% if not filter.is_required %}{% endif %} onchange="this.form.submit()">
+                                <option value="">Все</option>
+                                {% for option in filter.options.all %}
+                                    {% if option.is_active %}
+                                    <option value="{{ option.value }}" 
+                                        {% if applied_filters|get_item:filter.field_name == option.value %}selected{% endif %}>
+                                        {{ option.get_display_name }}
+                                    </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        
+                        {% elif filter.filter_type == 'checkbox' %}
+                            <div class="form-check">
+                                <input type="checkbox" name="{{ filter.field_name }}" value="true" 
+                                    class="form-check-input" id="filter_{{ filter.field_name }}"
+                                    {% if applied_filters|get_item:filter.field_name %}checked{% endif %}
+                                    onchange="this.form.submit()">
+                                <label class="form-check-label" for="filter_{{ filter.field_name }}">
+                                    Да
+                                </label>
+                            </div>
+                        
+                        {% elif filter.filter_type == 'multiselect' %}
+                            {% for option in filter.options.all %}
+                                {% if option.is_active %}
+                                <div class="form-check">
+                                    <input type="checkbox" name="{{ filter.field_name }}" value="{{ option.value }}" 
+                                        class="form-check-input" id="opt_{{ option.id }}"
+                                        {% if option.value in applied_filters|get_item:filter.field_name %}checked{% endif %}>
+                                    <label class="form-check-label" for="opt_{{ option.id }}">
+                                        {{ option.get_display_name }}
+                                    </label>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    
+                    <button type="submit" class="btn btn-primary w-100 mt-3">
+                        <i class="bi bi-search"></i> Применить фильтры
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-9">
+        {% else %}
+        <div class="col-12">
+        {% endif %}
+
     <!-- Listings -->
     {% if page_obj %}
     <div class="mb-3">
@@ -112,6 +200,9 @@
         {% endif %}
     </div>
     {% endif %}
+    
+        </div><!-- End column -->
+    </div><!-- End row -->
 </div>
 {% endblock %}
 
