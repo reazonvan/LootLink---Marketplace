@@ -813,16 +813,41 @@
     
     /* Чат */
     .conversation-item {
-        padding: 0.85rem !important;
+        padding: 1rem 0.85rem !important;
+        gap: 0.75rem !important;
     }
     
     .conversation-avatar {
-        width: 44px !important;
-        height: 44px !important;
+        width: 52px !important;
+        height: 52px !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .conversation-avatar img,
+    .conversation-avatar .avatar-placeholder {
+        width: 52px !important;
+        height: 52px !important;
+    }
+    
+    .conversation-content {
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+    
+    .conversation-username {
+        font-size: 1rem !important;
+    }
+    
+    .conversation-listing {
+        font-size: 0.8125rem !important;
     }
     
     .conversation-preview {
-        font-size: 0.85rem !important;
+        font-size: 0.8125rem !important;
+    }
+    
+    .conversation-time {
+        font-size: 0.75rem !important;
     }
     
     /* Транзакции */
