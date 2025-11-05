@@ -14,9 +14,10 @@ class Migration(migrations.Migration):
             model_name='profile',
             name='last_seen',
             field=models.DateTimeField(
-                default=django.utils.timezone.now,
+                null=True,
+                blank=True,
                 verbose_name='Последняя активность',
-                help_text='Автоматически обновляется при каждом запросе'
+                help_text='Обновляется middleware при каждом запросе пользователя'
             ),
         ),
         migrations.AddIndex(
