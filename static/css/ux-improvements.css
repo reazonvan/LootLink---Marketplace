@@ -338,13 +338,13 @@
    LISTING DETAIL IMPROVEMENTS
    ============================================ */
 .listing-action-sidebar {
-    position: sticky;
-    top: 100px;
+    position: static;
     background: white;
     border: 2px solid #e9ecef;
     border-radius: 16px;
     padding: 25px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
 }
 
 /* Кнопка избранного на странице детального просмотра - НЕ абсолютная */
