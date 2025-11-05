@@ -146,6 +146,11 @@ class Profile(models.Model):
         auto_now=True,
         verbose_name='Дата обновления'
     )
+    last_seen = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Последняя активность',
+        help_text='Автоматически обновляется при каждом запросе'
+    )
     
     class Meta:
         verbose_name = 'Профиль'
@@ -176,6 +181,69 @@ class Profile(models.Model):
         
         # Обновляем текущий объект из БД
         self.refresh_from_db()
+    
+    def get_online_status(self):
+        """
+        Возвращает онлайн-статус пользователя.
+        
+        Returns:
+            str: 'online', 'away', 'offline'
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        if not self.last_seen:
+            return 'offline'
+        
+        now = timezone.now()
+        diff = now - self.last_seen
+        
+        # Онлайн: активность в последние 5 минут
+        if diff < timedelta(minutes=5):
+            return 'online'
+        # Away: активность в последний час
+        elif diff < timedelta(hours=1):
+            return 'away'
+        # Offline: более часа назад
+        else:
+            return 'offline'
+    
+    def get_last_seen_display(self):
+        """
+        Возвращает читаемое представление последней активности.
+        
+        Returns:
+            str: например "Онлайн", "5 минут назад", "Сегодня в 14:30"
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        if not self.last_seen:
+            return 'Не был(а) в сети'
+        
+        status = self.get_online_status()
+        
+        if status == 'online':
+            return 'Онлайн'
+        
+        now = timezone.now()
+        diff = now - self.last_seen
+        
+        # Менее часа - показываем минуты
+        if diff < timedelta(hours=1):
+            minutes = int(diff.total_seconds() / 60)
+            return f'{minutes} мин. назад'
+        
+        # Сегодня - показываем время
+        if self.last_seen.date() == now.date():
+            return f'Сегодня в {self.last_seen.strftime("%H:%M")}'
+        
+        # Вчера
+        if self.last_seen.date() == (now.date() - timedelta(days=1)):
+            return f'Вчера в {self.last_seen.strftime("%H:%M")}'
+        
+        # Другая дата
+        return self.last_seen.strftime('%d.%m.%Y')
     
     def delete(self, *args, **kwargs):
         """
