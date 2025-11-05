@@ -491,19 +491,22 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ========== Page Header ========== */
 .page-header {
-    padding: 3rem 0;
-    margin-bottom: 3rem;
+    padding: 1.5rem 0;
+    margin-bottom: 1.5rem;
     border-bottom: 2px solid var(--border);
 }
 
 .page-header h1 {
-    font-size: 3rem;
+    font-size: 2.5rem;
     line-height: 1.2;
+    margin-bottom: 0.5rem;
 }
 
-.page-header .lead {
-    font-size: 1.125rem;
-    line-height: 1.7;
+.page-header .lead,
+.page-header .text-muted {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 0;
 }
 
 /* ========== Search Section ========== */
@@ -1086,8 +1089,8 @@ footer a:hover {
     }
     
     .page-header {
-        padding: 2rem 0;
-        margin-bottom: 2rem;
+        padding: 1rem 0;
+        margin-bottom: 1rem;
     }
     
     /* Кнопки */
