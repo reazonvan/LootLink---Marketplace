@@ -144,13 +144,8 @@ def conversation_start(request, listing_pk):
                 }
             )
             
-            # Если беседа только что создана - создаем приветственное сообщение
-            if created:
-                Message.objects.create(
-                    conversation=conversation,
-                    sender=request.user,
-                    content=f'Здравствуйте! Интересует товар: {listing.title}'
-                )
+            # Беседа создается без автоматических сообщений
+            # Пользователь сам отправит первое сообщение
     except IntegrityError:
         # На случай если все равно создался дубликат (крайне редко)
         conversation = Conversation.objects.filter(
