@@ -37,8 +37,12 @@
                     <strong>{% if conversation.last_message.sender == user %}Вы:{% endif %}</strong>
                     {{ conversation.last_message.content|truncatewords:10 }}
                 </p>
-                <span class="conversation-time">{{ conversation.updated_at|date:"d.m.Y H:i" }}</span>
+                {% else %}
+                <p class="conversation-preview text-muted">
+                    Нет сообщений
+                </p>
                 {% endif %}
+                <span class="conversation-time">{{ conversation.updated_at|date:"d.m.Y H:i" }}</span>
             </div>
         </a>
         {% endfor %}
