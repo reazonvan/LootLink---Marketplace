@@ -376,6 +376,9 @@
     font-weight: 700;
     color: #0066ff;
     margin-bottom: 20px;
+    text-align: center;
+    width: 100%;
+    display: block;
 }
 
 .listing-cta-buttons {
