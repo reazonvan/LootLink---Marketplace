@@ -464,15 +464,11 @@
 }
 
 .online-status.online {
-    background: #00c853;
-}
-
-.online-status.away {
-    background: #ffa726;
+    background: #10B981; /* Зеленый - в сети */
 }
 
 .online-status.offline {
-    background: #bdbdbd;
+    background: #9CA3AF; /* Серый - не в сети */
 }
 
 .seller-info-main h5 {

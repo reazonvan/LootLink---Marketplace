@@ -188,7 +188,7 @@ class Profile(models.Model):
         Возвращает онлайн-статус пользователя.
         
         Returns:
-            str: 'online', 'away', 'offline'
+            str: 'online' или 'offline'
         """
         from django.utils import timezone
         from datetime import timedelta
@@ -202,10 +202,7 @@ class Profile(models.Model):
         # Онлайн: активность в последние 5 минут
         if diff < timedelta(minutes=5):
             return 'online'
-        # Away: активность в последний час
-        elif diff < timedelta(hours=1):
-            return 'away'
-        # Offline: более часа назад
+        # Offline: более 5 минут назад
         else:
             return 'offline'
     

@@ -64,15 +64,11 @@
 }
 
 .chat-online-status.online {
-    background: #10B981;
-}
-
-.chat-online-status.away {
-    background: #F59E0B;
+    background: #10B981; /* Зеленый - в сети */
 }
 
 .chat-online-status.offline {
-    background: #9CA3AF;
+    background: #9CA3AF; /* Серый - не в сети */
 }
 
 .chat-header-info {
