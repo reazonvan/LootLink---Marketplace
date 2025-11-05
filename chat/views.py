@@ -81,6 +81,11 @@ def conversation_detail(request, pk):
             message.sender = request.user
             message.save()
             
+            # Обновляем last_seen отправителя сразу
+            from django.utils import timezone
+            from accounts.models import Profile
+            Profile.objects.filter(user=request.user).update(last_seen=timezone.now())
+            
             # Если AJAX запрос, возвращаем JSON
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({
