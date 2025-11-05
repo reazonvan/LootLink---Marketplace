@@ -235,8 +235,8 @@
             padding: 90px 15px 90px 15px !important; /* Увеличен верхний padding чтобы не заезжало под header */
         }
         
-        .chat-messages-area[style*="padding-top:160px"] {
-            padding-top: 155px !important; /* Если есть карточка товара - на мобильных меньше отступ */
+        .chat-messages-area[style*="padding-top:175px"] {
+            padding-top: 165px !important; /* Если есть карточка товара - на мобильных меньше отступ */
         }
         
         .chat-header-fixed {
@@ -310,13 +310,15 @@
     <div class="listing-card-wrapper">
         <a href="{% url 'listings:listing_detail' conversation.listing.pk %}" class="listing-card-hover" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:10px;transition:all 0.2s;max-width:1000px;margin:0 auto;">
             <div style="width:56px;height:56px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#E5E7EB;">
-                {% if conversation.listing.images.first %}
-                <img src="{{ conversation.listing.images.first.image.url }}" alt="{{ conversation.listing.title }}" style="width:100%;height:100%;object-fit:cover;">
-                {% else %}
-                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
-                    <i class="bi bi-box" style="font-size:24px;color:#9CA3AF;"></i>
-                </div>
-                {% endif %}
+                {% with first_image=conversation.listing.images.all.first %}
+                    {% if first_image %}
+                    <img src="{{ first_image.image.url }}" alt="{{ conversation.listing.title }}" style="width:100%;height:100%;object-fit:cover;">
+                    {% else %}
+                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+                        <i class="bi bi-box" style="font-size:24px;color:#9CA3AF;"></i>
+                    </div>
+                    {% endif %}
+                {% endwith %}
             </div>
             <div style="flex:1;min-width:0;">
                 <div style="font-size:14px;font-weight:600;color:#111827;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
@@ -335,7 +337,7 @@
     {% endif %}
     
     <!-- Messages Area - Scrollable -->
-    <div class="chat-messages-area" id="messagesList" {% if conversation.listing %}style="padding-top:160px;"{% endif %}>
+    <div class="chat-messages-area" id="messagesList" {% if conversation.listing %}style="padding-top:175px;"{% endif %}>
         <div class="chat-messages-container">
             {% if messages %}
                 {% for message in messages %}
