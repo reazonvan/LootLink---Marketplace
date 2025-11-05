@@ -86,14 +86,6 @@
                                 <span>Открыть</span>
                             </a>
                             {% endif %}
-                            {% if not notification.is_read %}
-                            <button type="button" 
-                                    class="notification-action-btn mark-read-btn" 
-                                    data-notification-id="{{ notification.pk }}"
-                                    title="Отметить как прочитанное">
-                                <i class="bi bi-check2"></i>
-                            </button>
-                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}
@@ -153,29 +145,45 @@
 
 <!-- JavaScript для автоматического прочтения при просмотре -->
 <script>
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
+// Получаем CSRF токен из мета-тега
+function getCSRFToken() {
+    // Пробуем из мета-тега
+    const metaToken = document.querySelector('meta[name="csrf-token"]');
+    if (metaToken) {
+        return metaToken.content;
+    }
+    
+    // Пробуем из cookie
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith('csrftoken=')) {
+            return cookie.substring('csrftoken='.length);
         }
     }
-    return cookieValue;
+    
+    // Пробуем из скрытого поля формы
+    const hiddenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (hiddenInput) {
+        return hiddenInput.value;
+    }
+    
+    return null;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const csrfToken = getCookie('csrftoken');
+    const csrfToken = getCSRFToken();
+    
+    if (!csrfToken) {
+        console.error('CSRF token not found');
+        return;
+    }
     
     // Intersection Observer для автоматического прочтения
     const observerOptions = {
         root: null,
         rootMargin: '0px',
-        threshold: 0.5 // 50% карточки должно быть видимо
+        threshold: 0.6 // 60% карточки должно быть видимо
     };
     
     const markedCards = new Set(); // Предотвращаем дублирование
@@ -189,10 +197,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (entry.isIntersecting && !isRead && !markedCards.has(notificationId)) {
                 markedCards.add(notificationId);
                 
-                // Отмечаем как прочитанное сразу
+                // Отмечаем как прочитанное через 1 секунду просмотра
                 setTimeout(() => {
-                    markNotificationAsRead(notificationId, entry.target);
-                }, 800);
+                    if (entry.isIntersecting) { // Проверяем что все еще видима
+                        markNotificationAsRead(notificationId, entry.target);
+                    }
+                }, 1000);
             }
         });
     }, observerOptions);
@@ -203,54 +213,55 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': csrfToken
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
+                console.log('Notification marked as read:', notificationId);
                 card.setAttribute('data-is-read', 'true');
                 card.classList.add('marking-read');
                 setTimeout(() => {
                     card.classList.remove('unread', 'marking-read');
                     const unreadDot = card.querySelector('.unread-dot');
                     if (unreadDot) unreadDot.remove();
-                    // Обновляем счетчик в navbar
+                    // Обновляем счетчик
                     updateNotificationCount();
                 }, 300);
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error marking notification as read:', error);
+            markedCards.delete(notificationId); // Убираем из set при ошибке
+        });
     }
     
     // Обновление счетчика уведомлений
     function updateNotificationCount() {
         const unreadCount = document.querySelectorAll('.notification-card[data-is-read="false"]').length;
         
-        // Обновляем бейдж в navbar
-        const notifLink = document.querySelector('a[href="/notifications/"]');
-        if (notifLink) {
-            const badge = notifLink.querySelector('.position-absolute');
-            if (badge) {
-                if (unreadCount > 0) {
-                    badge.textContent = unreadCount;
-                } else {
-                    badge.remove();
-                    // Обновляем текст ссылки
-                    notifLink.innerHTML = '<i class="bi bi-bell"></i> Уведомления';
-                }
-            }
-        }
-        
         // Обновляем счетчик на странице
-        const totalCount = document.querySelector('.notifications-subtitle strong');
-        if (totalCount) {
-            totalCount.textContent = document.querySelectorAll('.notification-card').length;
+        const totalUnread = document.querySelector('.notifications-subtitle strong');
+        if (totalUnread) {
+            const totalText = totalUnread.parentElement;
+            if (unreadCount > 0) {
+                totalText.innerHTML = `Непрочитанных: <strong>${unreadCount}</strong>`;
+            } else {
+                totalText.innerHTML = `У вас нет непрочитанных уведомлений`;
+            }
         }
     }
     
     // Наблюдаем за всеми непрочитанными уведомлениями
     const unreadCards = document.querySelectorAll('.notification-card.unread');
+    console.log('Найдено непрочитанных уведомлений:', unreadCards.length);
     unreadCards.forEach(card => {
         autoMarkAsRead.observe(card);
     });
@@ -648,3 +659,4 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
 {% endblock %}
+
