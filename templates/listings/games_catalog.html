@@ -83,12 +83,13 @@
                 </div>
                 <div class="game-info-clean">
                     <h3 class="game-name-clean">{{ game.name }}</h3>
-                    {% if game.listings_count %}
                     <span class="game-count-clean">
-                        <i class="bi bi-box-seam"></i> 
-                        {{ game.listings_count }} {{ game.listings_count|pluralize:"лот,лота,лотов" }}
+                        {% if game.listings_count %}
+                            Товаров: {{ game.listings_count }}
+                        {% else %}
+                            Нет товаров
+                        {% endif %}
                     </span>
-                    {% endif %}
                 </div>
             </div>
             
@@ -499,16 +500,10 @@
 }
 
 .game-count-clean {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
+    display: inline-block;
     font-size: 0.8rem;
     color: var(--gray-600);
     font-weight: 500;
-}
-
-.game-count-clean i {
-    font-size: 0.8rem;
 }
 
 /* Список категорий - компактный popup в 2 колонки */

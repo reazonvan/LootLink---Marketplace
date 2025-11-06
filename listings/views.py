@@ -72,18 +72,14 @@ def landing_page(request):
 def games_catalog(request):
     """Каталог игр с категориями (как на Funpay)."""
     from django.core.cache import cache
+    from django.db.models import Count
     
-    # Кэшируем список игр на 1 час (меняется редко)
-    cache_key = 'games_catalog_data'
-    games = cache.get(cache_key)
-    
-    if games is None:
-        # Получаем все активные игры с их категориями
-        games = list(Game.objects.filter(is_active=True).prefetch_related(
-            'categories'
-        ).order_by('name'))
-        # Кэшируем на 1 час
-        cache.set(cache_key, games, 3600)
+    # Получаем все активные игры с их категориями и подсчетом объявлений
+    games = list(Game.objects.filter(is_active=True).prefetch_related(
+        'categories'
+    ).annotate(
+        listings_count=Count('listings', filter=Q(listings__status='active'))
+    ).order_by('name'))
     
     # Собираем алфавит и помечаем первую игру каждой буквы
     alphabet = []
@@ -107,12 +103,6 @@ def games_catalog(request):
             last_letter = game.first_letter
         else:
             game.first_in_letter = False
-        
-        # Добавляем счетчик объявлений для игры
-        game.listings_count = Listing.objects.filter(
-            game=game,
-            status='active'
-        ).count()
         
         # Добавляем счетчик объявлений для каждой категории
         for category in game.categories.all():
