@@ -254,8 +254,10 @@ class Listing(models.Model):
         Category,
         on_delete=models.PROTECT,
         related_name='listings',
+        null=True,
+        blank=True,
         verbose_name='Категория',
-        help_text='Категория товара (например: Аккаунты, Гемы, Ключи)'
+        help_text='Категория товара (необязательно)'
     )
     title = models.CharField(
         max_length=200,
