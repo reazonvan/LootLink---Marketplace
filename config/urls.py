@@ -6,7 +6,9 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic.base import RedirectView
+from django.contrib.sitemaps.views import sitemap
 from core import views as core_views
+from core.sitemaps import sitemaps
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -17,9 +19,13 @@ urlpatterns = [
     path('transactions/', include('transactions.urls')),
     path('chat/', include('chat.urls')),
     path('payments/', include('payments.urls')),
+    path('api/', include('api.urls')),
     path('', include('core.urls')),
     path('about/', core_views.about, name='about'),
     path('rules/', core_views.rules, name='rules'),
+    
+    # SEO
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
 ]
 
 # Custom error handlers

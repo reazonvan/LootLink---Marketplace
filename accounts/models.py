@@ -73,6 +73,13 @@ class Profile(models.Model):
         validators=[validate_avatar_size, validate_avatar_type],
         verbose_name='Аватар'
     )
+    cover_image = models.ImageField(
+        upload_to='covers/',
+        blank=True,
+        null=True,
+        verbose_name='Обложка профиля',
+        help_text='Рекомендуемый размер: 1200x300px'
+    )
     bio = models.TextField(
         max_length=500,
         blank=True,
@@ -86,6 +93,17 @@ class Profile(models.Model):
         verbose_name='Телефон'
     )
     # Социальные сети удалены - общение только на сайте через встроенный чат
+    
+    # Telegram
+    telegram_chat_id = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='Telegram Chat ID'
+    )
+    telegram_notifications = models.BooleanField(
+        default=False,
+        verbose_name='Telegram уведомления'
+    )
     
     # Баланс
     balance = models.DecimalField(
