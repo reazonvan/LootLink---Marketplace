@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Показываем уведомление
                     if (window.showToast) {
-                        showToast('success', data.message);
+                        showToast(data.message, 'success', 'heart-fill', 'bg-success');
                     }
                 } else {
                     // Удалено из избранного
@@ -55,20 +55,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Показываем уведомление
                     if (window.showToast) {
-                        showToast('info', data.message);
+                        showToast(data.message, 'info', 'heart', 'bg-info');
                     }
                 }
             } else {
                 // Ошибка
                 if (window.showToast) {
-                    showToast('error', 'Произошла ошибка. Попробуйте позже.');
+                    showToast('Произошла ошибка. Попробуйте позже.', 'error', 'exclamation-triangle', 'bg-danger');
                 }
             }
         })
         .catch(error => {
             console.error('Ошибка:', error);
             if (window.showToast) {
-                showToast('error', 'Произошла ошибка соединения.');
+                showToast('Произошла ошибка соединения.', 'error', 'exclamation-triangle', 'bg-danger');
             }
         })
         .finally(() => {

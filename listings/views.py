@@ -350,11 +350,11 @@ def category_listings(request, game_slug, category_slug):
     return render(request, 'listings/category_listings.html', context)
 
 
-def game_listings(request, slug):
+def game_listings(request, game_slug):
     """Объявления конкретной игры с оптимизацией запросов."""
     from django.core.cache import cache
     
-    game = get_object_or_404(Game, slug=slug, is_active=True)
+    game = get_object_or_404(Game, slug=game_slug, is_active=True)
     
     # Оптимизация: используем only() для выборки только нужных полей
     listings = Listing.objects.filter(
