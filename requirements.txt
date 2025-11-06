@@ -53,4 +53,23 @@ celery>=5.5.0
 # HTTP requests (для SMS API)
 requests>=2.31.0
 
+# Платежи
+yookassa>=3.4.0
+
+# WebSockets для real-time чата
+channels>=4.0.0
+channels-redis>=4.1.0
+daphne>=4.0.0
+
+# 2FA
+django-otp>=1.3.0
+qrcode>=7.4.2
+
+# REST API
+djangorestframework>=3.14.0
+django-filter>=23.5
+
+# Telegram бот
+python-telegram-bot>=20.7
+
 

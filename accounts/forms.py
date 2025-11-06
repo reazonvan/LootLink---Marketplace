@@ -349,3 +349,29 @@ class PasswordResetConfirmForm(forms.Form):
         self.reset_code.mark_as_used()
         return self.user
 
+
+class SMSVerificationForm(forms.Form):
+    """Форма ввода SMS кода"""
+    code = forms.CharField(
+        max_length=6,
+        min_length=6,
+        label='Введите код из SMS',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg text-center',
+            'placeholder': '000000',
+            'pattern': '[0-9]{6}',
+            'inputmode': 'numeric',
+            'autocomplete': 'one-time-code'
+        })
+    )
+    
+    def clean_code(self):
+        code = self.cleaned_data['code']
+        if not code.isdigit():
+            raise forms.ValidationError('Код должен содержать только цифры')
+        return code
+
+
+class ResendVerificationForm(forms.Form):
+    """Форма повторной отправки верификации"""
+    pass

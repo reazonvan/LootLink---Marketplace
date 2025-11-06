@@ -286,7 +286,7 @@
     
     <!-- Messages Area - Scrollable -->
     <div class="chat-messages-area" id="messagesList">
-        <div class="chat-messages-container">
+        <div class="chat-messages-container" id="messages-container">
             {% if messages %}
                 {% for message in messages %}
                 <div class="message-item {% if message.sender == user %}sent{% else %}received{% endif %}" data-message-id="{{ message.id }}">
@@ -314,6 +314,9 @@
                     <p>Начните беседу, отправив первое сообщение</p>
                 </div>
             {% endif %}
+            
+            <!-- Индикатор печатает -->
+            <div id="typing-indicator-container"></div>
         </div>
     </div>
     
@@ -339,76 +342,340 @@
     </div>
 </div>
 
+<!-- Статус подключения -->
+<div id="connection-status" class="connection-status" style="position:fixed;top:70px;left:0;right:0;z-index:99;display:none;"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+// WebSocket Chat Implementation
+class ChatWebSocket {
+    constructor(conversationId, userId, username) {
+        this.conversationId = conversationId;
+        this.userId = userId;
+        this.username = username;
+        this.socket = null;
+        this.typingTimeout = null;
+        this.isTyping = false;
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 5;
+        
+        this.messagesContainer = document.querySelector('.chat-messages-container');
+        this.messagesArea = document.getElementById('messagesList');
+        this.messageInput = document.getElementById('id_content');
+        this.messageForm = document.getElementById('message-form');
+        
+        this.init();
+    }
+    
+    init() {
+        this.connect();
+        this.attachEventListeners();
+        this.scrollToBottom();
+    }
+    
+    connect() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/chat/${this.conversationId}/`;
+        
+        console.log('🔌 Подключение к WebSocket:', wsUrl);
+        
+        try {
+            this.socket = new WebSocket(wsUrl);
+            
+            this.socket.onopen = () => {
+                console.log('✅ WebSocket подключен');
+                this.reconnectAttempts = 0;
+                this.showConnectionStatus('connected');
+                this.useWebSocket = true;
+            };
+            
+            this.socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                this.handleMessage(data);
+            };
+            
+            this.socket.onclose = (event) => {
+                console.log('❌ WebSocket отключен:', event.code, event.reason);
+                this.showConnectionStatus('disconnected');
+                this.useWebSocket = false;
+                
+                // Переподключение
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.reconnectAttempts++;
+                    const timeout = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000);
+                    console.log(`🔄 Переподключение через ${timeout}ms... (попытка ${this.reconnectAttempts})`);
+                    setTimeout(() => this.connect(), timeout);
+                } else {
+                    console.warn('⚠️ WebSocket недоступен, используем polling');
+                    this.startPolling();
+                }
+            };
+            
+            this.socket.onerror = (error) => {
+                console.error('❌ WebSocket ошибка:', error);
+                this.showConnectionStatus('error');
+            };
+        } catch (error) {
+            console.error('Ошибка создания WebSocket:', error);
+            this.showConnectionStatus('error');
+            console.warn('⚠️ Fallback на polling');
+            this.startPolling();
+        }
+    }
+    
+    startPolling() {
+        // Fallback на старый polling если WebSocket не работает
+        console.log('📡 Запуск polling режима');
+        this.pollingInterval = setInterval(() => {
+            this.pollNewMessages();
+        }, 3000);
+    }
+    
+    async pollNewMessages() {
+        const lastMessage = this.messagesContainer.querySelector('[data-message-id]:last-child');
+        const lastId = lastMessage ? lastMessage.dataset.messageId : 0;
+        
+        try {
+            const response = await fetch(`/chat/api/messages/${this.conversationId}/?after=${lastId}`);
+            const data = await response.json();
+            
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(msg => {
+                    this.addMessage({
+                        id: msg.id,
+                        content: msg.content,
+                        sender_id: msg.is_own ? this.userId : null,
+                        sender_username: msg.sender,
+                        created_at: new Date().toISOString(),
+                        is_read: false
+                    });
+                });
+            }
+        } catch (error) {
+            console.error('Ошибка polling:', error);
+        }
+    }
+    
+    handleMessage(data) {
+        console.log('Получено сообщение:', data);
+        
+        switch(data.type) {
+            case 'message':
+                this.addMessage(data.message);
+                break;
+            case 'typing':
+                this.showTypingIndicator(data.username, data.is_typing);
+                break;
+            case 'status':
+                this.updateUserStatus(data.username, data.status);
+                break;
+            case 'read':
+                this.markMessageAsRead(data.message_id);
+                break;
+            case 'error':
+                console.error('Ошибка сервера:', data.message);
+                break;
+        }
+    }
+    
+    sendMessage(content) {
+        if (!content.trim() || !this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            console.warn('Невозможно отправить сообщение');
+            return false;
+        }
+        
+        this.send({
+            type: 'message',
+            content: content.trim()
+        });
+        return true;
+    }
+    
+    sendTypingIndicator(isTyping) {
+        this.send({
+            type: 'typing',
+            is_typing: isTyping
+        });
+    }
+    
+    send(data) {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify(data));
+        }
+    }
+    
+    addMessage(message) {
+        const isSent = message.sender_id === this.userId;
+        const time = new Date(message.created_at).toLocaleTimeString('ru-RU', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        const messageHTML = `
+            <div class="message-item ${isSent ? 'sent' : 'received'}" data-message-id="${message.id}">
+                ${!isSent ? `
+                <div class="message-avatar-chat">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                ` : ''}
+                <div class="message-content-box">
+                    <div class="message-bubble-chat ${isSent ? 'sent' : 'received'}">
+                        ${this.escapeHtml(message.content)}
+                    </div>
+                    <div class="message-timestamp">${time}</div>
+                </div>
+            </div>
+        `;
+        
+        if (this.messagesContainer) {
+            this.messagesContainer.insertAdjacentHTML('beforeend', messageHTML);
+            this.scrollToBottom();
+        }
+    }
+    
+    showTypingIndicator(username, isTyping) {
+        const container = document.getElementById('typing-indicator-container');
+        if (!container) return;
+        
+        if (isTyping && username !== this.username) {
+            if (!document.getElementById('typing-indicator')) {
+                container.innerHTML = `
+                    <div id="typing-indicator" class="message-item received" style="opacity:0.8;">
+                        <div class="message-avatar-chat">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <div class="message-content-box">
+                            <div class="message-bubble-chat received" style="padding:8px 12px;">
+                                <span class="typing-dots">
+                                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#6B7280;margin:0 2px;animation:typing 1s infinite;"></span>
+                                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#6B7280;margin:0 2px;animation:typing 1s infinite 0.2s;"></span>
+                                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#6B7280;margin:0 2px;animation:typing 1s infinite 0.4s;"></span>
+                                </span>
+                            </div>
+                            <div class="message-timestamp">${username} печатает...</div>
+                        </div>
+                    </div>
+                    <style>
+                    @keyframes typing {
+                        0%, 60%, 100% { transform: translateY(0); }
+                        30% { transform: translateY(-5px); }
+                    }
+                    </style>
+                `;
+                this.scrollToBottom();
+            }
+        } else {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+    }
+    
+    updateUserStatus(username, status) {
+        console.log('Статус пользователя:', username, status);
+        // Можно обновить индикатор онлайн в хедере
+    }
+    
+    markMessageAsRead(messageId) {
+        const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
+        if (messageDiv) {
+            console.log('Сообщение прочитано:', messageId);
+        }
+    }
+    
+    showConnectionStatus(status) {
+        const statusEl = document.getElementById('connection-status');
+        if (!statusEl) return;
+        
+        const messages = {
+            'connected': 'Подключено ✓',
+            'disconnected': 'Переподключение...',
+            'error': 'Ошибка подключения'
+        };
+        
+        const colors = {
+            'connected': '#d4edda',
+            'disconnected': '#fff3cd',
+            'error': '#f8d7da'
+        };
+        
+        statusEl.textContent = messages[status] || '';
+        statusEl.style.background = colors[status] || '#fff';
+        statusEl.style.display = status === 'connected' ? 'none' : 'block';
+        statusEl.style.padding = '8px';
+        statusEl.style.textAlign = 'center';
+    }
+    
+    attachEventListeners() {
+        // Обработка формы
+        if (this.messageForm) {
+            this.messageForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const content = this.messageInput.value.trim();
+                if (content) {
+                    const sent = this.sendMessage(content);
+                    if (sent) {
+                        this.messageInput.value = '';
+                        this.isTyping = false;
+                        this.sendTypingIndicator(false);
+                    }
+                }
+            });
+        }
+        
+        // Индикатор печати
+        if (this.messageInput) {
+            this.messageInput.addEventListener('input', () => {
+                if (!this.isTyping) {
+                    this.isTyping = true;
+                    this.sendTypingIndicator(true);
+                }
+                
+                clearTimeout(this.typingTimeout);
+                this.typingTimeout = setTimeout(() => {
+                    this.isTyping = false;
+                    this.sendTypingIndicator(false);
+                }, 1000);
+            });
+            
+            // Enter для отправки
+            this.messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.messageForm.dispatchEvent(new Event('submit'));
+                }
+            });
+        }
+    }
+    
+    scrollToBottom() {
+        if (this.messagesArea) {
+            this.messagesArea.scrollTop = this.messagesArea.scrollHeight;
+        }
+    }
+    
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+}
+
+// Инициализация
 document.addEventListener('DOMContentLoaded', function() {
-    // Автоскролл вниз при загрузке
+    const conversationId = {{ conversation.pk }};
+    const userId = {{ user.id }};
+    const username = "{{ user.username }}";
+    
+    // Создаем WebSocket чат
+    window.chatWS = new ChatWebSocket(conversationId, userId, username);
+    
+    // Начальный скролл
     const messagesArea = document.getElementById('messagesList');
     if (messagesArea) {
         messagesArea.scrollTop = messagesArea.scrollHeight;
-    }
-    
-    // Автоскролл при отправке сообщения
-    const form = document.getElementById('message-form');
-    const input = document.getElementById('id_content');
-    
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            if (!input.value.trim()) return;
-            
-            const formData = new FormData(form);
-            
-            fetch(window.location.href, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Добавляем сообщение в DOM
-                    const container = document.querySelector('.chat-messages-container');
-                    const messageHTML = `
-                        <div class="message-item sent">
-                            <div class="message-content-box">
-                                <div class="message-bubble-chat sent">${input.value}</div>
-                                <div class="message-timestamp">${new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})}</div>
-                            </div>
-                        </div>
-                    `;
-                    
-                    if (container) {
-                        container.insertAdjacentHTML('beforeend', messageHTML);
-                        messagesArea.scrollTop = messagesArea.scrollHeight;
-                    }
-                    
-                    // Очищаем поле
-                    input.value = '';
-                    input.focus();
-                } else {
-                    // Fallback - обычная отправка формы
-                    form.submit();
-                }
-            })
-            .catch(() => {
-                // При ошибке AJAX - обычная отправка
-                form.submit();
-            });
-        });
-    }
-    
-    // Enter для отправки
-    if (input) {
-        input.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                form.dispatchEvent(new Event('submit'));
-            }
-        });
     }
 });
 </script>

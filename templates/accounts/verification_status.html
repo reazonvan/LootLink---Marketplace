@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Статус верификации - LootLink{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="mb-4"><i class="bi bi-shield-check"></i> Статус верификации</h1>
+            
+            <!-- Email верификация -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header {% if email_verification and email_verification.is_verified %}bg-success text-white{% else %}bg-warning text-dark{% endif %}">
+                    <h5 class="mb-0">
+                        <i class="bi bi-envelope-check"></i> Email верификация
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if email_verification and email_verification.is_verified %}
+                        <div class="alert alert-success mb-0">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <strong>Верифицирован!</strong> Ваш email {{ user.email }} подтвержден.
+                            <br><small class="text-muted">Дата верификации: {{ email_verification.verified_at|date:"d.m.Y H:i" }}</small>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Требуется верификация!</strong> Email {{ user.email }} не подтвержден.
+                        </div>
+                        <p>Проверьте свою почту и перейдите по ссылке из письма.</p>
+                        <form method="post" action="{% url 'accounts:resend_verification_email' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-arrow-repeat"></i> Отправить письмо повторно
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Телефон верификация -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header {% if phone_verified %}bg-success text-white{% else %}bg-warning text-dark{% endif %}">
+                    <h5 class="mb-0">
+                        <i class="bi bi-phone-vibrate"></i> Телефон верификация
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if phone_verified %}
+                        <div class="alert alert-success mb-0">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <strong>Верифицирован!</strong> Ваш телефон {{ user.profile.phone }} подтвержден.
+                            <br><small class="text-muted">Дата верификации: {{ user.profile.verification_date|date:"d.m.Y H:i" }}</small>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Требуется верификация!</strong> 
+                            {% if user.profile.phone %}
+                                Телефон {{ user.profile.phone }} не подтвержден.
+                            {% else %}
+                                Добавьте номер телефона в настройках профиля.
+                            {% endif %}
+                        </div>
+                        {% if user.profile.phone %}
+                            <p>Мы отправим вам SMS с кодом подтверждения.</p>
+                            <a href="{% url 'accounts:phone_verification_request' %}" class="btn btn-primary">
+                                <i class="bi bi-phone"></i> Верифицировать телефон
+                            </a>
+                        {% else %}
+                            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
+                                <i class="bi bi-pencil"></i> Добавить телефон
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Преимущества верификации -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-star"></i> Преимущества верификации</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-check2 text-success"></i> Повышенное доверие со стороны покупателей
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check2 text-success"></i> Значок "Проверенный продавец" в профиле
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check2 text-success"></i> Приоритет в поисковой выдаче
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check2 text-success"></i> Доступ ко всем функциям платформы
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check2 text-success"></i> Возможность выводить средства
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
