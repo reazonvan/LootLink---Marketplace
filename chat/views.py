@@ -167,11 +167,11 @@ def get_new_messages(request, conversation_pk):
     """API endpoint для получения новых сообщений (AJAX)."""
     from django.core.cache import cache
     
-    # Rate limiting: 60 запросов в минуту на пользователя
-    cache_key = f'chat_poll_rate_{request.user.id}'
+    # Rate limiting: 200 запросов в минуту на пользователя (для polling каждые 3 секунды)
+    cache_key = f'chat_poll_rate_{request.user.id}_{conversation_pk}'
     requests_count = cache.get(cache_key, 0)
     
-    if requests_count >= 60:
+    if requests_count >= 200:
         return JsonResponse({
             'error': 'Слишком много запросов. Подождите минуту.',
             'messages': []
