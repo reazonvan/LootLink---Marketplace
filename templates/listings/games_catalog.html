@@ -90,11 +90,6 @@
                     </span>
                     {% endif %}
                 </div>
-                {% if game.categories.all %}
-                <div class="toggle-icon">
-                    <i class="bi bi-chevron-down"></i>
-                </div>
-                {% endif %}
             </div>
             
             {% if game.categories.all %}
@@ -433,11 +428,18 @@
     border-radius: 16px;
     padding: 1.5rem;
     transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
 }
 
 .game-card-clean:hover {
     border-color: var(--primary);
     box-shadow: 0 4px 12px rgba(0, 102, 255, 0.08);
+}
+
+.game-card-clean.expanded {
+    z-index: 10;
+    box-shadow: 0 8px 24px rgba(0, 102, 255, 0.15);
+    border-color: var(--primary);
 }
 
 /* Заголовок карточки */
@@ -456,35 +458,13 @@
     transition: background 0.2s;
     border-radius: 8px;
     margin: -0.5rem;
-    padding: 0.5rem 0.5rem 1.25rem;
+    padding: 0.5rem 0.5rem 0.5rem;
+    margin-bottom: 0;
+    border-bottom: none;
 }
 
 .game-header-clean.game-toggle:hover {
     background: var(--gray-50);
-}
-
-.toggle-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    background: var(--gray-100);
-    border-radius: 8px;
-    color: var(--gray-600);
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-}
-
-.game-card-clean.expanded .toggle-icon {
-    background: var(--primary);
-    color: white;
-    transform: rotate(180deg);
-}
-
-.game-card-clean.expanded .game-header-clean {
-    border-bottom-color: transparent;
-    margin-bottom: 0.75rem;
 }
 
 .game-icon-clean {
@@ -526,34 +506,35 @@
     font-size: 0.875rem;
 }
 
-/* Список категорий */
+/* Список категорий - появляется поверх */
 .categories-list-clean {
     display: none;
     flex-direction: column;
     gap: 0.5rem;
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 12px 32px rgba(0, 102, 255, 0.2);
+    z-index: 100;
     opacity: 0;
-    max-height: 0;
-    overflow: hidden;
-    transition: opacity 0.3s ease, max-height 0.3s ease;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
 }
 
 .game-card-clean.expanded .categories-list-clean {
     display: flex;
     opacity: 1;
-    max-height: 2000px;
-    animation: slideDown 0.3s ease;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+/* Убираем анимацию slideDown */
 
 .category-item-clean {
     display: flex;
@@ -980,41 +961,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // Аккордеон для категорий игр
     document.querySelectorAll('.game-toggle').forEach(toggle => {
         toggle.addEventListener('click', function(e) {
-            // Не закрываем если кликнули по ссылке категории
-            if (e.target.closest('.category-item-clean')) {
-                return;
-            }
+            e.stopPropagation();
             
             const gameCard = this.closest('.game-card-clean');
             const wasExpanded = gameCard.classList.contains('expanded');
             
-            // Закрываем все другие карточки (опционально)
-            // document.querySelectorAll('.game-card-clean.expanded').forEach(card => {
-            //     if (card !== gameCard) {
-            //         card.classList.remove('expanded');
-            //     }
-            // });
+            // Закрываем все другие карточки
+            document.querySelectorAll('.game-card-clean.expanded').forEach(card => {
+                if (card !== gameCard) {
+                    card.classList.remove('expanded');
+                }
+            });
             
             // Переключаем текущую
             gameCard.classList.toggle('expanded');
-            
-            // Небольшая задержка для плавности анимации
-            if (!wasExpanded) {
-                setTimeout(() => {
-                    const categoriesList = gameCard.querySelector('.categories-list-clean');
-                    if (categoriesList && categoriesList.offsetTop) {
-                        const scrollTarget = categoriesList.offsetTop + gameCard.offsetTop - 100;
-                        // Плавно скроллим к категориям если они за пределами видимости
-                        if (window.pageYOffset + window.innerHeight < scrollTarget + categoriesList.offsetHeight) {
-                            window.scrollTo({
-                                top: scrollTarget,
-                                behavior: 'smooth'
-                            });
-                        }
-                    }
-                }, 100);
-            }
         });
+    });
+    
+    // Закрытие категорий при клике вне карточки
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.game-card-clean')) {
+            document.querySelectorAll('.game-card-clean.expanded').forEach(card => {
+                card.classList.remove('expanded');
+            });
+        }
     });
 });
 </script>
