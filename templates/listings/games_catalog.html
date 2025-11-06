@@ -94,18 +94,13 @@
             
             {% if game.categories.all %}
             <div class="categories-list-clean">
-                {% for category in game.categories.all|slice:":8" %}
+                {% for category in game.categories.all %}
                 <a href="{% url 'listings:category_listings' game.slug category.slug %}" class="category-item-clean">
                     <i class="{{ category.icon }}"></i>
                     <span>{{ category.name }}</span>
                     <i class="bi bi-chevron-right"></i>
                 </a>
                 {% endfor %}
-                {% if game.categories.all|length > 8 %}
-                <div class="more-link-clean">
-                    Еще {{ game.categories.all|length|add:"-8" }} {{ game.categories.all|length|add:"-8"|pluralize:"категория,категории,категорий" }}
-                </div>
-                {% endif %}
             </div>
             {% else %}
             <div class="no-categories-clean">
@@ -508,7 +503,7 @@
 .categories-list-clean {
     display: none;
     grid-template-columns: 1fr 1fr;
-    gap: 0.4rem;
+    gap: 0.35rem;
     position: absolute;
     top: calc(100% + 0.5rem);
     left: 0;
@@ -516,14 +511,14 @@
     background: white;
     border: 2px solid var(--primary);
     border-radius: 10px;
-    padding: 0.75rem;
+    padding: 0.65rem;
     box-shadow: 0 12px 32px rgba(0, 102, 255, 0.2);
     z-index: 100;
     opacity: 0;
     transform: translateY(-10px);
     transition: opacity 0.3s ease, transform 0.3s ease;
     pointer-events: none;
-    max-height: 500px;
+    max-height: 600px;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -559,19 +554,23 @@
 .category-item-clean {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.55rem 0.75rem;
+    gap: 0.45rem;
+    padding: 0.5rem 0.65rem;
     background: var(--gray-50);
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: 7px;
     text-decoration: none;
     color: var(--dark);
     font-weight: 500;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     transition: all 0.2s;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    min-height: 34px;
+}
+
+.category-item-clean span {
+    flex: 1;
+    word-break: break-word;
+    line-height: 1.25;
 }
 
 .category-item-clean:hover {
@@ -583,32 +582,24 @@
 }
 
 .category-item-clean i:first-child {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     flex-shrink: 0;
-}
-
-.category-item-clean span {
-    flex: 1;
+    width: 18px;
+    text-align: center;
 }
 
 .category-item-clean i:last-child {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     opacity: 0;
     transition: opacity 0.2s;
+    flex-shrink: 0;
 }
 
 .category-item-clean:hover i:last-child {
     opacity: 1;
 }
 
-.more-link-clean {
-    text-align: center;
-    padding: 0.5rem;
-    color: var(--gray-600);
-    font-size: 0.8rem;
-    font-weight: 500;
-    grid-column: 1 / -1;
-}
+/* Удалено - показываем все категории */
 
 /* Нет категорий */
 .no-categories-clean {
