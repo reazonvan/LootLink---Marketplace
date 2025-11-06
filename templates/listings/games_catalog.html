@@ -77,7 +77,7 @@
         {% endif %}
         
         <div class="game-card-clean" data-game-name="{{ game.name|lower }}">
-            <div class="game-header-clean">
+            <div class="game-header-clean game-toggle" data-game-id="{{ forloop.counter }}">
                 <div class="game-icon-clean">
                     <i class="bi bi-controller"></i>
                 </div>
@@ -90,6 +90,11 @@
                     </span>
                     {% endif %}
                 </div>
+                {% if game.categories.all %}
+                <div class="toggle-icon">
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                {% endif %}
             </div>
             
             {% if game.categories.all %}
@@ -445,6 +450,43 @@
     border-bottom: 2px solid var(--gray-100);
 }
 
+.game-header-clean.game-toggle {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+    border-radius: 8px;
+    margin: -0.5rem;
+    padding: 0.5rem 0.5rem 1.25rem;
+}
+
+.game-header-clean.game-toggle:hover {
+    background: var(--gray-50);
+}
+
+.toggle-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--gray-100);
+    border-radius: 8px;
+    color: var(--gray-600);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.game-card-clean.expanded .toggle-icon {
+    background: var(--primary);
+    color: white;
+    transform: rotate(180deg);
+}
+
+.game-card-clean.expanded .game-header-clean {
+    border-bottom-color: transparent;
+    margin-bottom: 0.75rem;
+}
+
 .game-icon-clean {
     width: 56px;
     height: 56px;
@@ -486,9 +528,31 @@
 
 /* Список категорий */
 .categories-list-clean {
-    display: flex;
+    display: none;
     flex-direction: column;
     gap: 0.5rem;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, max-height 0.3s ease;
+}
+
+.game-card-clean.expanded .categories-list-clean {
+    display: flex;
+    opacity: 1;
+    max-height: 2000px;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .category-item-clean {
@@ -909,6 +973,46 @@ document.addEventListener('DOMContentLoaded', function() {
             const targetElement = document.querySelector(targetId);
             if (targetElement) {
                 targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+    
+    // Аккордеон для категорий игр
+    document.querySelectorAll('.game-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            // Не закрываем если кликнули по ссылке категории
+            if (e.target.closest('.category-item-clean')) {
+                return;
+            }
+            
+            const gameCard = this.closest('.game-card-clean');
+            const wasExpanded = gameCard.classList.contains('expanded');
+            
+            // Закрываем все другие карточки (опционально)
+            // document.querySelectorAll('.game-card-clean.expanded').forEach(card => {
+            //     if (card !== gameCard) {
+            //         card.classList.remove('expanded');
+            //     }
+            // });
+            
+            // Переключаем текущую
+            gameCard.classList.toggle('expanded');
+            
+            // Небольшая задержка для плавности анимации
+            if (!wasExpanded) {
+                setTimeout(() => {
+                    const categoriesList = gameCard.querySelector('.categories-list-clean');
+                    if (categoriesList && categoriesList.offsetTop) {
+                        const scrollTarget = categoriesList.offsetTop + gameCard.offsetTop - 100;
+                        // Плавно скроллим к категориям если они за пределами видимости
+                        if (window.pageYOffset + window.innerHeight < scrollTarget + categoriesList.offsetHeight) {
+                            window.scrollTo({
+                                top: scrollTarget,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                }, 100);
             }
         });
     });
