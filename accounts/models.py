@@ -85,16 +85,7 @@ class Profile(models.Model):
         null=True,
         verbose_name='Телефон'
     )
-    telegram = models.CharField(
-        max_length=50,
-        blank=True,
-        verbose_name='Telegram'
-    )
-    discord = models.CharField(
-        max_length=50,
-        blank=True,
-        verbose_name='Discord'
-    )
+    # Социальные сети удалены - общение только на сайте через встроенный чат
     
     # Баланс
     balance = models.DecimalField(

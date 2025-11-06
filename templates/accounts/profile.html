@@ -66,29 +66,13 @@
             </div>
         </div>
         
-        <!-- Contacts -->
-        {% if profile.telegram or profile.discord or profile.phone %}
-        <div class="profile-contacts-modern">
-            {% if profile.telegram %}
-            <a href="https://t.me/{{ profile.telegram }}" target="_blank" class="contact-item">
-                <i class="bi bi-telegram"></i>
-                <span>{{ profile.telegram }}</span>
-            </a>
-            {% endif %}
-            {% if profile.discord %}
-            <div class="contact-item">
-                <i class="bi bi-discord"></i>
-                <span>{{ profile.discord }}</span>
+        <!-- Chat Info -->
+        <div class="profile-chat-info-modern">
+            <div class="chat-info-content">
+                <i class="bi bi-chat-dots-fill"></i>
+                <span><strong>Общение только на сайте:</strong> Для связи используйте встроенный чат LootLink. Безопасно и удобно.</span>
             </div>
-            {% endif %}
-            {% if profile.phone and is_own_profile %}
-            <div class="contact-item">
-                <i class="bi bi-telephone"></i>
-                <span>{{ profile.phone }}</span>
-                            </div>
-                            {% endif %}
-                        </div>
-        {% endif %}
+        </div>
         
         <!-- Stats Grid -->
         <div class="profile-stats-grid">
@@ -338,38 +322,33 @@
     font-size: 1rem;
 }
 
-/* Contacts */
-.profile-contacts-modern {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+/* Chat Info */
+.profile-chat-info-modern {
     padding: 1rem 1.5rem;
-    background: #f9fafb;
-    border-top: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-top: 1px solid #bfdbfe;
 }
 
-.contact-item {
+.chat-info-content {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.45rem 0.85rem;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
     background: white;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    color: #374151;
-    text-decoration: none;
-    border: 1px solid #e5e7eb;
-    transition: all 0.15s;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
 }
 
-.contact-item:hover {
-    border-color: #2563eb;
+.chat-info-content i {
+    font-size: 1.5rem;
     color: #2563eb;
-    text-decoration: none;
+    flex-shrink: 0;
 }
 
-.contact-item i {
-    font-size: 1.1rem;
+.chat-info-content strong {
+    color: #1e40af;
 }
 
 /* Stats Grid */
@@ -668,18 +647,17 @@
         padding: 0.65rem 1rem;
     }
     
-    .profile-contacts-modern {
-        padding: 1rem;
-        justify-content: center;
+    .profile-chat-info-modern {
+        padding: 0.85rem 1rem;
     }
     
-    .contact-item {
-        font-size: 0.8rem;
-        padding: 0.5rem 0.75rem;
+    .chat-info-content {
+        font-size: 0.85rem;
+        padding: 0.65rem 0.85rem;
     }
     
-    .contact-item i {
-        font-size: 1rem;
+    .chat-info-content i {
+        font-size: 1.3rem;
     }
     
     /* Stats Grid - 2x2 на мобильных */
@@ -839,18 +817,18 @@
         padding: 0.6rem 0.95rem;
     }
     
-    .profile-contacts-modern {
-        padding: 0.85rem;
+    .profile-chat-info-modern {
+        padding: 0.75rem 0.85rem;
+    }
+    
+    .chat-info-content {
+        font-size: 0.8rem;
+        padding: 0.6rem 0.75rem;
         gap: 0.6rem;
     }
     
-    .contact-item {
-        font-size: 0.75rem;
-        padding: 0.45rem 0.65rem;
-    }
-    
-    .contact-item i {
-        font-size: 0.95rem;
+    .chat-info-content i {
+        font-size: 1.2rem;
     }
     
     .profile-stats-grid {
