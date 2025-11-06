@@ -199,7 +199,7 @@ class ProfileUpdateForm(forms.ModelForm):
     
     class Meta:
         model = Profile
-        fields = ['avatar', 'bio', 'phone', 'telegram', 'discord']
+        fields = ['avatar', 'bio', 'phone']
         widgets = {
             'bio': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -210,20 +210,12 @@ class ProfileUpdateForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': '+7 (999) 123-45-67'
             }),
-            'telegram': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': '@username'
-            }),
-            'discord': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'username#1234'
-            }),
             'avatar': forms.FileInput(attrs={
                 'class': 'form-control'
             })
         }
         help_texts = {
-            'phone': 'Телефон можно указать один раз. После этого его нельзя будет изменить.',
+            'phone': 'Телефон можно указать один раз. После этого его нельзя будет изменить. Для общения используйте встроенный чат.',
         }
     
     def clean_bio(self):

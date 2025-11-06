@@ -79,24 +79,11 @@
                             <small class="form-text text-muted">Расскажите о себе (до 500 символов)</small>
                         </div>
                         
-                        <!-- Telegram -->
-                        <div class="mb-3">
-                            <label for="id_telegram" class="form-label">Telegram</label>
-                            {{ profile_form.telegram }}
-                            {% if profile_form.telegram.errors %}
-                                <div class="text-danger small mt-1">{{ profile_form.telegram.errors }}</div>
-                            {% endif %}
-                            <small class="form-text text-muted">Ваш Telegram username (например, @username)</small>
-                        </div>
-                        
-                        <!-- Discord -->
-                        <div class="mb-3">
-                            <label for="id_discord" class="form-label">Discord</label>
-                            {{ profile_form.discord }}
-                            {% if profile_form.discord.errors %}
-                                <div class="text-danger small mt-1">{{ profile_form.discord.errors }}</div>
-                            {% endif %}
-                            <small class="form-text text-muted">Ваш Discord username (например, username#1234)</small>
+                        <!-- Информация о связи -->
+                        <div class="alert alert-success">
+                            <i class="bi bi-chat-dots"></i> 
+                            <strong>Общение на сайте:</strong> Для связи с покупателями и продавцами используйте встроенный чат LootLink. 
+                            Все переписки сохраняются и защищены.
                         </div>
                         
                         <div class="d-flex justify-content-between mt-4">
