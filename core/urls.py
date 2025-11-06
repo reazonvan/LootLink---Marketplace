@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import moderation_views
 
 app_name = 'core'
 

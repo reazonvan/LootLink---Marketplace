@@ -16,6 +16,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('transactions/', include('transactions.urls')),
     path('chat/', include('chat.urls')),
+    path('payments/', include('payments.urls')),
     path('', include('core.urls')),
     path('about/', core_views.about, name='about'),
     path('rules/', core_views.rules, name='rules'),

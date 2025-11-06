@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import search_views
 
 app_name = 'listings'
 

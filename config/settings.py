@@ -38,6 +38,7 @@ CSRF_TRUSTED_ORIGINS = config(
 
 # Application definition
 INSTALLED_APPS = [
+    'daphne',  # Должен быть первым для ASGI
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,9 +47,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     # Third party apps
+    'channels',
     'crispy_forms',
     'crispy_bootstrap5',
     'storages',
+    'rest_framework',
+    'django_filters',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
     
     # Local apps
     'core.apps.CoreConfig',
@@ -56,6 +62,7 @@ INSTALLED_APPS = [
     'listings.apps.ListingsConfig',
     'transactions.apps.TransactionsConfig',
     'chat.apps.ChatConfig',
+    'payments.apps.PaymentsConfig',
 ]
 
 MIDDLEWARE = [
@@ -95,6 +102,17 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+# Channels configuration
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [config('REDIS_URL', default='redis://localhost:6379/2')],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -309,6 +327,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 3600.0,  # Раз в час
     },
 }
+
+# ЮKassa settings
+YOOKASSA_SHOP_ID = config('YOOKASSA_SHOP_ID', default='')
+YOOKASSA_SECRET_KEY = config('YOOKASSA_SECRET_KEY', default='')
+SITE_URL = config('SITE_URL', default='http://91.218.245.178')
 
 # Logging configuration
 LOGGING = {

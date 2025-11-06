@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Мой кошелек - LootLink{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="mb-4"><i class="bi bi-wallet2"></i> Мой кошелек</h1>
+            
+            <!-- Баланс -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Общий баланс</h6>
+                            <h2 class="text-success">{{ wallet.balance|floatformat:2 }} ₽</h2>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Заморожено</h6>
+                            <h2 class="text-warning">{{ wallet.frozen_balance|floatformat:2 }} ₽</h2>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Доступно</h6>
+                            <h2 class="text-primary">{{ wallet.get_available_balance|floatformat:2 }} ₽</h2>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'payments:deposit' %}" class="btn btn-success">
+                            <i class="bi bi-plus-circle"></i> Пополнить
+                        </a>
+                        <a href="{% url 'payments:withdrawal_create' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-up-circle"></i> Вывести
+                        </a>
+                        <a href="{% url 'payments:transaction_history' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-clock-history"></i> История
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Активные эскроу -->
+            {% if active_escrows %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-shield-lock"></i> Активные эскроу ({{ active_escrows.count }})</h5>
+                </div>
+                <div class="card-body">
+                    {% for escrow in active_escrows %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                        <div>
+                            <strong>{{ escrow.purchase_request.listing.title }}</strong><br>
+                            <small class="text-muted">Продавец: {{ escrow.seller.username }}</small>
+                        </div>
+                        <div class="text-end">
+                            <h5 class="mb-0">{{ escrow.amount }} ₽</h5>
+                            <a href="{% url 'payments:escrow_detail' escrow.id %}" class="btn btn-sm btn-outline-info">Детали</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Ожидающие выводы -->
+            {% if pending_withdrawals %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-hourglass-split"></i> Ожидающие выводы</h5>
+                </div>
+                <div class="card-body">
+                    {% for withdrawal in pending_withdrawals %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>{{ withdrawal.get_payment_method_display }}</strong><br>
+                            <small class="text-muted">{{ withdrawal.created_at|date:"d.m.Y H:i" }}</small>
+                        </div>
+                        <h5 class="mb-0">{{ withdrawal.amount }} ₽</h5>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Последние транзакции -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-list-ul"></i> Последние транзакции</h5>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                        {% for transaction in transactions %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                            <div>
+                                <strong>{{ transaction.get_transaction_type_display }}</strong><br>
+                                <small class="text-muted">{{ transaction.created_at|date:"d.m.Y H:i" }}</small>
+                                {% if transaction.description %}
+                                <br><small>{{ transaction.description }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                <h5 class="mb-0 {% if transaction.amount > 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {% if transaction.amount > 0 %}+{% endif %}{{ transaction.amount }} ₽
+                                </h5>
+                                <span class="badge bg-{{ transaction.status }}">{{ transaction.get_status_display }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">Нет транзакций</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

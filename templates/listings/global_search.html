@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{% if search_query %}Поиск: {{ search_query }}{% else %}Поиск объявлений{% endif %} - LootLink
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Форма поиска -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" action="{% url 'listings:global_search' %}">
+                <div class="row g-3">
+                    <!-- Основной поиск -->
+                    <div class="col-md-12">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" name="q" class="form-control" 
+                                   placeholder="Поиск по названию и описанию..." 
+                                   value="{{ search_query }}">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Найти
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Фильтры -->
+                    <div class="col-md-3">
+                        <select name="game" class="form-select">
+                            <option value="">Все игры</option>
+                            {% for game in games %}
+                            <option value="{{ game.slug }}" {% if selected_game == game.slug %}selected{% endif %}>
+                                {{ game.name }} ({{ game.listing_count }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <input type="number" name="min_price" class="form-control" 
+                               placeholder="От ₽" value="{{ min_price }}">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <input type="number" name="max_price" class="form-control" 
+                               placeholder="До ₽" value="{{ max_price }}">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <select name="seller_rating" class="form-select">
+                            <option value="">Любой рейтинг</option>
+                            <option value="4.5" {% if seller_rating == "4.5" %}selected{% endif %}>⭐ 4.5+</option>
+                            <option value="4.0" {% if seller_rating == "4.0" %}selected{% endif %}>⭐ 4.0+</option>
+                            <option value="3.5" {% if seller_rating == "3.5" %}selected{% endif %}>⭐ 3.5+</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" name="verified_only" 
+                                   id="verified_only" value="1" {% if verified_only %}checked{% endif %}>
+                            <label class="form-check-label" for="verified_only">
+                                <i class="bi bi-shield-check text-success"></i> Только верифицированные
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Результаты -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Найдено: {{ total_count }} объявлений</h5>
+                
+                <!-- Сортировка -->
+                <div class="btn-group">
+                    <a href="?q={{ search_query }}&sort=-created_at" class="btn btn-sm btn-outline-secondary {% if sort_by == '-created_at' %}active{% endif %}">
+                        <i class="bi bi-clock"></i> Новые
+                    </a>
+                    <a href="?q={{ search_query }}&sort=price_asc" class="btn btn-sm btn-outline-secondary {% if sort_by == 'price_asc' %}active{% endif %}">
+                        <i class="bi bi-sort-numeric-down"></i> Дешевле
+                    </a>
+                    <a href="?q={{ search_query }}&sort=price_desc" class="btn btn-sm btn-outline-secondary {% if sort_by == 'price_desc' %}active{% endif %}">
+                        <i class="bi bi-sort-numeric-up"></i> Дороже
+                    </a>
+                    <a href="?q={{ search_query }}&sort=rating" class="btn btn-sm btn-outline-secondary {% if sort_by == 'rating' %}active{% endif %}">
+                        <i class="bi bi-star-fill"></i> Рейтинг
+                    </a>
+                </div>
+            </div>
+            
+            {% if page_obj %}
+            <div class="row g-4">
+                {% for listing in page_obj %}
+                <div class="col-md-3">
+                    <div class="card h-100 shadow-sm listing-card">
+                        <a href="{% url 'listings:listing_detail' listing.pk %}" class="text-decoration-none">
+                            {% if listing.image %}
+                            <img src="{{ listing.image.url }}" class="card-img-top" alt="{{ listing.title }}" style="height: 200px; object-fit: cover;">
+                            {% else %}
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-image text-muted" style="font-size: 48px;"></i>
+                            </div>
+                            {% endif %}
+                        </a>
+                        <div class="card-body">
+                            <h6 class="card-title text-truncate">
+                                <a href="{% url 'listings:listing_detail' listing.pk %}" class="text-dark text-decoration-none">
+                                    {{ listing.title }}
+                                </a>
+                            </h6>
+                            <p class="card-text text-muted small">{{ listing.game.name }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0 text-success">{{ listing.price }} ₽</h5>
+                                {% if listing.seller.profile.is_verified %}
+                                <span class="badge bg-success"><i class="bi bi-shield-check"></i></span>
+                                {% endif %}
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    {{ listing.seller.username }}
+                                    {% if listing.seller.profile.rating > 0 %}
+                                    <span class="text-warning">⭐ {{ listing.seller.profile.rating|floatformat:1 }}</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Пагинация -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?q={{ search_query }}&page={{ page_obj.previous_page_number }}&sort={{ sort_by }}">Предыдущая</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?q={{ search_query }}&page={{ num }}&sort={{ sort_by }}">{{ num }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?q={{ search_query }}&page={{ page_obj.next_page_number }}&sort={{ sort_by }}">Следующая</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="alert alert-info text-center">
+                <i class="bi bi-search" style="font-size: 48px;"></i>
+                <h4 class="mt-3">Ничего не найдено</h4>
+                <p>Попробуйте изменить параметры поиска</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.listing-card {
+    transition: transform 0.2s;
+}
+.listing-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+</style>
+{% endblock %}
+
