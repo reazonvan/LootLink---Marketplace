@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('transactions', '0005_alter_purchaserequest_options_and_more'),
+        ('transactions', '0004_remove_purchaserequest_purchase_buyer_status_idx_and_more'),
     ]
 
     operations = [
