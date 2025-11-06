@@ -108,6 +108,12 @@ def games_catalog(request):
         else:
             game.first_in_letter = False
         
+        # Добавляем счетчик объявлений для игры
+        game.listings_count = Listing.objects.filter(
+            game=game,
+            status='active'
+        ).count()
+        
         # Добавляем счетчик объявлений для каждой категории
         for category in game.categories.all():
             category.count = Listing.objects.filter(

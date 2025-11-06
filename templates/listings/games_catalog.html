@@ -83,12 +83,10 @@
                 </div>
                 <div class="game-info-clean">
                     <h3 class="game-name-clean">{{ game.name }}</h3>
-                    {% if game.categories.all %}
                     <span class="game-count-clean">
-                        <i class="bi bi-tag"></i> 
-                        {{ game.categories.all|length }} {{ game.categories.all|length|pluralize:"категория,категории,категорий" }}
+                        <i class="bi bi-box"></i> 
+                        {{ game.listings_count|default:"0" }} {{ game.listings_count|default:"0"|pluralize:"объявление,объявления,объявлений" }}
                     </span>
-                    {% endif %}
                 </div>
             </div>
             
@@ -98,6 +96,7 @@
                 <a href="{% url 'listings:category_listings' game.slug category.slug %}" class="category-item-clean">
                     <i class="{{ category.icon }}"></i>
                     <span>{{ category.name }}</span>
+                    <span class="category-count-badge">{{ category.count|default:"0" }}</span>
                     <i class="bi bi-chevron-right"></i>
                 </a>
                 {% endfor %}
@@ -604,6 +603,28 @@
 
 .category-item-clean:hover i:last-child {
     opacity: 1;
+}
+
+/* Счетчик объявлений в категории */
+.category-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 20px;
+    padding: 0 6px;
+    background: var(--primary);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 10px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.category-item-clean:hover .category-count-badge {
+    background: white;
+    color: var(--primary);
 }
 
 /* Удалено - показываем все категории */
