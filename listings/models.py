@@ -252,11 +252,9 @@ class Listing(models.Model):
     )
     category = models.ForeignKey(
         Category,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name='listings',
         verbose_name='Категория',
-        null=True,
-        blank=True,
         help_text='Категория товара (например: Аккаунты, Гемы, Ключи)'
     )
     title = models.CharField(
