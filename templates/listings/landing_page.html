@@ -407,8 +407,11 @@
             {% for game in games %}
             <div class="col-md-4 col-lg-2">
                 <a href="{% url 'listings:game_listings' game.slug %}" class="game-card">
-                    {% if game.icon %}
-                    <img src="{{ game.icon.url }}" alt="{{ game.name }}" style="width:60px;height:60px;border-radius:12px;margin:0 auto 15px;">
+                    {% if game.icon and game.icon.name %}
+                    <img src="{{ game.icon.url }}" alt="{{ game.name }}" style="width:60px;height:60px;border-radius:12px;margin:0 auto 15px;" onerror="this.style.display='none'; this.parentElement.querySelector('.game-icon-placeholder').style.display='flex';">
+                    <div class="game-icon-placeholder" style="display:none;">
+                        <i class="bi bi-controller"></i>
+                    </div>
                     {% else %}
                     <div class="game-icon-placeholder">
                         <i class="bi bi-controller"></i>
