@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Аналитика - LootLink{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1><i class="bi bi-graph-up"></i> Аналитика и статистика</h1>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                <a href="?period=7" class="btn btn-sm btn-outline-primary {% if period == '7' %}active{% endif %}">7 дней</a>
+                <a href="?period=30" class="btn btn-sm btn-outline-primary {% if period == '30' %}active{% endif %}">30 дней</a>
+                <a href="?period=90" class="btn btn-sm btn-outline-primary {% if period == '90' %}active{% endif %}">90 дней</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Основная статистика -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-cart-check text-success" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ sales_stats.total_sales }}</h3>
+                    <p class="text-muted mb-0">Всего продаж</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-cash-coin text-primary" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ sales_stats.total_revenue|floatformat:0 }} ₽</h3>
+                    <p class="text-muted mb-0">Доход за период</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-box-seam text-warning" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ sales_stats.active_listings }}</h3>
+                    <p class="text-muted mb-0">Активных объявлений</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-star-fill text-info" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ reviews_stats.avg_rating|floatformat:1 }}</h3>
+                    <p class="text-muted mb-0">Средний рейтинг</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- График продаж -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-graph-up"></i> Динамика продаж</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="salesChart" height="80"></canvas>
+        </div>
+    </div>
+    
+    <!-- Популярные товары и отзывы -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-fire"></i> Популярные товары</h5>
+                </div>
+                <div class="card-body">
+                    {% for listing in popular_listings %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                        <div>
+                            <strong>{{ listing.title }}</strong><br>
+                            <small class="text-muted">{{ listing.game.name }}</small>
+                        </div>
+                        <h5 class="mb-0">{{ listing.price }} ₽</h5>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">Нет данных</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-chat-quote"></i> Последние отзывы</h5>
+                </div>
+                <div class="card-body">
+                    {% for review in reviews_stats.recent_reviews %}
+                    <div class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ review.reviewer.username }}</strong>
+                            <span class="text-warning">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                                {% endfor %}
+                            </span>
+                        </div>
+                        {% if review.comment %}
+                        <p class="mb-0 small text-muted">{{ review.comment|truncatewords:20 }}</p>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">Нет отзывов</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Экспорт данных -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-download"></i> Экспорт данных</h5>
+        </div>
+        <div class="card-body">
+            <p>Скачайте ваши данные в формате CSV для анализа в Excel</p>
+            <div class="d-flex gap-2">
+                <a href="{% url 'accounts:export_data' %}?type=sales" class="btn btn-success">
+                    <i class="bi bi-file-earmark-arrow-down"></i> Экспорт продаж
+                </a>
+                <a href="{% url 'accounts:export_data' %}?type=purchases" class="btn btn-primary">
+                    <i class="bi bi-file-earmark-arrow-down"></i> Экспорт покупок
+                </a>
+                <a href="{% url 'accounts:export_data' %}?type=listings" class="btn btn-info">
+                    <i class="bi bi-file-earmark-arrow-down"></i> Экспорт объявлений
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// График продаж
+const salesData = {{ sales_by_day_json|safe }};
+
+const ctx = document.getElementById('salesChart').getContext('2d');
+const salesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: salesData.map(d => d.date),
+        datasets: [{
+            label: 'Продажи',
+            data: salesData.map(d => d.count),
+            borderColor: '#0066FF',
+            backgroundColor: 'rgba(0, 102, 255, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
+

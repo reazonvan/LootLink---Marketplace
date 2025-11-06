@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FAQ - Часто задаваемые вопросы - LootLink{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4"><i class="bi bi-question-circle"></i> Часто задаваемые вопросы (FAQ)</h1>
+    
+    <!-- Поиск по FAQ -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" id="faq-search" class="form-control" placeholder="Поиск по вопросам...">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Категории FAQ -->
+    <div class="row">
+        {% for category_key, category_name in categories %}
+        <div class="col-md-12 mb-4">
+            <h3 class="mb-3">{{ category_name }}</h3>
+            
+            <div class="accordion" id="faq-{{ category_key }}">
+                {% for faq in faqs %}
+                {% if faq.category == category_key %}
+                <div class="accordion-item faq-item" data-question="{{ faq.question|lower }}" data-answer="{{ faq.answer|lower }}">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#faq-{{ faq.id }}">
+                            {{ faq.question }}
+                        </button>
+                    </h2>
+                    <div id="faq-{{ faq.id }}" class="accordion-collapse collapse" 
+                         data-bs-parent="#faq-{{ category_key }}">
+                        <div class="accordion-body">
+                            {{ faq.answer|linebreaks }}
+                            
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Просмотров: {{ faq.views_count }}</small>
+                                <div>
+                                    <span class="text-muted">Было ли это полезно?</span>
+                                    <button class="btn btn-sm btn-success ms-2" onclick="markHelpful({{ faq.id }}, true)">
+                                        <i class="bi bi-hand-thumbs-up"></i> Да ({{ faq.helpful_count }})
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary ms-1" onclick="markHelpful({{ faq.id }}, false)">
+                                        <i class="bi bi-hand-thumbs-down"></i> Нет
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Не нашли ответ -->
+    <div class="card bg-light mt-5">
+        <div class="card-body text-center">
+            <h4>Не нашли ответ на свой вопрос?</h4>
+            <p>Свяжитесь с нашей службой поддержки</p>
+            <a href="mailto:support@lootlink.com" class="btn btn-primary">
+                <i class="bi bi-envelope"></i> Написать в поддержку
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// Поиск по FAQ
+document.getElementById('faq-search').addEventListener('input', function(e) {
+    const query = e.target.value.toLowerCase();
+    const items = document.querySelectorAll('.faq-item');
+    
+    items.forEach(item => {
+        const question = item.dataset.question;
+        const answer = item.dataset.answer;
+        
+        if (question.includes(query) || answer.includes(query)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
+
+// Отметка полезности
+function markHelpful(faqId, isHelpful) {
+    fetch(`/faq/${faqId}/helpful/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ helpful: isHelpful })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Спасибо за отзыв!');
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
+
