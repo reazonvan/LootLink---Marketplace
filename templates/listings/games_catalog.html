@@ -83,10 +83,12 @@
                 </div>
                 <div class="game-info-clean">
                     <h3 class="game-name-clean">{{ game.name }}</h3>
+                    {% if game.listings_count %}
                     <span class="game-count-clean">
-                        <i class="bi bi-box"></i> 
-                        {{ game.listings_count|default:"0" }} {{ game.listings_count|default:"0"|pluralize:"объявление,объявления,объявлений" }}
+                        <i class="bi bi-box-seam"></i> 
+                        {{ game.listings_count }} {{ game.listings_count|pluralize:"лот,лота,лотов" }}
                     </span>
+                    {% endif %}
                 </div>
             </div>
             
@@ -94,10 +96,11 @@
             <div class="categories-list-clean">
                 {% for category in game.categories.all %}
                 <a href="{% url 'listings:category_listings' game.slug category.slug %}" class="category-item-clean">
-                    <i class="{{ category.icon }}"></i>
-                    <span>{{ category.name }}</span>
-                    <span class="category-count-badge">{{ category.count|default:"0" }}</span>
-                    <i class="bi bi-chevron-right"></i>
+                    <div class="category-content">
+                        <i class="{{ category.icon }}"></i>
+                        <span class="category-name">{{ category.name }}</span>
+                    </div>
+                    <span class="category-badge">{{ category.count|default:"0" }}</span>
                 </a>
                 {% endfor %}
             </div>
@@ -560,7 +563,8 @@
 .category-item-clean {
     display: flex;
     align-items: center;
-    gap: 0.45rem;
+    justify-content: space-between;
+    gap: 0.5rem;
     padding: 0.5rem 0.65rem;
     background: var(--gray-50);
     border: 1px solid transparent;
@@ -573,11 +577,34 @@
     min-height: 34px;
 }
 
-.category-item-clean span {
+.category-content {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.category-name {
     flex: 1;
     word-break: break-word;
     line-height: 1.25;
 }
+
+.category-badge {
+    background: white;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 5px;
+    min-width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+/* Улучшенный стиль для бейджей при наведении */
 
 .category-item-clean:hover {
     background: var(--primary);
@@ -587,44 +614,16 @@
     transform: translateX(2px);
 }
 
-.category-item-clean i:first-child {
+.category-item-clean:hover .category-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.category-content i {
     font-size: 0.9rem;
     flex-shrink: 0;
     width: 18px;
     text-align: center;
-}
-
-.category-item-clean i:last-child {
-    font-size: 0.65rem;
-    opacity: 0;
-    transition: opacity 0.2s;
-    flex-shrink: 0;
-}
-
-.category-item-clean:hover i:last-child {
-    opacity: 1;
-}
-
-/* Счетчик объявлений в категории */
-.category-count-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 24px;
-    height: 20px;
-    padding: 0 6px;
-    background: var(--primary);
-    color: white;
-    font-size: 0.7rem;
-    font-weight: 600;
-    border-radius: 10px;
-    margin-left: auto;
-    flex-shrink: 0;
-}
-
-.category-item-clean:hover .category-count-badge {
-    background: white;
-    color: var(--primary);
 }
 
 /* Удалено - показываем все категории */
@@ -856,6 +855,12 @@
     .category-item-clean {
         padding: 0.5rem 0.7rem;
         font-size: 0.8rem;
+    }
+    
+    .category-badge {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.4rem;
+        min-width: 20px;
     }
 }
 
