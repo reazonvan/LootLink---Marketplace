@@ -125,24 +125,25 @@ def send_message_notification(sender, instance, created, **kwargs):
         
         # Оптимизация: одно уведомление на беседу пока не прочитано
         from core.models import Notification
+        from django.db import transaction
         
-        # Ищем непрочитанное уведомление для этой беседы
-        existing_notification = Notification.objects.filter(
-            user=recipient,
-            notification_type='new_message',
-            is_read=False,
-            link=f'/chat/conversation/{conversation.pk}/'
-        ).first()
-        
-        if not existing_notification:
-            # Создаем новое уведомление только если нет непрочитанного
-            from core.services import NotificationService
-            NotificationService.create_and_notify(
+        # Используем атомарную транзакцию для предотвращения дубликатов
+        with transaction.atomic():
+            # Ищем или создаем уведомление атомарно
+            notification, created = Notification.objects.get_or_create(
                 user=recipient,
                 notification_type='new_message',
-                title=f'Новое сообщение от {instance.sender.username}',
-                message='У вас есть непрочитанные сообщения',
+                is_read=False,
                 link=f'/chat/conversation/{conversation.pk}/',
-                send_email=False  # Email не отправляем при каждом сообщении
+                defaults={
+                    'title': f'Новое сообщение от {instance.sender.username}',
+                    'message': 'У вас есть непрочитанные сообщения'
+                }
             )
+            
+            # Если уведомление уже существовало, просто обновляем время
+            if not created:
+                from django.utils import timezone
+                notification.created_at = timezone.now()
+                notification.save(update_fields=['created_at'])
 
