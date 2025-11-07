@@ -1,0 +1,17 @@
+[Unit]
+Description=Celery Beat Scheduler for LootLink
+After=network.target redis.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/lootlink
+Environment="PATH=/opt/lootlink/venv/bin"
+ExecStart=/opt/lootlink/venv/bin/celery -A config beat --loglevel=info --logfile=/var/log/lootlink/celery-beat.log --pidfile=/var/run/celery/beat.pid
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
