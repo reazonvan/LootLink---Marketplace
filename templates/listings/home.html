@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container">
     <!-- Header Section -->
-    <div class="page-header" data-aos="fade-down">
+    <div class="page-header">
         <div class="row align-items-center">
             <div class="col-lg-8">
                 <h1 class="display-5 fw-bold mb-3">Маркетплейс игровых предметов</h1>
@@ -30,7 +30,7 @@
     </div>
 
     <!-- Search and Filters -->
-    <div class="search-section" data-aos="fade-up">
+    <div class="search-section">
         <form method="get" class="search-form">
             <div class="row g-3">
                 <div class="col-lg-4">
@@ -89,7 +89,7 @@
     
     <div class="listings-grid">
         {% for listing in page_obj %}
-        <article class="listing-item" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:0|stringformat:'d' }}0">
+        <article class="listing-item">
             <a href="{% url 'listings:listing_detail' listing.pk %}" class="listing-link">
                 <div class="listing-image">
                     {% if listing.image %}
