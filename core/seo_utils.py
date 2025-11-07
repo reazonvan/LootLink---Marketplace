@@ -94,7 +94,7 @@ def get_organization_schema():
         "logo": "http://91.218.245.178/static/favicon.svg",
         "contactPoint": {
             "@type": "ContactPoint",
-            "email": "support@lootlink.com",
+            "email": "ivanpetrov20066.ip@gmail.com",
             "contactType": "customer service"
         }
     }
