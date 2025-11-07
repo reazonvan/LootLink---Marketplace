@@ -74,4 +74,5 @@ django-filter>=23.5
 # Telegram бот
 python-telegram-bot>=20.7
 
-
+# Email для масштаба (AWS SES)
+django-ses>=3.5.0
