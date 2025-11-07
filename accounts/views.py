@@ -251,20 +251,35 @@ def password_reset_request(request):
             email_sent = False
             sms_sent = False
             
-            # Отправляем email
+            # Отправляем email через EmailService (с HTML и лучшей обработкой ошибок)
             try:
-                send_mail(
-                    subject,
-                    email_message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [email],
-                    fail_silently=False,
-                )
-                email_sent = True
+                from core.email_service import EmailService
+                email_sent = EmailService.send_password_reset_email(user, reset_code.code)
+                
+                if not email_sent:
+                    # Fallback на старый способ
+                    send_mail(
+                        subject,
+                        email_message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                        fail_silently=False,
+                    )
+                    email_sent = True
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.error(f'Ошибка отправки email: {e}')
+                
+                # Логируем в audit
+                from core.models_audit import SecurityAuditLog
+                SecurityAuditLog.log(
+                    action_type='password_reset_request',
+                    user=user,
+                    description=f'Ошибка отправки email при сбросе пароля: {str(e)}',
+                    risk_level='medium',
+                    request=request
+                )
             
             # Отправляем СМС если у пользователя указан телефон
             if user.profile.phone:

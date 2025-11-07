@@ -106,45 +106,10 @@ class CustomUserCreationForm(UserCreationForm):
             # Создаем код для SMS верификации (6-значный)
             sms_code = PasswordResetCode.create_code(user)
             
-            # Отправляем письмо с подтверждением
-            from django.core.mail import send_mail
-            from django.conf import settings
-            from django.urls import reverse
-            
-            # Формируем ссылку верификации
-            domain = settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else 'localhost:8000'
-            protocol = 'https' if not settings.DEBUG else 'http'
-            verification_url = f"{protocol}://{domain}{reverse('accounts:verify_email', kwargs={'token': verification.token})}"
-            
-            subject = 'Подтвердите ваш email - LootLink'
-            email_message = f"""
-Здравствуйте, {user.username}!
-
-Спасибо за регистрацию на LootLink!
-
-Для завершения регистрации подтвердите ваш email адрес, перейдя по ссылке:
-
-{verification_url}
-
-Или введите код подтверждения: {sms_code.code}
-
-Ссылка и код действительны в течение 24 часов.
-
-Если вы не регистрировались на LootLink, проигнорируйте это письмо.
-
-С уважением,
-Команда LootLink
-"""
-            
-            # Отправляем email
+            # Отправляем письмо с подтверждением через EmailService
             try:
-                send_mail(
-                    subject,
-                    email_message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [user.email],
-                    fail_silently=False
-                )
+                from core.email_service import EmailService
+                EmailService.send_verification_email(user, verification.token)
             except Exception as e:
                 # Логируем ошибку но не ломаем регистрацию
                 import logging
