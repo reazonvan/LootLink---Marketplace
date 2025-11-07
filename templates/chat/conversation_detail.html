@@ -131,8 +131,12 @@
     .message-item {
         display: flex;
         gap: 12px;
-        margin-bottom: 20px;
+        margin-bottom: 4px;
         align-items: flex-end;
+    }
+    
+    .message-item.first-in-group {
+        margin-top: 16px;
     }
     
     .message-item.sent {
@@ -149,6 +153,11 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        visibility: visible;
+    }
+    
+    .message-avatar-chat.hidden {
+        visibility: hidden;
     }
     
     .message-avatar-chat img {
@@ -289,7 +298,7 @@
         <div class="chat-messages-container" id="messages-container">
             {% if messages %}
                 {% for message in messages %}
-                <div class="message-item {% if message.sender == user %}sent{% else %}received{% endif %}" data-message-id="{{ message.id }}">
+                <div class="message-item {% if message.sender == user %}sent{% else %}received{% endif %}" data-message-id="{{ message.id }}" data-sender-id="{{ message.sender.id }}">
                     {% if message.sender != user %}
                     <div class="message-avatar-chat">
                         {% if message.sender.profile.avatar %}
@@ -368,9 +377,31 @@ class ChatWebSocket {
     }
     
     init() {
+        this.groupExistingMessages();
         this.connect();
         this.attachEventListeners();
         this.scrollToBottom();
+    }
+    
+    groupExistingMessages() {
+        // Группируем существующие сообщения при загрузке
+        const messages = this.messagesContainer.querySelectorAll('.message-item');
+        let previousSenderId = null;
+        
+        messages.forEach((messageEl, index) => {
+            const senderId = messageEl.dataset.senderId;
+            const avatar = messageEl.querySelector('.message-avatar-chat');
+            
+            if (senderId === previousSenderId && avatar) {
+                // Скрываем аватарку если предыдущее от того же пользователя
+                avatar.classList.add('hidden');
+            } else if (index > 0) {
+                // Первое сообщение в новой группе
+                messageEl.classList.add('first-in-group');
+            }
+            
+            previousSenderId = senderId;
+        });
     }
     
     connect() {
@@ -511,11 +542,32 @@ class ChatWebSocket {
             minute: '2-digit'
         });
         
+        // Проверяем предыдущее сообщение для группировки
+        const allMessages = this.messagesContainer.querySelectorAll('.message-item');
+        const lastMessage = allMessages[allMessages.length - 1];
+        let showAvatar = true;
+        let isFirstInGroup = false;
+        
+        if (lastMessage) {
+            const lastSenderId = lastMessage.dataset.senderId;
+            if (lastSenderId === String(message.sender_id)) {
+                showAvatar = false; // Скрываем аватарку если предыдущее от того же
+            } else {
+                isFirstInGroup = true; // Первое в новой группе
+            }
+        }
+        
+        // Формируем HTML аватарки
+        let avatarHTML = '<i class="bi bi-person-fill"></i>';
+        if (message.sender_avatar_url) {
+            avatarHTML = `<img src="${message.sender_avatar_url}" alt="${message.sender_username}">`;
+        }
+        
         const messageHTML = `
-            <div class="message-item ${isSent ? 'sent' : 'received'}" data-message-id="${message.id}">
+            <div class="message-item ${isSent ? 'sent' : 'received'} ${isFirstInGroup ? 'first-in-group' : ''}" data-message-id="${message.id}" data-sender-id="${message.sender_id}">
                 ${!isSent ? `
-                <div class="message-avatar-chat">
-                    <i class="bi bi-person-fill"></i>
+                <div class="message-avatar-chat ${!showAvatar ? 'hidden' : ''}">
+                    ${avatarHTML}
                 </div>
                 ` : ''}
                 <div class="message-content-box">
@@ -527,10 +579,15 @@ class ChatWebSocket {
             </div>
         `;
         
-        if (this.messagesContainer) {
+        // Вставляем сообщение ПЕРЕД индикатором печати
+        const typingContainer = document.getElementById('typing-indicator-container');
+        if (typingContainer && this.messagesContainer) {
+            typingContainer.insertAdjacentHTML('beforebegin', messageHTML);
+        } else if (this.messagesContainer) {
             this.messagesContainer.insertAdjacentHTML('beforeend', messageHTML);
-            this.scrollToBottom();
         }
+        
+        this.scrollToBottom();
     }
     
     showTypingIndicator(username, isTyping) {
@@ -540,19 +597,13 @@ class ChatWebSocket {
         if (isTyping && username !== this.username) {
             if (!document.getElementById('typing-indicator')) {
                 container.innerHTML = `
-                    <div id="typing-indicator" class="message-item received" style="opacity:0.8;">
-                        <div class="message-avatar-chat">
-                            <i class="bi bi-person-fill"></i>
-                        </div>
-                        <div class="message-content-box">
-                            <div class="message-bubble-chat received" style="padding:8px 12px;">
-                                <span class="typing-dots">
-                                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#6B7280;margin:0 2px;animation:typing 1s infinite;"></span>
-                                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#6B7280;margin:0 2px;animation:typing 1s infinite 0.2s;"></span>
-                                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#6B7280;margin:0 2px;animation:typing 1s infinite 0.4s;"></span>
-                                </span>
-                            </div>
-                            <div class="message-timestamp">${username} печатает...</div>
+                    <div id="typing-indicator" style="padding-left: 52px; margin-top: 8px; opacity: 0.8;">
+                        <div style="display: inline-block; background: white; border: 1px solid #E5E7EB; border-radius: 18px; padding: 10px 16px;">
+                            <span class="typing-dots">
+                                <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#6B7280;margin:0 2px;animation:typing 1s infinite;"></span>
+                                <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#6B7280;margin:0 2px;animation:typing 1s infinite 0.2s;"></span>
+                                <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#6B7280;margin:0 2px;animation:typing 1s infinite 0.4s;"></span>
+                            </span>
                         </div>
                     </div>
                     <style>
