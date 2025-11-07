@@ -80,7 +80,7 @@
                                         <i class="bi bi-people"></i>
                                     </div>
                                     <div class="info-stat-text">
-                                        <div class="info-stat-value">1000+</div>
+                                        <div class="info-stat-value">{{ total_users|default:0 }}</div>
                                         <div class="info-stat-label">Активных пользователей</div>
                                     </div>
                                 </div>
@@ -89,7 +89,7 @@
                                         <i class="bi bi-box"></i>
                                     </div>
                                     <div class="info-stat-text">
-                                        <div class="info-stat-value">5000+</div>
+                                        <div class="info-stat-value">{{ total_deals|default:0 }}</div>
                                         <div class="info-stat-label">Успешных сделок</div>
                                     </div>
                                 </div>

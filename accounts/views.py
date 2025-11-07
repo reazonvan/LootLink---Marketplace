@@ -34,6 +34,12 @@ def user_login(request):
     if request.user.is_authenticated:
         return redirect('listings:home')
     
+    # Реальная статистика из БД
+    from listings.models import Listing
+    from transactions.models import PurchaseRequest
+    total_users = CustomUser.objects.filter(is_active=True).count()
+    total_deals = PurchaseRequest.objects.filter(status='completed').count()
+    
     if request.method == 'POST':
         try:
             form = CustomAuthenticationForm(request, data=request.POST)
@@ -62,7 +68,12 @@ def user_login(request):
     else:
         form = CustomAuthenticationForm()
     
-    return render(request, 'accounts/login.html', {'form': form})
+    context = {
+        'form': form,
+        'total_users': total_users,
+        'total_deals': total_deals,
+    }
+    return render(request, 'accounts/login.html', context)
 
 
 @login_required
