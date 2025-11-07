@@ -103,22 +103,15 @@ def mark_all_notifications_read(request):
 @login_required
 @require_http_methods(["GET"])
 def unread_notifications_count(request):
-    """API endpoint для получения количества непрочитанных уведомлений (AJAX) с rate limiting."""
-    from core.decorators import api_rate_limit
+    """API endpoint для получения количества непрочитанных уведомлений (AJAX)."""
+    count = Notification.objects.filter(
+        user=request.user,
+        is_read=False
+    ).count()
     
-    # Применяем rate limiting: максимум 120 запросов в минуту
-    @api_rate_limit(max_requests=120, time_window=60)
-    def _get_count():
-        count = Notification.objects.filter(
-            user=request.user,
-            is_read=False
-        ).count()
-        
-        return JsonResponse({
-            'count': count
-        })
-    
-    return _get_count()
+    return JsonResponse({
+        'count': count
+    })
 
 
 def yandex_verification(request):
