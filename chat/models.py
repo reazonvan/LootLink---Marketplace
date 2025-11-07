@@ -123,7 +123,39 @@ def send_message_notification(sender, instance, created, **kwargs):
         conversation = instance.conversation
         recipient = conversation.get_other_participant(instance.sender)
         
-        # Используем централизованный NotificationService
-        from core.services import NotificationService
-        NotificationService.notify_new_message(instance, recipient)
+        # Оптимизация: группируем уведомления от одного отправителя
+        from core.models import Notification
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Ищем непрочитанное уведомление о сообщении от этого же отправителя за последние 10 минут
+        recent_time = timezone.now() - timedelta(minutes=10)
+        existing_notification = Notification.objects.filter(
+            user=recipient,
+            notification_type='new_message',
+            is_read=False,
+            created_at__gte=recent_time,
+            link=f'/chat/conversation/{conversation.pk}/'
+        ).first()
+        
+        if existing_notification:
+            # Обновляем существующее уведомление
+            unread_count = conversation.get_unread_count(recipient)
+            
+            if unread_count > 1:
+                existing_notification.title = f'{unread_count} новых сообщений от {instance.sender.username}'
+                existing_notification.message = f'Последнее: {instance.content[:100]}'
+            else:
+                existing_notification.title = f'Новое сообщение от {instance.sender.username}'
+                existing_notification.message = instance.content[:100]
+            
+            if len(instance.content) > 100:
+                existing_notification.message += '...'
+            
+            existing_notification.created_at = timezone.now()  # Обновляем время
+            existing_notification.save()
+        else:
+            # Создаем новое уведомление
+            from core.services import NotificationService
+            NotificationService.notify_new_message(instance, recipient)
 
