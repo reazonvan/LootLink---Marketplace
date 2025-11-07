@@ -417,7 +417,7 @@
         let lastCount = {{ unread_notifications_count|default:0 }};
         
         function updateNotificationsCount() {
-            fetch('/core/notifications/unread-count/', {
+            fetch('/notifications/unread-count/', {
                 method: 'GET',
                 credentials: 'same-origin',
                 headers: {
