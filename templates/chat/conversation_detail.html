@@ -128,15 +128,20 @@
     }
     
     /* Message Bubbles - Improved Size */
+    .message-group {
+        position: relative;
+        margin-bottom: 16px;
+    }
+    
     .message-item {
         display: flex;
         gap: 12px;
         margin-bottom: 4px;
-        align-items: flex-end;
+        align-items: flex-start;
     }
     
     .message-item.first-in-group {
-        margin-top: 16px;
+        margin-top: 0;
     }
     
     .message-item.sent {
@@ -154,6 +159,10 @@
         align-items: center;
         justify-content: center;
         visibility: visible;
+        position: sticky;
+        top: 90px; /* Ниже header'а */
+        align-self: flex-start;
+        z-index: 10;
     }
     
     .message-avatar-chat.hidden {
@@ -387,17 +396,27 @@ class ChatWebSocket {
         // Группируем существующие сообщения при загрузке
         const messages = this.messagesContainer.querySelectorAll('.message-item');
         let previousSenderId = null;
+        let currentGroup = null;
         
         messages.forEach((messageEl, index) => {
             const senderId = messageEl.dataset.senderId;
             const avatar = messageEl.querySelector('.message-avatar-chat');
             
+            // Если новый отправитель - создаем новую группу
+            if (senderId !== previousSenderId) {
+                currentGroup = document.createElement('div');
+                currentGroup.className = 'message-group';
+                messageEl.parentNode.insertBefore(currentGroup, messageEl);
+            }
+            
+            // Добавляем сообщение в текущую группу
+            if (currentGroup) {
+                currentGroup.appendChild(messageEl);
+            }
+            
+            // Скрываем аватарку если не первое сообщение в группе
             if (senderId === previousSenderId && avatar) {
-                // Скрываем аватарку если предыдущее от того же пользователя
                 avatar.classList.add('hidden');
-            } else if (index > 0) {
-                // Первое сообщение в новой группе
-                messageEl.classList.add('first-in-group');
             }
             
             previousSenderId = senderId;
@@ -542,18 +561,34 @@ class ChatWebSocket {
             minute: '2-digit'
         });
         
-        // Проверяем предыдущее сообщение для группировки
-        const allMessages = this.messagesContainer.querySelectorAll('.message-item');
-        const lastMessage = allMessages[allMessages.length - 1];
-        let showAvatar = true;
-        let isFirstInGroup = false;
+        // Находим последнюю группу сообщений
+        const allGroups = this.messagesContainer.querySelectorAll('.message-group');
+        const lastGroup = allGroups[allGroups.length - 1];
         
-        if (lastMessage) {
-            const lastSenderId = lastMessage.dataset.senderId;
-            if (lastSenderId === String(message.sender_id)) {
-                showAvatar = false; // Скрываем аватарку если предыдущее от того же
+        let showAvatar = true;
+        let targetGroup = null;
+        
+        // Проверяем, можем ли добавить в последнюю группу
+        if (lastGroup) {
+            const lastMessage = lastGroup.querySelector('.message-item:last-child');
+            if (lastMessage) {
+                const lastSenderId = lastMessage.dataset.senderId;
+                if (lastSenderId === String(message.sender_id)) {
+                    showAvatar = false;
+                    targetGroup = lastGroup;
+                }
+            }
+        }
+        
+        // Если не нашли подходящую группу - создаем новую
+        if (!targetGroup) {
+            targetGroup = document.createElement('div');
+            targetGroup.className = 'message-group';
+            const typingContainer = document.getElementById('typing-indicator-container');
+            if (typingContainer) {
+                typingContainer.parentNode.insertBefore(targetGroup, typingContainer);
             } else {
-                isFirstInGroup = true; // Первое в новой группе
+                this.messagesContainer.appendChild(targetGroup);
             }
         }
         
@@ -564,7 +599,7 @@ class ChatWebSocket {
         }
         
         const messageHTML = `
-            <div class="message-item ${isSent ? 'sent' : 'received'} ${isFirstInGroup ? 'first-in-group' : ''}" data-message-id="${message.id}" data-sender-id="${message.sender_id}">
+            <div class="message-item ${isSent ? 'sent' : 'received'}" data-message-id="${message.id}" data-sender-id="${message.sender_id}">
                 ${!isSent ? `
                 <div class="message-avatar-chat ${!showAvatar ? 'hidden' : ''}">
                     ${avatarHTML}
@@ -579,13 +614,8 @@ class ChatWebSocket {
             </div>
         `;
         
-        // Вставляем сообщение ПЕРЕД индикатором печати
-        const typingContainer = document.getElementById('typing-indicator-container');
-        if (typingContainer && this.messagesContainer) {
-            typingContainer.insertAdjacentHTML('beforebegin', messageHTML);
-        } else if (this.messagesContainer) {
-            this.messagesContainer.insertAdjacentHTML('beforeend', messageHTML);
-        }
+        // Добавляем сообщение в группу
+        targetGroup.insertAdjacentHTML('beforeend', messageHTML);
         
         this.scrollToBottom();
     }
