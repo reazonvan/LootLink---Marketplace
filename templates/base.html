@@ -372,6 +372,71 @@
     <script src="{% static 'js/toast-notifications.js' %}"></script>
     <script src="{% static 'js/chat-improvements.js' %}"></script>
     
+    <!-- Real-time обновление уведомлений -->
+    {% if user.is_authenticated %}
+    <script>
+    (function() {
+        let updateInterval;
+        
+        function updateNotificationsCount() {
+            fetch('/core/notifications/unread-count/')
+                .then(response => response.json())
+                .then(data => {
+                    const count = data.count || 0;
+                    
+                    // Обновляем desktop версию
+                    const desktopBadge = document.querySelector('.navbar-nav .bi-bell + .badge');
+                    if (count > 0) {
+                        if (desktopBadge) {
+                            desktopBadge.textContent = count;
+                        } else {
+                            const bellIcon = document.querySelector('.navbar-nav .bi-bell');
+                            if (bellIcon) {
+                                const badge = document.createElement('span');
+                                badge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+                                badge.innerHTML = count + '<span class="visually-hidden">непрочитанных уведомлений</span>';
+                                bellIcon.parentElement.appendChild(badge);
+                            }
+                        }
+                    } else if (desktopBadge) {
+                        desktopBadge.remove();
+                    }
+                    
+                    // Обновляем mobile версию
+                    const mobileBadge = document.querySelector('.mobile-nav-icon .mobile-badge');
+                    if (count > 0) {
+                        if (mobileBadge) {
+                            mobileBadge.textContent = count;
+                        } else {
+                            const mobileIcon = document.querySelector('.mobile-nav-icon .bi-bell');
+                            if (mobileIcon) {
+                                const badge = document.createElement('span');
+                                badge.className = 'mobile-badge';
+                                badge.textContent = count;
+                                mobileIcon.parentElement.appendChild(badge);
+                            }
+                        }
+                    } else if (mobileBadge) {
+                        mobileBadge.remove();
+                    }
+                })
+                .catch(error => console.error('Ошибка обновления уведомлений:', error));
+        }
+        
+        // Обновляем каждые 10 секунд
+        updateInterval = setInterval(updateNotificationsCount, 10000);
+        
+        // Также обновляем при фокусе окна (вернулся на вкладку)
+        window.addEventListener('focus', updateNotificationsCount);
+        
+        // Останавливаем обновление при уходе со страницы
+        window.addEventListener('beforeunload', () => {
+            clearInterval(updateInterval);
+        });
+    })();
+    </script>
+    {% endif %}
+    
     {% block extra_js %}{% endblock %}
 </body>
 </html>
