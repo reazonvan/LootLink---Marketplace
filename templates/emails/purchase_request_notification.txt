@@ -13,7 +13,7 @@
 {% endif %}
 
 Посмотреть детали запроса:
-http://127.0.0.1:8000{% url 'transactions:purchase_request_detail' purchase_request.pk %}
+https://lootlink.ru{% url 'transactions:purchase_request_detail' purchase_request.pk %}
 
 ---
 С уважением,

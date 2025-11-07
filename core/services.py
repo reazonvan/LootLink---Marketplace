@@ -103,7 +103,7 @@ class NotificationService:
         if link:
             # Создаем полный URL если это относительная ссылка
             if link.startswith('/'):
-                domain = settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else 'localhost:8000'
+                domain = settings.SITE_URL.replace('http://', '').replace('https://', '')
                 protocol = 'https' if not settings.DEBUG else 'http'
                 full_link = f"{protocol}://{domain}{link}"
             else:
