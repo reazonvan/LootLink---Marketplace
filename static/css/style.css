@@ -133,6 +133,27 @@ h1, h2, h3, h4, h5, h6 {
     transform: translateX(-50%) scaleX(1);
 }
 
+/* Колокольчик уведомлений - современный */
+.nav-link .bi-bell {
+    color: #6b7280;
+    font-size: 1.25rem;
+    transition: all 0.15s ease;
+}
+
+.nav-link:hover .bi-bell {
+    color: #2563eb;
+}
+
+.nav-link .badge.bg-danger {
+    background: #ef4444 !important;
+    font-size: 0.625rem;
+    font-weight: 700;
+    padding: 0.25rem 0.425rem;
+    min-width: 18px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
 .dropdown-menu {
     border: 1px solid var(--border);
     border-radius: 12px;
