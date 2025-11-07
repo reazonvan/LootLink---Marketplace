@@ -257,6 +257,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 totalText.innerHTML = `У вас нет непрочитанных уведомлений`;
             }
         }
+        
+        // Обновляем бейдж в навигации (вызываем глобальную функцию из base.html)
+        if (typeof window.updateNotificationsCount === 'function') {
+            window.updateNotificationsCount();
+        }
     }
     
     // Наблюдаем за всеми непрочитанными уведомлениями
