@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import verification_views
+from . import views_2fa
 
 app_name = 'accounts'
 
@@ -18,6 +19,11 @@ urlpatterns = [
     # Email верификация
     path('verify-email/<str:token>/', views.verify_email, name='verify_email'),
     path('resend-verification/', views.resend_verification_email, name='resend_verification'),
+    # 2FA (Two-Factor Authentication)
+    path('2fa/setup/', views_2fa.setup_2fa, name='setup_2fa'),
+    path('2fa/verify/', views_2fa.verify_2fa, name='verify_2fa'),
+    path('2fa/disable/', views_2fa.disable_2fa, name='disable_2fa'),
+    path('2fa/status/', views_2fa.get_2fa_status, name='2fa_status'),
     # AJAX endpoints для проверки уникальности
     path('api/check-username/', views.check_username_available, name='check_username'),
     path('api/check-email/', views.check_email_available, name='check_email'),

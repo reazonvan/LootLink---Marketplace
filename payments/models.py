@@ -525,3 +525,6 @@ class Withdrawal(models.Model):
     def __str__(self):
         return f'Вывод {self.amount} ₽ - {self.user.username} ({self.get_status_display()})'
 
+
+# Импортируем модели диспутов в конец для избежания circular imports
+from .models_disputes import Dispute, DisputeMessage, DisputeEvidence

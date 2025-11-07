@@ -1,6 +1,9 @@
 from django.db import models
 from accounts.models import CustomUser
 
+# Импортируем audit модели
+from .models_audit import SecurityAuditLog, DataChangeLog
+
 
 class Notification(models.Model):
     """

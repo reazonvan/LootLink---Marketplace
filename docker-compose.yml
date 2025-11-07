@@ -64,6 +64,72 @@ services:
       timeout: 5s
       retries: 5
   
+  # Celery Worker для асинхронных задач
+  celery_worker:
+    build: .
+    container_name: lootlink_celery_worker
+    restart: unless-stopped
+    command: celery -A config worker -l info --concurrency=2
+    volumes:
+      - .:/app
+      - media_volume:/app/media
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - lootlink_network
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Beat для периодических задач
+  celery_beat:
+    build: .
+    container_name: lootlink_celery_beat
+    restart: unless-stopped
+    command: celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - lootlink_network
+
+  # Flower для мониторинга Celery (опционально)
+  flower:
+    build: .
+    container_name: lootlink_flower
+    restart: unless-stopped
+    command: celery -A config flower --port=5555
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    depends_on:
+      - celery_worker
+      - redis
+    networks:
+      - lootlink_network
+    profiles:
+      - monitoring
+
   # Nginx (опционально - для production)
   nginx:
     image: nginx:alpine
