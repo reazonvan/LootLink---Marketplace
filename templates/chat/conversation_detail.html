@@ -498,7 +498,7 @@ class ChatWebSocket {
         this.typingTimeout = null;
         this.isTyping = false;
         this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 5;
+        this.maxReconnectAttempts = 10; // Больше попыток
         
         this.messagesContainer = document.querySelector('.chat-messages-container');
         this.messagesArea = document.getElementById('messagesList');
@@ -512,7 +512,24 @@ class ChatWebSocket {
         this.groupExistingMessages();
         this.connect();
         this.attachEventListeners();
+        this.listenNetworkChanges();
         this.scrollToBottom();
+    }
+    
+    listenNetworkChanges() {
+        // Мгновенное переподключение при восстановлении сети
+        window.addEventListener('online', () => {
+            console.log('🌐 Сеть восстановлена, переподключаюсь...');
+            this.reconnectAttempts = 0; // Сбрасываем счетчик
+            if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+                this.connect();
+            }
+        });
+        
+        window.addEventListener('offline', () => {
+            console.log('📵 Сеть потеряна');
+            this.showConnectionStatus('error');
+        });
     }
     
     groupExistingMessages() {
@@ -592,11 +609,25 @@ class ChatWebSocket {
                 this.showConnectionStatus('disconnected');
                 this.useWebSocket = false;
                 
-                // Переподключение
+                // Переподключение с оптимизированными задержками
                 if (this.reconnectAttempts < this.maxReconnectAttempts) {
                     this.reconnectAttempts++;
-                    const timeout = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000);
-                    console.log(`🔄 Переподключение через ${timeout}ms... (попытка ${this.reconnectAttempts})`);
+                    
+                    // Быстрое переподключение: 0.5s, 1s, 2s, 3s, потом 5s max
+                    let timeout;
+                    if (this.reconnectAttempts === 1) {
+                        timeout = 500;   // Первая попытка - быстро
+                    } else if (this.reconnectAttempts === 2) {
+                        timeout = 1000;  // 1 секунда
+                    } else if (this.reconnectAttempts === 3) {
+                        timeout = 2000;  // 2 секунды
+                    } else if (this.reconnectAttempts === 4) {
+                        timeout = 3000;  // 3 секунды
+                    } else {
+                        timeout = 5000;  // Дальше 5 секунд
+                    }
+                    
+                    console.log(`🔄 Переподключение через ${timeout}ms... (попытка ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
                     setTimeout(() => this.connect(), timeout);
                 } else {
                     console.warn('⚠️ WebSocket недоступен, используем polling');
