@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return; // Нет нужных полей на странице
     }
     
-    console.log('🎮 Category selector initialized');
     
     // Функция загрузки категорий
     function loadCategories(gameId) {
@@ -57,10 +56,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             categorySelect.disabled = false;
-            console.log(`✅ Загружено ${data.categories.length} категорий`);
         })
         .catch(error => {
-            console.error('❌ Ошибка загрузки категорий:', error);
             categorySelect.innerHTML = '<option value="">Ошибка загрузки</option>';
             categorySelect.disabled = false;
         });
