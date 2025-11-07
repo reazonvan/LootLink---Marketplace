@@ -44,18 +44,32 @@ def landing_page(request):
     stats = cache.get(cache_key)
     
     if stats is None:
-        # Реальная статистика из базы данных (с приукрашиванием для презентабельности)
+        # РЕАЛЬНАЯ статистика из базы данных (без приукрашивания)
         actual_users = CustomUser.objects.count()
         actual_listings = Listing.objects.filter(status='active').count()
         actual_deals = PurchaseRequest.objects.filter(status='completed').count()
         
         stats = {
-            'total_listings': max(actual_listings, 150),  # Минимум показываем 150
-            'total_users': max(actual_users, 500),  # Минимум показываем 500
-            'total_deals': max(actual_deals, 230),  # Минимум показываем 230
+            'total_listings': actual_listings,  # Реальное количество
+            'total_users': actual_users,  # Реальное количество
+            'total_deals': actual_deals,  # Реальное количество
         }
         # Кешируем на 5 минут (300 секунд)
         cache.set(cache_key, stats, 300)
+    
+    # Реальные отзывы из базы данных (последние 3 с оценкой 4+)
+    from transactions.models import Review
+    real_reviews = Review.objects.filter(
+        rating__gte=4  # Только хорошие отзывы
+    ).select_related('reviewer', 'purchase_request__listing').order_by('-created_at')[:3]
+    
+    # Топ продавцов по рейтингу (только с реальными продажами)
+    from accounts.models import Profile
+    top_sellers = Profile.objects.filter(
+        user__is_active=True,
+        rating__gt=0,  # Есть рейтинг
+        total_sales__gt=0  # Есть продажи
+    ).select_related('user').order_by('-rating', '-total_sales')[:3]
     
     context = {
         'latest_listings': latest_listings,
@@ -64,6 +78,8 @@ def landing_page(request):
         'total_listings': stats['total_listings'],  # Для совместимости
         'total_users': stats['total_users'],
         'total_deals': stats['total_deals'],
+        'real_reviews': real_reviews,  # РЕАЛЬНЫЕ отзывы
+        'top_sellers': top_sellers,  # РЕАЛЬНЫЕ топ продавцы
     }
     
     return render(request, 'listings/landing_page.html', context)
