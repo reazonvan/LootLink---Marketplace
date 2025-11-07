@@ -369,7 +369,7 @@ def resend_verification_email(request):
         verification = EmailVerification.create_for_user(request.user)
     
     # Отправляем письмо
-    domain = settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else 'localhost:8000'
+    domain = settings.SITE_URL.replace('http://', '').replace('https://', '')
     protocol = 'https' if not settings.DEBUG else 'http'
     verification_url = f"{protocol}://{domain}{reverse('accounts:verify_email', kwargs={'token': verification.token})}"
     
