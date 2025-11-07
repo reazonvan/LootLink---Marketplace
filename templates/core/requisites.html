@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Реквизиты - LootLink{% endblock %}
+
+{% block meta_description %}Реквизиты и контактная информация LootLink{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h1 class="h3 mb-4 text-center">Реквизиты</h1>
+                    
+                    <div class="mb-4">
+                        <h5 class="text-muted mb-3">Информация о самозанятом</h5>
+                        
+                        <div class="mb-3">
+                            <strong>ФИО:</strong><br>
+                            Петров Иван Дмитриевич
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>ИНН:</strong><br>
+                            773474557248
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-4">
+                        <h5 class="text-muted mb-3">Контактная информация</h5>
+                        
+                        <div class="mb-3">
+                            <strong>Электронная почта:</strong><br>
+                            <a href="mailto:ivanpetrov20066.ip@gmail.com">ivanpetrov20066.ip@gmail.com</a>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Телефон:</strong><br>
+                            <a href="tel:+79269269988">+7 (926) 926-99-88</a>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Техподдержка:</strong><br>
+                            <a href="mailto:support@lootlink.com">support@lootlink.com</a>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-4">
+                        <h5 class="text-muted mb-3">Информация о доставке</h5>
+                        
+                        <p class="mb-2">
+                            <strong>Цифровые товары:</strong><br>
+                            Передача цифровых товаров (игровые предметы, аккаунты) осуществляется через встроенный чат платформы в течение 24 часов после подтверждения оплаты.
+                        </p>
+                        
+                        <p class="mb-0">
+                            <strong>Способы передачи:</strong>
+                        </p>
+                        <ul>
+                            <li>Передача данных аккаунта (логин/пароль)</li>
+                            <li>Trade-ссылка в игре (Steam, Epic Games)</li>
+                            <li>Внутриигровая передача предметов</li>
+                            <li>Код активации (если применимо)</li>
+                        </ul>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div>
+                        <h5 class="text-muted mb-3">Юридическая информация</h5>
+                        
+                        <p class="mb-2">
+                            <strong>Пользовательское соглашение:</strong><br>
+                            <a href="{% url 'rules' %}" target="_blank">https://lootlink.ru/rules/</a>
+                        </p>
+                        
+                        <p class="mb-0 text-muted small">
+                            Вся информация на данной странице предоставлена в соответствии с требованиями платежных систем и законодательством РФ.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="{% url 'listings:home' %}" class="btn btn-primary">
+                    <i class="bi bi-house"></i> На главную
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border-radius: 12px;
+}
+
+.card-body h5 {
+    color: #607590;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.card-body strong {
+    color: #0a2540;
+}
+
+.card-body a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.card-body a:hover {
+    text-decoration: underline;
+}
+
+.card-body ul {
+    padding-left: 1.5rem;
+}
+
+.card-body ul li {
+    margin-bottom: 0.5rem;
+}
+</style>
+{% endblock %}
+

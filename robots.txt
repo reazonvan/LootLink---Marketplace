@@ -6,6 +6,7 @@ Disallow: /accounts/register/
 Disallow: /accounts/profile-edit/
 Disallow: /chat/
 Disallow: /transactions/
+Disallow: /requisites/
 
 # Sitemap
 Sitemap: https://lootlink.ru/sitemap.xml

@@ -23,6 +23,7 @@ urlpatterns = [
     path('', include('core.urls')),
     path('about/', core_views.about, name='about'),
     path('rules/', core_views.rules, name='rules'),
+    path('requisites/', core_views.requisites, name='requisites'),
     
     # Verification files
     path('yandex_a6899228ac192041.html', core_views.yandex_verification, name='yandex_verification'),
