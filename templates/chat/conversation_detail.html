@@ -304,6 +304,87 @@
         font-size: 64px;
         margin-bottom: 16px;
     }
+    
+    /* Connection Status - Modern Design */
+    .connection-status {
+        position: fixed;
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 999;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        backdrop-filter: blur(10px);
+        animation: slideDown 0.3s ease-out;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .connection-status.connected {
+        background: rgba(16, 185, 129, 0.95);
+        color: white;
+    }
+    
+    .connection-status.disconnected {
+        background: rgba(251, 191, 36, 0.95);
+        color: #78350f;
+    }
+    
+    .connection-status.error {
+        background: rgba(239, 68, 68, 0.95);
+        color: white;
+    }
+    
+    .connection-status::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: pulse 2s infinite;
+    }
+    
+    .connection-status.disconnected::before {
+        animation: spin 1s linear infinite;
+        width: 16px;
+        height: 16px;
+        border: 2px solid currentColor;
+        border-top-color: transparent;
+        background: none;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+    }
+    
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
     </style>
 </head>
 <body>
@@ -403,7 +484,7 @@
 </div>
 
 <!-- Статус подключения -->
-<div id="connection-status" class="connection-status" style="position:fixed;top:70px;left:0;right:0;z-index:99;display:none;"></div>
+<div id="connection-status" class="connection-status" style="display:none;"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -745,22 +826,30 @@ class ChatWebSocket {
         if (!statusEl) return;
         
         const messages = {
-            'connected': 'Подключено ✓',
+            'connected': 'Подключено',
             'disconnected': 'Переподключение...',
             'error': 'Ошибка подключения'
         };
         
-        const colors = {
-            'connected': '#d4edda',
-            'disconnected': '#fff3cd',
-            'error': '#f8d7da'
-        };
+        // Удаляем все предыдущие классы статуса
+        statusEl.classList.remove('connected', 'disconnected', 'error');
         
+        // Добавляем новый класс
+        statusEl.classList.add(status);
+        
+        // Устанавливаем текст
         statusEl.textContent = messages[status] || '';
-        statusEl.style.background = colors[status] || '#fff';
-        statusEl.style.display = status === 'connected' ? 'none' : 'block';
-        statusEl.style.padding = '8px';
-        statusEl.style.textAlign = 'center';
+        
+        // Показываем или скрываем
+        if (status === 'connected') {
+            statusEl.style.display = 'flex';
+            // Автоматически скрываем через 2 секунды
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 2000);
+        } else {
+            statusEl.style.display = 'flex';
+        }
     }
     
     attachEventListeners() {
