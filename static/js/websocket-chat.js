@@ -25,12 +25,10 @@ class WebSocketChat {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/ws/chat/${this.conversationId}/`;
         
-        console.log('Connecting to WebSocket:', wsUrl);
         
         this.socket = new WebSocket(wsUrl);
         
         this.socket.onopen = () => {
-            console.log('WebSocket connected');
             this.reconnectAttempts = 0;
             this.showConnectionStatus('connected');
         };
@@ -41,20 +39,17 @@ class WebSocketChat {
         };
         
         this.socket.onclose = (event) => {
-            console.log('WebSocket closed:', event);
             this.showConnectionStatus('disconnected');
             
             // Попытка переподключения
             if (this.reconnectAttempts < this.maxReconnectAttempts) {
                 this.reconnectAttempts++;
                 const timeout = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-                console.log(`Reconnecting in ${timeout}ms... (attempt ${this.reconnectAttempts})`);
                 setTimeout(() => this.connect(), timeout);
             }
         };
         
         this.socket.onerror = (error) => {
-            console.error('WebSocket error:', error);
             this.showConnectionStatus('error');
         };
     }
@@ -74,7 +69,6 @@ class WebSocketChat {
                 this.markMessageAsRead(data.message_id);
                 break;
             case 'error':
-                console.error('Server error:', data.message);
                 break;
         }
     }
@@ -106,7 +100,6 @@ class WebSocketChat {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(JSON.stringify(data));
         } else {
-            console.warn('WebSocket not connected');
         }
     }
     

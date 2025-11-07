@@ -11,13 +11,11 @@ class PushNotifications {
     
     async init() {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-            console.log('Push notifications not supported');
             return;
         }
         
         try {
             this.swRegistration = await navigator.serviceWorker.register('/static/js/service-worker.js');
-            console.log('Service Worker registered');
             
             // Запрашиваем VAPID ключ с сервера
             const response = await fetch('/api/push/vapid-public-key/');
@@ -25,7 +23,6 @@ class PushNotifications {
             this.vapidPublicKey = data.public_key;
             
         } catch (error) {
-            console.error('Service Worker registration failed:', error);
         }
     }
     
@@ -38,11 +35,9 @@ class PushNotifications {
         const permission = await Notification.requestPermission();
         
         if (permission === 'granted') {
-            console.log('Push permission granted');
             await this.subscribe();
             return true;
         } else {
-            console.log('Push permission denied');
             return false;
         }
     }
@@ -64,11 +59,9 @@ class PushNotifications {
                 body: JSON.stringify(subscription.toJSON())
             });
             
-            console.log('Push subscription sent to server');
             return true;
             
         } catch (error) {
-            console.error('Failed to subscribe:', error);
             return false;
         }
     }

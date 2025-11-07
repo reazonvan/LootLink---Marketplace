@@ -103,5 +103,4 @@ function getCookie(name) {
     return cookieValue;
 }
 
-console.log('💖 Favorites script загружен');
 

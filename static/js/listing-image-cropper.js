@@ -241,7 +241,6 @@ class ListingImageCropper {
                         zoomOnWheel: true,
                         zoomOnTouch: true,
                         ready: function() {
-                            console.log('Listing Cropper готов');
                             // Принудительно включаем crop mode и центрируем
                             this.cropper.crop();
                             
@@ -257,13 +256,10 @@ class ListingImageCropper {
                                 height: cropBoxHeight
                             });
                             
-                            console.log('Listing crop box центрирован');
                         },
                         cropstart: function(e) {
-                            console.log('Crop start:', e.detail.action);
                         },
                         cropmove: function(e) {
-                            console.log('Crop move');
                             // ФИКС: Принудительно обновляем preview
                             const previewElement = document.getElementById('listingPreviewRect');
                             if (previewElement) {

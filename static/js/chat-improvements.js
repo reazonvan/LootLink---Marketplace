@@ -45,12 +45,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (messagesContainer && conversationId) {
         const chatId = conversationId.getAttribute('data-conversation-id');
-        console.log(`🔄 Автообновление для чата ${chatId}`);
         
-        // ИСПРАВЛЕНИЕ Memory Leak - очищаем старый interval перед созданием нового
         if (window.chatInterval) {
             clearInterval(window.chatInterval);
-            console.log('🧹 Очистка старого chat interval');
         }
         
         // Сохраняем interval ID
@@ -58,19 +55,15 @@ document.addEventListener('DOMContentLoaded', function() {
             loadNewMessages(chatId);
         }, 3000); // 3 секунды
         
-        // Очищаем interval при уходе со страницы (beforeunload)
         window.addEventListener('beforeunload', function() {
             if (window.chatInterval) {
                 clearInterval(window.chatInterval);
-                console.log('🧹 Chat interval очищен при beforeunload');
             }
         });
         
-        // ДОПОЛНИТЕЛЬНАЯ ЗАЩИТА: Очищаем при переходе на другую страницу (pagehide)
         window.addEventListener('pagehide', function() {
             if (window.chatInterval) {
                 clearInterval(window.chatInterval);
-                console.log('🧹 Chat interval очищен при pagehide');
             }
         });
         
@@ -82,9 +75,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 visibilityTimer = setTimeout(function() {
                     if (window.chatInterval) {
                         clearInterval(window.chatInterval);
-                        console.log('🧹 Chat interval очищен по таймауту (страница скрыта 5+ минут)');
                     }
-                }, 5 * 60 * 1000); // 5 минут
+                }, 5 * 60 * 1000);
             } else {
                 // Страница снова видима - отменяем таймер
                 if (visibilityTimer) {
@@ -121,8 +113,6 @@ function loadNewMessages(conversationId) {
     })
     .then(data => {
         if (data.messages && data.messages.length > 0) {
-            console.log(`📬 Получено новых сообщений: ${data.messages.length}`);
-            
             data.messages.forEach(message => {
                 addMessageToChat(message);
             });
@@ -137,9 +127,7 @@ function loadNewMessages(conversationId) {
             }
         }
     })
-    .catch(error => {
-        console.error('Ошибка загрузки сообщений:', error);
-    });
+    .catch(() => {});
 }
 
 /**

@@ -116,7 +116,6 @@ function checkAvailability(value, endpoint, feedbackElement, input) {
         }
     })
     .catch(error => {
-        console.error('Ошибка проверки:', error);
         feedbackElement.textContent = 'Ошибка проверки. Попробуйте позже.';
         feedbackElement.className = 'validation-feedback text-warning';
         input.classList.remove('is-valid', 'is-invalid');
