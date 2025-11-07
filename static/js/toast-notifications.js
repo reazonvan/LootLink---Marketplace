@@ -8,16 +8,9 @@ let toastSystemInitialized = false;
 
 // Создаём контейнер для toast уведомлений
 document.addEventListener('DOMContentLoaded', function() {
-    // Предотвращаем повторную инициализацию
-    if (toastSystemInitialized) {
-        console.log('⚠️ Toast система уже инициализирована, пропускаем');
-        return;
-    }
+    if (toastSystemInitialized) return;
     toastSystemInitialized = true;
     
-    console.log('🔔 Toast notifications initialized');
-    
-    // Создаём контейнер для toast если его нет
     let toastContainer = document.getElementById('toast-container');
     if (!toastContainer) {
         toastContainer = document.createElement('div');
@@ -30,23 +23,15 @@ document.addEventListener('DOMContentLoaded', function() {
             pointer-events: none;
         `;
         document.body.appendChild(toastContainer);
-        console.log('✅ Toast container создан');
     }
     
-    // СКРЫВАЕМ Django messages (не показываем их как Toast)
-    // Все уведомления теперь через систему Notification
     const djangoMessages = document.querySelectorAll('.django-messages-data .alert');
     if (djangoMessages.length > 0) {
-        console.log(`📨 Django messages скрыты: ${djangoMessages.length}`);
         djangoMessages.forEach(alert => alert.remove());
-        
         const messagesContainer = document.querySelector('.django-messages-data');
-        if (messagesContainer) {
-            messagesContainer.remove();
-        }
+        if (messagesContainer) messagesContainer.remove();
     }
     
-    // Проверяем новые уведомления через AJAX
     if (typeof updateNotificationBadge !== 'undefined') {
         checkNewNotifications();
     }

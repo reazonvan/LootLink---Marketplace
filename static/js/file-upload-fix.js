@@ -13,20 +13,10 @@ function escapeHtml(text) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔧 File upload fix загружен');
-    
-    // Находим ВСЕ input type="file" на странице
     const fileInputs = document.querySelectorAll('input[type="file"]');
-    
-    if (fileInputs.length === 0) {
-        console.log('⚠️ File inputs не найдены');
-        return;
-    }
-    
-    console.log(`✅ Найдено ${fileInputs.length} file input(s)`);
+    if (fileInputs.length === 0) return;
     
     fileInputs.forEach(function(input) {
-        console.log('📌 Обрабатываем input:', input.id || input.name);
         
         // СКРЫВАЕМ оригинальный input
         input.style.display = 'none';
@@ -48,9 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
         customButton.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🖱️ Клик по кастомной кнопке!');
-            input.click();  // Триггерим клик на скрытом input
-            console.log('✅ Input.click() вызван');
+            input.click();
         });
         
         // Создаём контейнер для превью
@@ -61,14 +49,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // ОБРАБОТЧИК ВЫБОРА ФАЙЛА
         input.addEventListener('change', function(e) {
-            console.log('📁 Файл выбран!', e.target.files[0]);
-            
             const file = e.target.files[0];
-            
-            if (!file) {
-                console.log('⚠️ Файл не выбран или отменён');
-                return;
-            }
+            if (!file) return;
             
             // Проверка типа
             if (!file.type.match('image.*')) {
@@ -84,12 +66,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            console.log('✅ Файл прошёл валидацию');
-            
             // Показываем превью
             const reader = new FileReader();
             reader.onload = function(e) {
-                console.log('🖼️ Показываем превью');
                 
                 // ЗАЩИТА ОТ XSS: экранируем имя файла
                 const safeFileName = escapeHtml(file.name);
@@ -113,7 +92,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Обработчик удаления
                 previewDiv.querySelector('.remove-file-btn').addEventListener('click', function() {
-                    console.log('🗑️ Удаление файла');
                     input.value = '';
                     previewDiv.style.display = 'none';
                     customButton.style.display = 'block';
@@ -122,8 +100,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             reader.readAsDataURL(file);
         });
-        
-        console.log('✅ Обработчики добавлены для', input.id || input.name);
     });
 });
 

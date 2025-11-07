@@ -22,26 +22,15 @@ function getCookie(name) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('💬 Chat improvements initialized');
-    
-    // 1. ОТПРАВКА ПО ENTER
     const messageForm = document.querySelector('#message-form');
     const messageTextarea = document.querySelector('#id_content');
     
     if (messageTextarea && messageForm) {
-        console.log('✅ Найдена форма чата');
-        
         messageTextarea.addEventListener('keydown', function(e) {
-            // Enter без Shift = отправка
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                console.log('📤 Отправка по Enter');
-                
-                // Проверяем что есть текст
                 if (this.value.trim()) {
                     messageForm.submit();
-                } else {
-                    console.log('⚠️ Пустое сообщение');
                 }
             }
         });

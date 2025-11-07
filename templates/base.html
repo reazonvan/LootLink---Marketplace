@@ -426,30 +426,21 @@
                 }
             })
                 .then(response => {
-                    if (!response.ok) {
-                        console.error('Response not OK:', response.status);
-                        throw new Error('Network response was not ok');
-                    }
+                    if (!response.ok) return null;
                     return response.json();
                 })
                 .then(data => {
+                    if (!data) return;
                     const count = data.count || 0;
                     
-                    // Логируем только если изменилось
                     if (count !== lastCount) {
-                        console.log(`Уведомления обновлены: ${lastCount} -> ${count}`);
                         lastCount = count;
                     }
                     
-                    // Обновляем desktop версию
                     updateBadge('.navbar-nav .position-relative', count);
-                    
-                    // Обновляем mobile версию
                     updateMobileBadge(count);
                 })
-                .catch(error => {
-                    console.error('Ошибка обновления уведомлений:', error);
-                });
+                .catch(() => {});
         }
         
         function updateBadge(selector, count) {
