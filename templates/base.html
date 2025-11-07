@@ -379,8 +379,18 @@
         let updateInterval;
         
         function updateNotificationsCount() {
-            fetch('/core/notifications/unread-count/')
-                .then(response => response.json())
+            fetch('/core/notifications/unread-count/', {
+                credentials: 'same-origin',  // Включаем отправку cookies
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     const count = data.count || 0;
                     
