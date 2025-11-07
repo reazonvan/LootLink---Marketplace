@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import views_disputes
 
 app_name = 'payments'
 
@@ -20,6 +21,13 @@ urlpatterns = [
     
     # Эскроу
     path('escrow/<int:escrow_id>/', views.escrow_detail, name='escrow_detail'),
+    
+    # Диспуты
+    path('disputes/', views_disputes.disputes_list, name='disputes_list'),
+    path('dispute/create/<int:escrow_id>/', views_disputes.create_dispute, name='dispute_create'),
+    path('dispute/<int:dispute_id>/', views_disputes.dispute_detail, name='dispute_detail'),
+    path('dispute/<int:dispute_id>/message/', views_disputes.add_dispute_message, name='dispute_add_message'),
+    path('dispute/<int:dispute_id>/moderate/', views_disputes.moderate_dispute, name='dispute_moderate'),
     
     # Webhooks
     path('webhook/yookassa/', views.yookassa_webhook, name='yookassa_webhook'),

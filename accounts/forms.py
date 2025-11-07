@@ -285,13 +285,15 @@ class PasswordResetConfirmForm(forms.Form):
     """
     code = forms.CharField(
         label='Код подтверждения',
-        max_length=6,
+        max_length=8,
+        min_length=8,
         widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': '123456',
-            'maxlength': '6'
+            'class': 'form-control text-uppercase',
+            'placeholder': '2A3B4C5D',
+            'maxlength': '8',
+            'style': 'letter-spacing: 0.1em;'
         }),
-        help_text='Введите 6-значный код из письма'
+        help_text='Введите 8-символьный код из письма (буквы и цифры)'
     )
     new_password1 = forms.CharField(
         label='Новый пароль',

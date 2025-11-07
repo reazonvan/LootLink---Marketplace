@@ -22,6 +22,8 @@ django-storages>=1.14.2
 
 # Image processing
 Pillow>=11.3.0
+python-magic>=0.4.27  # Для проверки реальных MIME типов файлов
+python-magic-bin>=0.4.14; sys_platform == 'win32'  # Windows binary
 
 # Additional utilities
 django-crispy-forms>=2.4

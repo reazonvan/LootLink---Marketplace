@@ -4,6 +4,7 @@ Django settings for LootLink project.
 import os
 from pathlib import Path
 from decouple import config
+from django.core.exceptions import ImproperlyConfigured
 
 # Sentry для мониторинга ошибок (только в production)
 if not config('DEBUG', default=False, cast=bool):
@@ -23,7 +24,15 @@ if not config('DEBUG', default=False, cast=bool):
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-in-production')
+# SECRET_KEY ОБЯЗАТЕЛЬНО должен быть в .env файле! Без default для безопасности
+try:
+    SECRET_KEY = config('SECRET_KEY')
+except Exception:
+    raise ImproperlyConfigured(
+        'SECRET_KEY not found in environment variables! '
+        'Add SECRET_KEY=your-secret-key-here to your .env file. '
+        'Generate one using: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"'
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
@@ -83,6 +92,18 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
+    # Rate Limiting (Throttling) для защиты от DDoS и злоупотреблений
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',  # Анонимные пользователи: 100 запросов в час
+        'user': '1000/hour',  # Аутентифицированные: 1000 запросов в час
+        'burst': '60/minute',  # Burst лимит: 60 запросов в минуту
+        'create': '20/hour',  # Создание объектов: 20 в час
+        'modify': '100/hour',  # Модификация: 100 в час
+    },
 }
 
 MIDDLEWARE = [
@@ -97,6 +118,8 @@ MIDDLEWARE = [
     # Кастомные middleware для безопасности
     'core.middleware.SimpleRateLimitMiddleware',
     'core.middleware.SecurityHeadersMiddleware',
+    'core.middleware_audit.BruteForceProtectionMiddleware',  # Защита от брутфорса
+    'core.middleware_audit.SecurityAuditMiddleware',  # Аудит безопасности
     # Обновление last_seen
     'core.middleware_activity.UpdateLastSeenMiddleware',
 ]
@@ -144,8 +167,13 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),  # Пароль ОБЯЗАТЕЛЬНО должен быть в .env файле!
         'HOST': config('DB_HOST', default='localhost'),
         'PORT': config('DB_PORT', default='5432'),
+        # Connection Pooling - переиспользование подключений
+        'CONN_MAX_AGE': config('DB_CONN_MAX_AGE', default=600, cast=int),  # 10 минут
         'OPTIONS': {
             'client_encoding': 'UTF8',
+            # Дополнительные оптимизации PostgreSQL
+            'connect_timeout': 10,  # Таймаут подключения 10 секунд
+            'options': '-c statement_timeout=30000'  # Таймаут запроса 30 секунд
         },
     }
 }
@@ -345,6 +373,26 @@ CELERY_BEAT_SCHEDULE = {
     'update-user-ratings-hourly': {
         'task': 'core.tasks.update_user_ratings',
         'schedule': 3600.0,  # Раз в час
+    },
+    'cleanup-audit-logs-weekly': {
+        'task': 'core.tasks.cleanup_security_audit_logs',
+        'schedule': 604800.0,  # Раз в неделю (7 дней)
+        'kwargs': {'days': 90}  # Удаляем логи старше 90 дней
+    },
+    'cleanup-login-attempts-daily': {
+        'task': 'core.tasks.cleanup_login_attempts',
+        'schedule': 86400.0,  # Раз в день
+        'kwargs': {'days': 30}  # Удаляем попытки старше 30 дней
+    },
+    # Автоматическое освобождение escrow
+    'auto-release-escrow-hourly': {
+        'task': 'payments.auto_release_escrow',
+        'schedule': 3600.0,  # Раз в час
+    },
+    # Проверка pending withdrawals
+    'check-pending-withdrawals-daily': {
+        'task': 'payments.check_pending_withdrawals',
+        'schedule': 86400.0,  # Раз в день
     },
 }
 

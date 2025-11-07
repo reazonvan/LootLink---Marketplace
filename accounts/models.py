@@ -5,33 +5,9 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
+from core.validators import AvatarValidator
 import random
 import string
-
-
-def validate_avatar_size(image):
-    """Валидация размера аватара."""
-    if image:
-        file_size = image.size
-        limit_mb = 2
-        if file_size > limit_mb * 1024 * 1024:
-            raise ValidationError(f'Максимальный размер аватара {limit_mb} МБ. Ваш файл: {file_size / (1024*1024):.2f} МБ')
-
-
-def validate_avatar_type(image):
-    """Валидация типа изображения аватара."""
-    if image:
-        import imghdr
-        file_type = imghdr.what(image)
-        allowed_types = ['jpeg', 'jpg', 'png', 'gif']
-        
-        if file_type not in allowed_types:
-            raise ValidationError('Неподдерживаемый формат. Разрешены: JPEG, PNG, GIF')
-        
-        if hasattr(image, 'content_type'):
-            allowed_mime = ['image/jpeg', 'image/png', 'image/gif']
-            if image.content_type not in allowed_mime:
-                raise ValidationError('Файл должен быть изображением')
 
 
 class CustomUser(AbstractUser):
@@ -70,8 +46,9 @@ class Profile(models.Model):
         upload_to='avatars/',
         blank=True,
         null=True,
-        validators=[validate_avatar_size, validate_avatar_type],
-        verbose_name='Аватар'
+        validators=[AvatarValidator()],
+        verbose_name='Аватар',
+        help_text='Макс. 2 МБ. Форматы: JPG, PNG, WebP'
     )
     cover_image = models.ImageField(
         upload_to='covers/',
@@ -351,7 +328,7 @@ class PasswordResetCode(models.Model):
         verbose_name='Пользователь'
     )
     code = models.CharField(
-        max_length=6,
+        max_length=10,  # 8 символов + запас на будущее
         verbose_name='Код подтверждения'
     )
     created_at = models.DateTimeField(
@@ -376,8 +353,14 @@ class PasswordResetCode(models.Model):
     
     @classmethod
     def generate_code(cls):
-        """Генерирует случайный 6-значный код."""
-        return ''.join(random.choices(string.digits, k=6))
+        """
+        Генерирует безопасный 8-символьный буквенно-цифровой код.
+        Использует uppercase буквы и цифры для удобства ввода (исключая похожие символы).
+        Комбинаций: 32^8 = 1,099,511,627,776 (более триллиона)
+        """
+        # Исключаем похожие символы: 0/O, 1/I/L для удобства пользователя
+        safe_chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'
+        return ''.join(random.choices(safe_chars, k=8))
     
     @classmethod
     def create_code(cls, user):

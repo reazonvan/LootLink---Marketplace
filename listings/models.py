@@ -5,47 +5,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.postgres.search import SearchVectorField
 from django.contrib.postgres.indexes import GinIndex
 from accounts.models import CustomUser
-
-
-def validate_image_size(image):
-    """Валидация размера загружаемого изображения."""
-    if image:
-        file_size = image.size
-        limit_mb = 5
-        if file_size > limit_mb * 1024 * 1024:
-            raise ValidationError(f'Максимальный размер файла {limit_mb} МБ. Ваш файл: {file_size / (1024*1024):.2f} МБ')
-
-
-def validate_image_type(image):
-    """Валидация типа изображения с защитой от вредоносных файлов."""
-    if image:
-        import imghdr
-        from PIL import Image
-        
-        # Проверка через PIL (защита от поврежденных/вредоносных файлов)
-        try:
-            img = Image.open(image)
-            img.verify()  # Проверяет что файл является валидным изображением
-            # Сбрасываем указатель файла после verify()
-            image.seek(0)
-        except Exception as e:
-            raise ValidationError(f'Файл поврежден или не является валидным изображением: {str(e)}')
-        
-        # Определяем тип файла по содержимому
-        file_type = imghdr.what(image)
-        allowed_types = ['jpeg', 'jpg', 'png', 'gif', 'webp']
-        
-        if file_type not in allowed_types:
-            raise ValidationError(f'Неподдерживаемый формат изображения. Разрешены: JPEG, PNG, GIF, WebP')
-        
-        # Дополнительная проверка через content_type
-        if hasattr(image, 'content_type'):
-            allowed_mime = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-            if image.content_type not in allowed_mime:
-                raise ValidationError('Файл должен быть изображением')
-        
-        # Сбрасываем указатель файла для дальнейшего использования
-        image.seek(0)
+from core.validators import ListingImageValidator
 
 
 class Favorite(models.Model):
@@ -278,8 +238,9 @@ class Listing(models.Model):
         upload_to='listings/',
         blank=True,
         null=True,
-        validators=[validate_image_size, validate_image_type],
-        verbose_name='Изображение'
+        validators=[ListingImageValidator()],
+        verbose_name='Изображение',
+        help_text='Макс. 5 МБ. Форматы: JPG, PNG, WebP'
     )
     status = models.CharField(
         max_length=20,

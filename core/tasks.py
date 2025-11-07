@@ -127,3 +127,32 @@ def update_user_ratings():
     
     return f'Обновлено рейтингов: {updated_count}, ошибок: {errors_count}'
 
+
+@shared_task
+def cleanup_security_audit_logs(days=90):
+    """
+    Очистка старых логов аудита безопасности.
+    По умолчанию удаляет логи старше 90 дней.
+    
+    Args:
+        days: Количество дней для хранения логов
+    """
+    from .models_audit import SecurityAuditLog
+    
+    deleted_count = SecurityAuditLog.cleanup_old_logs(days=days)
+    return f'Удалено {deleted_count} записей audit log старше {days} дней'
+
+
+@shared_task
+def cleanup_login_attempts(days=30):
+    """
+    Очистка старых попыток входа.
+    По умолчанию удаляет попытки старше 30 дней.
+    
+    Args:
+        days: Количество дней для хранения записей
+    """
+    from .models_audit import LoginAttempt
+    
+    deleted_count = LoginAttempt.cleanup_old_attempts(days=days)
+    return f'Удалено {deleted_count} записей попыток входа старше {days} дней'
