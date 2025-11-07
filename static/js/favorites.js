@@ -65,8 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         })
-        .catch(error => {
-            console.error('Ошибка:', error);
+        .catch(() => {
             if (window.showToast) {
                 showToast('Произошла ошибка соединения.', 'error', 'exclamation-triangle', 'bg-danger');
             }

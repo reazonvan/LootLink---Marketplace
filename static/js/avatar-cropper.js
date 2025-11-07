@@ -192,8 +192,6 @@ class AvatarCropper {
                         zoomOnWheel: true,
                         zoomOnTouch: true,
                         ready: function() {
-                            console.log('Avatar Cropper готов');
-                            // Принудительно включаем crop mode и центрируем
                             this.cropper.crop();
                             
                             // ФИКС: Центрируем crop box
@@ -207,14 +205,10 @@ class AvatarCropper {
                                 width: cropBoxSize,
                                 height: cropBoxSize
                             });
-                            
-                            console.log('Crop box центрирован');
                         },
                         cropstart: function(e) {
-                            console.log('Crop start:', e.detail.action);
                         },
                         cropmove: function(e) {
-                            console.log('Crop move');
                             // ФИКС: Принудительно обновляем preview при каждом движении
                             const previewElement = document.getElementById('avatarPreviewCircle');
                             if (previewElement) {
@@ -227,7 +221,6 @@ class AvatarCropper {
                     setTimeout(() => {
                         if (this.cropper) {
                             this.cropper.crop();
-                            console.log('Crop mode активирован');
                         }
                     }, 100);
                 };

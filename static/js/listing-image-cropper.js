@@ -269,12 +269,11 @@ class ListingImageCropper {
                     });
                     
                     // Дополнительно включаем crop mode через 100ms
-                    setTimeout(() => {
-                        if (this.cropper) {
-                            this.cropper.crop();
-                            console.log('Crop mode активирован');
-                        }
-                    }, 100);
+                        setTimeout(() => {
+                            if (this.cropper) {
+                                this.cropper.crop();
+                            }
+                        }, 100);
                 };
                 
                 // Если изображение уже загружено
