@@ -126,6 +126,9 @@ def send_message_notification(sender, instance, created, **kwargs):
         # Оптимизация: одно уведомление на беседу пока не прочитано
         from core.models import Notification
         from django.db import transaction
+        import logging
+        
+        logger = logging.getLogger(__name__)
         
         # Используем атомарную транзакцию для предотвращения дубликатов
         with transaction.atomic():
@@ -141,8 +144,10 @@ def send_message_notification(sender, instance, created, **kwargs):
                 }
             )
             
-            # Если уведомление уже существовало, просто обновляем время
-            if not created:
+            if created:
+                logger.info(f'Создано новое уведомление для {recipient.username} от {instance.sender.username}')
+            else:
+                logger.info(f'Обновлено время уведомления для {recipient.username} от {instance.sender.username}')
                 from django.utils import timezone
                 notification.created_at = timezone.now()
                 notification.save(update_fields=['created_at'])
