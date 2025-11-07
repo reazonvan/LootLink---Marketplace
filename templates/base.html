@@ -7,9 +7,15 @@
     
     <!-- SEO Meta Tags -->
     <meta name="description" content="{% block meta_description %}LootLink - безопасный P2P маркетплейс для покупки и продажи внутриигровых предметов. Торгуйте напрямую с другими игроками без посредников.{% endblock %}">
-    <meta name="keywords" content="игровые предметы, маркетплейс, p2p, dota 2, csgo, торговля, скины">
+    <meta name="keywords" content="{% block meta_keywords %}купить игровые предметы, продать скины, маркетплейс dota 2, csgo скины, valorant, genshin impact, торговля предметами, p2p маркетплейс, игровой маркетплейс{% endblock %}">
     <meta name="author" content="LootLink">
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <meta name="csrf-token" content="{{ csrf_token }}">
+    
+    <!-- Verification Meta Tags -->
+    <meta name="google-site-verification" content="sIZPJJwsVs72C3rERyKECmsPSzZ8jpBYZFVEbHMXjzI">
+    <meta name="yandex-verification" content="YANDEX_VERIFICATION_CODE">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -23,6 +29,37 @@
     <meta property="twitter:url" content="{{ request.build_absolute_uri }}">
     <meta property="twitter:title" content="{% block twitter_title %}LootLink - Маркетплейс игровых предметов{% endblock %}">
     <meta property="twitter:description" content="{% block twitter_description %}Покупайте и продавайте игровые предметы напрямую у других игроков{% endblock %}">
+    
+    <!-- Structured Data (Schema.org) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "LootLink",
+      "url": "https://lootlink.ru",
+      "description": "P2P маркетплейс для торговли игровыми предметами",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://lootlink.ru/catalog/?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "LootLink",
+      "url": "https://lootlink.ru",
+      "logo": "https://lootlink.ru{% static 'favicon.svg' %}",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Support",
+        "email": "support@lootlink.com"
+      },
+      "sameAs": []
+    }
+    </script>
     
     <!-- Favicon -->
     {% load static %}
