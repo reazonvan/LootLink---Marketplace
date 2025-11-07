@@ -187,7 +187,5 @@ function scrollToBottom() {
  * Показать уведомление (из toast-notifications.js)
  */
 if (typeof showToast === 'undefined') {
-    function showToast(message, type = 'info', icon = 'info-circle', bgClass = 'bg-primary') {
-        console.log('Toast fallback:', message);
-    }
+    function showToast(message, type = 'info', icon = 'info-circle', bgClass = 'bg-primary') {}
 }
