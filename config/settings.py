@@ -336,9 +336,8 @@ if USE_REDIS:
         }
     }
     
-    # Session хранение в Redis для production
-    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-    SESSION_CACHE_ALIAS = 'default'
+    # Session хранение в БД для совместимости с WebSocket
+    SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 else:
     # Локальный кеш для разработки
     CACHES = {
