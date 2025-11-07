@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('transactions', '0003_alter_review_options_and_more'),  # Замените на последнюю миграцию
+        ('transactions', '0004_remove_purchaserequest_purchase_buyer_status_idx_and_more'),
     ]
 
     operations = [

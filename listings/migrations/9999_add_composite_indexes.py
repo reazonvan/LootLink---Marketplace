@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('listings', '0013_alter_category_options_and_more'),  # Замените на последнюю миграцию
+        ('listings', '0013_add_category_filters'),
     ]
 
     operations = [

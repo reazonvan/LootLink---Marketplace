@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('chat', '0007_alter_conversation_unique_together_and_more'),  # Замените на последнюю миграцию
+        ('chat', '0006_add_conversation_ordering_constraint'),
     ]
 
     operations = [
