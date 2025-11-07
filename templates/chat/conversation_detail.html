@@ -127,27 +127,65 @@
         transform: scale(0.95);
     }
     
-    /* Message Bubbles - Improved Size */
+    /* Message Groups - Like Telegram */
     .message-group {
         position: relative;
         margin-bottom: 16px;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .message-group.sent {
+        flex-direction: row-reverse;
+    }
+    
+    .message-group-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #E5E7EB;
+        flex-shrink: 0;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: sticky;
+        top: 90px; /* Ниже header'а */
+        align-self: flex-start;
+        z-index: 10;
+    }
+    
+    .message-group-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .message-group-avatar i {
+        font-size: 20px;
+        color: #9CA3AF;
+    }
+    
+    .messages-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
     }
     
     .message-item {
         display: flex;
-        gap: 12px;
-        margin-bottom: 4px;
+        flex-direction: column;
         align-items: flex-start;
     }
     
-    .message-item.first-in-group {
-        margin-top: 0;
+    .message-group.sent .message-item {
+        align-items: flex-end;
     }
     
-    .message-item.sent {
-        flex-direction: row-reverse;
-    }
-    
+    /* Старые стили для совместимости */
     .message-avatar-chat {
         width: 40px;
         height: 40px;
@@ -158,15 +196,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        visibility: visible;
-        position: sticky;
-        top: 90px; /* Ниже header'а */
-        align-self: flex-start;
-        z-index: 10;
     }
     
     .message-avatar-chat.hidden {
-        visibility: hidden;
+        display: none;
     }
     
     .message-avatar-chat img {
@@ -183,12 +216,21 @@
     .message-content-box {
         display: flex;
         flex-direction: column;
-        max-width: 55%; /* Desktop - чуть больше половины */
+        max-width: 100%;
         min-width: 120px;
     }
     
-    .message-item.sent .message-content-box {
+    .message-group.sent .message-content-box {
         align-items: flex-end;
+    }
+    
+    .messages-wrapper .message-item {
+        max-width: 70%;
+    }
+    
+    .message-group.sent .messages-wrapper .message-item {
+        max-width: 70%;
+        align-self: flex-end;
     }
     
     .message-bubble-chat {
@@ -223,7 +265,7 @@
     
     /* Mobile Adjustments */
     @media (max-width: 768px) {
-        .message-content-box {
+        .messages-wrapper .message-item {
             max-width: 85%; /* Mobile - почти до края */
         }
         
@@ -397,26 +439,46 @@ class ChatWebSocket {
         const messages = this.messagesContainer.querySelectorAll('.message-item');
         let previousSenderId = null;
         let currentGroup = null;
+        let messagesWrapper = null;
         
         messages.forEach((messageEl, index) => {
             const senderId = messageEl.dataset.senderId;
-            const avatar = messageEl.querySelector('.message-avatar-chat');
+            const isSent = messageEl.classList.contains('sent');
             
             // Если новый отправитель - создаем новую группу
             if (senderId !== previousSenderId) {
+                // Создаем группу
                 currentGroup = document.createElement('div');
-                currentGroup.className = 'message-group';
+                currentGroup.className = `message-group ${isSent ? 'sent' : 'received'}`;
                 messageEl.parentNode.insertBefore(currentGroup, messageEl);
+                
+                // Добавляем аватарку для получателя
+                if (!isSent) {
+                    const avatar = messageEl.querySelector('.message-avatar-chat');
+                    if (avatar) {
+                        const groupAvatar = document.createElement('div');
+                        groupAvatar.className = 'message-group-avatar';
+                        groupAvatar.innerHTML = avatar.innerHTML;
+                        currentGroup.appendChild(groupAvatar);
+                        avatar.remove(); // Удаляем старую аватарку
+                    }
+                }
+                
+                // Создаем обертку для сообщений
+                messagesWrapper = document.createElement('div');
+                messagesWrapper.className = 'messages-wrapper';
+                currentGroup.appendChild(messagesWrapper);
             }
             
-            // Добавляем сообщение в текущую группу
-            if (currentGroup) {
-                currentGroup.appendChild(messageEl);
+            // Удаляем аватарку из последующих сообщений
+            const avatar = messageEl.querySelector('.message-avatar-chat');
+            if (avatar) {
+                avatar.remove();
             }
             
-            // Скрываем аватарку если не первое сообщение в группе
-            if (senderId === previousSenderId && avatar) {
-                avatar.classList.add('hidden');
+            // Добавляем сообщение в обертку
+            if (messagesWrapper) {
+                messagesWrapper.appendChild(messageEl);
             }
             
             previousSenderId = senderId;
@@ -565,17 +627,18 @@ class ChatWebSocket {
         const allGroups = this.messagesContainer.querySelectorAll('.message-group');
         const lastGroup = allGroups[allGroups.length - 1];
         
-        let showAvatar = true;
         let targetGroup = null;
+        let messagesWrapper = null;
         
         // Проверяем, можем ли добавить в последнюю группу
         if (lastGroup) {
-            const lastMessage = lastGroup.querySelector('.message-item:last-child');
+            const lastWrapper = lastGroup.querySelector('.messages-wrapper');
+            const lastMessage = lastWrapper ? lastWrapper.querySelector('.message-item:last-child') : null;
             if (lastMessage) {
                 const lastSenderId = lastMessage.dataset.senderId;
                 if (lastSenderId === String(message.sender_id)) {
-                    showAvatar = false;
                     targetGroup = lastGroup;
+                    messagesWrapper = lastWrapper;
                 }
             }
         }
@@ -583,7 +646,27 @@ class ChatWebSocket {
         // Если не нашли подходящую группу - создаем новую
         if (!targetGroup) {
             targetGroup = document.createElement('div');
-            targetGroup.className = 'message-group';
+            targetGroup.className = `message-group ${isSent ? 'sent' : 'received'}`;
+            
+            // Добавляем аватарку для входящих сообщений
+            if (!isSent) {
+                const groupAvatar = document.createElement('div');
+                groupAvatar.className = 'message-group-avatar';
+                
+                let avatarHTML = '<i class="bi bi-person-fill"></i>';
+                if (message.sender_avatar_url) {
+                    avatarHTML = `<img src="${message.sender_avatar_url}" alt="${message.sender_username}">`;
+                }
+                groupAvatar.innerHTML = avatarHTML;
+                targetGroup.appendChild(groupAvatar);
+            }
+            
+            // Создаем обертку для сообщений
+            messagesWrapper = document.createElement('div');
+            messagesWrapper.className = 'messages-wrapper';
+            targetGroup.appendChild(messagesWrapper);
+            
+            // Вставляем группу перед индикатором печати
             const typingContainer = document.getElementById('typing-indicator-container');
             if (typingContainer) {
                 typingContainer.parentNode.insertBefore(targetGroup, typingContainer);
@@ -592,19 +675,9 @@ class ChatWebSocket {
             }
         }
         
-        // Формируем HTML аватарки
-        let avatarHTML = '<i class="bi bi-person-fill"></i>';
-        if (message.sender_avatar_url) {
-            avatarHTML = `<img src="${message.sender_avatar_url}" alt="${message.sender_username}">`;
-        }
-        
+        // Создаем HTML сообщения (без аватарки внутри)
         const messageHTML = `
-            <div class="message-item ${isSent ? 'sent' : 'received'}" data-message-id="${message.id}" data-sender-id="${message.sender_id}">
-                ${!isSent ? `
-                <div class="message-avatar-chat ${!showAvatar ? 'hidden' : ''}">
-                    ${avatarHTML}
-                </div>
-                ` : ''}
+            <div class="message-item" data-message-id="${message.id}" data-sender-id="${message.sender_id}">
                 <div class="message-content-box">
                     <div class="message-bubble-chat ${isSent ? 'sent' : 'received'}">
                         ${this.escapeHtml(message.content)}
@@ -614,8 +687,10 @@ class ChatWebSocket {
             </div>
         `;
         
-        // Добавляем сообщение в группу
-        targetGroup.insertAdjacentHTML('beforeend', messageHTML);
+        // Добавляем сообщение в обертку
+        if (messagesWrapper) {
+            messagesWrapper.insertAdjacentHTML('beforeend', messageHTML);
+        }
         
         this.scrollToBottom();
     }
