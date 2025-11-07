@@ -377,16 +377,20 @@
     <script>
     (function() {
         let updateInterval;
+        let lastCount = {{ unread_notifications_count|default:0 }};
         
         function updateNotificationsCount() {
             fetch('/core/notifications/unread-count/', {
-                credentials: 'same-origin',  // Включаем отправку cookies
+                method: 'GET',
+                credentials: 'same-origin',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
                 }
             })
                 .then(response => {
                     if (!response.ok) {
+                        console.error('Response not OK:', response.status);
                         throw new Error('Network response was not ok');
                     }
                     return response.json();
@@ -394,55 +398,82 @@
                 .then(data => {
                     const count = data.count || 0;
                     
-                    // Обновляем desktop версию
-                    const desktopBadge = document.querySelector('.navbar-nav .bi-bell + .badge');
-                    if (count > 0) {
-                        if (desktopBadge) {
-                            desktopBadge.textContent = count;
-                        } else {
-                            const bellIcon = document.querySelector('.navbar-nav .bi-bell');
-                            if (bellIcon) {
-                                const badge = document.createElement('span');
-                                badge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
-                                badge.innerHTML = count + '<span class="visually-hidden">непрочитанных уведомлений</span>';
-                                bellIcon.parentElement.appendChild(badge);
-                            }
-                        }
-                    } else if (desktopBadge) {
-                        desktopBadge.remove();
+                    // Логируем только если изменилось
+                    if (count !== lastCount) {
+                        console.log(`Уведомления обновлены: ${lastCount} -> ${count}`);
+                        lastCount = count;
                     }
                     
+                    // Обновляем desktop версию
+                    updateBadge('.navbar-nav .position-relative', count);
+                    
                     // Обновляем mobile версию
-                    const mobileBadge = document.querySelector('.mobile-nav-icon .mobile-badge');
-                    if (count > 0) {
-                        if (mobileBadge) {
-                            mobileBadge.textContent = count;
-                        } else {
-                            const mobileIcon = document.querySelector('.mobile-nav-icon .bi-bell');
-                            if (mobileIcon) {
-                                const badge = document.createElement('span');
-                                badge.className = 'mobile-badge';
-                                badge.textContent = count;
-                                mobileIcon.parentElement.appendChild(badge);
-                            }
-                        }
-                    } else if (mobileBadge) {
-                        mobileBadge.remove();
-                    }
+                    updateMobileBadge(count);
                 })
-                .catch(error => console.error('Ошибка обновления уведомлений:', error));
+                .catch(error => {
+                    console.error('Ошибка обновления уведомлений:', error);
+                });
         }
         
-        // Обновляем каждые 10 секунд
-        updateInterval = setInterval(updateNotificationsCount, 10000);
+        function updateBadge(selector, count) {
+            const container = document.querySelector(selector);
+            if (!container) return;
+            
+            let badge = container.querySelector('.badge');
+            
+            if (count > 0) {
+                if (badge) {
+                    badge.textContent = count;
+                } else {
+                    badge = document.createElement('span');
+                    badge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+                    badge.textContent = count;
+                    container.appendChild(badge);
+                }
+            } else if (badge) {
+                badge.remove();
+            }
+        }
         
-        // Также обновляем при фокусе окна (вернулся на вкладку)
+        function updateMobileBadge(count) {
+            const container = document.querySelector('.mobile-nav-icon .bi-bell');
+            if (!container) return;
+            
+            const parent = container.parentElement;
+            let badge = parent.querySelector('.mobile-badge');
+            
+            if (count > 0) {
+                if (badge) {
+                    badge.textContent = count;
+                } else {
+                    badge = document.createElement('span');
+                    badge.className = 'mobile-badge';
+                    badge.textContent = count;
+                    parent.appendChild(badge);
+                }
+            } else if (badge) {
+                badge.remove();
+            }
+        }
+        
+        // Глобальная функция для обновления из других скриптов
+        window.updateNotificationsCount = updateNotificationsCount;
+        
+        // Первое обновление через 2 секунды после загрузки
+        setTimeout(updateNotificationsCount, 2000);
+        
+        // Обновляем каждые 5 секунд (чаще для лучшего UX)
+        updateInterval = setInterval(updateNotificationsCount, 5000);
+        
+        // Также обновляем при фокусе окна
         window.addEventListener('focus', updateNotificationsCount);
         
-        // Останавливаем обновление при уходе со страницы
+        // Останавливаем при уходе
         window.addEventListener('beforeunload', () => {
             clearInterval(updateInterval);
         });
+        
+        console.log('Real-time уведомления запущены (обновление каждые 5 сек)');
     })();
     </script>
     {% endif %}
