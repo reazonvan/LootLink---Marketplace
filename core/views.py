@@ -131,3 +131,8 @@ def yandex_verification(request):
     <body>Verification: a6899228ac192041</body>
 </html>"""
     return HttpResponse(html_content, content_type='text/html')
+
+
+def requisites(request):
+    """Страница с реквизитами для платежных систем."""
+    return render(request, 'core/requisites.html')
