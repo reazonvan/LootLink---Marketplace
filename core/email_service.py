@@ -280,12 +280,7 @@ class EmailService:
     
     @staticmethod
     def _try_alternative_providers(subject, message, recipient_list, html_message, fail_silently):
-        """
-        Попытка отправки через альтернативные провайдеры.
-        """
-        # TODO: Реализовать SendGrid API
-        # TODO: Реализовать Mailgun API
-        
+        """Fallback email providers."""
         logger.warning('Alternative email providers not configured. Email not sent.')
         return False
     
