@@ -21,14 +21,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_group_name = f'chat_{self.conversation_id}'
         self.user = self.scope['user']
         
+        logger.info(f'WS connect attempt: user={self.user}, authenticated={self.user.is_authenticated}')
+        
         # Проверка аутентификации
         if not self.user.is_authenticated:
+            logger.warning(f'WS REJECTED: User not authenticated')
             await self.close()
             return
         
         # Проверка прав доступа к беседе
         has_access = await self.check_conversation_access()
         if not has_access:
+            logger.warning(f'WS REJECTED: User {self.user.username} no access to conversation {self.conversation_id}')
             await self.close()
             return
         
