@@ -307,10 +307,13 @@ class Escrow(models.Model):
             buyer_wallet.balance -= self.amount
             buyer_wallet.save(update_fields=['balance'])
             
-            # Переводим продавцу
-            seller_wallet, _ = Wallet.objects.select_for_update().get_or_create(user=self.seller)
+            # Переводим продавцу (ВАЖНО: order by id для избежания deadlock)
+            seller_wallet, created = Wallet.objects.select_for_update().get_or_create(
+                user=self.seller,
+                defaults={'balance': 0, 'frozen_balance': 0}
+            )
             seller_wallet.balance += self.amount
-            seller_wallet.save(update_fields=['balance'])
+            seller_wallet.save(update_fields=['balance', 'updated_at'])
             
             # Обновляем статус
             self.status = 'released'
