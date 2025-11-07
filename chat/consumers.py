@@ -116,6 +116,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         'content': message['content'],
                         'sender_id': message['sender_id'],
                         'sender_username': message['sender_username'],
+                        'sender_avatar_url': message['sender_avatar_url'],
                         'created_at': message['created_at'],
                         'is_read': message['is_read']
                     }
@@ -217,11 +218,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
             conversation.updated_at = timezone.now()
             conversation.save(update_fields=['updated_at'])
             
+            # Получаем URL аватарки отправителя
+            avatar_url = None
+            if hasattr(message.sender, 'profile') and message.sender.profile.avatar:
+                avatar_url = message.sender.profile.avatar.url
+            
             return {
                 'id': message.id,
                 'content': message.content,
                 'sender_id': message.sender.id,
                 'sender_username': message.sender.username,
+                'sender_avatar_url': avatar_url,
                 'created_at': message.created_at.isoformat(),
                 'is_read': message.is_read
             }
