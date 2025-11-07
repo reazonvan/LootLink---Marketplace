@@ -24,6 +24,9 @@ urlpatterns = [
     path('about/', core_views.about, name='about'),
     path('rules/', core_views.rules, name='rules'),
     
+    # Verification files
+    path('yandex_a6899228ac192041.html', core_views.yandex_verification, name='yandex_verification'),
+    
     # SEO
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
 ]
