@@ -79,6 +79,7 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="{% static 'css/mobile-improvements.css' %}">
     <link rel="stylesheet" href="{% static 'css/modern-design.css' %}">
+    <link rel="stylesheet" href="{% static 'css/modern-header.css' %}">
     <link rel="stylesheet" href="{% static 'css/image-cropper.css' %}">
     <link rel="stylesheet" href="{% static 'css/ux-improvements.css' %}">
     <link rel="stylesheet" href="{% static 'css/ux-fixes.css' %}">
@@ -133,17 +134,12 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <!-- Навигация -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
+    <!-- Навигация - Современный минималистичный дизайн -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm" style="border-bottom: 1px solid #e5e7eb;">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'listings:home' %}">
-                <span class="logo-icon">
-                    <svg class="logo-svg" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-                        <circle class="logo-circle" cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <path class="logo-path" d="M15 25 L22 32 L35 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </span>
-                <span class="logo-text">LootLink</span>
+            <a class="navbar-brand fw-bold" href="{% url 'listings:home' %}" style="font-size: 1.4rem; color: #2563eb;">
+                <i class="bi bi-box-seam" style="font-size: 1.3rem;"></i>
+                LootLink
             </a>
             
             <!-- Мобильная навигация справа -->
