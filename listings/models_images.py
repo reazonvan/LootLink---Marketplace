@@ -3,7 +3,8 @@
 """
 from django.db import models
 from django.core.validators import FileExtensionValidator
-from .models import Listing, validate_image_size, validate_image_type
+from core.validators import ListingImageValidator
+from .models import Listing
 
 
 class ListingImage(models.Model):
@@ -18,8 +19,9 @@ class ListingImage(models.Model):
     )
     image = models.ImageField(
         upload_to='listings/gallery/',
-        validators=[validate_image_size, validate_image_type],
-        verbose_name='Изображение'
+        validators=[ListingImageValidator()],
+        verbose_name='Изображение',
+        help_text='Макс. 5 МБ. Форматы: JPG, PNG, WebP'
     )
     order = models.PositiveIntegerField(
         default=0,
