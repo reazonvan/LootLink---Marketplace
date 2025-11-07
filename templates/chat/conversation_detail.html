@@ -826,10 +826,15 @@ class ChatWebSocket {
         if (!statusEl) return;
         
         const messages = {
-            'connected': 'Подключено',
             'disconnected': 'Переподключение...',
             'error': 'Ошибка подключения'
         };
+        
+        // Если подключено - просто скрываем индикатор
+        if (status === 'connected') {
+            statusEl.style.display = 'none';
+            return;
+        }
         
         // Удаляем все предыдущие классы статуса
         statusEl.classList.remove('connected', 'disconnected', 'error');
@@ -840,16 +845,8 @@ class ChatWebSocket {
         // Устанавливаем текст
         statusEl.textContent = messages[status] || '';
         
-        // Показываем или скрываем
-        if (status === 'connected') {
-            statusEl.style.display = 'flex';
-            // Автоматически скрываем через 2 секунды
-            setTimeout(() => {
-                statusEl.style.display = 'none';
-            }, 2000);
-        } else {
-            statusEl.style.display = 'flex';
-        }
+        // Показываем индикатор
+        statusEl.style.display = 'flex';
     }
     
     attachEventListeners() {
