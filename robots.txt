@@ -8,5 +8,5 @@ Disallow: /chat/
 Disallow: /transactions/
 
 # Sitemap
-Sitemap: https://lootlink.com/sitemap.xml
+Sitemap: https://lootlink.ru/sitemap.xml
 
