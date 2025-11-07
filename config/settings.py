@@ -283,7 +283,10 @@ SMS_RU_API_KEY = config('SMS_RU_API_KEY', default='')
 
 # Security settings for production
 if not DEBUG:
-    # SSL/HTTPS настройки (можно отключить через .env если нет сертификата)
+    # Важно: Для работы за nginx reverse proxy
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    
+    # SSL/HTTPS настройки
     SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
     SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
     CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
@@ -293,7 +296,6 @@ if not DEBUG:
         SECURE_HSTS_SECONDS = 31536000  # 1 год
         SECURE_HSTS_INCLUDE_SUBDOMAINS = True
         SECURE_HSTS_PRELOAD = True
-        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     
     # Базовая безопасность (всегда включено)
     SECURE_BROWSER_XSS_FILTER = True
