@@ -302,10 +302,12 @@ if not DEBUG:
 
 # Session and Cookie security
 SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False  # WebSocket нужен доступ к CSRF
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_AGE = 1209600  # 2 недели
+SESSION_COOKIE_NAME = 'lootlink_sessionid'  # Уникальное имя
+CSRF_COOKIE_NAME = 'lootlink_csrftoken'  # Уникальное имя
 
 # Cache configuration
 USE_REDIS = config('USE_REDIS', default=False, cast=bool)
