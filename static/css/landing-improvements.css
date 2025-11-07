@@ -1,0 +1,147 @@
+/* Улучшения для главной страницы - компактный дизайн */
+
+/* Компактная статистика в hero */
+.hero-stats-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    color: white;
+}
+
+.stat-compact {
+    font-size: 0.95rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.stat-compact:last-child {
+    border-bottom: none;
+}
+
+.stat-compact strong {
+    font-size: 1.3rem;
+    margin-right: 0.3rem;
+}
+
+/* Компактные карточки шагов */
+.step-card-compact {
+    text-align: center;
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.step-card-compact:hover {
+    border-color: #667eea;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.step-card-compact .step-num {
+    position: absolute;
+    top: -10px;
+    left: 10px;
+    background: #667eea;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.step-card-compact i {
+    font-size: 2rem;
+    color: #667eea;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.step-card-compact strong {
+    display: block;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+/* Компактные гарантии */
+.guarantee-compact {
+    text-align: center;
+    padding: 1rem 0.5rem;
+    background: white;
+    border-radius: 8px;
+    transition: transform 0.2s;
+}
+
+.guarantee-compact:hover {
+    transform: scale(1.05);
+}
+
+.guarantee-compact i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.guarantee-compact strong {
+    font-size: 0.9rem;
+    display: block;
+    color: #333;
+}
+
+/* Уменьшаем отступы секций */
+.how-it-works-section,
+.guarantees-section,
+.latest-listings-section,
+.popular-games-section {
+    padding: 2rem 0 !important;
+}
+
+/* Компактнее заголовки */
+.section-title {
+    font-size: 1.5rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.section-subtitle {
+    font-size: 0.95rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Hero кнопки компактнее */
+.hero-actions .btn {
+    padding: 0.6rem 1.5rem;
+    font-size: 1rem;
+}
+
+/* Адаптив */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 1.8rem !important;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem !important;
+    }
+    
+    .hero-stats-compact {
+        margin-top: 1rem;
+    }
+    
+    .step-card-compact i {
+        font-size: 1.5rem;
+    }
+    
+    .guarantee-compact i {
+        font-size: 1.5rem;
+    }
+}
+

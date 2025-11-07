@@ -1,148 +1,117 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}LootLink - Маркетплейс игровых предметов{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/landing-improvements.css' %}">
+{% endblock %}
+
 {% block content %}
-<!-- Hero Section -->
-<section class="hero-landing" style="margin-top: 2rem;">
+<!-- Hero Section - Компактный -->
+<section class="hero-landing" style="margin-top: 1rem; padding: 2rem 0;">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h1 class="hero-title">Покупайте и продавайте игровые предметы безопасно</h1>
-                <p class="hero-subtitle">P2P маркетплейс для прямой торговли между игроками. Без посредников, без скрытых комиссий.</p>
-                <div class="hero-actions">
+            <div class="col-lg-8">
+                <h1 class="hero-title mb-2" style="font-size: 2.5rem;">Маркетплейс игровых предметов</h1>
+                <p class="hero-subtitle mb-3" style="font-size: 1.1rem;">Торгуйте напрямую с игроками. Без комиссий и посредников.</p>
+                <div class="hero-actions mb-3">
                     {% if user.is_authenticated %}
-                    <a href="{% url 'listings:listing_create' %}" class="btn btn-primary btn-lg">Создать объявление</a>
-                    <a href="{% url 'listings:catalog' %}" class="btn btn-outline-primary btn-lg">Смотреть каталог</a>
+                    <a href="{% url 'listings:listing_create' %}" class="btn btn-primary">Создать объявление</a>
+                    <a href="{% url 'listings:catalog' %}" class="btn btn-outline-primary">Каталог</a>
                     {% else %}
-                    <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg">Начать продавать</a>
-                    <a href="{% url 'listings:catalog' %}" class="btn btn-outline-primary btn-lg">Посмотреть объявления</a>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-primary">Начать продавать</a>
+                    <a href="{% url 'listings:catalog' %}" class="btn btn-outline-primary">Объявления</a>
                     {% endif %}
                 </div>
-                <div class="hero-stats">
-                    <div class="stat-item">
-                        <div class="stat-value">{{ stats.total_users }}</div>
-                        <div class="stat-label">Зарегистрировано пользователей</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">{{ stats.total_listings }}</div>
-                        <div class="stat-label">Активных объявлений</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">{{ stats.total_deals }}</div>
-                        <div class="stat-label">Завершено сделок</div>
-                    </div>
-                </div>
             </div>
-            <!-- Hero illustration убран для production -->
-        </div>
-    </div>
-</section>
-
-<!-- How It Works Section -->
-<section class="how-it-works-section">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="section-title">Как это работает</h2>
-            <p class="section-subtitle">Всего 4 простых шага до успешной сделки</p>
-        </div>
-        <div class="row g-4">
-            <div class="col-md-3 col-6">
-                <div class="step-card">
-                    <div class="step-number">1</div>
-                    <div class="step-icon"><i class="bi bi-search"></i></div>
-                    <h4 class="step-title">Выбираете товар</h4>
-                    <p class="step-description">Находите нужный предмет в каталоге игр</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="step-card">
-                    <div class="step-number">2</div>
-                    <div class="step-icon"><i class="bi bi-chat-dots"></i></div>
-                    <h4 class="step-title">Связываетесь</h4>
-                    <p class="step-description">Пишете продавцу через встроенный чат</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="step-card">
-                    <div class="step-number">3</div>
-                    <div class="step-icon"><i class="bi bi-check-circle"></i></div>
-                    <h4 class="step-title">Безопасная сделка</h4>
-                    <p class="step-description">Получаете товар с гарантией</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="step-card">
-                    <div class="step-number">4</div>
-                    <div class="step-icon"><i class="bi bi-star"></i></div>
-                    <h4 class="step-title">Оставляете отзыв</h4>
-                    <p class="step-description">Делитесь опытом с сообществом</p>
+            <div class="col-lg-4">
+                <div class="hero-stats-compact">
+                    <div class="stat-compact"><strong>{{ stats.total_users }}</strong> пользователей</div>
+                    <div class="stat-compact"><strong>{{ stats.total_listings }}</strong> объявлений</div>
+                    <div class="stat-compact"><strong>{{ stats.total_deals }}</strong> сделок</div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Security Guarantees Section -->
-<section class="guarantees-section">
+<!-- How It Works - Компактная версия -->
+<section class="how-it-works-section" style="padding: 2rem 0;">
     <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="section-title">Гарантии безопасности</h2>
-            <p class="section-subtitle">Мы защищаем каждую сделку на платформе</p>
+        <h3 class="text-center mb-3" style="font-size: 1.5rem;">Как это работает</h3>
+        <div class="row g-3">
+            <div class="col-md-3 col-6">
+                <div class="step-card-compact">
+                    <span class="step-num">1</span>
+                    <i class="bi bi-search"></i>
+                    <strong>Найти товар</strong>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="step-card-compact">
+                    <span class="step-num">2</span>
+                    <i class="bi bi-chat-dots"></i>
+                    <strong>Написать продавцу</strong>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="step-card-compact">
+                    <span class="step-num">3</span>
+                    <i class="bi bi-check-circle"></i>
+                    <strong>Совершить сделку</strong>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="step-card-compact">
+                    <span class="step-num">4</span>
+                    <i class="bi bi-star"></i>
+                    <strong>Оставить отзыв</strong>
+                </div>
+            </div>
         </div>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="guarantee-card">
-                    <div class="guarantee-icon text-success">
-                        <i class="bi bi-shield-fill-check"></i>
-                    </div>
-                    <h4 class="guarantee-title">Проверенные продавцы</h4>
-                    <p class="guarantee-text">Система рейтингов и отзывов помогает выбрать надежных продавцов</p>
+    </div>
+</section>
+
+<!-- Security - Компактная сетка -->
+<section class="guarantees-section" style="padding: 2rem 0; background: #f8f9fa;">
+    <div class="container">
+        <h3 class="text-center mb-3" style="font-size: 1.5rem;">Гарантии безопасности</h3>
+        <div class="row g-3">
+            <div class="col-md-4 col-6">
+                <div class="guarantee-compact">
+                    <i class="bi bi-shield-fill-check text-success"></i>
+                    <strong>Проверка продавцов</strong>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="guarantee-card">
-                    <div class="guarantee-icon text-primary">
-                        <i class="bi bi-arrow-repeat"></i>
-                    </div>
-                    <h4 class="guarantee-title">Возврат средств</h4>
-                    <p class="guarantee-text">Гарантия возврата при доказанном обмане или несоответствии товара</p>
+            <div class="col-md-4 col-6">
+                <div class="guarantee-compact">
+                    <i class="bi bi-arrow-repeat text-primary"></i>
+                    <strong>Возврат средств</strong>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="guarantee-card">
-                    <div class="guarantee-icon text-info">
-                        <i class="bi bi-headset"></i>
-                    </div>
-                    <h4 class="guarantee-title">Поддержка 24/7</h4>
-                    <p class="guarantee-text">Техподдержка всегда на связи для решения любых вопросов</p>
+            <div class="col-md-4 col-6">
+                <div class="guarantee-compact">
+                    <i class="bi bi-headset text-info"></i>
+                    <strong>Поддержка 24/7</strong>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="guarantee-card">
-                    <div class="guarantee-icon text-warning">
-                        <i class="bi bi-lock-fill"></i>
-                    </div>
-                    <h4 class="guarantee-title">Шифрование данных</h4>
-                    <p class="guarantee-text">Все личные данные и переписка защищены современным шифрованием</p>
+            <div class="col-md-4 col-6">
+                <div class="guarantee-compact">
+                    <i class="bi bi-lock-fill text-warning"></i>
+                    <strong>Шифрование</strong>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="guarantee-card">
-                    <div class="guarantee-icon text-danger">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                    </div>
-                    <h4 class="guarantee-title">Защита от мошенников</h4>
-                    <p class="guarantee-text">Автоматическая система выявления подозрительной активности</p>
+            <div class="col-md-4 col-6">
+                <div class="guarantee-compact">
+                    <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+                    <strong>Антимошенник</strong>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="guarantee-card">
-                    <div class="guarantee-icon text-secondary">
-                        <i class="bi bi-file-earmark-text"></i>
-                    </div>
-                    <h4 class="guarantee-title">Честные правила</h4>
-                    <p class="guarantee-text">Прозрачные правила платформы и справедливое разрешение споров</p>
+            <div class="col-md-4 col-6">
+                <div class="guarantee-compact">
+                    <i class="bi bi-file-earmark-text text-secondary"></i>
+                    <strong>Честные правила</strong>
                 </div>
             </div>
         </div>
@@ -153,11 +122,11 @@
 
 <!-- Latest Listings Section -->
 {% if latest_listings %}
-<section class="latest-listings-section">
+<section class="latest-listings-section" style="padding: 2rem 0;">
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="section-title mb-0">Последние объявления</h2>
-            <a href="{% url 'listings:catalog' %}" class="btn btn-outline-primary">Смотреть все</a>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0" style="font-size: 1.5rem;">Последние объявления</h3>
+            <a href="{% url 'listings:catalog' %}" class="btn btn-sm btn-outline-primary">Все объявления</a>
         </div>
         <div class="listings-grid">
             {% for listing in latest_listings %}
