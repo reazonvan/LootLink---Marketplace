@@ -7,10 +7,10 @@
 Цена: {{ listing.price }} ₽
 
 Свяжитесь с продавцом для завершения сделки:
-http://127.0.0.1:8000{% url 'chat:conversation_start' listing.pk %}
+https://lootlink.ru{% url 'chat:conversation_start' listing.pk %}
 
 Детали запроса:
-http://127.0.0.1:8000{% url 'transactions:purchase_request_detail' purchase_request.pk %}
+https://lootlink.ru{% url 'transactions:purchase_request_detail' purchase_request.pk %}
 
 ---
 С уважением,
