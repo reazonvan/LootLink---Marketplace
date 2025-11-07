@@ -34,46 +34,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
-                <div class="hero-illustration">
-                    <!-- Анимированные карточки товаров -->
-                    <div class="floating-card floating-card-1">
-                        <div class="card-mini-image">
-                            <i class="bi bi-gem"></i>
-                        </div>
-                        <div class="card-mini-content">
-                            <div class="card-mini-title">Dragon Lore AWP</div>
-                            <div class="card-mini-price">15,000 ₽</div>
-                        </div>
-                    </div>
-                    
-                    <div class="floating-card floating-card-2">
-                        <div class="card-mini-image">
-                            <i class="bi bi-trophy-fill"></i>
-                        </div>
-                        <div class="card-mini-content">
-                            <div class="card-mini-title">Arcana Pack</div>
-                            <div class="card-mini-price">3,500 ₽</div>
-                        </div>
-                    </div>
-                    
-                    <div class="floating-card floating-card-3">
-                        <div class="card-mini-image">
-                            <i class="bi bi-shield-fill-check"></i>
-                        </div>
-                        <div class="card-mini-content">
-                            <div class="card-mini-title">Rare Skin</div>
-                            <div class="card-mini-price">999 ₽</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Центральный элемент -->
-                    <div class="hero-center-badge">
-                        <i class="bi bi-bag-check-fill"></i>
-                        <div class="hero-center-text">Безопасно</div>
-                    </div>
-                </div>
-            </div>
+            <!-- Hero illustration убран для production -->
         </div>
     </div>
 </section>
@@ -239,161 +200,107 @@
 </section>
 {% endif %}
 
-<!-- Testimonials Section -->
+<!-- Testimonials Section (РЕАЛЬНЫЕ отзывы из БД) -->
+{% if real_reviews %}
 <section class="testimonials-section">
     <div class="container">
         <div class="text-center mb-5">
             <h2 class="section-title">Отзывы клиентов</h2>
-            <p class="section-subtitle">Реальные отзывы игроков о LootLink</p>
+            <p class="section-subtitle">Реальные отзывы наших пользователей</p>
         </div>
         <div class="row g-4">
+            {% for review in real_reviews %}
             <div class="col-md-4">
                 <div class="testimonial-card">
                     <div class="testimonial-rating">
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= review.rating %}
+                            <i class="bi bi-star-fill"></i>
+                            {% else %}
+                            <i class="bi bi-star"></i>
+                            {% endif %}
+                        {% endfor %}
                     </div>
-                    <p class="testimonial-text">"Купил аккаунт CS2 за 5 минут! Продавец оказался честным, всё прошло гладко. Рекомендую!"</p>
+                    <p class="testimonial-text">"{{ review.comment|default:"Отличная сделка! Всё прошло быстро и безопасно." }}"</p>
                     <div class="testimonial-author">
-                        <div class="author-avatar"><i class="bi bi-person-fill"></i></div>
+                        <div class="author-avatar">
+                            {% if review.reviewer.profile.avatar %}
+                            <img src="{{ review.reviewer.profile.avatar.url }}" alt="{{ review.reviewer.username }}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">
+                            {% else %}
+                            <i class="bi bi-person-fill"></i>
+                            {% endif %}
+                        </div>
                         <div>
-                            <div class="author-name">Ivan_Pro</div>
-                            <div class="author-meta">Купил CS2 аккаунт</div>
+                            <div class="author-name">{{ review.reviewer.username }}</div>
+                            <div class="author-meta">{{ review.purchase_request.listing.game.name }}</div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="testimonial-card">
-                    <div class="testimonial-rating">
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                    </div>
-                    <p class="testimonial-text">"Лучший маркетплейс для Dota 2! Продал несколько arcana дороже чем на Steam Market. Спасибо!"</p>
-                    <div class="testimonial-author">
-                        <div class="author-avatar"><i class="bi bi-controller"></i></div>
-                        <div>
-                            <div class="author-name">ProGamer2024</div>
-                            <div class="author-meta">Продал 15+ предметов</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="testimonial-card">
-                    <div class="testimonial-rating">
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                    </div>
-                    <p class="testimonial-text">"Безопасно и удобно! Поддержка быстро помогла разобраться. Буду пользоваться ещё!"</p>
-                    <div class="testimonial-author">
-                        <div class="author-avatar"><i class="bi bi-lightning-fill"></i></div>
-                        <div>
-                            <div class="author-name">Dmitry_88</div>
-                            <div class="author-meta">Новый пользователь</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
 </section>
+{% endif %}
 
-<!-- Top Sellers Section -->
+<!-- Top Sellers Section (РЕАЛЬНЫЕ продавцы из БД) -->
+{% if top_sellers %}
 <section class="top-sellers-section">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="section-title">Топ продавцов месяца</h2>
-            <p class="section-subtitle">Проверенные продавцы с лучшей репутацией</p>
+            <h2 class="section-title">Лучшие продавцы</h2>
+            <p class="section-subtitle">Продавцы с высоким рейтингом и успешными сделками</p>
         </div>
         <div class="row g-4">
+            {% for seller in top_sellers %}
             <div class="col-md-4">
                 <div class="top-seller-card">
-                    <div class="seller-rank gold">#1</div>
-                    <div class="seller-avatar-large"><i class="bi bi-person-fill"></i></div>
-                    <h4 class="seller-name-large">TrustedSeller</h4>
+                    <div class="seller-rank {% if forloop.first %}gold{% elif forloop.counter == 2 %}silver{% else %}bronze{% endif %}">#{{ forloop.counter }}</div>
+                    <div class="seller-avatar-large">
+                        {% if seller.avatar %}
+                        <img src="{{ seller.avatar.url }}" alt="{{ seller.user.username }}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">
+                        {% else %}
+                        <i class="bi bi-person-fill"></i>
+                        {% endif %}
+                    </div>
+                    <h4 class="seller-name-large">
+                        <a href="{% url 'accounts:profile' seller.user.username %}" style="text-decoration:none;color:inherit;">
+                            {{ seller.user.username }}
+                        </a>
+                    </h4>
                     <div class="seller-rating-large">
-                        <span class="rating-stars">⭐⭐⭐⭐⭐</span>
-                        <span class="rating-value">4.9</span>
+                        <span class="rating-stars">
+                            {% for i in "12345" %}
+                                {% if i|add:"0" <= seller.rating %}⭐{% endif %}
+                            {% endfor %}
+                        </span>
+                        <span class="rating-value">{{ seller.rating|floatformat:1 }}</span>
                     </div>
                     <div class="seller-stats-grid">
                         <div class="stat-box">
-                            <div class="stat-value-small">127</div>
+                            <div class="stat-value-small">{{ seller.total_sales }}</div>
                             <div class="stat-label-small">Продаж</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-value-small">98%</div>
-                            <div class="stat-label-small">Позитивных</div>
+                            <div class="stat-value-small">{{ seller.total_purchases }}</div>
+                            <div class="stat-label-small">Покупок</div>
                         </div>
                     </div>
                     <div class="seller-badges">
+                        {% if seller.is_verified %}
                         <span class="badge bg-success">Проверен</span>
-                        <span class="badge bg-primary">Быстрый ответ</span>
+                        {% endif %}
+                        {% if seller.total_sales > 10 %}
+                        <span class="badge bg-primary">Опытный</span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="top-seller-card">
-                    <div class="seller-rank silver">#2</div>
-                    <div class="seller-avatar-large"><i class="bi bi-person-fill"></i></div>
-                    <h4 class="seller-name-large">ReliableTrader</h4>
-                    <div class="seller-rating-large">
-                        <span class="rating-stars">⭐⭐⭐⭐⭐</span>
-                        <span class="rating-value">4.8</span>
-                    </div>
-                    <div class="seller-stats-grid">
-                        <div class="stat-box">
-                            <div class="stat-value-small">95</div>
-                            <div class="stat-label-small">Продаж</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value-small">97%</div>
-                            <div class="stat-label-small">Позитивных</div>
-                        </div>
-                    </div>
-                    <div class="seller-badges">
-                        <span class="badge bg-success">Проверен</span>
-                        <span class="badge bg-info">С фото</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="top-seller-card">
-                    <div class="seller-rank bronze">#3</div>
-                    <div class="seller-avatar-large"><i class="bi bi-person-fill"></i></div>
-                    <h4 class="seller-name-large">FastDeals</h4>
-                    <div class="seller-rating-large">
-                        <span class="rating-stars">⭐⭐⭐⭐⭐</span>
-                        <span class="rating-value">4.9</span>
-                    </div>
-                    <div class="seller-stats-grid">
-                        <div class="stat-box">
-                            <div class="stat-value-small">78</div>
-                            <div class="stat-label-small">Продаж</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value-small">99%</div>
-                            <div class="stat-label-small">Позитивных</div>
-                        </div>
-                    </div>
-                    <div class="seller-badges">
-                        <span class="badge bg-warning text-dark">Быстрый</span>
-                        <span class="badge bg-secondary">Популярный</span>
-                    </div>
-                </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
 </section>
+{% endif %}
 
 <!-- Games Section -->
 {% if games %}
