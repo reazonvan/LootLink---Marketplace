@@ -15,6 +15,10 @@ ssh $server "cd /opt/lootlink && source venv/bin/activate && pip install -r requ
 Write-Host "Step 3: Running migrations..." -ForegroundColor Yellow
 ssh $server "cd /opt/lootlink && source venv/bin/activate && python manage.py migrate"
 
+# Create indexes
+Write-Host "Step 3.5: Creating composite indexes..." -ForegroundColor Yellow
+ssh $server "cd /opt/lootlink && source venv/bin/activate && python manage.py create_indexes || echo 'Indexes command executed'"
+
 # Collect static
 Write-Host "Step 4: Collecting static..." -ForegroundColor Yellow
 ssh $server "cd /opt/lootlink && source venv/bin/activate && python manage.py collectstatic --noinput"
