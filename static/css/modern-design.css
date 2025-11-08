@@ -53,10 +53,39 @@
     color: var(--primary);
 }
 
-/* Убрана анимация логотипа */
-.logo-circle,
+/* Современная анимация логотипа - более мягкая */
+.logo-circle {
+    stroke-dasharray: 126;
+    stroke-dashoffset: 126;
+    animation: drawCircle 3s ease-in-out infinite;
+}
+
 .logo-path {
-    animation: none;
+    stroke-dasharray: 50;
+    stroke-dashoffset: 50;
+    animation: drawPath 3s ease-in-out infinite 0.3s;
+}
+
+@keyframes drawCircle {
+    0%, 100% {
+        stroke-dashoffset: 126;
+        opacity: 0.5;
+    }
+    50% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
+}
+
+@keyframes drawPath {
+    0%, 100% {
+        stroke-dashoffset: 50;
+        opacity: 0.5;
+    }
+    50% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
 }
 
 .nav-link {
