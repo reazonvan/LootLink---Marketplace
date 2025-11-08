@@ -1,0 +1,19 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Спор #{{ dispute.id }}{% endblock %}
+{% block page_title %}Спор #{{ dispute.id }}{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <h4>Спор #{{ dispute.id }}</h4>
+    <p><strong>Статус:</strong> {{ dispute.get_status_display }}</p>
+    <p><strong>Причина:</strong> {{ dispute.reason }}</p>
+    
+    <hr>
+    
+    <h5>Участники:</h5>
+    <p>Покупатель: {{ dispute.purchase_request.buyer.username }}</p>
+    <p>Продавец: {{ dispute.purchase_request.listing.seller.username }}</p>
+</div>
+{% endblock %}
+

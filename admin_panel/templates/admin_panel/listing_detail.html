@@ -1,0 +1,126 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}{{ listing.title }}{% endblock %}
+{% block page_title %}Модерация объявления{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'admin_panel:listings_moderation' %}">Объявления</a></li>
+        <li class="breadcrumb-item active">{{ listing.title|truncatewords:3 }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-md-8">
+        <!-- Изображение -->
+        <div class="admin-card mb-4">
+            {% if listing.image %}
+            <img src="{{ listing.image.url }}" alt="{{ listing.title }}" style="width: 100%; border-radius: 12px; aspect-ratio: 16/10; object-fit: cover;">
+            {% else %}
+            <div style="width: 100%; aspect-ratio: 16/10; background: linear-gradient(135deg, var(--admin-primary) 0%, #8B5CF6 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-image" style="font-size: 5rem; color: white; opacity: 0.5;"></i>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Описание -->
+        <div class="admin-card">
+            <h3 style="font-weight: 700; margin-bottom: 1rem;">{{ listing.title }}</h3>
+            <div style="color: #6B7280; line-height: 1.6; white-space: pre-line;">{{ listing.description }}</div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Информация -->
+        <div class="admin-card mb-4">
+            <div class="mb-3">
+                <div style="font-size: 3rem; font-weight: 800; color: var(--admin-success);">{{ listing.price }} ₽</div>
+            </div>
+            
+            <div class="mb-3">
+                <span class="status-badge status-{{ listing.status }}">{{ listing.get_status_display }}</span>
+            </div>
+            
+            <div style="border-top: 1px solid var(--admin-border); padding-top: 1rem; margin-top: 1rem;">
+                <div class="mb-2"><strong>Игра:</strong> {{ listing.game.name }}</div>
+                <div class="mb-2"><strong>Категория:</strong> {{ listing.category.name }}</div>
+                <div class="mb-2"><strong>Создано:</strong> {{ listing.created_at|date:"d.m.Y H:i" }}</div>
+            </div>
+            
+            {% if listing.status == 'pending' %}
+            <div class="d-grid gap-2 mt-4">
+                <button class="btn-admin btn-admin-success" onclick="approveListing({{ listing.id }})">
+                    <i class="bi bi-check-lg"></i> Одобрить
+                </button>
+                <button class="btn-admin btn-admin-danger" onclick="rejectListing({{ listing.id }})">
+                    <i class="bi bi-x-lg"></i> Отклонить
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Продавец -->
+        <div class="admin-card">
+            <h5 style="margin-bottom: 1rem;">Продавец</h5>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                {% if listing.seller.profile.avatar %}
+                <img src="{{ listing.seller.profile.avatar.url }}" alt="" style="width: 56px; height: 56px; border-radius: 12px; object-fit: cover;">
+                {% else %}
+                <div style="width: 56px; height: 56px; border-radius: 12px; background: var(--admin-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem;">
+                    {{ listing.seller.username|first|upper }}
+                </div>
+                {% endif %}
+                
+                <div>
+                    <a href="{% url 'admin_panel:user_detail' listing.seller.id %}" style="font-weight: 700; color: var(--admin-dark); text-decoration: none;">
+                        {{ listing.seller.username }}
+                    </a>
+                    <div style="color: #FBBF24; font-size: 0.875rem;">
+                        ⭐ {{ listing.seller.profile.rating|floatformat:1 }}
+                    </div>
+                </div>
+            </div>
+            
+            <div style="font-size: 0.875rem;">
+                <div class="mb-2">Продаж: <strong>{{ listing.seller.profile.total_sales }}</strong></div>
+                <div>Рейтинг: <strong>{{ listing.seller.profile.rating|floatformat:1 }}</strong></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function approveListing(listingId) {
+        const url = `/custom-admin/api/listings/${listingId}/approve/`;
+        const result = await adminAjax(url);
+        if (result.success) {
+            showToast(result.message, 'success');
+            setTimeout(() => window.location.href = '{% url "admin_panel:listings_moderation" %}', 1000);
+        } else {
+            showToast(result.message, 'danger');
+        }
+    }
+    
+    function rejectListing(listingId) {
+        const reason = prompt('Укажите причину отклонения:');
+        if (!reason) return;
+        
+        adminAjax(`/custom-admin/api/listings/${listingId}/reject/`, { reason })
+            .then(result => {
+                if (result.success) {
+                    showToast(result.message, 'success');
+                    setTimeout(() => window.location.href = '{% url "admin_panel:listings_moderation" %}', 1000);
+                } else {
+                    showToast(result.message, 'danger');
+                }
+            });
+    }
+</script>
+{% endblock %}
+

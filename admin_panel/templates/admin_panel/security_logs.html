@@ -1,0 +1,129 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Логи безопасности{% endblock %}
+{% block page_title %}Логи безопасности{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Безопасность</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Фильтры -->
+<div class="admin-card mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Уровень риска</label>
+            <select name="risk_level" class="form-select">
+                <option value="">Все</option>
+                <option value="low" {% if filters.risk_level == 'low' %}selected{% endif %}>Низкий</option>
+                <option value="medium" {% if filters.risk_level == 'medium' %}selected{% endif %}>Средний</option>
+                <option value="high" {% if filters.risk_level == 'high' %}selected{% endif %}>Высокий</option>
+                <option value="critical" {% if filters.risk_level == 'critical' %}selected{% endif %}>Критический</option>
+            </select>
+        </div>
+        
+        <div class="col-md-3">
+            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Тип действия</label>
+            <select name="action_type" class="form-select">
+                <option value="">Все</option>
+                <option value="failed_login" {% if filters.action_type == 'failed_login' %}selected{% endif %}>Неудачный вход</option>
+                <option value="suspicious_activity" {% if filters.action_type == 'suspicious_activity' %}selected{% endif %}>Подозрительная активность</option>
+                <option value="user_banned" {% if filters.action_type == 'user_banned' %}selected{% endif %}>Блокировка</option>
+                <option value="admin_action" {% if filters.action_type == 'admin_action' %}selected{% endif %}>Действие админа</option>
+            </select>
+        </div>
+        
+        <div class="col-md-2">
+            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">С</label>
+            <input type="date" name="date_from" class="form-control" value="{{ filters.date_from }}">
+        </div>
+        
+        <div class="col-md-2">
+            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">По</label>
+            <input type="date" name="date_to" class="form-control" value="{{ filters.date_to }}">
+        </div>
+        
+        <div class="col-md-2 d-flex align-items-end gap-2">
+            <button type="submit" class="btn-admin btn-admin-primary flex-grow-1">
+                <i class="bi bi-search"></i> Поиск
+            </button>
+            <a href="{% url 'admin_panel:security_logs' %}" class="btn-admin btn-admin-outline">
+                <i class="bi bi-x"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Логи -->
+<div class="admin-card">
+    <h3 class="card-title mb-3">Логи безопасности (последние 100)</h3>
+    
+    <div class="admin-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Время</th>
+                    <th>Пользователь</th>
+                    <th>Действие</th>
+                    <th>Уровень риска</th>
+                    <th>IP адрес</th>
+                    <th>Описание</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td style="font-size: 0.875rem;">{{ log.created_at|date:"d.m.Y H:i:s" }}</td>
+                    <td>
+                        {% if log.user %}
+                        <a href="{% url 'admin_panel:user_detail' log.user.id %}" style="font-weight: 600; color: var(--admin-dark); text-decoration: none;">
+                            {{ log.user.username }}
+                        </a>
+                        {% else %}
+                        <span style="color: #9CA3AF;">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span style="font-size: 0.875rem; font-weight: 500;">{{ log.get_action_type_display }}</span>
+                    </td>
+                    <td>
+                        {% if log.risk_level == 'critical' %}
+                        <span class="badge" style="background: var(--admin-danger);">КРИТИЧЕСКИЙ</span>
+                        {% elif log.risk_level == 'high' %}
+                        <span class="badge" style="background: var(--admin-warning);">ВЫСОКИЙ</span>
+                        {% elif log.risk_level == 'medium' %}
+                        <span class="badge" style="background: var(--admin-info);">СРЕДНИЙ</span>
+                        {% else %}
+                        <span class="badge bg-secondary">НИЗКИЙ</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <code style="font-size: 0.75rem; background: var(--admin-light); padding: 0.25rem 0.5rem; border-radius: 4px;">
+                            {{ log.ip_address }}
+                        </code>
+                    </td>
+                    <td>
+                        <div style="font-size: 0.875rem; color: #6B7280; max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ log.description }}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4" style="color: #6B7280;">
+                        <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>
+                        Логи не найдены
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

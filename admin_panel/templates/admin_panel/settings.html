@@ -1,0 +1,55 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Настройки{% endblock %}
+{% block page_title %}Настройки системы{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="admin-card">
+            <h3 class="card-title mb-3">Информация о системе</h3>
+            <table class="table table-borderless">
+                <tr>
+                    <td style="color: #6B7280;">Режим отладки:</td>
+                    <td style="font-weight: 600;">
+                        {% if debug %}
+                        <span class="badge" style="background: var(--admin-warning);">DEBUG ON</span>
+                        {% else %}
+                        <span class="badge" style="background: var(--admin-success);">Production</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="color: #6B7280;">База данных:</td>
+                    <td style="font-weight: 600;">{{ database }}</td>
+                </tr>
+                <tr>
+                    <td style="color: #6B7280;">Redis:</td>
+                    <td style="font-weight: 600;">
+                        {% if redis_enabled %}
+                        <span class="badge" style="background: var(--admin-success);">Включен</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Выключен</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="admin-card">
+            <h3 class="card-title mb-3">Быстрые действия</h3>
+            <div class="d-grid gap-2">
+                <a href="/admin/" target="_blank" class="btn-admin btn-admin-primary">
+                    <i class="bi bi-gear"></i> Открыть Django Admin
+                </a>
+                <a href="{% url 'listings:home' %}" target="_blank" class="btn-admin btn-admin-outline">
+                    <i class="bi bi-house"></i> Перейти на сайт
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,174 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Споры{% endblock %}
+{% block page_title %}Управление спорами{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Споры</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Фильтры -->
+<div class="admin-card mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Статус</label>
+            <select name="status" class="form-select">
+                <option value="">Все</option>
+                <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Активные</option>
+                <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Ожидают</option>
+                <option value="in_review" {% if filters.status == 'in_review' %}selected{% endif %}>На рассмотрении</option>
+                <option value="resolved" {% if filters.status == 'resolved' %}selected{% endif %}>Разрешенные</option>
+            </select>
+        </div>
+        
+        <div class="col-md-2">
+            <button type="submit" class="btn-admin btn-admin-primary w-100">
+                <i class="bi bi-search"></i> Поиск
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Список споров -->
+<div class="admin-card">
+    <h3 class="card-title mb-3">Споры ({{ total_count }})</h3>
+    
+    {% for dispute in disputes %}
+    <div style="padding: 1.5rem; border: 1px solid var(--admin-border); border-radius: 12px; margin-bottom: 1rem;">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h5 style="font-weight: 700; margin-bottom: 0.5rem;">
+                    Спор #{{ dispute.id }}
+                </h5>
+                <span class="status-badge status-{{ dispute.status }}">{{ dispute.get_status_display }}</span>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 0.875rem; color: #6B7280;">{{ dispute.created_at|date:"d.m.Y H:i" }}</div>
+            </div>
+        </div>
+        
+        <!-- Информация о сделке -->
+        <div style="background: var(--admin-light); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+            <div class="row">
+                <div class="col-md-6">
+                    <div style="font-size: 0.75rem; color: #6B7280; margin-bottom: 0.25rem;">Покупатель</div>
+                    <div style="font-weight: 600;">{{ dispute.purchase_request.buyer.username }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div style="font-size: 0.75rem; color: #6B7280; margin-bottom: 0.25rem;">Продавец</div>
+                    <div style="font-weight: 600;">{{ dispute.purchase_request.listing.seller.username }}</div>
+                </div>
+            </div>
+            <div class="mt-2">
+                <div style="font-size: 0.75rem; color: #6B7280; margin-bottom: 0.25rem;">Объявление</div>
+                <div style="font-weight: 600;">{{ dispute.purchase_request.listing.title }}</div>
+            </div>
+        </div>
+        
+        <!-- Описание спора -->
+        <div style="margin-bottom: 1rem;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">Причина спора:</div>
+            <div style="color: #6B7280; font-size: 0.875rem;">{{ dispute.reason }}</div>
+        </div>
+        
+        <!-- Действия -->
+        <div class="d-flex gap-2">
+            <a href="{% url 'admin_panel:dispute_detail' dispute.id %}" class="btn-admin btn-admin-primary">
+                <i class="bi bi-eye"></i> Подробнее
+            </a>
+            
+            {% if dispute.status in 'pending,in_review' %}
+            <button class="btn-admin btn-admin-success" onclick="openResolveModal({{ dispute.id }})">
+                <i class="bi bi-check-lg"></i> Разрешить
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-5">
+        <i class="bi bi-inbox" style="font-size: 4rem; color: var(--admin-border); display: block; margin-bottom: 1rem;"></i>
+        <h4 style="color: #6B7280;">Нет споров</h4>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Модальное окно разрешения спора -->
+<div class="modal fade" id="resolveModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header">
+                <h5 class="modal-title">Разрешить спор</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" style="font-weight: 600;">Решение в пользу</label>
+                    <select id="resolveWinner" class="form-select">
+                        <option value="">Выберите...</option>
+                        <option value="buyer">Покупателя</option>
+                        <option value="seller">Продавца</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label" style="font-weight: 600;">Решение и обоснование</label>
+                    <textarea id="resolveText" class="form-control" rows="6" placeholder="Опишите ваше решение..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-admin btn-admin-outline" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn-admin btn-admin-success" onclick="confirmResolve()">
+                    <i class="bi bi-check-lg"></i> Разрешить спор
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentDisputeId = null;
+    const resolveModal = new bootstrap.Modal(document.getElementById('resolveModal'));
+    
+    function openResolveModal(disputeId) {
+        currentDisputeId = disputeId;
+        document.getElementById('resolveWinner').value = '';
+        document.getElementById('resolveText').value = '';
+        resolveModal.show();
+    }
+    
+    async function confirmResolve() {
+        const winner = document.getElementById('resolveWinner').value;
+        const resolution = document.getElementById('resolveText').value.trim();
+        
+        if (!winner) {
+            showToast('Выберите победителя', 'warning');
+            return;
+        }
+        
+        if (!resolution) {
+            showToast('Опишите решение', 'warning');
+            return;
+        }
+        
+        const url = `/custom-admin/api/disputes/${currentDisputeId}/resolve/`;
+        const result = await adminAjax(url, { winner, resolution });
+        
+        if (result.success) {
+            showToast(result.message, 'success');
+            resolveModal.hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(result.message, 'danger');
+        }
+    }
+</script>
+{% endblock %}
+

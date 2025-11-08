@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Админ-панель{% endblock %} - LootLink</title>
+    
+    {% load static %}
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Chart.js для графиков -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        /* ═══════════════════════════════════════════════════════════════
+           ADMIN PANEL - Дизайн-система
+           ═══════════════════════════════════════════════════════════════ */
+        
+        :root {
+            /* Цвета - темная профессиональная схема */
+            --admin-primary: #6366F1;
+            --admin-primary-dark: #4F46E5;
+            --admin-primary-light: #818CF8;
+            --admin-secondary: #EC4899;
+            --admin-success: #10B981;
+            --admin-warning: #F59E0B;
+            --admin-danger: #EF4444;
+            --admin-info: #3B82F6;
+            
+            /* Нейтральные */
+            --admin-dark: #1F2937;
+            --admin-darker: #111827;
+            --admin-light: #F9FAFB;
+            --admin-border: #E5E7EB;
+            
+            /* Sidebar */
+            --sidebar-bg: #1F2937;
+            --sidebar-text: #9CA3AF;
+            --sidebar-active: #6366F1;
+            --sidebar-hover: #374151;
+            
+            /* Размеры */
+            --sidebar-width: 260px;
+            --topbar-height: 64px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--admin-light);
+            color: var(--admin-dark);
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           LAYOUT - Sidebar + Content
+           ═══════════════════════════════════════════════════════════════ */
+        
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* SIDEBAR */
+        .admin-sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+        
+        .admin-sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: white;
+            text-decoration: none;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        
+        .sidebar-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--admin-primary) 0%, #8B5CF6 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+        
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+        
+        .menu-section-title {
+            padding: 1rem 1.5rem 0.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--sidebar-text);
+            font-weight: 600;
+            opacity: 0.7;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--admin-primary);
+            transform: scaleY(0);
+            transition: transform 0.2s;
+        }
+        
+        .menu-item:hover {
+            background: var(--sidebar-hover);
+            color: white;
+        }
+        
+        .menu-item.active {
+            background: var(--sidebar-hover);
+            color: white;
+        }
+        
+        .menu-item.active::before {
+            transform: scaleY(1);
+        }
+        
+        .menu-item i {
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .menu-badge {
+            margin-left: auto;
+            background: var(--admin-danger);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        
+        .menu-badge.warning {
+            background: var(--admin-warning);
+        }
+        
+        .menu-badge.info {
+            background: var(--admin-info);
+        }
+        
+        /* MAIN CONTENT */
+        .admin-main {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .admin-main.sidebar-collapsed {
+            margin-left: 0;
+        }
+        
+        /* TOPBAR */
+        .admin-topbar {
+            height: var(--topbar-height);
+            background: white;
+            border-bottom: 1px solid var(--admin-border);
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .sidebar-toggle {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--admin-dark);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .sidebar-toggle:hover {
+            background: var(--admin-light);
+        }
+        
+        .topbar-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--admin-dark);
+        }
+        
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .topbar-item {
+            position: relative;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+            color: var(--admin-dark);
+            font-size: 1.25rem;
+        }
+        
+        .topbar-item:hover {
+            background: var(--admin-light);
+        }
+        
+        .topbar-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--admin-danger);
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            font-size: 0.625rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        
+        .admin-user-menu {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .admin-user-menu:hover {
+            background: var(--admin-light);
+        }
+        
+        .admin-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid var(--admin-border);
+        }
+        
+        .admin-avatar-placeholder {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--admin-primary) 0%, #8B5CF6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+        
+        .admin-user-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .admin-username {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--admin-dark);
+        }
+        
+        .admin-role {
+            font-size: 0.75rem;
+            color: var(--sidebar-text);
+        }
+        
+        /* CONTENT AREA */
+        .admin-content {
+            flex: 1;
+            padding: 2rem;
+        }
+        
+        .content-header {
+            margin-bottom: 2rem;
+        }
+        
+        .content-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--admin-dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .content-subtitle {
+            color: #6B7280;
+            font-size: 1rem;
+        }
+        
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 1rem;
+        }
+        
+        .breadcrumb-item a {
+            color: var(--admin-primary);
+            text-decoration: none;
+        }
+        
+        /* ═══════════════════════════════════════════════════════════════
+           COMPONENTS - Кнопки, Карточки, Таблицы
+           ═══════════════════════════════════════════════════════════════ */
+        
+        .admin-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--admin-border);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--admin-dark);
+        }
+        
+        .btn-admin {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-admin-primary {
+            background: var(--admin-primary);
+            color: white;
+        }
+        
+        .btn-admin-primary:hover {
+            background: var(--admin-primary-dark);
+            transform: translateY(-1px);
+        }
+        
+        .btn-admin-success {
+            background: var(--admin-success);
+            color: white;
+        }
+        
+        .btn-admin-danger {
+            background: var(--admin-danger);
+            color: white;
+        }
+        
+        .btn-admin-secondary {
+            background: #6B7280;
+            color: white;
+        }
+        
+        .btn-admin-outline {
+            background: transparent;
+            border: 2px solid var(--admin-border);
+            color: var(--admin-dark);
+        }
+        
+        .btn-admin-outline:hover {
+            border-color: var(--admin-primary);
+            color: var(--admin-primary);
+        }
+        
+        /* Таблицы */
+        .admin-table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .admin-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .admin-table thead {
+            background: var(--admin-light);
+        }
+        
+        .admin-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--admin-dark);
+            border-bottom: 1px solid var(--admin-border);
+        }
+        
+        .admin-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--admin-border);
+        }
+        
+        .admin-table tbody tr:hover {
+            background: var(--admin-light);
+        }
+        
+        .admin-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Статусы */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .status-active { background: rgba(16, 185, 129, 0.1); color: var(--admin-success); }
+        .status-pending { background: rgba(245, 158, 11, 0.1); color: var(--admin-warning); }
+        .status-completed { background: rgba(99, 102, 241, 0.1); color: var(--admin-primary); }
+        .status-cancelled { background: rgba(107, 114, 128, 0.1); color: #6B7280; }
+        .status-rejected { background: rgba(239, 68, 68, 0.1); color: var(--admin-danger); }
+        
+        /* Аватары в таблицах */
+        .table-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        
+        .table-avatar-placeholder {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--admin-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+        
+        /* Статистика карточки */
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--admin-border);
+            transition: all 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-icon.primary { background: rgba(99, 102, 241, 0.1); color: var(--admin-primary); }
+        .stat-icon.success { background: rgba(16, 185, 129, 0.1); color: var(--admin-success); }
+        .stat-icon.warning { background: rgba(245, 158, 11, 0.1); color: var(--admin-warning); }
+        .stat-icon.danger { background: rgba(239, 68, 68, 0.1); color: var(--admin-danger); }
+        .stat-icon.info { background: rgba(59, 130, 246, 0.1); color: var(--admin-info); }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--admin-dark);
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6B7280;
+            font-weight: 500;
+        }
+        
+        .stat-change {
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .stat-change.positive { color: var(--admin-success); }
+        .stat-change.negative { color: var(--admin-danger); }
+        
+        /* Модальные окна */
+        .modal-header {
+            border-bottom: 1px solid var(--admin-border);
+        }
+        
+        .modal-footer {
+            border-top: 1px solid var(--admin-border);
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .admin-sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .admin-main {
+                margin-left: 0;
+            }
+            
+            .admin-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- SIDEBAR -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-header">
+                <a href="{% url 'admin_panel:dashboard' %}" class="sidebar-logo">
+                    <div class="sidebar-logo-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <span>LootLink Admin</span>
+                </a>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <div class="menu-section-title">Основное</div>
+                
+                <a href="{% url 'admin_panel:dashboard' %}" class="menu-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+                <div class="menu-section-title">Управление</div>
+                
+                <a href="{% url 'admin_panel:users_list' %}" class="menu-item {% if 'users' in request.path %}active{% endif %}">
+                    <i class="bi bi-people"></i>
+                    <span>Пользователи</span>
+                </a>
+                
+                <a href="{% url 'admin_panel:listings_moderation' %}" class="menu-item {% if 'listings' in request.path %}active{% endif %}">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Объявления</span>
+                    {% if request.pending_moderation > 0 %}
+                    <span class="menu-badge">{{ request.pending_moderation }}</span>
+                    {% endif %}
+                </a>
+                
+                <a href="{% url 'admin_panel:transactions_list' %}" class="menu-item {% if 'transactions' in request.path %}active{% endif %}">
+                    <i class="bi bi-arrow-left-right"></i>
+                    <span>Сделки</span>
+                </a>
+                
+                <div class="menu-section-title">Модерация</div>
+                
+                <a href="{% url 'admin_panel:disputes_list' %}" class="menu-item {% if 'disputes' in request.path %}active{% endif %}">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Споры</span>
+                    {% if request.active_disputes > 0 %}
+                    <span class="menu-badge warning">{{ request.active_disputes }}</span>
+                    {% endif %}
+                </a>
+                
+                <a href="{% url 'admin_panel:reports_list' %}" class="menu-item {% if 'reports' in request.path %}active{% endif %}">
+                    <i class="bi bi-flag"></i>
+                    <span>Жалобы</span>
+                    {% if request.pending_reports > 0 %}
+                    <span class="menu-badge danger">{{ request.pending_reports }}</span>
+                    {% endif %}
+                </a>
+                
+                <div class="menu-section-title">Безопасность</div>
+                
+                <a href="{% url 'admin_panel:security_logs' %}" class="menu-item {% if 'security' in request.path %}active{% endif %}">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>Логи безопасности</span>
+                </a>
+                
+                <div class="menu-section-title">Система</div>
+                
+                <a href="/admin/" class="menu-item" target="_blank">
+                    <i class="bi bi-gear"></i>
+                    <span>Django Admin</span>
+                    <i class="bi bi-box-arrow-up-right ms-auto" style="font-size: 0.875rem;"></i>
+                </a>
+                
+                <a href="{% url 'admin_panel:settings' %}" class="menu-item {% if 'settings' in request.path %}active{% endif %}">
+                    <i class="bi bi-sliders"></i>
+                    <span>Настройки</span>
+                </a>
+                
+                <a href="{% url 'listings:home' %}" class="menu-item">
+                    <i class="bi bi-house"></i>
+                    <span>На сайт</span>
+                    <i class="bi bi-box-arrow-up-right ms-auto" style="font-size: 0.875rem;"></i>
+                </a>
+            </nav>
+        </aside>
+        
+        <!-- MAIN CONTENT -->
+        <main class="admin-main" id="adminMain">
+            <!-- TOPBAR -->
+            <div class="admin-topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h1 class="topbar-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+                
+                <div class="topbar-right">
+                    <!-- Уведомления -->
+                    <div class="topbar-item">
+                        <i class="bi bi-bell"></i>
+                        {% if request.pending_moderation > 0 %}
+                        <span class="topbar-badge">{{ request.pending_moderation }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Пользователь -->
+                    <div class="admin-user-menu">
+                        {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="admin-avatar">
+                        {% else %}
+                        <div class="admin-avatar-placeholder">
+                            {{ user.username|first|upper }}
+                        </div>
+                        {% endif %}
+                        <div class="admin-user-info">
+                            <div class="admin-username">{{ user.username }}</div>
+                            <div class="admin-role">
+                                {% if user.is_superuser %}Владелец
+                                {% elif user.is_staff %}Администратор
+                                {% elif user.profile.is_moderator %}Модератор
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CONTENT -->
+            <div class="admin-content">
+                {% block breadcrumb %}{% endblock %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Admin Panel JS -->
+    <script>
+        // Переключение sidebar
+        const sidebar = document.getElementById('adminSidebar');
+        const mainContent = document.getElementById('adminMain');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('show');
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('sidebar-collapsed');
+        });
+        
+        // CSRF Token для AJAX
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        const csrftoken = getCookie('csrftoken');
+        
+        // Глобальная функция для AJAX запросов
+        window.adminAjax = async function(url, data = {}) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(data)
+                });
+                
+                return await response.json();
+            } catch (error) {
+                console.error('AJAX Error:', error);
+                return { success: false, message: 'Ошибка соединения' };
+            }
+        };
+        
+        // Toast уведомления
+        window.showToast = function(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-bg-${type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        };
+        
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+            return container;
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

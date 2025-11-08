@@ -1,0 +1,227 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Модерация объявлений{% endblock %}
+{% block page_title %}Модерация объявлений{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Модерация объявлений</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Фильтры -->
+<div class="admin-card mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Поиск</label>
+            <input type="text" name="search" class="form-control" placeholder="Название, продавец..." value="{{ filters.search }}">
+        </div>
+        
+        <div class="col-md-3">
+            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Статус</label>
+            <select name="status" class="form-select">
+                <option value="">Все</option>
+                <option value="pending" {% if filters.status == 'pending' or not filters.status %}selected{% endif %}>На модерации</option>
+                <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Активные</option>
+                <option value="sold" {% if filters.status == 'sold' %}selected{% endif %}>Проданные</option>
+                <option value="rejected" {% if filters.status == 'rejected' %}selected{% endif %}>Отклоненные</option>
+            </select>
+        </div>
+        
+        <div class="col-md-3">
+            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Игра</label>
+            <select name="game" class="form-select">
+                <option value="">Все игры</option>
+                {% for game in games %}
+                <option value="{{ game.id }}" {% if filters.game == game.id|stringformat:"s" %}selected{% endif %}>
+                    {{ game.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-2 d-flex align-items-end gap-2">
+            <button type="submit" class="btn-admin btn-admin-primary flex-grow-1">
+                <i class="bi bi-search"></i> Поиск
+            </button>
+            <a href="{% url 'admin_panel:listings_moderation' %}" class="btn-admin btn-admin-outline">
+                <i class="bi bi-x"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Результаты в виде карточек с превью -->
+<div class="row g-4">
+    {% for listing in listings %}
+    <div class="col-md-6 col-lg-4">
+        <div class="admin-card" style="padding: 0; overflow: hidden;">
+            <!-- Изображение -->
+            <div style="position: relative; aspect-ratio: 16/10; background: var(--admin-light);">
+                {% if listing.image %}
+                <img src="{{ listing.image.url }}" alt="{{ listing.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--admin-primary) 0%, #8B5CF6 100%);">
+                    <i class="bi bi-image" style="font-size: 3rem; color: white; opacity: 0.5;"></i>
+                </div>
+                {% endif %}
+                
+                <!-- Статус badge -->
+                <div style="position: absolute; top: 12px; left: 12px;">
+                    <span class="status-badge status-{{ listing.status }}">{{ listing.get_status_display }}</span>
+                </div>
+                
+                <!-- Игра badge -->
+                <div style="position: absolute; top: 12px; right: 12px;">
+                    <span class="badge" style="background: rgba(0, 0, 0, 0.7); color: white; backdrop-filter: blur(10px);">
+                        {{ listing.game.name }}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Контент -->
+            <div style="padding: 1.25rem;">
+                <h4 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--admin-dark);">
+                    {{ listing.title }}
+                </h4>
+                
+                <p style="font-size: 0.875rem; color: #6B7280; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                    {{ listing.description }}
+                </p>
+                
+                <!-- Продавец и цена -->
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3" style="border-bottom: 1px solid var(--admin-border);">
+                    <div class="d-flex align-items-center gap-2">
+                        {% if listing.seller.profile.avatar %}
+                        <img src="{{ listing.seller.profile.avatar.url }}" alt="{{ listing.seller.username }}" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover;">
+                        {% else %}
+                        <div style="width: 32px; height: 32px; border-radius: 8px; background: var(--admin-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.75rem;">
+                            {{ listing.seller.username|first|upper }}
+                        </div>
+                        {% endif %}
+                        <div>
+                            <div style="font-weight: 600; font-size: 0.875rem;">{{ listing.seller.username }}</div>
+                            <div style="font-size: 0.75rem; color: #6B7280;">
+                                <i class="bi bi-star-fill" style="color: #FBBF24;"></i>
+                                {{ listing.seller.profile.rating|floatformat:1 }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="font-size: 1.5rem; font-weight: 800; color: var(--admin-success);">
+                        {{ listing.price }} ₽
+                    </div>
+                </div>
+                
+                <!-- Действия -->
+                <div class="d-flex gap-2">
+                    {% if listing.status == 'pending' %}
+                    <button 
+                        class="btn-admin btn-admin-success flex-grow-1"
+                        onclick="approveListing({{ listing.id }})">
+                        <i class="bi bi-check-lg"></i> Одобрить
+                    </button>
+                    <button 
+                        class="btn-admin btn-admin-danger flex-grow-1"
+                        onclick="rejectListing({{ listing.id }})">
+                        <i class="bi bi-x-lg"></i> Отклонить
+                    </button>
+                    {% endif %}
+                    
+                    <a href="{% url 'admin_panel:listing_detail' listing.id %}" class="btn-admin btn-admin-outline">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                </div>
+                
+                <!-- Мета-информация -->
+                <div class="mt-3 pt-3" style="border-top: 1px solid var(--admin-border); font-size: 0.75rem; color: #6B7280;">
+                    <div class="d-flex justify-content-between">
+                        <span>Создано: {{ listing.created_at|date:"d.m.Y H:i" }}</span>
+                        <span>Просмотров: {{ listing.views_count|default:"0" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="admin-card text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 4rem; color: var(--admin-border); display: block; margin-bottom: 1rem;"></i>
+            <h4 style="color: #6B7280;">Нет объявлений для модерации</h4>
+            <p style="color: #9CA3AF;">Все объявления обработаны</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Модальное окно для отклонения -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header">
+                <h5 class="modal-title">Отклонить объявление</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label" style="font-weight: 600;">Причина отклонения</label>
+                <textarea id="rejectReason" class="form-control" rows="4" placeholder="Укажите причину..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-admin btn-admin-outline" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn-admin btn-admin-danger" onclick="confirmReject()">
+                    <i class="bi bi-x-lg"></i> Отклонить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentListingId = null;
+    const rejectModal = new bootstrap.Modal(document.getElementById('rejectModal'));
+    
+    async function approveListing(listingId) {
+        const url = `/custom-admin/api/listings/${listingId}/approve/`;
+        const result = await adminAjax(url);
+        
+        if (result.success) {
+            showToast(result.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(result.message, 'danger');
+        }
+    }
+    
+    function rejectListing(listingId) {
+        currentListingId = listingId;
+        rejectModal.show();
+    }
+    
+    async function confirmReject() {
+        const reason = document.getElementById('rejectReason').value.trim();
+        
+        if (!reason) {
+            showToast('Укажите причину отклонения', 'warning');
+            return;
+        }
+        
+        const url = `/custom-admin/api/listings/${currentListingId}/reject/`;
+        const result = await adminAjax(url, { reason });
+        
+        if (result.success) {
+            showToast(result.message, 'success');
+            rejectModal.hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(result.message, 'danger');
+        }
+    }
+</script>
+{% endblock %}
+
