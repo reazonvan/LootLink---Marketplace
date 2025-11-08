@@ -14,7 +14,7 @@ from accounts.models import CustomUser, Profile
 from listings.models import Listing
 from transactions.models import PurchaseRequest
 from transactions.models_disputes import Dispute
-from listings.models_reports import ListingReport
+from listings.models_reports import Report
 from core.models_audit import SecurityAuditLog
 
 
@@ -273,7 +273,7 @@ def resolve_dispute(request, dispute_id):
 @user_passes_test(is_staff_or_moderator)
 def process_report(request, report_id):
     """Обработать жалобу"""
-    report = get_object_or_404(ListingReport, id=report_id)
+    report = get_object_or_404(Report, id=report_id)
     action = request.POST.get('action')  # 'approve', 'reject'
     
     if action == 'approve':

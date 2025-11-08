@@ -12,7 +12,7 @@ from accounts.models import CustomUser, Profile
 from listings.models import Listing, Game, Category
 from transactions.models import PurchaseRequest, Review
 from core.models_audit import SecurityAuditLog, DataChangeLog
-from listings.models_reports import ListingReport
+from listings.models_reports import Report
 from transactions.models_disputes import Dispute
 
 
@@ -56,7 +56,7 @@ def dashboard(request):
     
     # ═══ МОДЕРАЦИЯ ═══
     pending_moderation = Listing.objects.filter(status='pending').count()
-    pending_reports = ListingReport.objects.filter(status='pending').count()
+    pending_reports = Report.objects.filter(status='pending').count()
     active_disputes = Dispute.objects.filter(status__in=['pending', 'in_review']).count()
     
     # ═══ ФИНАНСЫ ═══
@@ -283,7 +283,7 @@ def listing_detail(request, listing_id):
     )
     
     # Репорты на это объявление
-    reports = ListingReport.objects.filter(listing=listing).select_related('reporter')
+    reports = Report.objects.filter(listing=listing).select_related('reporter')
     
     context = {
         'listing': listing,
@@ -399,7 +399,7 @@ def dispute_detail(request, dispute_id):
 @user_passes_test(is_staff_or_moderator)
 def reports_list(request):
     """Список жалоб"""
-    reports = ListingReport.objects.select_related(
+    reports = Report.objects.select_related(
         'listing__seller', 'listing__game', 'reporter'
     ).all()
     

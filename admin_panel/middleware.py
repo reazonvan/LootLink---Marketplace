@@ -3,7 +3,7 @@ Middleware для админ-панели
 Добавляет счетчики в контекст для sidebar
 """
 from listings.models import Listing
-from listings.models_reports import ListingReport
+from listings.models_reports import Report
 from transactions.models_disputes import Dispute
 
 
@@ -21,7 +21,7 @@ class AdminPanelContextMiddleware:
                 (hasattr(request.user, 'profile') and request.user.profile.is_moderator)):
                 
                 request.pending_moderation = Listing.objects.filter(status='pending').count()
-                request.pending_reports = ListingReport.objects.filter(status='pending').count()
+                request.pending_reports = Report.objects.filter(status='pending').count()
                 request.active_disputes = Dispute.objects.filter(
                     status__in=['pending', 'in_review']
                 ).count()
