@@ -2,8 +2,7 @@
 Middleware для админ-панели
 Добавляет счетчики в контекст для sidebar
 """
-from listings.models import Listing
-from listings.models_reports import Report
+from listings.models import Listing, Report
 from transactions.models_disputes import Dispute
 
 
