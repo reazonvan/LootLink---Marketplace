@@ -11,10 +11,9 @@ from django.db.models import Count, Sum, Avg
 from datetime import timedelta
 
 from accounts.models import CustomUser, Profile
-from listings.models import Listing
+from listings.models import Listing, Report
 from transactions.models import PurchaseRequest
 from transactions.models_disputes import Dispute
-from listings.models_reports import Report
 from core.models_audit import SecurityAuditLog
 
 

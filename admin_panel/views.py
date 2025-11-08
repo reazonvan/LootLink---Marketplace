@@ -9,10 +9,9 @@ from django.utils import timezone
 from datetime import timedelta
 
 from accounts.models import CustomUser, Profile
-from listings.models import Listing, Game, Category
+from listings.models import Listing, Game, Category, Report
 from transactions.models import PurchaseRequest, Review
 from core.models_audit import SecurityAuditLog, DataChangeLog
-from listings.models_reports import Report
 from transactions.models_disputes import Dispute
 
 
