@@ -662,21 +662,55 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ========== Footer ========== */
+/* ========== Footer - Современный минималистичный ========== */
 footer {
-    background: var(--dark);
-    color: white;
-    padding: 2rem 0;
-    margin-top: 3rem;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
+    padding: 3rem 0 1.5rem 0;
+    margin-top: 4rem;
+    border-top: 1px solid #334155;
+}
+
+footer h5, footer h6 {
+    color: #ffffff;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    font-size: 1rem;
+}
+
+footer .text-muted {
+    color: #94a3b8 !important;
+    font-size: 0.9375rem;
+    line-height: 1.6;
 }
 
 footer a {
-    color: #94a3b8;
+    color: #cbd5e1;
     text-decoration: none;
-    transition: color 0.2s;
+    transition: all 0.15s ease;
+    display: inline-block;
+    padding: 0.25rem 0;
+    font-size: 0.9375rem;
 }
 
 footer a:hover {
-    color: white;
+    color: #2563eb;
+    transform: translateX(3px);
+}
+
+footer ul li {
+    margin-bottom: 0.625rem;
+}
+
+footer hr {
+    border-color: #334155 !important;
+    opacity: 0.3;
+    margin: 2rem 0 1.5rem 0;
+}
+
+footer .text-center small {
+    color: #94a3b8;
+    font-size: 0.875rem;
 }
 
 /* ========== Pagination ========== */

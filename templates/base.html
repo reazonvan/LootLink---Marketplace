@@ -351,14 +351,14 @@
 
     <!-- Футер -->
     {% block footer %}
-    <footer class="bg-dark text-white mt-5 py-4">
+    <footer>
         <div class="container">
-            <div class="row">
+            <div class="row g-4">
                 <div class="col-md-4">
                     <h5>LootLink</h5>
-                    <p class="text-muted">Маркетплейс для торговли внутриигровыми предметами</p>
+                    <p class="text-muted">Безопасный маркетплейс для торговли игровыми предметами</p>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-2">
                     <h6>Навигация</h6>
                     <ul class="list-unstyled">
                         <li><a href="{% url 'listings:catalog' %}">Каталог</a></li>
@@ -371,7 +371,7 @@
                         {% endif %}
                     </ul>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-2">
                     <h6>Информация</h6>
                     <ul class="list-unstyled">
                         <li><a href="{% url 'about' %}">О нас</a></li>
@@ -387,7 +387,7 @@
                     <p class="text-muted mb-0">Техподдержка: ivanpetrov20066.ip@gmail.com</p>
                 </div>
             </div>
-            <hr class="bg-secondary">
+            <hr>
             <div class="text-center">
                 <small>&copy; 2025 LootLink. Все права защищены.</small>
             </div>
