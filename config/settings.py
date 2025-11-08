@@ -308,8 +308,11 @@ CSRF_COOKIE_HTTPONLY = False  # WebSocket нужен доступ к CSRF
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_AGE = 1209600  # 2 недели
-SESSION_COOKIE_NAME = 'lootlink_sessionid'  # Уникальное имя
-CSRF_COOKIE_NAME = 'lootlink_csrftoken'  # Уникальное имя
+SESSION_COOKIE_NAME = 'lootlink_sessionid'
+CSRF_COOKIE_NAME = 'lootlink_csrftoken'
+# ВАЖНО: Точка перед доменом = работает на всех поддоменах (lootlink.ru, www.lootlink.ru)
+SESSION_COOKIE_DOMAIN = '.lootlink.ru'
+CSRF_COOKIE_DOMAIN = '.lootlink.ru'
 
 # Cache configuration
 USE_REDIS = config('USE_REDIS', default=False, cast=bool)
