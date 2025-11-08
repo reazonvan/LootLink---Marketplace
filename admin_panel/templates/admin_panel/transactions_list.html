@@ -1,0 +1,136 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Сделки{% endblock %}
+{% block page_title %}Управление сделками{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Сделки</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Фильтры -->
+<div class="admin-card mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-5">
+            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Поиск</label>
+            <input type="text" name="search" class="form-control" placeholder="Покупатель, продавец, товар..." value="{{ filters.search }}">
+        </div>
+        
+        <div class="col-md-3">
+            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Статус</label>
+            <select name="status" class="form-select">
+                <option value="">Все</option>
+                <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Ожидают</option>
+                <option value="accepted" {% if filters.status == 'accepted' %}selected{% endif %}>Приняты</option>
+                <option value="completed" {% if filters.status == 'completed' %}selected{% endif %}>Завершены</option>
+                <option value="cancelled" {% if filters.status == 'cancelled' %}selected{% endif %}>Отменены</option>
+            </select>
+        </div>
+        
+        <div class="col-md-4 d-flex align-items-end gap-2">
+            <button type="submit" class="btn-admin btn-admin-primary flex-grow-1">
+                <i class="bi bi-search"></i> Поиск
+            </button>
+            <a href="{% url 'admin_panel:transactions_list' %}" class="btn-admin btn-admin-outline">
+                <i class="bi bi-x"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Список сделок -->
+<div class="admin-card">
+    <h3 class="card-title mb-3">Сделки ({{ total_count }})</h3>
+    
+    <div class="admin-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Дата</th>
+                    <th>Покупатель</th>
+                    <th>Продавец</th>
+                    <th>Товар</th>
+                    <th>Сумма</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in transactions %}
+                <tr>
+                    <td><strong>#{{ transaction.id }}</strong></td>
+                    <td style="font-size: 0.875rem;">{{ transaction.created_at|date:"d.m H:i" }}</td>
+                    <td>
+                        <a href="{% url 'admin_panel:user_detail' transaction.buyer.id %}" style="font-weight: 600; color: var(--admin-dark); text-decoration: none;">
+                            {{ transaction.buyer.username }}
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{% url 'admin_panel:user_detail' transaction.listing.seller.id %}" style="font-weight: 600; color: var(--admin-dark); text-decoration: none;">
+                            {{ transaction.listing.seller.username }}
+                        </a>
+                    </td>
+                    <td>
+                        <div style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ transaction.listing.title }}">
+                            {{ transaction.listing.title }}
+                        </div>
+                        <div style="font-size: 0.75rem; color: #9CA3AF;">{{ transaction.listing.game.name }}</div>
+                    </td>
+                    <td>
+                        <span style="font-weight: 700; color: var(--admin-success);">{{ transaction.listing.price }} ₽</span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ transaction.status }}">{{ transaction.get_status_display }}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{% url 'admin_panel:transaction_detail' transaction.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if transaction.status not in 'completed,cancelled' %}
+                            <button class="btn btn-sm btn-outline-danger" onclick="cancelTransaction({{ transaction.id }})" title="Отменить">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4" style="color: #6B7280;">
+                        <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>
+                        Сделки не найдены
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function cancelTransaction(transactionId) {
+        const reason = prompt('Укажите причину отмены:');
+        if (!reason) return;
+        
+        const url = `/custom-admin/api/transactions/${transactionId}/cancel/`;
+        const result = await adminAjax(url, { reason });
+        
+        if (result.success) {
+            showToast(result.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(result.message, 'danger');
+        }
+    }
+</script>
+{% endblock %}
+

@@ -1,0 +1,105 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Жалобы{% endblock %}
+{% block page_title %}Жалобы на объявления{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Жалобы</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <h3 class="card-title mb-3">Жалобы ({{ total_count }})</h3>
+    
+    {% for report in reports %}
+    <div style="padding: 1.5rem; border: 1px solid var(--admin-border); border-radius: 12px; margin-bottom: 1rem; {% if report.status == 'pending' %}border-left: 4px solid var(--admin-warning);{% endif %}">
+        <div class="d-flex gap-3">
+            <!-- Превью объявления -->
+            <div style="flex-shrink: 0;">
+                {% if report.listing.image %}
+                <img src="{{ report.listing.image.url }}" alt="" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                {% else %}
+                <div style="width: 100px; height: 100px; background: var(--admin-light); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-image" style="font-size: 2rem; color: #9CA3AF;"></i>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Информация -->
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h5 style="font-weight: 700; margin-bottom: 0.5rem;">{{ report.listing.title }}</h5>
+                        <div style="font-size: 0.875rem; color: #6B7280;">
+                            Продавец: <strong>{{ report.listing.seller.username }}</strong> • 
+                            Игра: {{ report.listing.game.name }}
+                        </div>
+                    </div>
+                    <span class="status-badge status-{{ report.status }}">{{ report.get_status_display }}</span>
+                </div>
+                
+                <div style="background: rgba(245, 158, 11, 0.05); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--admin-warning); margin: 1rem 0;">
+                    <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">
+                        Причина: {{ report.get_reason_display }}
+                    </div>
+                    <div style="font-size: 0.875rem; color: #6B7280;">
+                        {{ report.description }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: #9CA3AF; margin-top: 0.75rem;">
+                        От: <strong>{{ report.reporter.username }}</strong> • {{ report.created_at|date:"d.m.Y H:i" }}
+                    </div>
+                </div>
+                
+                {% if report.status == 'pending' %}
+                <div class="d-flex gap-2">
+                    <button class="btn-admin btn-admin-danger" onclick="processReport({{ report.id }}, 'approve')">
+                        <i class="bi bi-shield-x"></i> Заблокировать объявление
+                    </button>
+                    <button class="btn-admin btn-admin-success" onclick="processReport({{ report.id }}, 'reject')">
+                        <i class="bi bi-check-lg"></i> Жалоба необоснована
+                    </button>
+                    <a href="{% url 'listings:listing_detail' report.listing.id %}" target="_blank" class="btn-admin btn-admin-outline">
+                        <i class="bi bi-box-arrow-up-right"></i> Открыть объявление
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-5">
+        <i class="bi bi-inbox" style="font-size: 4rem; color: var(--admin-border); display: block; margin-bottom: 1rem;"></i>
+        <h4 style="color: #6B7280;">Нет жалоб</h4>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function processReport(reportId, action) {
+        const messages = {
+            'approve': 'Вы уверены, что хотите заблокировать это объявление?',
+            'reject': 'Вы уверены, что жалоба необоснована?'
+        };
+        
+        if (!confirm(messages[action])) return;
+        
+        const url = `/custom-admin/api/reports/${reportId}/process/`;
+        const result = await adminAjax(url, { action });
+        
+        if (result.success) {
+            showToast(result.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(result.message, 'danger');
+        }
+    }
+</script>
+{% endblock %}
+

@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     'chat.apps.ChatConfig',
     'payments.apps.PaymentsConfig',
     'api.apps.ApiConfig',
+    'admin_panel.apps.AdminPanelConfig',  # Кастомная админ-панель
 ]
 
 # REST Framework settings
@@ -122,6 +123,8 @@ MIDDLEWARE = [
     'core.middleware_audit.SecurityAuditMiddleware',  # Аудит безопасности
     # Обновление last_seen
     'core.middleware_activity.UpdateLastSeenMiddleware',
+    # Админ-панель
+    'admin_panel.middleware.AdminPanelContextMiddleware',  # Счетчики для sidebar
 ]
 
 ROOT_URLCONF = 'config.urls'

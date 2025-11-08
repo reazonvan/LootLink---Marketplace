@@ -1,0 +1,40 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Сделка #{{ transaction.id }}{% endblock %}
+{% block page_title %}Сделка #{{ transaction.id }}{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'admin_panel:transactions_list' %}">Сделки</a></li>
+        <li class="breadcrumb-item active">#{{ transaction.id }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="row">
+        <div class="col-md-6">
+            <h5>Покупатель:</h5>
+            <p><strong>{{ transaction.buyer.username }}</strong></p>
+        </div>
+        <div class="col-md-6">
+            <h5>Продавец:</h5>
+            <p><strong>{{ transaction.listing.seller.username }}</strong></p>
+        </div>
+    </div>
+    
+    <hr>
+    
+    <h5>Товар:</h5>
+    <p><strong>{{ transaction.listing.title }}</strong> - {{ transaction.listing.price }} ₽</p>
+    
+    <hr>
+    
+    <h5>Статус:</h5>
+    <span class="status-badge status-{{ transaction.status }}">{{ transaction.get_status_display }}</span>
+</div>
+{% endblock %}
+

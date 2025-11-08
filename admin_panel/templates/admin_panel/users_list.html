@@ -1,0 +1,250 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Пользователи{% endblock %}
+{% block page_title %}Управление пользователями{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Пользователи</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Фильтры и поиск -->
+<div class="admin-card mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Поиск</label>
+            <input type="text" name="search" class="form-control" placeholder="Имя, email..." value="{{ filters.search }}">
+        </div>
+        
+        <div class="col-md-3">
+            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Роль</label>
+            <select name="role" class="form-select">
+                <option value="">Все</option>
+                <option value="admin" {% if filters.role == 'admin' %}selected{% endif %}>Администраторы</option>
+                <option value="moderator" {% if filters.role == 'moderator' %}selected{% endif %}>Модераторы</option>
+                <option value="verified" {% if filters.role == 'verified' %}selected{% endif %}>Верифицированные</option>
+            </select>
+        </div>
+        
+        <div class="col-md-3">
+            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Верификация</label>
+            <select name="verified" class="form-select">
+                <option value="">Все</option>
+                <option value="yes" {% if filters.verified == 'yes' %}selected{% endif %}>Верифицированные</option>
+                <option value="no" {% if filters.verified == 'no' %}selected{% endif %}>Не верифицированные</option>
+            </select>
+        </div>
+        
+        <div class="col-md-2 d-flex align-items-end gap-2">
+            <button type="submit" class="btn-admin btn-admin-primary flex-grow-1">
+                <i class="bi bi-search"></i> Поиск
+            </button>
+            <a href="{% url 'admin_panel:users_list' %}" class="btn-admin btn-admin-outline">
+                <i class="bi bi-x"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Результаты -->
+<div class="admin-card">
+    <div class="card-header-custom">
+        <div>
+            <h3 class="card-title mb-1">Пользователи</h3>
+            <div style="font-size: 0.875rem; color: #6B7280;">Всего найдено: <strong>{{ total_count }}</strong></div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/admin/accounts/customuser/" target="_blank" class="btn-admin btn-admin-outline btn-sm">
+                <i class="bi bi-gear"></i> Django Admin
+            </a>
+        </div>
+    </div>
+    
+    <div class="admin-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Пользователь</th>
+                    <th>Email</th>
+                    <th>Роль</th>
+                    <th>Рейтинг</th>
+                    <th>Продажи/Покупки</th>
+                    <th>Регистрация</th>
+                    <th>Статус</th>
+                    <th style="text-align: right;">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            {% if user.profile.avatar %}
+                            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="table-avatar">
+                            {% else %}
+                            <div class="table-avatar-placeholder">{{ user.username|first|upper }}</div>
+                            {% endif %}
+                            <div>
+                                <a href="{% url 'admin_panel:user_detail' user.id %}" style="font-weight: 600; color: var(--admin-dark); text-decoration: none;">
+                                    {{ user.username }}
+                                </a>
+                                {% if user.profile.is_verified %}
+                                <i class="bi bi-check-circle-fill ms-1" style="color: var(--admin-success); font-size: 0.875rem;"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="font-size: 0.875rem; color: #6B7280;">{{ user.email }}</span>
+                    </td>
+                    <td>
+                        {% if user.is_superuser %}
+                        <span class="badge" style="background: var(--admin-danger);">👑 Владелец</span>
+                        {% elif user.is_staff %}
+                        <span class="badge" style="background: var(--admin-primary);">🛡️ Админ</span>
+                        {% elif user.profile.is_moderator %}
+                        <span class="badge" style="background: var(--admin-success);">⚖️ Модератор</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Пользователь</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="bi bi-star-fill" style="color: #FBBF24; font-size: 0.875rem;"></i>
+                            <span style="font-weight: 600;">{{ user.profile.rating|floatformat:1 }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-size: 0.875rem;">
+                            <span style="color: var(--admin-success); font-weight: 600;">{{ user.profile.total_sales }}</span> /
+                            <span style="color: var(--admin-info); font-weight: 600;">{{ user.profile.total_purchases }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="font-size: 0.875rem; color: #6B7280;">{{ user.date_joined|date:"d.m.Y" }}</span>
+                    </td>
+                    <td>
+                        {% if user.is_active %}
+                        <span class="status-badge status-active">Активен</span>
+                        {% else %}
+                        <span class="status-badge status-rejected">Заблокирован</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex justify-content-end gap-1">
+                            <button 
+                                class="btn btn-sm btn-outline-primary" 
+                                onclick="verifyUser({{ user.id }}, {{ user.profile.is_verified|yesno:'true,false' }})"
+                                title="{% if user.profile.is_verified %}Снять верификацию{% else %}Верифицировать{% endif %}">
+                                <i class="bi bi-{% if user.profile.is_verified %}check-circle-fill{% else %}check-circle{% endif %}"></i>
+                            </button>
+                            
+                            {% if not user.is_superuser %}
+                            {% if user.is_staff %}
+                            <button 
+                                class="btn btn-sm btn-outline-warning"
+                                onclick="toggleModerator({{ user.id }}, {{ user.profile.is_moderator|yesno:'true,false' }})"
+                                title="{% if user.profile.is_moderator %}Снять модератора{% else %}Назначить модератором{% endif %}">
+                                <i class="bi bi-shield"></i>
+                            </button>
+                            {% endif %}
+                            
+                            {% if user.is_active %}
+                            <button 
+                                class="btn btn-sm btn-outline-danger"
+                                onclick="banUser({{ user.id }})"
+                                title="Заблокировать">
+                                <i class="bi bi-ban"></i>
+                            </button>
+                            {% else %}
+                            <button 
+                                class="btn btn-sm btn-outline-success"
+                                onclick="unbanUser({{ user.id }})"
+                                title="Разблокировать">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                            {% endif %}
+                            {% endif %}
+                            
+                            <a href="{% url 'admin_panel:user_detail' user.id %}" class="btn btn-sm btn-outline-secondary" title="Подробнее">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4" style="color: #6B7280;">
+                        <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>
+                        Пользователи не найдены
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function verifyUser(userId, currentStatus) {
+        const url = `/custom-admin/api/users/${userId}/verify/`;
+        const result = await adminAjax(url);
+        
+        if (result.success) {
+            showToast(result.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(result.message, 'danger');
+        }
+    }
+    
+    async function banUser(userId) {
+        if (!confirm('Вы уверены, что хотите заблокировать этого пользователя?')) return;
+        
+        const url = `/custom-admin/api/users/${userId}/ban/`;
+        const result = await adminAjax(url);
+        
+        if (result.success) {
+            showToast(result.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(result.message, 'danger');
+        }
+    }
+    
+    async function unbanUser(userId) {
+        const url = `/custom-admin/api/users/${userId}/unban/`;
+        const result = await adminAjax(url);
+        
+        if (result.success) {
+            showToast(result.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(result.message, 'danger');
+        }
+    }
+    
+    async function toggleModerator(userId, currentStatus) {
+        const action = currentStatus ? 'снять статус модератора' : 'назначить модератором';
+        if (!confirm(`Вы уверены, что хотите ${action}?`)) return;
+        
+        const url = `/custom-admin/api/users/${userId}/moderator/`;
+        const result = await adminAjax(url);
+        
+        if (result.success) {
+            showToast(result.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(result.message, 'danger');
+        }
+    }
+</script>
+{% endblock %}
+
