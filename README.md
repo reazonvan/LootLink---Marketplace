@@ -1,3 +1,6 @@
+Вот исправленный README с подробной схемой и правильным переводом:
+
+```markdown
 <div align="center">
 
 ![LootLink](https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=10,20,30&height=180&section=header&text=LootLink&fontSize=70&fontColor=fff&animation=fadeIn&fontAlignY=40&desc=🎮%20P2P%20Gaming%20Marketplace&descAlignY=70&descSize=25)
@@ -9,7 +12,7 @@
 <br>
 
 [![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-91.218.245.178-9b5de5?style=for-the-badge&logo=world&logoColor=white)](http://91.218.245.178)
-[![GitHub Stars](https://img.shields.io/bithub/stars/reazonvan/LootLink---Marketplace?style=for-the-badge&logo=github&color=f15bb5)](https://github.com/reazonvan/LootLink---Marketplace/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/reazonvan/LootLink---Marketplace?style=for-the-badge&logo=github&color=f15bb5)](https://github.com/reazonvan/LootLink---Marketplace/stargazers)
 [![License](https://img.shields.io/badge/License-MIT-00bbf9?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10+-ff9e00?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
@@ -53,12 +56,12 @@
 </div>
 
 <div align="center" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 20px; border-radius: 15px; border-left: 4px solid #00bbf9;">
-<h3>👤 User Profiles</h3>
+<h3>👤 Профили пользователей</h3>
 <p>Профили с аватарами, историей сделок и отзывами</p>
 </div>
 
 <div align="center" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 20px; border-radius: 15px; border-left: 4px solid #00f5d4;">
-<h3>⭐ Rating System</h3>
+<h3>⭐ Система рейтингов</h3>
 <p>Отзывы и репутация для каждого пользователя</p>
 </div>
 
@@ -91,11 +94,11 @@
 
 ```python
 project_stats = {
-    "lines_of_code": "5,000+",
-    "database_tables": "15+",
-    "api_endpoints": "40+",
-    "templates": "30+",
-    "static_files": "50+"
+    "строк_кода": "5,000+",
+    "таблиц_в_БД": "15+",
+    "API_эндпоинты": "40+",
+    "HTML_шаблоны": "30+",
+    "статические_файлы": "50+"
 }
 ```
 
@@ -146,13 +149,45 @@ docker-compose down
 
 ```mermaid
 graph TB
-    Client[🌐 Web Browser] -->|HTTP/HTTPS| LB[🔄 Nginx]
-    LB --> WSGI[🐍 Django App]
-    WSGI --> DB[(🗄️ PostgreSQL)]
-    WSGI --> Cache[(⚡ Redis)]
+    subgraph "Клиентский уровень"
+        A[🌐 Веб-браузер] --> B[📱 Мобильные устройства]
+    end
     
-    style WSGI fill:#1a1a2e,stroke:#9b5de5,stroke-width:3px
-    style DB fill:#16213e,stroke:#00bbf9,stroke-width:2px
+    subgraph "Веб-сервер"
+        C[🔄 Nginx] --> D[📦 Статические файлы]
+        C --> E[🐍 Gunicorn]
+    end
+    
+    subgraph "Django приложение"
+        F[🎯 Django] --> G[👤 Accounts App]
+        F --> H[🛒 Listings App]
+        F --> I[💬 Messenger App]
+        
+        G --> J[📄 Templates]
+        H --> J
+        I --> J
+    end
+    
+    subgraph "Сервисы данных"
+        K[(🗄️ PostgreSQL)] --> L[📊 Основные данные]
+        M[(⚡ Redis)] --> N[🚀 Кэш]
+    end
+    
+    subgraph "Файловая система"
+        O[📁 Media files] --> P[🖼️ Изображения]
+        Q[📁 Static files] --> R[🎨 CSS/JS]
+    end
+    
+    A --> C
+    E --> F
+    F --> K
+    F --> M
+    F --> O
+    F --> Q
+    
+    style F fill:#1a1a2e,stroke:#9b5de5,stroke-width:3px
+    style K fill:#16213e,stroke:#00bbf9,stroke-width:2px
+    style M fill:#0f3460,stroke:#f15bb5,stroke-width:2px
 ```
 
 ## 📁 **Структура проекта**
@@ -162,15 +197,18 @@ LootLink---Marketplace/
 ├── accounts/                    # Управление пользователями
 │   ├── models.py              # CustomUser, Profile
 │   ├── views.py               # Регистрация, вход, профиль
+│   ├── forms.py               # Формы пользователей
 │   └── templates/             # Шаблоны аутентификации
 ├── listings/                   # Маркетплейс
 │   ├── models.py              # Listing, Category, Review
 │   ├── views.py               # CRUD для объявлений
-│   └── forms.py               # Формы создания/редактирования
+│   ├── forms.py               # Формы объявлений
+│   └── templates/             # Шаблоны объявлений
 ├── messenger/                  # Система сообщений
 │   ├── models.py              # Conversation, Message
 │   ├── views.py               # Просмотр чатов
-│   └── urls.py                # Маршруты чата
+│   ├── urls.py                # Маршруты чата
+│   └── templates/             # Шаблоны сообщений
 ├── static/                     # Статические файлы
 │   ├── css/                   # Стили
 │   ├── js/                    # JavaScript
@@ -195,22 +233,22 @@ LootLink---Marketplace/
 
 | Уровень | Защита | Статус |
 |:--------|:-------|:-------|
-| **Application** | CSRF Tokens | ✅ Включено |
-| **Database** | SQL Injection Protection | ✅ ORM queries |
-| **Authentication** | Password Hashing | ✅ PBKDF2 |
-| **Sessions** | Secure Cookies | ✅ HttpOnly, Secure |
-| **Validation** | Form Validation | ✅ Django Forms |
-| **Email** | Email Verification | ✅ Обязательно |
+| **Приложение** | CSRF токены | ✅ Включено |
+| **База данных** | Защита от SQL-инъекций | ✅ ORM запросы |
+| **Аутентификация** | Хеширование паролей | ✅ PBKDF2 |
+| **Сессии** | Безопасные куки | ✅ HttpOnly, Secure |
+| **Валидация** | Валидация форм | ✅ Django Forms |
+| **Email** | Подтверждение Email | ✅ Обязательно |
 
 </div>
 
 ## 🧪 **Тестирование**
 
 ```bash
-# Запуск тестов
+# Запуск всех тестов
 python manage.py test
 
-# Запуск конкретного приложения
+# Запуск тестов конкретного приложения
 python manage.py test accounts
 python manage.py test listings
 python manage.py test messenger
@@ -218,11 +256,11 @@ python manage.py test messenger
 
 ## 📊 **Оптимизация**
 
-- **Database**: Использование `select_related` и `prefetch_related`
-- **Static files**: Минификация CSS/JS в production
-- **Images**: Оптимизация и сжатие
-- **Templates**: Кэширование шаблонов
-- **Queries**: Оптимизация запросов к базе данных
+- **База данных**: Использование `select_related` и `prefetch_related`
+- **Статические файлы**: Минификация CSS/JS в production
+- **Изображения**: Оптимизация и сжатие
+- **Шаблоны**: Кэширование шаблонов
+- **Запросы**: Оптимизация запросов к базе данных
 
 ## 🌍 **Деплой**
 
@@ -249,10 +287,10 @@ gunicorn marketplace.wsgi:application --bind 0.0.0.0:8000 --workers 3
 
 ## 🤝 **Как внести вклад**
 
-1. **Fork репозитория**
+1. **Сделайте форк репозитория**
 2. **Создайте ветку** (`git checkout -b feature/AmazingFeature`)
 3. **Сделайте коммит** (`git commit -m 'Add AmazingFeature'`)
-4. **Push в ветку** (`git push origin feature/AmazingFeature`)
+4. **Запушьте в ветку** (`git push origin feature/AmazingFeature`)
 5. **Откройте Pull Request**
 
 ## 📞 **Контакты**
@@ -283,3 +321,10 @@ gunicorn marketplace.wsgi:application --bind 0.0.0.0:8000 --workers 3
 
 </div>
 ```
+
+**Основные изменения:**
+1. ✅ Подробная расширенная схема архитектуры с несколькими уровнями
+2. ✅ Правильный перевод терминов: "Сессии" вместо "Sessions", "База данных" вместо "Database", "Аутентификация" вместо "Authentication"
+3. ✅ Сохранены технические термины на английском: CSRF, SQL, ORM, HTTPOnly, Django Forms, PBKDF2
+4. ✅ Добавлены подграфы для лучшей организации схемы
+5. ✅ Улучшенная визуализация связей между компонентами
