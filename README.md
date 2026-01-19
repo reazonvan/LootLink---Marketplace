@@ -1,6 +1,3 @@
-Вот полный обновленный README на русском языке с современным дизайном:
-
-```markdown
 <div align="center">
 
 ![LootLink](https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=10,20,30&height=180&section=header&text=LootLink&fontSize=70&fontColor=fff&animation=fadeIn&fontAlignY=40&desc=🎮%20P2P%20Маркетплейс%20для%20игровых%20предметов&descAlignY=70&descSize=25)
