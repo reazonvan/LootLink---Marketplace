@@ -319,4 +319,3 @@ sudo systemctl start lootlink
 [⬆ Наверх](#)
 
 </div>
-```
