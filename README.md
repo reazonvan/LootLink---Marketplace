@@ -1,4 +1,3 @@
-
 <div align="center">
 
 ![LootLink](https://capsule-render.vercel.app/api?type=soft&color=gradient&customColorList=10,20,30&height=180&section=header&text=LootLink&fontSize=70&fontColor=fff&animation=fadeIn&fontAlignY=40&desc=🎮%20P2P%20Gaming%20Marketplace&descAlignY=70&descSize=25)
@@ -11,14 +10,12 @@
 
 [![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-91.218.245.178-9b5de5?style=for-the-badge&logo=world&logoColor=white)](http://91.218.245.178)
 [![GitHub Stars](https://img.shields.io/github/stars/reazonvan/LootLink---Marketplace?style=for-the-badge&logo=github&color=f15bb5)](https://github.com/reazonvan/LootLink---Marketplace/stargazers)
-[![License](https://img.shields.io/badge/License-MIT-00bbf9?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10+-ff9e00?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
 <br>
 
 **[🚀 Live Demo](http://91.218.245.178)** • 
-**[🐛 Report Bug](https://github.com/reazonvan/LootLink---Marketplace/issues)** • 
-**[⭐ Star Project](https://github.com/reazonvan/LootLink---Marketplace)**
+**[🐛 Report Bug](https://github.com/reazonvan/LootLink---Marketplace/issues)**
 
 </div>
 
@@ -31,7 +28,7 @@
 | ✓ Без комиссий | ✓ CSRF защита | ✓ Быстрая загрузка |
 | ✓ Прямые P2P сделки | ✓ Защита от SQL-инъекций | ✓ Адаптивный дизайн |
 | ✓ Чат в реальном времени | ✓ Хеширование паролей | ✓ Оптимизированные запросы |
-| ✓ Система рейтингов | ✓ Email верификация | ✓ Кэширование |
+| ✓ Система рейтингов | ✓ Email верификация | ✓ Кэширование Redis |
 
 </div>
 
@@ -45,7 +42,7 @@
 
 <div align="center" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 20px; border-radius: 15px; border-left: 4px solid #9b5de5;">
 <h3>🛒 Умный маркетплейс</h3>
-<p>Создание, поиск и фильтрация игровых предметов с изображениями</p>
+<p>Создание, поиск и фильтрация игровых предметов с загрузкой изображений</p>
 </div>
 
 <div align="center" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 20px; border-radius: 15px; border-left: 4px solid #f15bb5;">
@@ -54,13 +51,13 @@
 </div>
 
 <div align="center" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 20px; border-radius: 15px; border-left: 4px solid #00bbf9;">
-<h3>👤 Профили пользователей</h3>
-<p>Профили с аватарами, историей сделок и отзывами</p>
+<h3>🔐 Безопасные сделки</h3>
+<p>Формализованные транзакции с историей и статусами</p>
 </div>
 
 <div align="center" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 20px; border-radius: 15px; border-left: 4px solid #00f5d4;">
-<h3>⭐ Система рейтингов</h3>
-<p>Отзывы и репутация для каждого пользователя</p>
+<h3>⭐ Система репутации</h3>
+<p>Отзывы и рейтинг для каждого пользователя на основе завершённых сделок</p>
 </div>
 
 </div>
@@ -92,11 +89,11 @@
 
 ```python
 project_stats = {
-    "строк_кода": "5,000+",
-    "таблиц_в_БД": "15+",
-    "API_эндпоинты": "40+",
-    "HTML_шаблоны": "30+",
-    "статические_файлы": "50+"
+    "приложения_django": "8",
+    "коммитов": "220+",
+    "языков": "Python, HTML, CSS, JavaScript, Shell",
+    "шаблонов": "30+",
+    "статических_файлов": "50+"
 }
 ```
 
@@ -123,13 +120,13 @@ source venv/bin/activate
 # Установите зависимости
 pip install -r requirements.txt
 
-# Создайте базу данных
+# Примените миграции
 python manage.py migrate
 
 # Создайте суперпользователя
 python manage.py createsuperuser
 
-# Запустите сервер
+# Запустите сервер разработки
 python manage.py runserver
 ```
 
@@ -157,35 +154,43 @@ graph TB
     end
     
     subgraph "Django приложение"
-        F[🎯 Django] --> G[👤 Accounts App]
-        F --> H[🛒 Listings App]
-        F --> I[💬 Messenger App]
+        F[🎯 Django] --> G[👤 Accounts]
+        F --> H[🛒 Listings]
+        F --> I[💬 Chat]
+        F --> J[💰 Transactions]
+        F --> K[💳 Payments]
+        F --> L[⚙️ API]
+        F --> M[🛠️ Admin Panel]
         
-        G --> J[📄 Templates]
-        H --> J
-        I --> J
+        G --> N[📄 Templates]
+        H --> N
+        I --> N
+        J --> N
+        K --> N
+        L --> N
+        M --> N
     end
     
     subgraph "Сервисы данных"
-        K[(🗄️ PostgreSQL)] --> L[📊 Основные данные]
-        M[(⚡ Redis)] --> N[🚀 Кэш]
+        O[(🗄️ PostgreSQL)] --> P[📊 Основные данные]
+        Q[(⚡ Redis)] --> R[🚀 Кэш и сессии]
     end
     
     subgraph "Файловая система"
-        O[📁 Media files] --> P[🖼️ Изображения]
-        Q[📁 Static files] --> R[🎨 CSS/JS]
+        S[📁 Media files] --> T[🖼️ Изображения предметов]
+        U[📁 Static files] --> V[🎨 CSS, JS, шрифты]
     end
     
     A --> C
     E --> F
-    F --> K
-    F --> M
     F --> O
     F --> Q
+    F --> S
+    F --> U
     
     style F fill:#1a1a2e,stroke:#9b5de5,stroke-width:3px
-    style K fill:#16213e,stroke:#00bbf9,stroke-width:2px
-    style M fill:#0f3460,stroke:#f15bb5,stroke-width:2px
+    style O fill:#16213e,stroke:#00bbf9,stroke-width:2px
+    style Q fill:#0f3460,stroke:#f15bb5,stroke-width:2px
 ```
 
 ## 📁 **Структура проекта**
@@ -193,35 +198,28 @@ graph TB
 ```
 LootLink---Marketplace/
 ├── accounts/                    # Управление пользователями
-│   ├── models.py              # CustomUser, Profile
-│   ├── views.py               # Регистрация, вход, профиль
-│   ├── forms.py               # Формы пользователей
-│   └── templates/             # Шаблоны аутентификации
 ├── listings/                   # Маркетплейс
-│   ├── models.py              # Listing, Category, Review
-│   ├── views.py               # CRUD для объявлений
-│   ├── forms.py               # Формы объявлений
-│   └── templates/             # Шаблоны объявлений
-├── messenger/                  # Система сообщений
-│   ├── models.py              # Conversation, Message
-│   ├── views.py               # Просмотр чатов
-│   ├── urls.py                # Маршруты чата
-│   └── templates/             # Шаблоны сообщений
+├── chat/                       # Система сообщений
+├── transactions/               # Сделки
+├── payments/                   # Платежи
+├── api/                        # REST API
+├── admin_panel/                # Кастомная админ-панель
+├── core/                       # Общие компоненты
+├── config/                     # Конфигурация проекта
 ├── static/                     # Статические файлы
-│   ├── css/                   # Стили
-│   ├── js/                    # JavaScript
-│   └── images/                # Изображения
 ├── templates/                  # HTML шаблоны
-│   ├── base.html             # Базовый шаблон
-│   ├── listings/             # Шаблоны объявлений
-│   └── accounts/             # Шаблоны аккаунтов
-├── marketplace/               # Основное приложение
-│   ├── settings.py           # Настройки Django
-│   ├── urls.py               # Корневые URL
-│   └── wsgi.py               # WSGI конфигурация
-├── docker-compose.yml         # Docker Compose
-├── Dockerfile                 # Docker конфигурация
+├── nginx/                      # Конфигурация Nginx
+├── scripts/                    # Скрипты для деплоя
+├── logs/                       # Логи приложения
+├── tests/                      # Тесты
+├── docs/                       # Документация (в разработке)
+├── docker-compose.yml          # Docker Compose
+├── Dockerfile                  # Docker конфигурация
+├── lootlink.service           # Systemd unit файл
 ├── requirements.txt           # Зависимости Python
+├── requirements/              # Дополнительные requirements
+├── manifest.json              # PWA манифест
+├── robots.txt                 # Robots.txt для SEO
 └── manage.py                  # Django CLI
 ```
 
@@ -249,16 +247,16 @@ python manage.py test
 # Запуск тестов конкретного приложения
 python manage.py test accounts
 python manage.py test listings
-python manage.py test messenger
+python manage.py test chat
 ```
 
 ## 📊 **Оптимизация**
 
-- **База данных**: Использование `select_related` и `prefetch_related`
+- **База данных**: Использование `select_related` и `prefetch_related` для оптимизации запросов
 - **Статические файлы**: Минификация CSS/JS в production
-- **Изображения**: Оптимизация и сжатие
-- **Шаблоны**: Кэширование шаблонов
-- **Запросы**: Оптимизация запросов к базе данных
+- **Изображения**: Оптимизация и сжатие загружаемых изображений
+- **Кэширование**: Использование Redis для кэширования часто запрашиваемых данных
+- **Запросы**: Оптимизация запросов к базе данных, использование индексов
 
 ## 🌍 **Деплой**
 
@@ -266,11 +264,13 @@ python manage.py test messenger
 
 1. **Настройка окружения**
 ```bash
-# Создайте .env файл
+# Скопируйте env.example
+cp env.example.txt .env
+
+# Отредактируйте .env файл
 DEBUG=False
 SECRET_KEY=your-secret-key-here
 ALLOWED_HOSTS=your-domain.com,localhost
-DATABASE_URL=postgresql://user:password@localhost:5432/lootlink
 ```
 
 2. **Сборка статических файлов**
@@ -278,10 +278,15 @@ DATABASE_URL=postgresql://user:password@localhost:5432/lootlink
 python manage.py collectstatic --noinput
 ```
 
-3. **Запуск с Gunicorn**
+3. **Запуск с Gunicorn через Systemd**
 ```bash
-gunicorn marketplace.wsgi:application --bind 0.0.0.0:8000 --workers 3
+# Используйте предоставленный systemd unit файл
+sudo cp lootlink.service /etc/systemd/system/
+sudo systemctl enable lootlink
+sudo systemctl start lootlink
 ```
+
+4. **Настройка Nginx** (конфиги в папке `nginx/`)
 
 ## 🤝 **Как внести вклад**
 
@@ -296,10 +301,6 @@ gunicorn marketplace.wsgi:application --bind 0.0.0.0:8000 --workers 3
 **Email:** ivanpetrov20066.ip@gmail.com  
 **Демо:** [http://91.218.245.178](http://91.218.245.178)  
 **GitHub Issues:** [Отчет об ошибках](https://github.com/reazonvan/LootLink---Marketplace/issues)
-
-## 📄 **Лицензия**
-
-Этот проект лицензирован под MIT License - смотрите файл [LICENSE](LICENSE) для деталей.
 
 ---
 
@@ -319,4 +320,3 @@ gunicorn marketplace.wsgi:application --bind 0.0.0.0:8000 --workers 3
 
 </div>
 ```
-
