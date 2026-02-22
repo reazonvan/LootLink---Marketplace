@@ -15,6 +15,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _get_client_ip(request):
+    """Получить IP клиента с учетом reverse proxy."""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')
+
+
 @login_required
 def wallet_dashboard(request):
     """Дашборд кошелька пользователя"""
@@ -138,10 +146,11 @@ def yookassa_webhook(request):
     Важно: не забудьте настроить webhook в личном кабинете ЮKassa.
     """
     try:
-        webhook_data = json.loads(request.body)
-        logger.info(f'Получен webhook от ЮKassa: {webhook_data}')
+        webhook_data = json.loads(request.body.decode('utf-8'))
+        request_ip = _get_client_ip(request)
+        logger.info(f'Получен webhook от ЮKassa: ip={request_ip}, event={webhook_data.get("event")}')
         
-        success = yookassa_service.handle_webhook(webhook_data)
+        success = yookassa_service.handle_webhook(webhook_data, request_ip=request_ip)
         
         if success:
             return HttpResponse(status=200)

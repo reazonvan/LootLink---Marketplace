@@ -5,6 +5,8 @@
 from decimal import Decimal
 import uuid
 from django.conf import settings
+from django.db import transaction as db_transaction
+from django.utils import timezone
 from .models import Transaction
 import logging
 
@@ -20,6 +22,9 @@ class YooKassaService:
         self.shop_id = getattr(settings, 'YOOKASSA_SHOP_ID', '')
         self.secret_key = getattr(settings, 'YOOKASSA_SECRET_KEY', '')
         self.enabled = bool(self.shop_id and self.secret_key)
+        self.allowed_webhook_ips = {
+            ip.strip() for ip in getattr(settings, 'YOOKASSA_WEBHOOK_ALLOWED_IPS', '').split(',') if ip.strip()
+        }
         
         if self.enabled:
             try:
@@ -127,59 +132,178 @@ class YooKassaService:
         except Exception as e:
             logger.error(f'Ошибка проверки платежа {payment_id}: {str(e)}')
             return {'error': str(e)}
+
+    @staticmethod
+    def _safe_get(data, key, default=None):
+        """Безопасно получить значение по ключу из dict/SDK объекта."""
+        if data is None:
+            return default
+        if isinstance(data, dict):
+            return data.get(key, default)
+        return getattr(data, key, default)
+
+    def _extract_payment_fields(self, payment_obj):
+        """Нормализовать поля платежа из webhook/API объекта."""
+        payment_id = self._safe_get(payment_obj, 'id')
+        status = self._safe_get(payment_obj, 'status')
+        paid = self._safe_get(payment_obj, 'paid')
+        metadata = self._safe_get(payment_obj, 'metadata', {}) or {}
+        amount_obj = self._safe_get(payment_obj, 'amount')
+        amount_value = self._safe_get(amount_obj, 'value')
+        currency = self._safe_get(amount_obj, 'currency')
+
+        return {
+            'id': payment_id,
+            'status': status,
+            'paid': paid,
+            'metadata': metadata,
+            'amount_value': Decimal(str(amount_value)) if amount_value is not None else None,
+            'currency': currency,
+        }
+
+    def _verify_webhook_payload(self, event, webhook_payment_data):
+        """
+        Проверить подлинность webhook путем сверки с API YooKassa.
+        Это снижает риск подделки входящего payload.
+        """
+        webhook_fields = self._extract_payment_fields(webhook_payment_data)
+        payment_id = webhook_fields['id']
+        if not payment_id:
+            logger.warning('Webhook отклонен: отсутствует payment_id')
+            return False
+
+        try:
+            api_payment = self.Payment.find_one(payment_id)
+        except Exception as e:
+            logger.error(f'Webhook verification failed: cannot fetch payment {payment_id}: {e}')
+            return False
+
+        api_fields = self._extract_payment_fields(api_payment)
+
+        # Базовая консистентность payload <-> API
+        if webhook_fields['status'] and webhook_fields['status'] != api_fields['status']:
+            logger.warning(
+                f'Webhook отклонен: статус не совпал payload={webhook_fields["status"]} '
+                f'api={api_fields["status"]} payment_id={payment_id}'
+            )
+            return False
+
+        if webhook_fields['amount_value'] is not None and webhook_fields['amount_value'] != api_fields['amount_value']:
+            logger.warning(
+                f'Webhook отклонен: сумма не совпала payload={webhook_fields["amount_value"]} '
+                f'api={api_fields["amount_value"]} payment_id={payment_id}'
+            )
+            return False
+
+        if webhook_fields['currency'] and webhook_fields['currency'] != api_fields['currency']:
+            logger.warning(
+                f'Webhook отклонен: валюта не совпала payload={webhook_fields["currency"]} '
+                f'api={api_fields["currency"]} payment_id={payment_id}'
+            )
+            return False
+
+        # Логическая проверка события
+        if event == 'payment.succeeded':
+            if api_fields['status'] != 'succeeded' or not api_fields['paid']:
+                logger.warning(f'Webhook отклонен: payment {payment_id} не в succeeded/paid')
+                return False
+        elif event == 'payment.canceled':
+            if api_fields['status'] != 'canceled':
+                logger.warning(f'Webhook отклонен: payment {payment_id} не в canceled')
+                return False
+
+        return True
     
-    def handle_webhook(self, webhook_data):
+    def handle_webhook(self, webhook_data, request_ip=None):
         """
         Обработать webhook от ЮKassa.
         
         Args:
             webhook_data: Данные webhook
+            request_ip: IP отправителя webhook
         
         Returns:
             bool: Успешность обработки
         """
         if not self.enabled:
             return False
+
+        if self.allowed_webhook_ips and request_ip and request_ip not in self.allowed_webhook_ips:
+            logger.warning(f'Webhook отклонен: IP {request_ip} не входит в whitelist')
+            return False
         
         try:
             event = webhook_data.get('event')
             payment_data = webhook_data.get('object')
-            
-            if event == 'payment.succeeded':
-                payment_id = payment_data['id']
-                metadata = payment_data.get('metadata', {})
-                transaction_id = metadata.get('transaction_id')
-                
-                if transaction_id:
-                    # Обновляем транзакцию
-                    transaction = Transaction.objects.get(id=transaction_id)
-                    transaction.status = 'completed'
-                    transaction.mark_completed()
-                    
-                    # Пополняем баланс
+            if not event or not payment_data:
+                logger.warning('Webhook отклонен: отсутствует event/object')
+                return False
+
+            if not self._verify_webhook_payload(event, payment_data):
+                return False
+
+            payment_fields = self._extract_payment_fields(payment_data)
+            payment_id = payment_fields['id']
+            metadata = payment_fields['metadata'] or {}
+            transaction_id = metadata.get('transaction_id')
+            if not transaction_id:
+                logger.warning(f'Webhook отклонен: transaction_id отсутствует в metadata payment_id={payment_id}')
+                return False
+
+            with db_transaction.atomic():
+                tx = Transaction.objects.select_for_update().get(id=transaction_id)
+
+                # Защита от несогласованных данных/подмены связи
+                if tx.payment_id and tx.payment_id != payment_id:
+                    logger.warning(
+                        f'Webhook отклонен: payment_id mismatch transaction_id={tx.id} '
+                        f'db={tx.payment_id} incoming={payment_id}'
+                    )
+                    return False
+
+                tx.payment_id = payment_id
+                tx.payment_data = {
+                    **(tx.payment_data or {}),
+                    'webhook_event': event,
+                    'webhook_status': payment_fields['status'],
+                    'webhook_received_at': timezone.now().isoformat(),
+                }
+
+                if event == 'payment.succeeded':
+                    # Идемпотентность: уже зачисленную транзакцию повторно не обрабатываем
+                    if tx.status == 'completed':
+                        tx.save(update_fields=['payment_id', 'payment_data'])
+                        logger.info(f'Webhook duplicate ignored for payment {payment_id}')
+                        return True
+
+                    tx.status = 'completed'
+                    tx.completed_at = timezone.now()
+                    tx.save(update_fields=['payment_id', 'payment_data', 'status', 'completed_at'])
+
                     from .models import Wallet
-                    wallet, _ = Wallet.objects.get_or_create(user=transaction.user)
-                    wallet.balance += transaction.amount
-                    wallet.save()
-                    
-                    logger.info(f'Платеж {payment_id} успешно обработан')
+                    wallet, _ = Wallet.objects.select_for_update().get_or_create(user=tx.user)
+                    wallet.balance += tx.amount
+                    wallet.save(update_fields=['balance', 'updated_at'])
+
+                    logger.info(f'Платеж {payment_id} успешно обработан и зачислен')
                     return True
-            
-            elif event == 'payment.canceled':
-                payment_id = payment_data['id']
-                metadata = payment_data.get('metadata', {})
-                transaction_id = metadata.get('transaction_id')
-                
-                if transaction_id:
-                    transaction = Transaction.objects.get(id=transaction_id)
-                    transaction.status = 'cancelled'
-                    transaction.save()
-                    
+
+                if event == 'payment.canceled':
+                    if tx.status == 'completed':
+                        logger.warning(
+                            f'Получен canceled для уже completed transaction_id={tx.id}, пропускаем'
+                        )
+                        tx.save(update_fields=['payment_id', 'payment_data'])
+                        return True
+
+                    tx.status = 'cancelled'
+                    tx.save(update_fields=['payment_id', 'payment_data', 'status'])
                     logger.info(f'Платеж {payment_id} отменен')
                     return True
-            
-            return False
-            
+
+            logger.info(f'Webhook event {event} принят без бизнес-действий')
+            return True
+             
         except Exception as e:
             logger.error(f'Ошибка обработки webhook: {str(e)}')
             return False

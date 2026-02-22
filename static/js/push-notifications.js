@@ -54,7 +54,7 @@ class PushNotifications {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': this.getCookie('csrftoken')
+                    'X-CSRFToken': this.getCookie('lootlink_csrftoken') || this.getCookie('csrftoken')
                 },
                 body: JSON.stringify(subscription.toJSON())
             });

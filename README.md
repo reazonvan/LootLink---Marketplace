@@ -8,13 +8,13 @@
 
 <br>
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-91.218.245.178-9b5de5?style=for-the-badge&logo=world&logoColor=white)](http://91.218.245.178)
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-lootlink.ru-9b5de5?style=for-the-badge&logo=world&logoColor=white)](https://lootlink.ru)
 [![GitHub Stars](https://img.shields.io/github/stars/reazonvan/LootLink---Marketplace?style=for-the-badge&logo=github&color=f15bb5)](https://github.com/reazonvan/LootLink---Marketplace/stargazers)
 [![Python](https://img.shields.io/badge/Python-3.10+-ff9e00?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
 <br>
 
-**[🚀 Live Demo](http://91.218.245.178)** • 
+**[🚀 Live Demo](https://lootlink.ru)** • 
 **[🐛 Report Bug](https://github.com/reazonvan/LootLink---Marketplace/issues)**
 
 </div>
@@ -267,11 +267,21 @@ python manage.py test chat
 # Скопируйте env.example
 cp env.example.txt .env
 
+# Для локальной разработки можно использовать готовый профиль:
+cp .env.local .env
+
+# Для production:
+cp .env.production .env
+
 # Отредактируйте .env файл
 DEBUG=False
 SECRET_KEY=your-secret-key-here
-ALLOWED_HOSTS=your-domain.com,localhost
-```
+ALLOWED_HOSTS=lootlink.ru,www.lootlink.ru,localhost,127.0.0.1
+CSRF_TRUSTED_ORIGINS=https://lootlink.ru,https://www.lootlink.ru
+SECURE_SSL_REDIRECT=True
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
+``` 
 
 2. **Сборка статических файлов**
 ```bash
@@ -299,7 +309,7 @@ sudo systemctl start lootlink
 ## 📞 **Контакты**
 
 **Email:** ivanpetrov20066.ip@gmail.com  
-**Демо:** [http://91.218.245.178](http://91.218.245.178)  
+**Демо:** [https://lootlink.ru](https://lootlink.ru)  
 **GitHub Issues:** [Отчет об ошибках](https://github.com/reazonvan/LootLink---Marketplace/issues)
 
 ---

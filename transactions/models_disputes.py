@@ -144,7 +144,7 @@ class DisputeMessage(models.Model):
     sender = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='dispute_messages',
+        related_name='transaction_dispute_messages',
         verbose_name='Отправитель'
     )
     message = models.TextField(

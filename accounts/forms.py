@@ -11,13 +11,15 @@ class CustomUserCreationForm(UserCreationForm):
         required=True,
         widget=forms.EmailInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Email'
+            'placeholder': 'Email',
+            'autocomplete': 'email'
         })
     )
     username = forms.CharField(
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Имя пользователя'
+            'placeholder': 'Имя пользователя',
+            'autocomplete': 'username'
         })
     )
     phone = forms.CharField(
@@ -25,7 +27,8 @@ class CustomUserCreationForm(UserCreationForm):
         max_length=20,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': '+7 (999) 123-45-67'
+            'placeholder': '+7 (999) 123-45-67',
+            'autocomplete': 'tel'
         }),
         label='Телефон',
         help_text='Введите номер телефона. Он будет неизменным.'
@@ -34,14 +37,16 @@ class CustomUserCreationForm(UserCreationForm):
         label='Пароль',
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Пароль'
+            'placeholder': 'Пароль',
+            'autocomplete': 'new-password'
         })
     )
     password2 = forms.CharField(
         label='Подтверждение пароля',
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Повторите пароль'
+            'placeholder': 'Повторите пароль',
+            'autocomplete': 'new-password'
         })
     )
     
@@ -137,13 +142,15 @@ class CustomAuthenticationForm(AuthenticationForm):
     username = forms.CharField(
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Имя пользователя'
+            'placeholder': 'Имя пользователя',
+            'autocomplete': 'username'
         })
     )
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Пароль'
+            'placeholder': 'Пароль',
+            'autocomplete': 'current-password'
         })
     )
 

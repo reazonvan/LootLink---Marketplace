@@ -6,7 +6,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.conf import settings
+from django.utils import timezone
+import logging
 from .models_notifications import NotificationSettings, PushSubscription
+
+logger = logging.getLogger(__name__)
 
 
 @login_required

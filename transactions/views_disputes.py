@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
+from django.db import models
 from .models import PurchaseRequest
 from .models_disputes import Dispute, DisputeMessage, DisputeEvidence
 from django import forms

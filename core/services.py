@@ -217,3 +217,76 @@ class NotificationService:
             send_email=True
         )
 
+    @staticmethod
+    def notify_price_offer(offer):
+        """Уведомление продавцу о новом предложении цены."""
+        return NotificationService.create_and_notify(
+            user=offer.seller,
+            notification_type='price_offer',
+            title=f'Новое предложение цены: {offer.listing.title}',
+            message=(
+                f'{offer.buyer.username} предложил(а) {offer.offered_price} ₽ '
+                f'вместо {offer.original_price} ₽'
+            ),
+            link='/my-offers/',
+            send_email=True,
+        )
+
+    @staticmethod
+    def notify_listing_reserved(reservation):
+        """Уведомление продавцу о резервировании объявления."""
+        return NotificationService.create_and_notify(
+            user=reservation.listing.seller,
+            notification_type='listing_reserved',
+            title=f'Объявление зарезервировано: {reservation.listing.title}',
+            message=(
+                f'Пользователь {reservation.buyer.username} зарезервировал '
+                f'ваше объявление до {reservation.expires_at:%d.%m.%Y %H:%M}.'
+            ),
+            link='/my-reservations/',
+            send_email=True,
+        )
+
+    @staticmethod
+    def notify_dispute_resolved(dispute):
+        """Уведомления участникам о решении спора."""
+        buyer = dispute.purchase_request.buyer
+        seller = dispute.purchase_request.seller
+        title = f'Спор #{dispute.id} разрешен'
+        message = (
+            f'Статус: {dispute.get_status_display()}. '
+            f'Комментарий модератора: {dispute.moderator_decision or "без комментария"}'
+        )
+
+        NotificationService.create_and_notify(
+            user=buyer,
+            notification_type='dispute_resolved',
+            title=title,
+            message=message,
+            link=f'/transactions/dispute/{dispute.id}/',
+            send_email=True,
+        )
+        return NotificationService.create_and_notify(
+            user=seller,
+            notification_type='dispute_resolved',
+            title=title,
+            message=message,
+            link=f'/transactions/dispute/{dispute.id}/',
+            send_email=True,
+        )
+
+    @staticmethod
+    def notify_price_alert(price_alert):
+        """Уведомление покупателю о достижении целевой цены."""
+        return NotificationService.create_and_notify(
+            user=price_alert.user,
+            notification_type='price_alert',
+            title=f'Цена достигнута: {price_alert.listing.title}',
+            message=(
+                f'Текущая цена стала {price_alert.listing.price} ₽, '
+                f'что ниже вашей цели {price_alert.target_price} ₽.'
+            ),
+            link=f'/listing/{price_alert.listing.id}/',
+            send_email=True,
+        )
+

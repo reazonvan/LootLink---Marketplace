@@ -3,6 +3,7 @@ Telegram бот для уведомлений.
 """
 import logging
 from django.conf import settings
+from django.utils import timezone
 from telegram import Bot
 from telegram.error import TelegramError
 
