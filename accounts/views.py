@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.db.models import Avg
 from django.core.mail import send_mail
 from django.conf import settings
+from django.utils.http import url_has_allowed_host_and_scheme
 from .forms import (CustomUserCreationForm, CustomAuthenticationForm, ProfileUpdateForm, 
                     PasswordResetRequestForm, PasswordResetConfirmForm)
 from .models import CustomUser, Profile, PasswordResetCode
@@ -50,9 +51,15 @@ def user_login(request):
                 if user is not None:
                     login(request, user)
                     messages.success(request, f'Добро пожаловать, {username}!')
-                    # Перенаправление на страницу, с которой пришел пользователь
-                    next_page = request.GET.get('next', 'listings:home')
-                    return redirect(next_page)
+                    # Безопасное перенаправление только на внутренние URL
+                    next_page = request.GET.get('next')
+                    if next_page and url_has_allowed_host_and_scheme(
+                        url=next_page,
+                        allowed_hosts={request.get_host()},
+                        require_https=request.is_secure(),
+                    ):
+                        return redirect(next_page)
+                    return redirect('listings:home')
                 else:
                     messages.error(request, 'Неверное имя пользователя или пароль.')
             else:

@@ -18,5 +18,6 @@ router.register(r'conversations', views.ConversationViewSet, basename='conversat
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/token/', obtain_auth_token, name='api_token_auth'),
+    path('push/vapid-public-key/', views.vapid_public_key, name='vapid_public_key'),
 ]
 

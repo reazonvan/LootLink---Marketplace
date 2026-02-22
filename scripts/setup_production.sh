@@ -94,21 +94,21 @@ log "DEBUG установлен в False"
 
 # Обновление остальных настроек безопасности
 if grep -q "^SECURE_SSL_REDIRECT=" "$ENV_FILE"; then
-    sed -i "s/^SECURE_SSL_REDIRECT=.*/SECURE_SSL_REDIRECT=False/" "$ENV_FILE"
+    sed -i "s/^SECURE_SSL_REDIRECT=.*/SECURE_SSL_REDIRECT=True/" "$ENV_FILE"
 else
-    echo "SECURE_SSL_REDIRECT=False" >> "$ENV_FILE"
+    echo "SECURE_SSL_REDIRECT=True" >> "$ENV_FILE"
 fi
 
 if grep -q "^SESSION_COOKIE_SECURE=" "$ENV_FILE"; then
-    sed -i "s/^SESSION_COOKIE_SECURE=.*/SESSION_COOKIE_SECURE=False/" "$ENV_FILE"
+    sed -i "s/^SESSION_COOKIE_SECURE=.*/SESSION_COOKIE_SECURE=True/" "$ENV_FILE"
 else
-    echo "SESSION_COOKIE_SECURE=False" >> "$ENV_FILE"
+    echo "SESSION_COOKIE_SECURE=True" >> "$ENV_FILE"
 fi
 
 if grep -q "^CSRF_COOKIE_SECURE=" "$ENV_FILE"; then
-    sed -i "s/^CSRF_COOKIE_SECURE=.*/CSRF_COOKIE_SECURE=False/" "$ENV_FILE"
+    sed -i "s/^CSRF_COOKIE_SECURE=.*/CSRF_COOKIE_SECURE=True/" "$ENV_FILE"
 else
-    echo "CSRF_COOKIE_SECURE=False" >> "$ENV_FILE"
+    echo "CSRF_COOKIE_SECURE=True" >> "$ENV_FILE"
 fi
 
 log "Настройки безопасности обновлены"
@@ -145,8 +145,8 @@ else
         sed -i "s/^CSRF_COOKIE_SECURE=.*/CSRF_COOKIE_SECURE=True/" "$ENV_FILE"
         
         # Обновление ALLOWED_HOSTS и CSRF_TRUSTED_ORIGINS
-        sed -i "s/^ALLOWED_HOSTS=.*/ALLOWED_HOSTS=localhost,127.0.0.1,91.218.245.178,$DOMAIN,www.$DOMAIN/" "$ENV_FILE"
-        sed -i "s|^CSRF_TRUSTED_ORIGINS=.*|CSRF_TRUSTED_ORIGINS=https://$DOMAIN,https://www.$DOMAIN,http://91.218.245.178,https://91.218.245.178|" "$ENV_FILE"
+        sed -i "s/^ALLOWED_HOSTS=.*/ALLOWED_HOSTS=$DOMAIN,www.$DOMAIN,127.0.0.1,localhost/" "$ENV_FILE"
+        sed -i "s|^CSRF_TRUSTED_ORIGINS=.*|CSRF_TRUSTED_ORIGINS=https://$DOMAIN,https://www.$DOMAIN|" "$ENV_FILE"
         
         log "Настройки HTTPS обновлены в .env"
     else
@@ -231,7 +231,7 @@ info "Бекап старого .env: ${ENV_FILE}.backup.*"
 echo ""
 info "Проверьте работу сайта:"
 if [ -z "$DOMAIN" ]; then
-    info "  http://91.218.245.178"
+    info "  https://lootlink.ru"
 else
     info "  https://$DOMAIN"
 fi

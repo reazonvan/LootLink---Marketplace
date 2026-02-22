@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from . import moderation_views
 from . import views_faq
+from . import views_notifications
 
 app_name = 'core'
 
@@ -10,6 +11,9 @@ urlpatterns = [
     path('notifications/mark-read/<int:pk>/', views.mark_notification_read, name='mark_notification_read'),
     path('notifications/mark-all-read/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
     path('notifications/unread-count/', views.unread_notifications_count, name='unread_notifications_count'),
+    path('notifications/settings/', views_notifications.notification_settings, name='notification_settings'),
+    path('notifications/push/subscribe/', views_notifications.subscribe_push, name='subscribe_push'),
+    path('notifications/telegram/link/', views_notifications.link_telegram, name='link_telegram'),
     
     # Moderation (добавлены выше, но проверим)
     path('moderation/', moderation_views.moderation_dashboard, name='moderation_dashboard'),

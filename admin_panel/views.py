@@ -56,7 +56,7 @@ def dashboard(request):
     # ═══ МОДЕРАЦИЯ ═══
     pending_moderation = Listing.objects.filter(status='pending').count()
     pending_reports = Report.objects.filter(status='pending').count()
-    active_disputes = Dispute.objects.filter(status__in=['pending', 'in_review']).count()
+    active_disputes = Dispute.objects.filter(status__in=['open', 'under_review']).count()
     
     # ═══ ФИНАНСЫ ═══
     total_balance = Profile.objects.aggregate(total=Sum('balance'))['total'] or 0
@@ -354,11 +354,11 @@ def disputes_list(request):
     ).all()
     
     # Фильтры
-    status = request.GET.get('status', 'pending')
+    status = request.GET.get('status', 'open')
     
     if status:
         if status == 'active':
-            disputes = disputes.filter(status__in=['pending', 'in_review'])
+            disputes = disputes.filter(status__in=['open', 'under_review'])
         else:
             disputes = disputes.filter(status=status)
     
@@ -383,7 +383,7 @@ def dispute_detail(request, dispute_id):
             'purchase_request__buyer__profile',
             'purchase_request__listing__seller__profile',
             'purchase_request__listing__game',
-            'resolved_by'
+            'moderator'
         ).prefetch_related('evidence'),
         id=dispute_id
     )

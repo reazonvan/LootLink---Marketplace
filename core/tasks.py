@@ -137,9 +137,12 @@ def cleanup_security_audit_logs(days=90):
     Args:
         days: Количество дней для хранения логов
     """
+    from django.utils import timezone
+    from datetime import timedelta
     from .models_audit import SecurityAuditLog
-    
-    deleted_count = SecurityAuditLog.cleanup_old_logs(days=days)
+
+    threshold = timezone.now() - timedelta(days=days)
+    deleted_count, _ = SecurityAuditLog.objects.filter(created_at__lt=threshold).delete()
     return f'Удалено {deleted_count} записей audit log старше {days} дней'
 
 
@@ -152,7 +155,13 @@ def cleanup_login_attempts(days=30):
     Args:
         days: Количество дней для хранения записей
     """
-    from .models_audit import LoginAttempt
-    
-    deleted_count = LoginAttempt.cleanup_old_attempts(days=days)
-    return f'Удалено {deleted_count} записей попыток входа старше {days} дней'
+    from django.utils import timezone
+    from datetime import timedelta
+    from .models_audit import SecurityAuditLog
+
+    threshold = timezone.now() - timedelta(days=days)
+    deleted_count, _ = SecurityAuditLog.objects.filter(
+        action_type='login_failed',
+        created_at__lt=threshold,
+    ).delete()
+    return f'Удалено {deleted_count} записей неудачных входов старше {days} дней'

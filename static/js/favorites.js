@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': getCookie('csrftoken'),
+                'X-CSRFToken': getCookie('lootlink_csrftoken') || getCookie('csrftoken'),
                 'Content-Type': 'application/json',
             },
         })
