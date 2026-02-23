@@ -6,12 +6,10 @@
 }
 
 www.lootlink.ru {
-    tls /etc/caddy/certs/fullchain.pem /etc/caddy/certs/privkey.pem
     redir https://lootlink.ru{uri} 301
 }
 
 lootlink.ru {
-    tls /etc/caddy/certs/fullchain.pem /etc/caddy/certs/privkey.pem
     encode zstd gzip
 
     # Canonical SEO files from collected static
