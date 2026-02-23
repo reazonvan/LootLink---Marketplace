@@ -2588,7 +2588,7 @@ a, button, .card, .btn {
     display: none !important;
 }
 
-.container .alert {
+.django-messages-data .alert {
     display: none !important;
 }
 

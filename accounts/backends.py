@@ -19,10 +19,17 @@ class CaseInsensitiveModelBackend(ModelBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         if username is None or password is None:
             return None
+
+        login_value = (username or "").strip()
+        if not login_value:
+            return None
         
         try:
-            # Case-insensitive поиск по username
-            user = User.objects.get(username__iexact=username)
+            # Allow login by either username or email.
+            if '@' in login_value:
+                user = User.objects.get(email__iexact=login_value)
+            else:
+                user = User.objects.get(username__iexact=login_value)
         except User.DoesNotExist:
             # Запускаем hasher для защиты от timing атак
             User().set_password(password)
@@ -30,14 +37,17 @@ class CaseInsensitiveModelBackend(ModelBackend):
             if request:
                 ip = request.META.get('REMOTE_ADDR', 'unknown')
                 security_logger.warning(
-                    f'Failed login attempt: username={username} | IP={ip} | Reason=UserNotFound'
+                    f'Failed login attempt: username={login_value} | IP={ip} | Reason=UserNotFound'
                 )
             return None
         except User.MultipleObjectsReturned:
             # Если каким-то образом есть дубликаты (не должно быть)
             # Берем первого и логируем проблему
-            security_logger.error(f'Multiple users found with username (case-insensitive): {username}')
-            user = User.objects.filter(username__iexact=username).first()
+            security_logger.error(f'Multiple users found with login value (case-insensitive): {login_value}')
+            if '@' in login_value:
+                user = User.objects.filter(email__iexact=login_value).first()
+            else:
+                user = User.objects.filter(username__iexact=login_value).first()
         
         # Проверяем пароль
         if user and user.check_password(password) and self.user_can_authenticate(user):
@@ -51,7 +61,7 @@ class CaseInsensitiveModelBackend(ModelBackend):
         if user and request:
             ip = request.META.get('REMOTE_ADDR', 'unknown')
             security_logger.warning(
-                f'Failed login attempt: username={username} | IP={ip} | Reason=InvalidPassword'
+                f'Failed login attempt: username={login_value} | IP={ip} | Reason=InvalidPassword'
             )
         
         return None

@@ -37,6 +37,7 @@ class TestRegistrationView:
         
         assert response.status_code == 302
         assert CustomUser.objects.filter(username='newuser').exists()
+        assert '_auth_user_id' in client.session
         
         user = CustomUser.objects.get(username='newuser')
         assert user.profile.phone == '+7 (999) 123-45-67'
@@ -122,6 +123,16 @@ class TestLoginView:
         
         assert response.status_code == 200
         assert '_auth_user_id' not in client.session
+
+    def test_login_with_email(self, client, verified_user):
+        """Вход с email вместо username."""
+        response = client.post(reverse('accounts:login'), {
+            'username': verified_user.email,
+            'password': 'testpass123',
+        })
+
+        assert response.status_code == 302
+        assert '_auth_user_id' in client.session
     
     def test_login_next_parameter(self, client, verified_user):
         """Редирект после входа на указанную страницу."""
@@ -135,6 +146,20 @@ class TestLoginView:
         
         assert response.status_code == 302
         assert response.url == '/catalog/'
+
+    def test_login_next_parameter_from_post(self, client, verified_user):
+        """Редирект после входа через hidden input next в POST."""
+        response = client.post(
+            reverse('accounts:login'),
+            {
+                'username': verified_user.username,
+                'password': 'testpass123',
+                'next': '/accounts/my-listings/',
+            }
+        )
+
+        assert response.status_code == 302
+        assert response.url == '/accounts/my-listings/'
 
 
 @pytest.mark.django_db

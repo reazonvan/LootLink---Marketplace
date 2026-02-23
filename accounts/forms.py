@@ -140,9 +140,10 @@ class CustomAuthenticationForm(AuthenticationForm):
     Форма входа в систему.
     """
     username = forms.CharField(
+        label='Имя пользователя или Email',
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Имя пользователя',
+            'placeholder': 'Имя пользователя или Email',
             'autocomplete': 'username'
         })
     )
