@@ -489,7 +489,42 @@ maxmemory-policy allkeys-lru
 4. ✅ Собирается Docker image
 5. ✅ Deploy на сервер (опционально)
 
-См. `.github/workflows/django.yml`
+См. `.github/workflows/django.yml`.
+
+### Post-deploy smoke (production)
+
+Добавлен отдельный workflow: `.github/workflows/post-deploy-smoke.yml`.
+
+Что он делает:
+1. Запускает публичные browser smoke проверки (`scripts/playwright_smoke.py`).
+2. Запускает авторизованные user-journey сценарии (`scripts/playwright_user_journey.py`):
+   создание объявления, старт чата, отправка запроса на покупку.
+
+Перед первым запуском подготовьте QA-данные на сервере:
+
+```bash
+python manage.py setup_smoke_data \
+  --seller-username "<seller_username>" \
+  --seller-email "<seller_email>" \
+  --seller-password "<seller_password>" \
+  --buyer-username "<buyer_username>" \
+  --buyer-email "<buyer_email>" \
+  --buyer-password "<buyer_password>"
+```
+
+И добавьте в GitHub Secrets:
+- `SMOKE_SELLER_USERNAME`
+- `SMOKE_SELLER_PASSWORD`
+- `SMOKE_BUYER_USERNAME`
+- `SMOKE_BUYER_PASSWORD`
+
+Опционально для login smoke:
+- `SMOKE_LOGIN_USERNAME`
+- `SMOKE_LOGIN_PASSWORD`
+
+Запуск:
+1. Через Actions -> `Post-Deploy Smoke` -> `Run workflow`.
+2. Или через `repository_dispatch` (`event_type=post_deploy_smoke`) после вашего deploy-скрипта.
 
 ---
 

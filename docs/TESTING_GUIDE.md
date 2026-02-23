@@ -54,6 +54,22 @@ pytest accounts/tests.py::AccountsModelsTest::test_user_creation
 
 Эти проверки нужны для быстрого регресса после деплоя: редиректы, SEO-теги, авторизация, базовая валидация форм и целостность ключевых счетчиков.
 
+### Подготовка QA данных (один раз на среду)
+
+Создайте/обновите тестовых пользователей и базовые данные для e2e-потоков:
+
+```bash
+python manage.py setup_smoke_data \
+  --seller-username "<seller_username>" \
+  --seller-email "<seller_email>" \
+  --seller-password "<seller_password>" \
+  --buyer-username "<buyer_username>" \
+  --buyer-email "<buyer_email>" \
+  --buyer-password "<buyer_password>"
+```
+
+Команда идемпотентная: повторный запуск не создает дубликаты и поддерживает baseline-данные в актуальном состоянии.
+
 ### PowerShell smoke
 
 ```powershell
@@ -97,6 +113,48 @@ python scripts/playwright_smoke.py \
 - видимость сообщения об ошибке при невалидном логине;
 - консистентность счетчика активных пользователей (главная vs логин);
 - редирект `www -> apex` со статусом `308`.
+
+### Browser user journeys (Playwright)
+
+Отдельный скрипт для бизнес-потоков авторизованных пользователей:
+
+```bash
+python scripts/playwright_user_journey.py \
+  --base-url https://lootlink.ru \
+  --seller-username "<seller_username>" \
+  --seller-password "<seller_password>" \
+  --buyer-username "<buyer_username>" \
+  --buyer-password "<buyer_password>"
+```
+
+Сценарии:
+- продавец логинится и создает новое объявление;
+- покупатель открывает объявление, стартует чат и отправляет сообщение;
+- покупатель отправляет запрос на покупку.
+
+Можно также передать креды через переменные окружения:
+- `SMOKE_SELLER_USERNAME`
+- `SMOKE_SELLER_PASSWORD`
+- `SMOKE_BUYER_USERNAME`
+- `SMOKE_BUYER_PASSWORD`
+
+### Post-deploy запуск через GitHub Actions
+
+В репозитории добавлен workflow: `.github/workflows/post-deploy-smoke.yml`.
+
+Он умеет:
+- запускаться вручную (`workflow_dispatch`);
+- запускаться через `repository_dispatch` с событием `post_deploy_smoke`.
+
+Минимальные secrets для полного набора проверок:
+- `SMOKE_SELLER_USERNAME`
+- `SMOKE_SELLER_PASSWORD`
+- `SMOKE_BUYER_USERNAME`
+- `SMOKE_BUYER_PASSWORD`
+
+Дополнительно для проверки логина в `playwright_smoke.py`:
+- `SMOKE_LOGIN_USERNAME`
+- `SMOKE_LOGIN_PASSWORD`
 
 ---
 
