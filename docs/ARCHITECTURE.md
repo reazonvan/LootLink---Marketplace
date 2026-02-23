@@ -550,7 +550,7 @@ EMAIL_BACKEND = 'console.EmailBackend'
 **Production:**
 ```python
 DEBUG = False
-ALLOWED_HOSTS = ['lootlink.com']
+ALLOWED_HOSTS = ['lootlink.ru']
 CACHES = {'default': {'BACKEND': 'django_redis.cache.RedisCache'}}
 EMAIL_BACKEND = 'smtp.EmailBackend'
 SECURE_SSL_REDIRECT = True

@@ -1,4 +1,5 @@
 from django.db import models
+from django.db import connections
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
@@ -285,8 +286,9 @@ class Listing(models.Model):
         """Обновляем search_vector при сохранении."""
         super().save(*args, **kwargs)
         
-        # Обновляем search_vector если изменились title или description
-        if self.pk:
+        # PostgreSQL-only: SearchVector недоступен в SQLite.
+        db_alias = kwargs.get('using') or self._state.db or 'default'
+        if self.pk and connections[db_alias].vendor == 'postgresql':
             from django.contrib.postgres.search import SearchVector
             Listing.objects.filter(pk=self.pk).update(
                 search_vector=SearchVector('title', weight='A', config='russian') + 
