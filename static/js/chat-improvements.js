@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function loadNewMessages(conversationId) {
     const lastMessageId = getLastMessageId();
-    const csrftoken = getCookie('csrftoken');
+    const csrftoken = getCookie('lootlink_csrftoken') || getCookie('csrftoken');
     
     fetch(`/chat/api/messages/${conversationId}/?after=${lastMessageId}`, {
         method: 'GET',

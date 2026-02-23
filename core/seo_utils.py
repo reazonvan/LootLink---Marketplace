@@ -90,8 +90,8 @@ def get_organization_schema():
         "@type": "Organization",
         "name": "LootLink",
         "description": "P2P маркетплейс для торговли игровыми предметами",
-        "url": "http://91.218.245.178",
-        "logo": "http://91.218.245.178/static/favicon.svg",
+        "url": "https://lootlink.ru",
+        "logo": "https://lootlink.ru/static/favicon.svg",
         "contactPoint": {
             "@type": "ContactPoint",
             "email": "ivanpetrov20066.ip@gmail.com",

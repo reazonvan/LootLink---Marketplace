@@ -34,6 +34,6 @@ RUN python manage.py collectstatic --noinput || true
 # Открываем порт
 EXPOSE 8000
 
-# Запуск через gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "config.wsgi:application"]
+# Запуск через ASGI сервер (поддержка HTTP + WebSocket)
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]
 

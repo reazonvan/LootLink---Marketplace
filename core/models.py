@@ -16,6 +16,10 @@ class Notification(models.Model):
         ('request_rejected', 'Запрос отклонен'),
         ('deal_completed', 'Сделка завершена'),
         ('new_review', 'Новый отзыв'),
+        ('price_offer', 'Новое предложение цены'),
+        ('listing_reserved', 'Объявление зарезервировано'),
+        ('dispute_resolved', 'Спор разрешен'),
+        ('price_alert', 'Сработало уведомление о цене'),
         ('system', 'Системное уведомление'),
     ]
     

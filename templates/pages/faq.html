@@ -97,7 +97,7 @@ function markHelpful(faqId, isHelpful) {
     fetch(`/faq/${faqId}/helpful/`, {
         method: 'POST',
         headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
+            'X-CSRFToken': getCookie('lootlink_csrftoken') || getCookie('csrftoken'),
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ helpful: isHelpful })

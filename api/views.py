@@ -5,6 +5,8 @@ from rest_framework import viewsets, filters, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
+from django.http import JsonResponse
+from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count, Q
 from accounts.models import CustomUser, Profile
@@ -20,6 +22,11 @@ from .permissions import (
     IsOwnerOrReadOnly, IsReviewerOrReadOnly, IsConversationParticipant,
     CanCreateReview
 )
+
+
+def vapid_public_key(request):
+    """Public endpoint for web-push VAPID key."""
+    return JsonResponse({'public_key': getattr(settings, 'VAPID_PUBLIC_KEY', '')})
 
 
 class GameViewSet(viewsets.ReadOnlyModelViewSet):

@@ -1,0 +1,49 @@
+{
+    # Replace with your production email for Let's Encrypt notices.
+    email ivanpetrov20066.ip@gmail.com
+    # Use Let's Encrypt explicitly to avoid fallback noise from other CAs.
+    acme_ca https://acme-v02.api.letsencrypt.org/directory
+}
+
+www.lootlink.ru {
+    tls /etc/caddy/certs/fullchain.pem /etc/caddy/certs/privkey.pem
+    redir https://lootlink.ru{uri} 301
+}
+
+lootlink.ru {
+    tls /etc/caddy/certs/fullchain.pem /etc/caddy/certs/privkey.pem
+    encode zstd gzip
+
+    # Canonical SEO files from collected static
+    @robots path /robots.txt
+    handle @robots {
+        root * /srv/static
+        file_server
+    }
+
+    @manifest path /manifest.json
+    handle @manifest {
+        root * /srv/static
+        file_server
+    }
+
+    # Serve collected static and uploaded media directly from Caddy.
+    @static path /static/*
+    handle @static {
+        root * /srv
+        file_server
+    }
+
+    @media path /media/*
+    handle @media {
+        root * /srv
+        file_server
+    }
+
+    reverse_proxy web:8000
+}
+
+# Redirect plain HTTP access by server IP to canonical domain.
+http://91.218.246.114 {
+    redir https://lootlink.ru{uri} 301
+}

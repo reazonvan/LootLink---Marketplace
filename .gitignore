@@ -85,3 +85,7 @@ exports/
 lootlink_backup.dump
 reset_db_password.sql
 *.dump
+
+# TLS certificates/private keys for reverse proxy
+certs/*
+!certs/.gitkeep

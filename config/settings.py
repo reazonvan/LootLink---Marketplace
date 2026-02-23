@@ -37,12 +37,15 @@ except Exception:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,91.218.245.178').split(',')
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='lootlink.ru,www.lootlink.ru,127.0.0.1,localhost'
+).split(',')
 
 # CSRF Trusted Origins для HTTPS
 CSRF_TRUSTED_ORIGINS = config(
     'CSRF_TRUSTED_ORIGINS',
-    default='http://91.218.245.178,https://91.218.245.178'
+    default='https://lootlink.ru,https://www.lootlink.ru'
 ).split(',')
 
 # Application definition
@@ -142,6 +145,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
                 'core.context_processors.notifications_processor',
+                'core.context_processors.site_context',
             ],
         },
     },
@@ -162,24 +166,34 @@ CHANNEL_LAYERS = {
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='lootlink_db'),
-        'USER': config('DB_USER', default='postgres'),
-        'PASSWORD': config('DB_PASSWORD'),  # Пароль ОБЯЗАТЕЛЬНО должен быть в .env файле!
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
-        # Connection Pooling - переиспользование подключений
-        'CONN_MAX_AGE': config('DB_CONN_MAX_AGE', default=600, cast=int),  # 10 минут
-        'OPTIONS': {
-            'client_encoding': 'UTF8',
-            # Дополнительные оптимизации PostgreSQL
-            'connect_timeout': 10,  # Таймаут подключения 10 секунд
-            'options': '-c statement_timeout=30000'  # Таймаут запроса 30 секунд
-        },
+DB_ENGINE = config('DB_ENGINE', default='postgresql')
+
+if DB_ENGINE == 'sqlite':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': config('SQLITE_PATH', default=str(BASE_DIR / 'db.sqlite3')),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='lootlink_db'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD'),  # Для PostgreSQL пароль обязателен.
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+            # Connection Pooling - переиспользование подключений
+            'CONN_MAX_AGE': config('DB_CONN_MAX_AGE', default=600, cast=int),  # 10 минут
+            'OPTIONS': {
+                'client_encoding': 'UTF8',
+                # Дополнительные оптимизации PostgreSQL
+                'connect_timeout': 10,  # Таймаут подключения 10 секунд
+                'options': '-c statement_timeout=30000'  # Таймаут запроса 30 секунд
+            },
+        }
+    }
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.CustomUser'
@@ -290,9 +304,9 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     
     # SSL/HTTPS настройки
-    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
-    SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
-    CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
+    CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
     
     # HSTS настройки (включать только когда есть SSL)
     if SECURE_SSL_REDIRECT:
@@ -313,9 +327,15 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_AGE = 1209600  # 2 недели
 SESSION_COOKIE_NAME = 'lootlink_sessionid'
 CSRF_COOKIE_NAME = 'lootlink_csrftoken'
-# ВАЖНО: Точка перед доменом = работает на всех поддоменах (lootlink.ru, www.lootlink.ru)
-SESSION_COOKIE_DOMAIN = '.lootlink.ru'
-CSRF_COOKIE_DOMAIN = '.lootlink.ru'
+# В проде задаем домен куки для общего входа между apex/www.
+SESSION_COOKIE_DOMAIN = config(
+    'SESSION_COOKIE_DOMAIN',
+    default='.lootlink.ru' if not DEBUG else ''
+) or None
+CSRF_COOKIE_DOMAIN = config(
+    'CSRF_COOKIE_DOMAIN',
+    default='.lootlink.ru' if not DEBUG else ''
+) or None
 
 # Cache configuration
 USE_REDIS = config('USE_REDIS', default=False, cast=bool)
@@ -418,7 +438,12 @@ CELERY_BEAT_SCHEDULE = {
 # ЮKassa settings
 YOOKASSA_SHOP_ID = config('YOOKASSA_SHOP_ID', default='')
 YOOKASSA_SECRET_KEY = config('YOOKASSA_SECRET_KEY', default='')
-SITE_URL = config('SITE_URL', default='http://91.218.245.178')
+YOOKASSA_WEBHOOK_ALLOWED_IPS = config('YOOKASSA_WEBHOOK_ALLOWED_IPS', default='')
+SITE_URL = config('SITE_URL', default='https://lootlink.ru')
+
+# Web Push settings
+VAPID_PUBLIC_KEY = config('VAPID_PUBLIC_KEY', default='')
+VAPID_PRIVATE_KEY = config('VAPID_PRIVATE_KEY', default='')
 
 # Logging configuration
 LOGGING = {

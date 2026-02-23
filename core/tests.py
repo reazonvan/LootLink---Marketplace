@@ -2,6 +2,7 @@
 Unit тесты для приложения core.
 """
 from django.test import TestCase, Client
+from django.test import override_settings
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from .models import Notification
@@ -309,3 +310,36 @@ class CoreViewsTest(TestCase):
         self.assertIn('total_users', response.context)
         self.assertIn('total_listings', response.context)
         self.assertIn('total_deals', response.context)
+
+
+@override_settings(SECURE_SSL_REDIRECT=False)
+class SeoAndDeployViewsTest(TestCase):
+    """Тесты SEO и deployment endpoint'ов."""
+
+    def setUp(self):
+        self.client = Client()
+
+    def test_health_endpoint_returns_ok(self):
+        """Health endpoint должен отдавать 200 и JSON статус."""
+        response = self.client.get('/health/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'status': 'ok'})
+
+    def test_robots_redirects_to_static(self):
+        """robots.txt доступен по корневому URL через редирект в static."""
+        response = self.client.get('/robots.txt')
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['Location'], '/static/robots.txt')
+
+    def test_manifest_redirects_to_static(self):
+        """manifest.json доступен по корневому URL через редирект в static."""
+        response = self.client.get('/manifest.json')
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['Location'], '/static/manifest.json')
+
+    @override_settings(SITE_URL='https://example.com')
+    def test_canonical_uses_site_url(self):
+        """Canonical ссылка строится через SITE_URL, а не через хардкод."""
+        response = self.client.get(reverse('about'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'rel="canonical" href="https://example.com/about/"')

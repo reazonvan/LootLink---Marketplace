@@ -12,5 +12,10 @@ urlpatterns = [
     path('purchase-request/<int:pk>/complete/', views.purchase_request_complete, name='purchase_request_complete'),
     path('purchase-request/<int:pk>/cancel/', views.purchase_request_cancel, name='purchase_request_cancel'),
     path('review/<int:purchase_request_pk>/create/', views.review_create, name='review_create'),
+    # Disputes
+    path('dispute/create/<int:purchase_request_id>/', views_disputes.create_dispute, name='dispute_create'),
+    path('dispute/<int:dispute_id>/', views_disputes.dispute_detail, name='dispute_detail'),
+    path('disputes/my/', views_disputes.my_disputes, name='my_disputes'),
+    path('dispute/<int:dispute_id>/upload-evidence/', views_disputes.upload_evidence, name='upload_evidence'),
 ]
 

@@ -15,6 +15,8 @@ urlpatterns = [
     path('custom-admin/', include('admin_panel.urls')),  # Кастомная админ-панель
     # Favicon redirect (to avoid 404)
     path('favicon.ico', RedirectView.as_view(url=settings.STATIC_URL + 'favicon.svg', permanent=True)),
+    path('robots.txt', RedirectView.as_view(url=settings.STATIC_URL + 'robots.txt', permanent=True)),
+    path('manifest.json', RedirectView.as_view(url=settings.STATIC_URL + 'manifest.json', permanent=True)),
     path('', include('listings.urls')),
     path('accounts/', include('accounts.urls')),
     path('transactions/', include('transactions.urls')),
@@ -22,6 +24,7 @@ urlpatterns = [
     path('payments/', include('payments.urls')),
     path('api/', include('api.urls')),
     path('', include('core.urls')),
+    path('health/', core_views.health_check, name='health_check'),
     path('about/', core_views.about, name='about'),
     path('rules/', core_views.rules, name='rules'),
     path('requisites/', core_views.requisites, name='requisites'),

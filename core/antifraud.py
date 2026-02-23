@@ -2,6 +2,7 @@
 Антифрод система.
 """
 from django.core.cache import cache
+from django.db import models
 from django.utils import timezone
 from datetime import timedelta
 import logging

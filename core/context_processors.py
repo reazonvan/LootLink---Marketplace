@@ -1,6 +1,8 @@
 """
 Context processors для глобального доступа к данным.
 """
+from django.conf import settings
+
 
 def notifications_processor(request):
     """
@@ -26,5 +28,19 @@ def notifications_processor(request):
     
     return {
         'unread_notifications_count': unread_count
+    }
+
+
+def site_context(request):
+    """
+    Добавляет нормализованный SITE_URL и canonical URL в контекст.
+    Нужен для корректных SEO-мета-тегов без хардкода домена.
+    """
+    configured_site_url = (getattr(settings, 'SITE_URL', '') or '').rstrip('/')
+    site_url = configured_site_url or request.build_absolute_uri('/').rstrip('/')
+
+    return {
+        'site_url': site_url,
+        'canonical_url': f'{site_url}{request.path}',
     }
 
