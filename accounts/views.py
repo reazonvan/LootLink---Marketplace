@@ -36,11 +36,11 @@ def user_login(request):
     if request.user.is_authenticated:
         return redirect('listings:home')
     
-    # Реальная статистика из БД
-    from listings.models import Listing
-    from transactions.models import PurchaseRequest
-    total_users = CustomUser.objects.filter(is_active=True).count()
-    total_deals = PurchaseRequest.objects.filter(status='completed').count()
+    # Единая статистика платформы для консистентности с главной страницей.
+    from core.utils import get_platform_stats
+    platform_stats = get_platform_stats()
+    total_users = platform_stats['active_users']
+    total_deals = platform_stats['total_deals']
     
     if request.method == 'POST':
         try:

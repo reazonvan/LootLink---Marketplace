@@ -26,10 +26,8 @@ def landing_page(request):
     персонализированный контент (информацию о пользователе в навигации).
     Кэшируется только статистика.
     """
-    from accounts.models import CustomUser
-    from transactions.models import PurchaseRequest
-    from django.core.cache import cache
     from django.db.models import Count
+    from core.utils import get_platform_stats
     
     # Последние объявления для отображения
     latest_listings = Listing.objects.filter(status='active').select_related('game', 'seller')[:8]
@@ -39,23 +37,8 @@ def landing_page(request):
         listings_count=Count('listings', filter=Q(listings__status='active'))
     ).order_by('-listings_count')[:6]
     
-    # Кешируем статистику (обновляется каждые 5 минут)
-    cache_key = 'homepage_stats'
-    stats = cache.get(cache_key)
-    
-    if stats is None:
-        # РЕАЛЬНАЯ статистика из базы данных (без приукрашивания)
-        actual_users = CustomUser.objects.count()
-        actual_listings = Listing.objects.filter(status='active').count()
-        actual_deals = PurchaseRequest.objects.filter(status='completed').count()
-        
-        stats = {
-            'total_listings': actual_listings,  # Реальное количество
-            'total_users': actual_users,  # Реальное количество
-            'total_deals': actual_deals,  # Реальное количество
-        }
-        # Кешируем на 5 минут (300 секунд)
-        cache.set(cache_key, stats, 300)
+    # Единая статистика платформы (кешируется в core.utils).
+    stats = get_platform_stats()
     
     # Реальные отзывы из базы данных (последние 3 с оценкой 4+)
     from transactions.models import Review
@@ -76,7 +59,7 @@ def landing_page(request):
         'games': games_with_counts,  # Теперь с счетчиками
         'stats': stats,  # Передаем stats напрямую
         'total_listings': stats['total_listings'],  # Для совместимости
-        'total_users': stats['total_users'],
+        'total_users': stats['active_users'],
         'total_deals': stats['total_deals'],
         'real_reviews': real_reviews,  # РЕАЛЬНЫЕ отзывы
         'top_sellers': top_sellers,  # РЕАЛЬНЫЕ топ продавцы

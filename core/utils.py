@@ -65,6 +65,41 @@ def get_cached_or_set(cache_key: str, callable_func, timeout: int = 300):
     return result
 
 
+def get_platform_stats(timeout: int = 300) -> dict:
+    """
+    Единый источник ключевой статистики платформы.
+
+    Возвращает:
+        {
+            'total_users': int,
+            'active_users': int,
+            'total_listings': int,
+            'total_deals': int,
+        }
+
+    Используется на публичных страницах, чтобы избежать расхождений в счетчиках.
+    """
+    cache_key = 'platform_stats_v1'
+    stats = cache.get(cache_key)
+
+    if stats is not None:
+        return stats
+
+    # Local imports to avoid circular dependencies.
+    from accounts.models import CustomUser
+    from listings.models import Listing
+    from transactions.models import PurchaseRequest
+
+    stats = {
+        'total_users': CustomUser.objects.count(),
+        'active_users': CustomUser.objects.filter(is_active=True).count(),
+        'total_listings': Listing.objects.filter(status='active').count(),
+        'total_deals': PurchaseRequest.objects.filter(status='completed').count(),
+    }
+    cache.set(cache_key, stats, timeout)
+    return stats
+
+
 def invalidate_cache_pattern(pattern: str):
     """
     Инвалидировать все ключи кеша по паттерну.
