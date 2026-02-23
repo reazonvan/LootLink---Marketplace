@@ -53,7 +53,7 @@ nano .env
 # Django
 SECRET_KEY=<сгенерируйте через: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())">
 DEBUG=False
-ALLOWED_HOSTS=lootlink.com,www.lootlink.com
+ALLOWED_HOSTS=lootlink.ru,www.lootlink.ru
 
 # Database
 DB_NAME=lootlink_db
@@ -107,7 +107,7 @@ docker-compose exec web python manage.py collectstatic --noinput
 sudo apt install certbot python3-certbot-nginx
 
 # Получите сертификат
-sudo certbot --nginx -d lootlink.com -d www.lootlink.com
+sudo certbot --nginx -d lootlink.ru -d www.lootlink.ru
 
 # Автоматическое обновление
 sudo certbot renew --dry-run
@@ -250,7 +250,7 @@ upstream lootlink_app {
 
 server {
     listen 80;
-    server_name lootlink.com www.lootlink.com;
+    server_name lootlink.ru www.lootlink.ru;
     
     client_max_body_size 5M;
     
@@ -286,7 +286,7 @@ sudo systemctl restart nginx
 ### 7. SSL через Let's Encrypt
 
 ```bash
-sudo certbot --nginx -d lootlink.com -d www.lootlink.com
+sudo certbot --nginx -d lootlink.ru -d www.lootlink.ru
 ```
 
 ---
@@ -367,7 +367,7 @@ sudo netstat -tlnp | grep -E ':(80|443|8000|5432|6379)'
 curl -I http://localhost:8000/health/
 
 # Проверка Nginx
-curl -I http://lootlink.com
+curl -I http://lootlink.ru
 ```
 
 ---
@@ -538,7 +538,7 @@ sudo nano /etc/postgresql/15/main/pg_hba.conf
 
 Если возникли проблемы при deployment:
 - Создайте issue на GitHub
-- Напишите на tech@lootlink.com
+- Напишите на tech@lootlink.ru
 - Проверьте документацию в `docs/`
 
 ---

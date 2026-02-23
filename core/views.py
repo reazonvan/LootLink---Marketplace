@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.db import connection
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_http_methods
 from .models import Notification
@@ -14,6 +15,21 @@ def custom_404(request, exception):
 def custom_500(request):
     """Кастомная страница 500."""
     return render(request, '500.html', status=500)
+
+
+def health_check(request):
+    """
+    Liveness/readiness endpoint для reverse proxy и Docker healthcheck.
+    Проверяет доступность БД.
+    """
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT 1')
+            cursor.fetchone()
+    except Exception:
+        return JsonResponse({'status': 'error'}, status=503)
+
+    return JsonResponse({'status': 'ok'})
 
 
 def about(request):

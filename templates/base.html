@@ -12,7 +12,7 @@
     <meta name="author" content="LootLink">
     <meta name="robots" content="index, follow">
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-    <link rel="canonical" href="https://lootlink.ru{{ request.path }}">
+    <link rel="canonical" href="{{ canonical_url }}">
     <meta name="csrf-token" content="{{ csrf_token }}">
     
     <!-- Verification Meta Tags -->
@@ -21,10 +21,11 @@
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
+    <meta property="og:locale" content="ru_RU">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:title" content="{% block og_title %}LootLink - Маркетплейс игровых предметов{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Покупайте и продавайте игровые предметы напрямую у других игроков. Без посредников и скрытых комиссий.{% endblock %}">
-    <meta property="og:image" content="{% block og_image %}https://lootlink.ru{% static 'images/og-image.jpg' %}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ site_url }}{% static 'images/og-image.jpg' %}{% endblock %}">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
@@ -38,11 +39,11 @@
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "LootLink",
-      "url": "https://lootlink.ru",
+      "url": "{{ site_url }}",
       "description": "P2P маркетплейс для торговли игровыми предметами",
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://lootlink.ru/search/?q={search_term_string}",
+        "target": "{{ site_url }}/search/?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
     }
@@ -52,8 +53,8 @@
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "LootLink",
-      "url": "https://lootlink.ru",
-      "logo": "https://lootlink.ru{% static 'favicon.svg' %}",
+      "url": "{{ site_url }}",
+      "logo": "{{ site_url }}{% static 'favicon.svg' %}",
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "Customer Support",
@@ -64,7 +65,7 @@
     </script>
     
     <!-- Favicon -->
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
     <link rel="icon" type="image/x-icon" href="{% static 'favicon.svg' %}">
     

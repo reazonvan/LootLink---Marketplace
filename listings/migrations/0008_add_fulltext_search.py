@@ -8,6 +8,11 @@ from django.contrib.postgres.search import SearchVectorField
 
 def compute_search_vector(apps, schema_editor):
     """Заполняем search_vector для существующих объявлений."""
+    # PostgreSQL-only выражение. На SQLite пропускаем, чтобы миграции
+    # и тестовая БД поднимались без ошибок.
+    if schema_editor.connection.vendor != 'postgresql':
+        return
+
     Listing = apps.get_model('listings', 'Listing')
     Listing.objects.update(
         search_vector=SearchVector('title', weight='A', config='russian') + 

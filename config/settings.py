@@ -145,6 +145,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
                 'core.context_processors.notifications_processor',
+                'core.context_processors.site_context',
             ],
         },
     },
