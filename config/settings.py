@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'storages',
     'rest_framework',
     'django_filters',
+    'django_celery_beat',
     'django_otp',
     'django_otp.plugins.otp_totp',
     
