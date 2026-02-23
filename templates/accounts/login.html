@@ -28,9 +28,10 @@
                             
                             <form method="post" action="{% url 'accounts:login' %}">
                                 {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
                                 
                                 <div class="mb-3">
-                                    <label for="{{ form.username.id_for_label }}" class="form-label">Имя пользователя</label>
+                                    <label for="{{ form.username.id_for_label }}" class="form-label">Имя пользователя или Email</label>
                                     {{ form.username }}
                                     {% if form.username.errors %}
                                     <div class="text-danger small mt-1">{{ form.username.errors }}</div>

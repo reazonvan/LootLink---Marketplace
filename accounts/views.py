@@ -21,7 +21,8 @@ def register(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            # Explicit backend is required because multiple auth backends are configured.
+            login(request, user, backend='accounts.backends.CaseInsensitiveModelBackend')
             messages.success(request, 'Регистрация прошла успешно! Добро пожаловать в LootLink!')
             return redirect('listings:home')
     else:
@@ -52,7 +53,7 @@ def user_login(request):
                     login(request, user)
                     messages.success(request, f'Добро пожаловать, {username}!')
                     # Безопасное перенаправление только на внутренние URL
-                    next_page = request.GET.get('next')
+                    next_page = request.POST.get('next') or request.GET.get('next')
                     if next_page and url_has_allowed_host_and_scheme(
                         url=next_page,
                         allowed_hosts={request.get_host()},
