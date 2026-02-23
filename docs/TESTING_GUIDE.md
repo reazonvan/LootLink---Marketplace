@@ -3,10 +3,11 @@
 ## Оглавление
 
 1. [Запуск тестов](#запуск-тестов)
-2. [Типы тестов](#типы-тестов)
-3. [Написание тестов](#написание-тестов)
-4. [Coverage](#coverage)
-5. [CI/CD](#cicd)
+2. [Smoke проверки production](#smoke-проверки-production)
+3. [Типы тестов](#типы-тестов)
+4. [Написание тестов](#написание-тестов)
+5. [Coverage](#coverage)
+6. [CI/CD](#cicd)
 
 ---
 
@@ -46,6 +47,56 @@ pytest accounts/tests.py::AccountsModelsTest
 ```bash
 pytest accounts/tests.py::AccountsModelsTest::test_user_creation
 ```
+
+---
+
+## Smoke проверки production
+
+Эти проверки нужны для быстрого регресса после деплоя: редиректы, SEO-теги, авторизация, базовая валидация форм и целостность ключевых счетчиков.
+
+### PowerShell smoke
+
+```powershell
+.\scripts\smoke_prod.ps1 -Domain lootlink.ru -WwwDomain www.lootlink.ru
+```
+
+Что проверяется:
+- доступность ключевых страниц и файлов (`/`, `/catalog/`, `/robots.txt`, `/sitemap.xml`, `/manifest.json`);
+- канонические редиректы (`www -> apex` с кодом `308`, `http -> https` с кодом `308`);
+- наличие SEO-разметки (`canonical`, `manifest`, `SearchAction`);
+- консистентность счетчика активных пользователей (главная vs логин);
+- негативные auth-сценарии (невалидный логин и регистрация с несовпадающими паролями должны возвращать ошибки на форме).
+
+### Browser smoke (Playwright)
+
+Установка зависимостей (один раз):
+
+```bash
+pip install -r requirements/development.txt
+python -m playwright install chromium
+```
+
+Запуск:
+
+```bash
+python scripts/playwright_smoke.py --base-url https://lootlink.ru
+```
+
+Опциональная проверка входа реальным пользователем:
+
+```bash
+python scripts/playwright_smoke.py \
+  --base-url https://lootlink.ru \
+  --login-username "<username_or_email>" \
+  --login-password "<password>"
+```
+
+Проверки Playwright включают:
+- отсутствие JS-ошибок и same-origin request failures;
+- layout-check страницы входа на desktop и mobile (без горизонтального “растягивания”);
+- видимость сообщения об ошибке при невалидном логине;
+- консистентность счетчика активных пользователей (главная vs логин);
+- редирект `www -> apex` со статусом `308`.
 
 ---
 
