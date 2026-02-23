@@ -156,6 +156,13 @@ python scripts/playwright_user_journey.py \
 - `SMOKE_LOGIN_USERNAME`
 - `SMOKE_LOGIN_PASSWORD`
 
+Для вызова автоматически после выката с сервера используйте:
+
+```bash
+export GITHUB_DISPATCH_TOKEN="<github_token>"
+bash scripts/trigger_post_deploy_smoke.sh
+```
+
 ---
 
 ## Типы тестов
