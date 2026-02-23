@@ -163,6 +163,12 @@ export GITHUB_DISPATCH_TOKEN="<github_token>"
 bash scripts/trigger_post_deploy_smoke.sh
 ```
 
+Если хотите единый запуск деплоя и smoke без ручных шагов:
+
+```bash
+bash scripts/deploy_with_smoke.sh
+```
+
 ---
 
 ## Типы тестов

@@ -326,6 +326,26 @@ crontab -e
 
 ### Обновление проекта
 
+Рекомендуемый способ: единый скрипт деплоя + post-deploy smoke.
+
+```bash
+cd /opt/LootLink
+
+# Обязателен для автотриггера post-deploy smoke
+export GITHUB_DISPATCH_TOKEN="<github_token>"
+
+# Для e2e user-journey (если хотите автоподготовку smoke-аккаунтов)
+export SMOKE_SELLER_USERNAME="<seller_username>"
+export SMOKE_SELLER_PASSWORD="<seller_password>"
+export SMOKE_BUYER_USERNAME="<buyer_username>"
+export SMOKE_BUYER_PASSWORD="<buyer_password>"
+
+# Docker mode (по умолчанию)
+bash scripts/deploy_with_smoke.sh
+```
+
+Ручной путь (если нужно выполнить шаги по отдельности):
+
 ```bash
 # Остановите сервис
 sudo systemctl stop lootlink
@@ -539,6 +559,19 @@ export GITHUB_DISPATCH_TOKEN="<github_token>"
 # 2) Вызовите триггер (по умолчанию base_url=https://lootlink.ru)
 bash scripts/trigger_post_deploy_smoke.sh
 ```
+
+Полный автодеплой + smoke:
+
+```bash
+bash scripts/deploy_with_smoke.sh
+```
+
+Опции для `deploy_with_smoke.sh` через переменные окружения:
+- `DEPLOY_MODE=docker|systemd`
+- `HEALTHCHECK_URL=https://lootlink.ru/health/`
+- `RUN_DISPATCH_AFTER_DEPLOY=true|false`
+- `STRICT_DISPATCH=true|false`
+- `DEPLOY_SKIP_SETUP_SMOKE_DATA=true|false`
 
 Опциональные переменные:
 - `SMOKE_BASE_URL` (например `https://staging.lootlink.ru`)
