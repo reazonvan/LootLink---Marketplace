@@ -5,11 +5,13 @@ Browser smoke checks for production using Playwright.
 Usage examples:
     python scripts/playwright_smoke.py --base-url https://lootlink.ru
     python scripts/playwright_smoke.py --base-url https://lootlink.ru --headed
+    python scripts/playwright_smoke.py --login-username user --login-password pass
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from dataclasses import dataclass
 from typing import Callable
@@ -35,6 +37,13 @@ def normalize_base_url(raw_url: str) -> str:
     return value.rstrip("/")
 
 
+def parse_numeric_value(raw: str) -> int:
+    digits = "".join(ch for ch in raw if ch.isdigit())
+    if not digits:
+        raise ValueError(f"could not parse numeric value from: {raw!r}")
+    return int(digits)
+
+
 def run() -> int:
     parser = argparse.ArgumentParser(description="Playwright browser smoke checks")
     parser.add_argument(
@@ -58,10 +67,22 @@ def run() -> int:
         action="store_true",
         help="Run browser in headed mode",
     )
+    parser.add_argument(
+        "--login-username",
+        default=os.getenv("SMOKE_LOGIN_USERNAME", ""),
+        help="Optional username/email for authenticated checks",
+    )
+    parser.add_argument(
+        "--login-password",
+        default=os.getenv("SMOKE_LOGIN_PASSWORD", ""),
+        help="Password for --login-username",
+    )
     args = parser.parse_args()
 
     base_url = normalize_base_url(args.base_url)
     expected_home = f"{base_url}/"
+    expected_login_url = urljoin(expected_home, "accounts/login/")
+    expected_my_listings_url = urljoin(expected_home, "accounts/my-listings/")
     checks: list[CheckResult] = []
 
     console_warnings: list[str] = []
@@ -94,7 +115,10 @@ def run() -> int:
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=not args.headed)
-        context = browser.new_context(ignore_https_errors=True)
+        context = browser.new_context(
+            ignore_https_errors=True,
+            viewport={"width": 1366, "height": 900},
+        )
         page = context.new_page()
 
         def on_console(msg) -> None:
@@ -116,6 +140,24 @@ def run() -> int:
             request_failures.append(line)
             if req.url.startswith(expected_home):
                 same_origin_request_failures.append(line)
+
+        def verify_no_horizontal_overflow() -> tuple[bool, str]:
+            metrics = page.evaluate(
+                """
+                () => ({
+                    clientWidth: document.documentElement.clientWidth,
+                    scrollWidth: document.documentElement.scrollWidth,
+                    bodyScrollWidth: document.body ? document.body.scrollWidth : 0
+                })
+                """
+            )
+            ok = metrics["scrollWidth"] <= metrics["clientWidth"] + 1
+            detail = (
+                f"client={metrics['clientWidth']}, "
+                f"scroll={metrics['scrollWidth']}, "
+                f"bodyScroll={metrics['bodyScrollWidth']}"
+            )
+            return ok, detail
 
         page.on("console", on_console)
         page.on("pageerror", lambda exc: js_errors.append(str(exc)))
@@ -140,11 +182,101 @@ def run() -> int:
             return ok, detail
 
         add_visit_check(page, "Home SEO meta", "/", verify=verify_home_meta)
+        add_visit_check(page, "Login layout desktop", "/accounts/login/", verify=verify_no_horizontal_overflow)
+
+        # Mobile layout check to catch form stretching or horizontal scroll regressions.
+        try:
+            page.set_viewport_size({"width": 390, "height": 844})
+            response = page.goto(expected_login_url, wait_until="domcontentloaded", timeout=args.timeout_ms)
+            status = response.status if response else None
+            if status != 200:
+                record(CheckResult("Login layout mobile", False, f"status={status}, url={expected_login_url}"))
+            else:
+                ok, detail = verify_no_horizontal_overflow()
+                record(CheckResult("Login layout mobile", ok, detail))
+        except PlaywrightError as exc:
+            record(CheckResult("Login layout mobile", False, str(exc)))
+        finally:
+            page.set_viewport_size({"width": 1366, "height": 900})
+
+        # Invalid login should keep user on login page and show visible error alert.
+        try:
+            page.goto(expected_login_url, wait_until="domcontentloaded", timeout=args.timeout_ms)
+            page.locator("input[name='username']").fill("__smoke_invalid__")
+            page.locator("input[name='password']").fill("__smoke_invalid__")
+            with page.expect_navigation(wait_until="domcontentloaded", timeout=args.timeout_ms):
+                page.locator("form[action$='/accounts/login/'] button[type='submit']").click()
+
+            alert = page.locator(".messages-container .alert.alert-danger").first
+            alert_count = page.locator(".messages-container .alert.alert-danger").count()
+            alert_text = alert.inner_text().strip() if alert_count else ""
+            alert_visible = alert.is_visible() if alert_count else False
+            stays_on_login = "/accounts/login/" in page.url
+            has_error_hint = any(token in alert_text.lower() for token in ("невер", "ошиб", "invalid"))
+
+            ok = stays_on_login and alert_visible and has_error_hint
+            detail = f"url={page.url}, alertVisible={alert_visible}, alertText={alert_text[:80]}"
+            record(CheckResult("Invalid login feedback", ok, detail))
+        except PlaywrightError as exc:
+            record(CheckResult("Invalid login feedback", False, str(exc)))
+
+        # Same counter should be shown on home/login for active users.
+        try:
+            page.goto(expected_home, wait_until="domcontentloaded", timeout=args.timeout_ms)
+            home_item = page.locator(".hero-stats .stat-item", has_text="Активных пользователей").first
+            home_count = home_item.count()
+            if home_count == 0:
+                raise ValueError("active users block not found on home page")
+            home_users = parse_numeric_value(home_item.locator(".stat-value").first.inner_text())
+
+            page.goto(expected_login_url, wait_until="domcontentloaded", timeout=args.timeout_ms)
+            login_item = page.locator(".info-stats .info-stat-item", has_text="Активных пользователей").first
+            login_count = login_item.count()
+            if login_count == 0:
+                raise ValueError("active users block not found on login page")
+            login_users = parse_numeric_value(login_item.locator(".info-stat-value").first.inner_text())
+
+            users_ok = home_users == login_users
+            record(
+                CheckResult(
+                    "Active users counter consistency",
+                    users_ok,
+                    f"home={home_users}, login={login_users}",
+                )
+            )
+        except (PlaywrightError, ValueError) as exc:
+            record(CheckResult("Active users counter consistency", False, str(exc)))
+
+        # Optional authenticated check for real login redirect behavior.
+        login_username = args.login_username.strip()
+        login_password = args.login_password
+        if login_username and login_password:
+            try:
+                target = f"{expected_login_url}?next=/accounts/my-listings/"
+                page.goto(target, wait_until="domcontentloaded", timeout=args.timeout_ms)
+                page.locator("input[name='username']").fill(login_username)
+                page.locator("input[name='password']").fill(login_password)
+                with page.expect_navigation(wait_until="domcontentloaded", timeout=args.timeout_ms):
+                    page.locator("form[action$='/accounts/login/'] button[type='submit']").click()
+
+                current_url = page.url
+                auth_redirect_ok = current_url.startswith(expected_my_listings_url)
+                record(CheckResult("Auth login redirect", auth_redirect_ok, f"url={current_url}"))
+            except PlaywrightError as exc:
+                record(CheckResult("Auth login redirect", False, str(exc)))
+        else:
+            record(
+                CheckResult(
+                    "Auth login redirect",
+                    True,
+                    "skipped (provide --login-username and --login-password for this check)",
+                )
+            )
 
         try:
             redirect_response = context.request.get(args.www_url, max_redirects=0, timeout=args.timeout_ms)
             location = redirect_response.headers.get("location", "")
-            redirect_ok = redirect_response.status == 301 and location.startswith(expected_home)
+            redirect_ok = redirect_response.status == 308 and location.startswith(expected_home)
             detail = f"status={redirect_response.status}, location={location}"
             record(CheckResult("WWW redirect", redirect_ok, detail))
         except PlaywrightError as exc:
