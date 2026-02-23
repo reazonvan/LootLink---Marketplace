@@ -349,6 +349,10 @@ python manage.py collectstatic --noinput
 # Перезапустите сервис
 sudo systemctl start lootlink
 sudo systemctl restart nginx
+
+# Запустите post-deploy smoke в GitHub Actions
+# (нужен GITHUB_DISPATCH_TOKEN в окружении сервера)
+bash scripts/trigger_post_deploy_smoke.sh
 ```
 
 ### Health Checks
@@ -525,6 +529,23 @@ python manage.py setup_smoke_data \
 Запуск:
 1. Через Actions -> `Post-Deploy Smoke` -> `Run workflow`.
 2. Или через `repository_dispatch` (`event_type=post_deploy_smoke`) после вашего deploy-скрипта.
+
+Для автоматического триггера после деплоя используйте скрипт:
+
+```bash
+# 1) Один раз задайте токен на сервере
+export GITHUB_DISPATCH_TOKEN="<github_token>"
+
+# 2) Вызовите триггер (по умолчанию base_url=https://lootlink.ru)
+bash scripts/trigger_post_deploy_smoke.sh
+```
+
+Опциональные переменные:
+- `SMOKE_BASE_URL` (например `https://staging.lootlink.ru`)
+- `GITHUB_OWNER`
+- `GITHUB_REPO`
+- `DISPATCH_EVENT_TYPE`
+- `DEPLOYED_SHA` (если хотите передать свой SHA вручную)
 
 ---
 
