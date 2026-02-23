@@ -6,7 +6,8 @@
 }
 
 www.lootlink.ru {
-    redir https://lootlink.ru{uri} 301
+    # Preserve request method/body for non-GET requests (e.g. login POST)
+    redir https://lootlink.ru{uri} 308
 }
 
 lootlink.ru {
