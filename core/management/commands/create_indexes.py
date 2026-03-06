@@ -78,7 +78,7 @@ class Command(BaseCommand):
                 ['user_id', 'is_read', 'created_at DESC']
             )
         
-        self.stdout.write(self.style.SUCCESS('✅ Все indexes созданы успешно!'))
+        self.stdout.write(self.style.SUCCESS('Все indexes созданы успешно!'))
     
     def create_index_if_not_exists(self, cursor, index_name, table_name, columns):
         """Создает индекс если его еще нет."""
@@ -90,7 +90,7 @@ class Command(BaseCommand):
         """, [index_name])
         
         if cursor.fetchone():
-            self.stdout.write(f'  ⏭️  Индекс {index_name} уже существует')
+            self.stdout.write(f'  Индекс {index_name} уже существует')
             return
         
         # Создаем индекс
@@ -100,7 +100,7 @@ class Command(BaseCommand):
         try:
             # CONCURRENTLY позволяет создавать индексы без блокировки таблицы
             cursor.execute(sql)
-            self.stdout.write(self.style.SUCCESS(f'  ✅ Создан индекс: {index_name}'))
+            self.stdout.write(self.style.SUCCESS(f'  Создан индекс: {index_name}'))
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'  ❌ Ошибка создания {index_name}: {e}'))
+            self.stdout.write(self.style.ERROR(f'  Ошибка создания {index_name}: {e}'))
 

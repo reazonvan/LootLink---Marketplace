@@ -23,26 +23,26 @@ from django.core.cache import cache
 
 def clear_all_sessions():
     """Очищает все сессии и кэш."""
-    print("\n🧹 Очистка сессий и кэша...\n")
-    
+    print("\nОчистка сессий и кэша...\n")
+
     # Очищаем все сессии
     session_count = Session.objects.count()
-    print(f"📋 Найдено сессий: {session_count}")
-    
+    print(f"Найдено сессий: {session_count}")
+
     if session_count > 0:
         Session.objects.all().delete()
-        print(f"✅ Удалено {session_count} сессий")
+        print(f"Удалено {session_count} сессий")
     else:
-        print("✅ Сессий не найдено")
-    
+        print("Сессий не найдено")
+
     # Очищаем кэш
     try:
         cache.clear()
-        print("✅ Кэш очищен")
+        print("Кэш очищен")
     except Exception as e:
-        print(f"⚠️  Ошибка при очистке кэша: {e}")
-    
-    print("\n✅ Готово! Теперь перезагрузите страницу в браузере (Ctrl+Shift+R)\n")
+        print(f"Ошибка при очистке кэша: {e}")
+
+    print("\nГотово! Теперь перезагрузите страницу в браузере (Ctrl+Shift+R)\n")
 
 if __name__ == '__main__':
     clear_all_sessions()

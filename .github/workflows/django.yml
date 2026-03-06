@@ -112,11 +112,11 @@ jobs:
     
     - name: Notify on success
       if: success()
-      run: echo "✅ All tests passed!"
-    
+      run: echo "All tests passed!"
+
     - name: Notify on failure
       if: failure()
-      run: echo "❌ Tests failed!"
+      run: echo "Tests failed!"
 
   lint:
     runs-on: ubuntu-latest

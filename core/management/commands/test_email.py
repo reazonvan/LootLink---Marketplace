@@ -40,7 +40,7 @@ class Command(BaseCommand):
         
         # Проверка на console backend
         if settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
-            self.stdout.write(self.style.ERROR('❌ ВНИМАНИЕ: EMAIL_BACKEND = console!'))
+            self.stdout.write(self.style.ERROR('ВНИМАНИЕ: EMAIL_BACKEND = console!'))
             self.stdout.write(self.style.ERROR('   Письма НЕ будут отправляться реально!\n'))
             self.stdout.write(self.style.WARNING('Для production настройте реальный SMTP:'))
             self.stdout.write('   1. Создайте email на Yandex/Gmail')
@@ -63,12 +63,12 @@ class Command(BaseCommand):
                 missing.append('EMAIL_HOST_PASSWORD')
             
             if missing:
-                self.stdout.write(self.style.ERROR(f'❌ Не хватает параметров: {", ".join(missing)}'))
+                self.stdout.write(self.style.ERROR(f'Не хватает параметров: {", ".join(missing)}'))
                 self.stdout.write(self.style.ERROR('   Настройте их в .env файле\n'))
                 return
-        
+
         if options['check_only']:
-            self.stdout.write(self.style.SUCCESS('✅ Конфигурация выглядит корректно'))
+            self.stdout.write(self.style.SUCCESS('Конфигурация выглядит корректно'))
             return
         
         # Отправка тестового письма
@@ -90,10 +90,10 @@ class Command(BaseCommand):
 Поздравляем! Email настроен правильно и работает!
 
 Теперь пользователи вашего сайта будут получать:
-✅ Коды сброса пароля
-✅ Ссылки верификации email
-✅ Уведомления о покупках и продажах
-✅ Уведомления о новых сообщениях
+- Коды сброса пароля
+- Ссылки верификации email
+- Уведомления о покупках и продажах
+- Уведомления о новых сообщениях
 
 Ваш сайт готов к работе с реальными пользователями!
 
@@ -105,16 +105,16 @@ class Command(BaseCommand):
                 fail_silently=False
             )
             
-            self.stdout.write(self.style.SUCCESS('\n✅ УСПЕХ! Письмо отправлено!'))
+            self.stdout.write(self.style.SUCCESS('\nУСПЕХ! Письмо отправлено!'))
             self.stdout.write(self.style.SUCCESS(f'   Проверьте почту: {recipient}'))
             self.stdout.write(self.style.WARNING('   (Возможно письмо попало в SPAM)\n'))
-            
+
             self.stdout.write('='*70)
-            self.stdout.write(self.style.SUCCESS('EMAIL РАБОТАЕТ КОРРЕКТНО! 🎉'))
+            self.stdout.write(self.style.SUCCESS('EMAIL РАБОТАЕТ КОРРЕКТНО!'))
             self.stdout.write('='*70 + '\n')
-            
+
         except smtplib.SMTPAuthenticationError as e:
-            self.stdout.write(self.style.ERROR('\n❌ ОШИБКА АУТЕНТИФИКАЦИИ:'))
+            self.stdout.write(self.style.ERROR('\nОШИБКА АУТЕНТИФИКАЦИИ:'))
             self.stdout.write(self.style.ERROR(f'   {str(e)}\n'))
             self.stdout.write(self.style.WARNING('Проверьте:'))
             self.stdout.write('  1. EMAIL_HOST_USER (должен быть полный email)')
@@ -123,11 +123,11 @@ class Command(BaseCommand):
             self.stdout.write('  4. Убедитесь что 2FA включена\n')
             
         except smtplib.SMTPException as e:
-            self.stdout.write(self.style.ERROR(f'\n❌ SMTP ОШИБКА: {str(e)}\n'))
+            self.stdout.write(self.style.ERROR(f'\nSMTP ОШИБКА: {str(e)}\n'))
             self.stdout.write(self.style.WARNING('Проверьте EMAIL_HOST и EMAIL_PORT\n'))
-            
+
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'\n❌ ОШИБКА: {str(e)}\n'))
+            self.stdout.write(self.style.ERROR(f'\nОШИБКА: {str(e)}\n'))
             self.stdout.write(self.style.WARNING('Проверьте логи: sudo journalctl -u lootlink -n 50\n'))
 
 

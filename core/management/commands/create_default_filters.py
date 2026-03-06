@@ -239,10 +239,10 @@ class Command(BaseCommand):
             try:
                 game = Game.objects.filter(name__icontains=game_name).first()
                 if not game:
-                    self.stdout.write(self.style.WARNING(f'  ⚠️  Игра "{game_name}" не найдена, пропускаем'))
+                    self.stdout.write(self.style.WARNING(f'  Игра "{game_name}" не найдена, пропускаем'))
                     continue
-                
-                self.stdout.write(f'\n🎮 {game.name}')
+
+                self.stdout.write(f'\n{game.name}')
                 
                 for category_name, filters in categories_data.items():
                     # Ищем категорию
@@ -267,7 +267,7 @@ class Command(BaseCommand):
                         
                         if filter_created:
                             created_filters += 1
-                            self.stdout.write(f'    ✅ Фильтр: {filter_data["name"]}')
+                            self.stdout.write(f'    Фильтр: {filter_data["name"]}')
                         
                         # Создаем опции для select/multiselect
                         if filter_data['options']:
@@ -284,11 +284,11 @@ class Command(BaseCommand):
                                     created_options += 1
             
             except Exception as e:
-                self.stdout.write(self.style.ERROR(f'  ❌ Ошибка: {e}'))
-        
+                self.stdout.write(self.style.ERROR(f'  Ошибка: {e}'))
+
         self.stdout.write('\n' + '=' * 60)
-        self.stdout.write(self.style.SUCCESS(f'✅ Создано фильтров: {created_filters}'))
-        self.stdout.write(self.style.SUCCESS(f'✅ Создано опций: {created_options}'))
+        self.stdout.write(self.style.SUCCESS(f'Создано фильтров: {created_filters}'))
+        self.stdout.write(self.style.SUCCESS(f'Создано опций: {created_options}'))
         self.stdout.write('=' * 60)
         self.stdout.write('\n💡 Фильтры доступны в админке Django')
         self.stdout.write('🌐 Они автоматически появятся на страницах категорий\n')

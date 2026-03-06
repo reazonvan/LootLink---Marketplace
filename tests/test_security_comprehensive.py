@@ -290,7 +290,7 @@ def test_all_improvements_implemented():
     print("="*70 + "\n")
     
     for name, status in improvements.items():
-        symbol = "✅" if status else "❌"
+        symbol = "PASS" if status else "FAIL"
         print(f"  {symbol} {name}")
     
     implemented_count = sum(improvements.values())

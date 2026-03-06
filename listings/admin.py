@@ -24,12 +24,12 @@ class GameAdmin(admin.ModelAdmin):
     inlines = [CategoryInline]
     actions = ['activate_games', 'deactivate_games']
     
-    @admin.action(description='✅ Активировать выбранные игры')
+    @admin.action(description='Активировать выбранные игры')
     def activate_games(self, request, queryset):
         updated = queryset.update(is_active=True)
         self.message_user(request, f'Активировано игр: {updated}')
-    
-    @admin.action(description='❌ Деактивировать выбранные игры')
+
+    @admin.action(description='Деактивировать выбранные игры')
     def deactivate_games(self, request, queryset):
         updated = queryset.update(is_active=False)
         self.message_user(request, f'Деактивировано игр: {updated}')
@@ -67,12 +67,12 @@ class CategoryAdmin(admin.ModelAdmin):
     list_editable = ['is_active', 'order']
     actions = ['activate_categories', 'deactivate_categories']
     
-    @admin.action(description='✅ Активировать выбранные категории')
+    @admin.action(description='Активировать выбранные категории')
     def activate_categories(self, request, queryset):
         updated = queryset.update(is_active=True)
         self.message_user(request, f'Активировано категорий: {updated}')
-    
-    @admin.action(description='❌ Деактивировать выбранные категории')
+
+    @admin.action(description='Деактивировать выбранные категории')
     def deactivate_categories(self, request, queryset):
         updated = queryset.update(is_active=False)
         self.message_user(request, f'Деактивировано категорий: {updated}')

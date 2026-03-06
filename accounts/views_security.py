@@ -91,7 +91,7 @@ def confirm_2fa(request):
             device.confirmed = True
             device.save()
             
-            messages.success(request, '✅ 2FA успешно включена!')
+            messages.success(request, '2FA успешно включена!')
             return JsonResponse({'success': True})
         else:
             return JsonResponse({'success': False, 'error': 'Неверный код'})
