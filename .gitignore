@@ -40,12 +40,25 @@ env.bak/
 venv.bak/
 
 # IDE
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
 *~
 .DS_Store
+
+# AI/IDE specific
+.claude/
+.cursor/
+.cursorrules
+.cursorignore
+
+# Cleanup documentation
+CLEANUP_*.md
+PROJECT_RULES.md
 
 # Testing
 .tox/
