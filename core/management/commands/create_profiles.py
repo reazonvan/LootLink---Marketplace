@@ -27,11 +27,11 @@ class Command(BaseCommand):
                 Profile.objects.create(user=user)
                 created_count += 1
                 self.stdout.write(
-                    self.style.SUCCESS(f"✓ Создан профиль для пользователя: {user.username}")
+                    self.style.SUCCESS(f"[OK] Создан профиль для пользователя: {user.username}")
                 )
             except Exception as e:
                 self.stdout.write(
-                    self.style.ERROR(f"✗ Ошибка для пользователя {user.username}: {e}")
+                    self.style.ERROR(f"[ERROR] Ошибка для пользователя {user.username}: {e}")
                 )
         
         self.stdout.write("\n" + "="*50)

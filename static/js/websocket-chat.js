@@ -119,7 +119,7 @@ class WebSocketChat {
         messageDiv.innerHTML = `
             <div class="message-bubble">
                 <div class="message-content">${this.escapeHtml(message.content)}</div>
-                <div class="message-time">${time} ${message.is_read ? '✓✓' : '✓'}</div>
+                <div class="message-time">${time} ${message.is_read ? '✔✔' : '✔'}</div>
             </div>
         `;
         

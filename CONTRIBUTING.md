@@ -2,7 +2,7 @@
 
 Спасибо за интерес к улучшению LootLink! Этот документ содержит рекомендации для разработчиков.
 
-## 📋 Содержание
+## Содержание
 
 1. [Начало работы](#начало-работы)
 2. [Стандарты кода](#стандарты-кода)
@@ -12,7 +12,7 @@
 
 ---
 
-## 🚀 Начало работы
+## Начало работы
 
 ### 1. Fork и клонирование репозитория
 
@@ -64,7 +64,7 @@ python scripts/create_test_data.py
 
 ---
 
-## 📝 Стандарты кода
+## Стандарты кода
 
 ### Python Style Guide
 
@@ -130,7 +130,7 @@ def _internal_method(self):
 
 ---
 
-## 🔄 Процесс разработки
+## Процесс разработки
 
 ### 1. Создание новой ветки
 
@@ -190,7 +190,7 @@ python manage.py makemigrations --check --dry-run
 
 ---
 
-## 🧪 Тестирование
+## Тестирование
 
 ### Написание тестов
 
@@ -245,7 +245,7 @@ coverage html  # Откроется htmlcov/index.html
 
 ---
 
-## 📬 Pull Requests
+## Pull Requests
 
 ### Checklist перед созданием PR
 
@@ -303,7 +303,7 @@ git push origin feature/your-feature-name
 
 ---
 
-## 🛡️ Security
+## Security
 
 ### Reporting Vulnerabilities
 
@@ -336,7 +336,7 @@ git push origin feature/your-feature-name
 
 ---
 
-## 📚 Полезные ресурсы
+## Полезные ресурсы
 
 - [Django Documentation](https://docs.djangoproject.com/)
 - [Django Best Practices](https://django-best-practices.readthedocs.io/)
@@ -345,7 +345,7 @@ git push origin feature/your-feature-name
 
 ---
 
-## 🤝 Community
+## Community
 
 - Будьте вежливы и уважительны
 - Задавайте вопросы в Discussions
@@ -354,10 +354,10 @@ git push origin feature/your-feature-name
 
 ---
 
-## 📄 License
+## License
 
 См. файл [LICENSE](LICENSE) для деталей.
 
 ---
 
-**Спасибо за ваш вклад в LootLink! 🎉**
+**Спасибо за ваш вклад в LootLink!**

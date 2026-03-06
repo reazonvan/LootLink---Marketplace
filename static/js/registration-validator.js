@@ -103,13 +103,13 @@ function checkAvailability(value, endpoint, feedbackElement, input) {
     .then(data => {
         if (data.available) {
             // Значение доступно
-            feedbackElement.textContent = '✓ ' + data.message;
+            feedbackElement.textContent = '[OK] ' + data.message;
             feedbackElement.className = 'validation-feedback text-success';
             input.classList.remove('is-invalid');
             input.classList.add('is-valid');
         } else {
             // Значение недоступно или ошибка валидации
-            feedbackElement.textContent = '✗ ' + data.message;
+            feedbackElement.textContent = '[ERROR] ' + data.message;
             feedbackElement.className = 'validation-feedback text-danger';
             input.classList.remove('is-valid');
             input.classList.add('is-invalid');
