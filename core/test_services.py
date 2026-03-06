@@ -98,7 +98,7 @@ class TestNotificationService:
         
         assert notification.user == seller
         assert notification.notification_type == 'new_review'
-        assert '⭐' in notification.message
+        assert '★' in notification.message
     
     def test_notify_new_message(self, seller, buyer, active_listing, conversation_factory, message_factory):
         """Уведомление о новом сообщении."""

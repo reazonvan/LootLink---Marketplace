@@ -30,8 +30,8 @@ class CustomUserAdmin(UserAdmin):
     def is_verified_display(self, obj):
         """Статус верификации"""
         if hasattr(obj, 'profile') and obj.profile.is_verified:
-            return format_html('<span style="color: #10b981;">✓</span>')
-        return format_html('<span style="color: #ef4444;">✗</span>')
+            return format_html('<span style="color: #10b981;">✔</span>')
+        return format_html('<span style="color: #ef4444;">✘</span>')
     is_verified_display.short_description = 'Verified'
 
     def rating_display(self, obj):
