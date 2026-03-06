@@ -118,7 +118,7 @@ venv\Scripts\activate
 source venv/bin/activate
 
 # Установите зависимости
-pip install -r requirements.txt
+pip install -r requirements/development.txt
 
 # Примените миграции
 python manage.py migrate
@@ -216,7 +216,7 @@ LootLink---Marketplace/
 ├── docker-compose.yml          # Docker Compose
 ├── Dockerfile                  # Docker конфигурация
 ├── lootlink.service           # Systemd unit файл
-├── requirements.txt           # Зависимости Python
+├── requirements/             # 📦 Зависимости Python (модульные)
 ├── requirements/              # Дополнительные requirements
 ├── manifest.json              # PWA манифест
 ├── robots.txt                 # Robots.txt для SEO
