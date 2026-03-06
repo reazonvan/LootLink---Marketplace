@@ -13,7 +13,7 @@ C:\Users\ivanp\AppData\Roaming\uv\python\cpython-3.14.3-windows-x86_64-none\pyth
 
 ---
 
-## ✅ Решение: Создать venv заново
+## Решение: Создать venv заново
 
 ### Шаг 1: Открыть PowerShell в VS Code
 
@@ -202,7 +202,7 @@ python manage.py runserver
 
 ---
 
-## ✅ Чеклист
+## Чеклист
 
 - [ ] venv создан: `Test-Path venv\Scripts\python.exe` → True
 - [ ] venv активирован: в терминале видно `(venv)`

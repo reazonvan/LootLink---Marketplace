@@ -4,7 +4,7 @@
 
 ---
 
-## ❌ Проблема
+## Проблема
 
 При попытке запустить задачу Django в VS Code (`Ctrl+Shift+B`) появлялась ошибка:
 ```
@@ -15,7 +15,7 @@ Python was not found; run without arguments to install from the Microsoft Store
 
 ---
 
-## ✅ Что исправлено
+## Что исправлено
 
 ### 1. `.vscode/tasks.json`
 **Было:**
@@ -114,7 +114,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ---
 
-## ✅ Проверка что всё работает
+## Проверка что всё работает
 
 ### 1. Python интерпретатор выбран
 - Статус бар (внизу справа): `Python 3.x.x ('venv')`
@@ -137,10 +137,10 @@ python manage.py check
 
 ## 📋 Все исправленные файлы
 
-1. ✅ `.vscode/tasks.json` - использует Python из VS Code
-2. ✅ `.vscode/settings.json` - Windows пути
-3. ✅ `.vscode/launch.json` - явный Python интерпретатор
-4. ✅ `WINDOWS_SETUP.md` - руководство для Windows
+1. `.vscode/tasks.json` - использует Python из VS Code
+2. `.vscode/settings.json` - Windows пути
+3. `.vscode/launch.json` - явный Python интерпретатор
+4. `WINDOWS_SETUP.md` - руководство для Windows
 
 ---
 
@@ -200,6 +200,6 @@ python manage.py check
 
 ---
 
-**Статус:** ✅ Исправлено и готово к использованию
+**Статус:** Исправлено и готово к использованию
 
 **Следующий шаг:** Выбрать Python интерпретатор в VS Code и перезапустить.

@@ -213,15 +213,15 @@ echo "=============================================="
 echo "   Production Setup Complete!"
 echo "=============================================="
 echo ""
-log "SECRET_KEY: ✓ Обновлен"
-log "DEBUG: ✓ False"
+log "SECRET_KEY: [OK] Обновлен"
+log "DEBUG: [OK] False"
 if [ -z "$DOMAIN" ]; then
     warning "HTTPS: Не настроен (нет домена)"
 else
-    log "HTTPS: ✓ Настроен"
+    log "HTTPS: [OK] Настроен"
 fi
-log "Автоматические бекапы: ✓ Настроены"
-log "Сервисы: ✓ Перезапущены"
+log "Автоматические бекапы: [OK] Настроены"
+log "Сервисы: [OK] Перезапущены"
 
 echo ""
 warning "ВАЖНО: Сохраните новый SECRET_KEY в безопасном месте!"
