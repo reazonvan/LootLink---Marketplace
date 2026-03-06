@@ -177,7 +177,7 @@ class EmailService:
                 <code style="background: #fff; padding: 5px; display: inline-block; margin-top: 5px;">{verification_url}</code>
             </p>
             
-            <p>⏰ Ссылка действительна в течение 24 часов.</p>
+            <p>Ссылка действительна в течение 24 часов.</p>
         </div>
     </div>
 </body>
