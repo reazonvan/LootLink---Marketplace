@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}LootLink - Маркетплейс игровых предметов{% endblock %}
+
+{% block content %}
+<!-- Hero Section - Redesigned -->
+<section class="hero-v2">
+    <div class="container">
+        <div class="row align-items-center min-vh-50">
+            <div class="col-lg-7">
+                <div class="hero-content">
+                    <h1 class="hero-heading">Торгуйте игровыми предметами напрямую</h1>
+                    <p class="hero-lead">P2P маркетплейс без посредников. Покупайте и продавайте скины, аккаунты и внутриигровые предметы безопасно.</p>
+
+                    <div class="hero-cta">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'listings:listing_create' %}" class="btn btn-primary btn-lg px-5">
+                            <i class="bi bi-plus-circle me-2"></i>Создать объявление
+                        </a>
+                        <a href="{% url 'listings:catalog' %}" class="btn btn-outline-primary btn-lg px-5">
+                            Смотреть каталог
+                        </a>
+                        {% else %}
+                        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg px-5">
+                            Начать продавать
+                        </a>
+                        <a href="{% url 'listings:catalog' %}" class="btn btn-outline-primary btn-lg px-5">
+                            Посмотреть товары
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="hero-stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <div class="stat-value">{{ stats.active_users }}</div>
+                        <div class="stat-label">Активных пользователей</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div class="stat-value">{{ stats.total_listings }}</div>
+                        <div class="stat-label">Активных объявлений</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-value">{{ stats.total_deals }}</div>
+                        <div class="stat-label">Завершено сделок</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works - Redesigned -->
+<section class="how-it-works-v2">
+    <div class="container">
+        <div class="section-header text-center">
+            <h2 class="section-heading">Как это работает</h2>
+            <p class="section-subheading">Простой процесс от поиска до покупки</p>
+        </div>
+
+        <div class="steps-grid">
+            <div class="step-item">
+                <div class="step-badge">1</div>
+                <div class="step-icon-wrapper">
+                    <i class="bi bi-search"></i>
+                </div>
+                <h3 class="step-heading">Найдите товар</h3>
+                <p class="step-text">Выберите игру и категорию, используйте фильтры для точного поиска</p>
+            </div>
+
+            <div class="step-item">
+                <div class="step-badge">2</div>
+                <div class="step-icon-wrapper">
+                    <i class="bi bi-chat-dots"></i>
+                </div>
+                <h3 class="step-heading">Свяжитесь с продавцом</h3>
+                <p class="step-text">Обсудите детали сделки через встроенный защищенный чат</p>
+            </div>
+
+            <div class="step-item">
+                <div class="step-badge">3</div>
+                <div class="step-icon-wrapper">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h3 class="step-heading">Безопасная сделка</h3>
+                <p class="step-text">Получите товар с гарантией возврата средств</p>
+            </div>
+
+            <div class="step-item">
+                <div class="step-badge">4</div>
+                <div class="step-icon-wrapper">
+                    <i class="bi bi-star"></i>
+                </div>
+                <h3 class="step-heading">Оставьте отзыв</h3>
+                <p class="step-text">Поделитесь опытом и помогите другим пользователям</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Latest Listings - Redesigned -->
+<section class="latest-listings-v2">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-heading">Последние объявления</h2>
+            <a href="{% url 'listings:catalog' %}" class="btn btn-outline-primary">
+                Смотреть все <i class="bi bi-arrow-right ms-2"></i>
+            </a>
+        </div>
+
+        <div class="listings-grid">
+            {% for listing in latest_listings %}
+            <div class="listing-card-v2">
+                <div class="listing-image">
+                    {% if listing.images.first %}
+                    <img src="{{ listing.images.first.image.url }}" alt="{{ listing.title }}">
+                    {% else %}
+                    <div class="listing-placeholder">
+                        <i class="bi bi-image"></i>
+                    </div>
+                    {% endif %}
+                    <div class="listing-badge">{{ listing.game.name }}</div>
+                </div>
+                <div class="listing-body">
+                    <h3 class="listing-title">{{ listing.title }}</h3>
+                    <p class="listing-description">{{ listing.description|truncatewords:15 }}</p>
+                    <div class="listing-footer">
+                        <div class="listing-price">{{ listing.price }} ₽</div>
+                        <a href="{% url 'listings:listing_detail' listing.id %}" class="btn btn-sm btn-primary">
+                            Подробнее
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <p class="text-muted mt-3">Пока нет объявлений</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Security Features - Redesigned -->
+<section class="security-features-v2">
+    <div class="container">
+        <div class="section-header text-center">
+            <h2 class="section-heading">Гарантии безопасности</h2>
+            <p class="section-subheading">Защищаем каждую сделку на платформе</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon text-success">
+                    <i class="bi bi-shield-fill-check"></i>
+                </div>
+                <h3 class="feature-heading">Проверенные продавцы</h3>
+                <p class="feature-text">Система рейтингов и отзывов помогает выбрать надежных продавцов</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon text-primary">
+                    <i class="bi bi-arrow-left-right"></i>
+                </div>
+                <h3 class="feature-heading">Гарантия возврата</h3>
+                <p class="feature-text">Если что-то пошло не так, мы вернем деньги в течение 24 часов</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon text-warning">
+                    <i class="bi bi-headset"></i>
+                </div>
+                <h3 class="feature-heading">Поддержка 24/7</h3>
+                <p class="feature-text">Наша команда всегда готова помочь решить любые вопросы</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -76,7 +76,7 @@ source venv/bin/activate
 
 ### 3. Установите зависимости:
 ```bash
-pip install -r requirements.txt
+pip install -r requirements/development.txt
 ```
 
 Подождите, пока все библиотеки установятся.
@@ -188,7 +188,7 @@ Starting development server at http://127.0.0.1:8000/
 
 ### Ошибка импорта модулей:
 ```bash
-pip install -r requirements.txt --upgrade
+pip install -r requirements/development.txt --upgrade
 ```
 
 ### Ошибка прав доступа к папке media:
