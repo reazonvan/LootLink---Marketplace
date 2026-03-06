@@ -178,7 +178,7 @@ python3.11 -m venv venv
 source venv/bin/activate
 
 # Установите зависимости
-pip install -r requirements.txt
+pip install -r requirements/production.txt
 
 # Настройте .env
 cp env.example.txt .env
@@ -358,7 +358,7 @@ git pull origin main
 source venv/bin/activate
 
 # Обновите зависимости
-pip install -r requirements.txt --upgrade
+pip install -r requirements/production.txt --upgrade
 
 # Примените миграции
 python manage.py migrate

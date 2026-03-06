@@ -74,6 +74,20 @@ Thumbs.db
 logs/*.log
 !logs/.gitkeep
 
+# Archives and binaries
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# IDE specific
+.vscode/
+.idea/
+
+# Design files (not needed in production)
+design-exports/
+design-pencil/
+
 # Sensitive data - NEVER commit these!
 env_production.txt
 env_server.txt

@@ -64,8 +64,8 @@ def landing_page(request):
         'real_reviews': real_reviews,  # РЕАЛЬНЫЕ отзывы
         'top_sellers': top_sellers,  # РЕАЛЬНЫЕ топ продавцы
     }
-    
-    return render(request, 'listings/landing_page.html', context)
+
+    return render(request, 'listings/landing_page_v2.html', context)
 
 
 def games_catalog(request):

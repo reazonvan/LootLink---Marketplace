@@ -1,0 +1,19 @@
+{% comment %}
+Компонент для отображения бейджей пользователя
+Использование: {% include 'components/user_badges.html' with profile=user.profile %}
+{% endcomment %}
+
+{% if profile %}
+<div class="user-badges d-inline-flex gap-1 flex-wrap">
+    {% for badge in profile.get_badges %}
+    <span class="badge bg-{{ badge.color }} d-inline-flex align-items-center gap-1"
+          data-bs-toggle="tooltip"
+          data-bs-placement="top"
+          title="{{ badge.tooltip }}">
+        <i class="{{ badge.icon }}"></i>
+        <span class="badge-text">{{ badge.text }}</span>
+    </span>
+    {% endfor %}
+</div>
+
+{% endif %}
