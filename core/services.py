@@ -190,7 +190,7 @@ class NotificationService:
     @staticmethod
     def notify_new_review(review):
         """Уведомление о новом отзыве."""
-        stars = '⭐' * review.rating
+        stars = '★' * review.rating
         return NotificationService.create_and_notify(
             user=review.reviewed_user,
             notification_type='new_review',

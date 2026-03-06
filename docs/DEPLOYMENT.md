@@ -1,10 +1,10 @@
-# 🚀 Deployment Guide для LootLink
+# Deployment Guide для LootLink
 
 Полное руководство по развертыванию LootLink в production.
 
 ---
 
-## 📋 Предварительные требования
+## Предварительные требования
 
 - **Сервер**: Ubuntu 20.04+ / Debian 11+ / RHEL 8+
 - **RAM**: минимум 2GB (рекомендуется 4GB+)
@@ -15,7 +15,7 @@
 
 ---
 
-## 🐳 Вариант 1: Docker Deployment (Рекомендуется)
+## Вариант 1: Docker Deployment (Рекомендуется)
 
 ### 1. Установка Docker
 
@@ -122,7 +122,7 @@ docker-compose --profile production up -d nginx
 
 ---
 
-## 🔧 Вариант 2: Manual Deployment (без Docker)
+## Вариант 2: Manual Deployment (без Docker)
 
 ### 1. Установка зависимостей
 
@@ -291,7 +291,7 @@ sudo certbot --nginx -d lootlink.ru -d www.lootlink.ru
 
 ---
 
-## 📊 Мониторинг и обслуживание
+## Мониторинг и обслуживание
 
 ### Логи
 
@@ -396,7 +396,7 @@ curl -I http://lootlink.ru
 
 ---
 
-## 🔒 Security Checklist
+## Security Checklist
 
 - [ ] `DEBUG=False` в production
 - [ ] Сильный `SECRET_KEY` (64+ символов)
@@ -460,7 +460,7 @@ sudo systemctl restart fail2ban
 
 ---
 
-## 📈 Performance Tuning
+## Performance Tuning
 
 ### PostgreSQL
 
@@ -504,14 +504,14 @@ maxmemory-policy allkeys-lru
 
 ---
 
-## 🔄 CI/CD через GitHub Actions
+## CI/CD через GitHub Actions
 
 При push в main:
-1. ✅ Запускаются тесты
-2. ✅ Проверяются линтеры
-3. ✅ Сканируется безопасность
-4. ✅ Собирается Docker image
-5. ✅ Deploy на сервер (опционально)
+1. Запускаются тесты
+2. Проверяются линтеры
+3. Сканируется безопасность
+4. Собирается Docker image
+5. Deploy на сервер (опционально)
 
 См. `.github/workflows/django.yml`.
 
@@ -582,7 +582,7 @@ bash scripts/deploy_with_smoke.sh
 
 ---
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 ### 500 Internal Server Error
 
@@ -623,7 +623,7 @@ sudo nano /etc/postgresql/15/main/pg_hba.conf
 
 ---
 
-## 📞 Support
+## Support
 
 Если возникли проблемы при deployment:
 - Создайте issue на GitHub
@@ -632,4 +632,4 @@ sudo nano /etc/postgresql/15/main/pg_hba.conf
 
 ---
 
-**Успешного развертывания! 🚀**
+**Успешного развертывания!**
