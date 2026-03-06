@@ -32,9 +32,9 @@ def create_missing_profiles():
             # Создаем профиль если его нет
             Profile.objects.create(user=user)
             created_count += 1
-            print(f"✓ Создан профиль для пользователя: {user.username}")
+            print(f"[OK] Создан профиль для пользователя: {user.username}")
         except Exception as e:
-            print(f"✗ Ошибка для пользователя {user.username}: {e}")
+            print(f"[ERROR] Ошибка для пользователя {user.username}: {e}")
     
     print("\n" + "="*50)
     print("РЕЗУЛЬТАТЫ:")

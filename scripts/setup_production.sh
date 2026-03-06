@@ -25,19 +25,19 @@ NC='\033[0m'
 
 # Функции вывода
 log() {
-    echo -e "${GREEN}[✓]${NC} $1"
+    echo -e "${GREEN}[OK]${NC} $1"
 }
 
 error() {
-    echo -e "${RED}[✗]${NC} $1"
+    echo -e "${RED}[ERROR]${NC} $1"
 }
 
 warning() {
-    echo -e "${YELLOW}[!]${NC} $1"
+    echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
 info() {
-    echo -e "${BLUE}[ℹ]${NC} $1"
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
 # Проверка прав root

@@ -67,7 +67,7 @@ class LoginHistory(models.Model):
         ]
     
     def __str__(self):
-        status = '✓' if self.success else '✗'
+        status = 'OK' if self.success else 'FAIL'
         return f'{status} {self.user.username} - {self.ip_address} - {self.created_at}'
     
     @classmethod

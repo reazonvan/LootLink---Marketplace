@@ -36,22 +36,22 @@ BACKUP_FILE_GZ="$BACKUP_FILE.gz"
 # Создаём бекап
 echo -e "${YELLOW}Creating backup...${NC}"
 if pg_dump -U "$DB_USER" -h "$DB_HOST" -p "$DB_PORT" "$DB_NAME" > "$BACKUP_FILE"; then
-    echo -e "${GREEN}✓ Backup created: $BACKUP_FILE${NC}"
-    
+    echo -e "${GREEN}OK: Backup created: $BACKUP_FILE${NC}"
+
     # Сжимаем бекап
     echo -e "${YELLOW}Compressing backup...${NC}"
     if gzip "$BACKUP_FILE"; then
-        echo -e "${GREEN}✓ Backup compressed: $BACKUP_FILE_GZ${NC}"
-        
+        echo -e "${GREEN}OK: Backup compressed: $BACKUP_FILE_GZ${NC}"
+
         # Показываем размер файла
         FILESIZE=$(du -h "$BACKUP_FILE_GZ" | cut -f1)
         echo -e "${GREEN}Backup size: $FILESIZE${NC}"
     else
-        echo -e "${RED}✗ Failed to compress backup${NC}"
+        echo -e "${RED}ERROR: Failed to compress backup${NC}"
         exit 1
     fi
 else
-    echo -e "${RED}✗ Failed to create backup${NC}"
+    echo -e "${RED}ERROR: Failed to create backup${NC}"
     exit 1
 fi
 
@@ -60,9 +60,9 @@ echo -e "${YELLOW}Cleaning old backups (older than $RETENTION_DAYS days)...${NC}
 DELETED_COUNT=$(find "$BACKUP_DIR" -name "lootlink_backup_*.sql.gz" -mtime +$RETENTION_DAYS -delete -print | wc -l)
 
 if [ "$DELETED_COUNT" -gt 0 ]; then
-    echo -e "${GREEN}✓ Deleted $DELETED_COUNT old backup(s)${NC}"
+    echo -e "${GREEN}OK: Deleted $DELETED_COUNT old backup(s)${NC}"
 else
-    echo -e "${GREEN}✓ No old backups to delete${NC}"
+    echo -e "${GREEN}OK: No old backups to delete${NC}"
 fi
 
 # Показываем список всех бекапов
