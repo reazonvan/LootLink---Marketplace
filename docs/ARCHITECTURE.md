@@ -1,10 +1,10 @@
-# 🏗️ Архитектура LootLink
+# Архитектура LootLink
 
 Полное описание архитектуры проекта LootLink.
 
 ---
 
-## 📊 Общая архитектура
+## Общая архитектура
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -221,7 +221,7 @@ setInterval(() => {
 
 ---
 
-## 🔐 Безопасность
+## Безопасность
 
 ### 1. CSRF Protection
 ```python
@@ -276,7 +276,7 @@ Content-Security-Policy:
 
 ---
 
-## 🗃️ База данных
+## База данных
 
 ### Schema Diagram
 
@@ -367,7 +367,7 @@ CustomUser ──1:1─→ Profile
 
 ---
 
-## 📱 Frontend Architecture
+## Frontend Architecture
 
 ### Templates Hierarchy
 
@@ -472,18 +472,18 @@ POST /listing/<id>/favorite/
 
 ---
 
-## 📊 Performance Optimizations
+## Performance Optimizations
 
 ### 1. Database Queries
 
 **N+1 Problem Solution:**
 ```python
-# ❌ BAD
+# BAD
 listings = Listing.objects.all()
 for listing in listings:
     print(listing.seller.username)  # N+1 запросов!
 
-# ✅ GOOD
+# GOOD
 listings = Listing.objects.select_related('seller').all()
 for listing in listings:
     print(listing.seller.username)  # 1 запрос
