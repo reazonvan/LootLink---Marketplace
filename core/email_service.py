@@ -63,7 +63,7 @@ class EmailService:
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 Сброс Пароля</h1>
+            <h1>Сброс Пароля</h1>
             <p>LootLink Marketplace</p>
         </div>
         <div class="content">
@@ -159,7 +159,7 @@ class EmailService:
 <body>
     <div class="container">
         <div class="header">
-            <h1>✉️ Подтверждение Email</h1>
+            <h1>Подтверждение Email</h1>
             <p>LootLink Marketplace</p>
         </div>
         <div class="content">

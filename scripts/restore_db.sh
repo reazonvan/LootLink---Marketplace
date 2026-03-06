@@ -34,7 +34,7 @@ BACKUP_FILE="$1"
 
 # Проверяем существование файла
 if [ ! -f "$BACKUP_FILE" ]; then
-    echo -e "${RED}✗ Backup file not found: $BACKUP_FILE${NC}"
+    echo -e "${RED}ERROR: Backup file not found: $BACKUP_FILE${NC}"
     exit 1
 fi
 
@@ -58,7 +58,7 @@ if [[ "$BACKUP_FILE" == *.gz ]]; then
     TEMP_FILE="/tmp/lootlink_restore_$$.sql"
     gunzip -c "$BACKUP_FILE" > "$TEMP_FILE"
     RESTORE_FILE="$TEMP_FILE"
-    echo -e "${GREEN}✓ Backup decompressed${NC}"
+    echo -e "${GREEN}OK: Backup decompressed${NC}"
 else
     RESTORE_FILE="$BACKUP_FILE"
 fi
@@ -69,27 +69,27 @@ dropdb -U "$DB_USER" -h "$DB_HOST" -p "$DB_PORT" "$DB_NAME" 2>/dev/null || echo 
 
 echo -e "${YELLOW}Creating new database...${NC}"
 createdb -U "$DB_USER" -h "$DB_HOST" -p "$DB_PORT" "$DB_NAME"
-echo -e "${GREEN}✓ New database created${NC}"
+echo -e "${GREEN}OK: New database created${NC}"
 
 # Восстанавливаем данные
 echo -e "${YELLOW}Restoring data...${NC}"
 if psql -U "$DB_USER" -h "$DB_HOST" -p "$DB_PORT" "$DB_NAME" < "$RESTORE_FILE"; then
-    echo -e "${GREEN}✓ Data restored successfully${NC}"
+    echo -e "${GREEN}OK: Data restored successfully${NC}"
 else
-    echo -e "${RED}✗ Failed to restore data${NC}"
-    
+    echo -e "${RED}ERROR: Failed to restore data${NC}"
+
     # Удаляем временный файл
     if [ -n "$TEMP_FILE" ] && [ -f "$TEMP_FILE" ]; then
         rm "$TEMP_FILE"
     fi
-    
+
     exit 1
 fi
 
 # Удаляем временный файл
 if [ -n "$TEMP_FILE" ] && [ -f "$TEMP_FILE" ]; then
     rm "$TEMP_FILE"
-    echo -e "${GREEN}✓ Temporary file cleaned${NC}"
+    echo -e "${GREEN}OK: Temporary file cleaned${NC}"
 fi
 
 echo ""

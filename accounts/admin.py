@@ -16,29 +16,29 @@ class CustomUserAdmin(UserAdmin):
     def role_display(self, obj):
         """Отображение роли"""
         if obj.is_superuser:
-            return format_html('<span style="color: #dc2626; font-weight: bold;">👑 Владелец</span>')
+            return format_html('<span style="color: #dc2626; font-weight: bold;">Владелец</span>')
         elif obj.is_staff:
-            return format_html('<span style="color: #2563eb; font-weight: bold;">🛡️ Админ</span>')
+            return format_html('<span style="color: #2563eb; font-weight: bold;">Админ</span>')
         elif hasattr(obj, 'profile') and obj.profile.is_moderator:
-            return format_html('<span style="color: #059669; font-weight: bold;">⚖️ Модератор</span>')
+            return format_html('<span style="color: #059669; font-weight: bold;">Модератор</span>')
         elif hasattr(obj, 'profile') and obj.profile.is_verified:
-            return format_html('<span style="color: #64748b;">✓ Верифицирован</span>')
+            return format_html('<span style="color: #64748b;">Верифицирован</span>')
         else:
-            return format_html('<span style="color: #9ca3af;">👤 Пользователь</span>')
+            return format_html('<span style="color: #9ca3af;">Пользователь</span>')
     role_display.short_description = 'Роль'
-    
+
     def is_verified_display(self, obj):
         """Статус верификации"""
         if hasattr(obj, 'profile') and obj.profile.is_verified:
             return format_html('<span style="color: #10b981;">✓</span>')
         return format_html('<span style="color: #ef4444;">✗</span>')
     is_verified_display.short_description = 'Verified'
-    
+
     def rating_display(self, obj):
         """Рейтинг"""
         if hasattr(obj, 'profile'):
             rating = obj.profile.rating
-            stars = '⭐' * int(rating)
+            stars = '★' * int(rating)
             return format_html(f'{stars} {rating:.1f}')
         return '-'
     rating_display.short_description = 'Рейтинг'
