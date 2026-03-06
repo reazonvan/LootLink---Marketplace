@@ -248,10 +248,10 @@ class Command(BaseCommand):
                     # Ищем категорию
                     category = Category.objects.filter(game=game, name__icontains=category_name).first()
                     if not category:
-                        self.stdout.write(f'  ⚠️  Категория "{category_name}" не найдена')
+                        self.stdout.write(f'  Категория "{category_name}" не найдена')
                         continue
-                    
-                    self.stdout.write(f'  📁 {category.name}')
+
+                    self.stdout.write(f'  {category.name}')
                     
                     for filter_data in filters:
                         # Создаем или обновляем фильтр
@@ -290,6 +290,6 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f'Создано фильтров: {created_filters}'))
         self.stdout.write(self.style.SUCCESS(f'Создано опций: {created_options}'))
         self.stdout.write('=' * 60)
-        self.stdout.write('\n💡 Фильтры доступны в админке Django')
-        self.stdout.write('🌐 Они автоматически появятся на страницах категорий\n')
+        self.stdout.write('\nФильтры доступны в админке Django')
+        self.stdout.write('Они автоматически появятся на страницах категорий\n')
 
