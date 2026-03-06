@@ -264,5 +264,5 @@ class TestReviewIDOR:
         assert review.comment == 'Great buyer!'
 
 
-print("✅ Тесты IDOR защиты созданы")
+print("Тесты IDOR защиты созданы")
 

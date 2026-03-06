@@ -18,14 +18,14 @@ def clear_all_cache():
     """Очищает весь кэш Django."""
     try:
         cache.clear()
-        print("✅ Кэш успешно очищен!")
+        print("Кэш успешно очищен!")
         return True
     except Exception as e:
-        print(f"❌ Ошибка при очистке кэша: {e}")
+        print(f"Ошибка при очистке кэша: {e}")
         return False
 
 if __name__ == '__main__':
-    print("🔄 Очистка кэша Django...")
+    print("Очистка кэша Django...")
     success = clear_all_cache()
     sys.exit(0 if success else 1)
 

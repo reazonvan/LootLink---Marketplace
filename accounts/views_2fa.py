@@ -104,10 +104,10 @@ def verify_2fa(request):
             request=request
         )
         
-        messages.success(request, '✅ Двухфакторная аутентификация успешно настроена!')
+        messages.success(request, 'Двухфакторная аутентификация успешно настроена!')
         return redirect('accounts:profile', username=user.username)
     else:
-        messages.error(request, '❌ Неверный код. Попробуйте еще раз.')
+        messages.error(request, 'Неверный код. Попробуйте еще раз.')
         return redirect('accounts:setup_2fa')
 
 
