@@ -245,7 +245,7 @@ function escapeHtml(text) {
 ### 3. SQL Injection Protection
 ```python
 # Django ORM автоматически параметризует запросы
-Listing.objects.filter(title__icontains=search)  # ✅ Safe
+Listing.objects.filter(title__icontains=search)  # Safe
 ```
 
 ### 4. Rate Limiting
