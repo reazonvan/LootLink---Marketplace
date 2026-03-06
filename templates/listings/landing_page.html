@@ -271,7 +271,7 @@
                     <div class="seller-rating-large">
                         <span class="rating-stars">
                             {% for i in "12345" %}
-                                {% if i|add:"0" <= seller.rating %}⭐{% endif %}
+                                {% if i|add:"0" <= seller.rating %}★{% endif %}
                             {% endfor %}
                         </span>
                         <span class="rating-value">{{ seller.rating|floatformat:1 }}</span>
@@ -398,12 +398,12 @@
                         <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
                                 <strong>Многоуровневая система защиты:</strong><br>
-                                ✅ Система рейтингов и отзывов<br>
-                                ✅ Верификация продавцов<br>
-                                ✅ Возможность подать жалобу<br>
-                                ✅ Техподдержка 24/7<br>
-                                ✅ Возврат средств при доказанном обмане<br>
-                                ✅ Все переписки сохраняются<br><br>
+                                • Система рейтингов и отзывов<br>
+                                • Верификация продавцов<br>
+                                • Возможность подать жалобу<br>
+                                • Техподдержка 24/7<br>
+                                • Возврат средств при доказанном обмане<br>
+                                • Все переписки сохраняются<br><br>
                                 <em>Ваша безопасность - наш приоритет!</em>
                             </div>
                         </div>

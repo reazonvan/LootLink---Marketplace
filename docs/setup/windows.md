@@ -1,14 +1,14 @@
 # Windows Setup Guide - LootLink
 
-## 🔧 Исправлено: Python не найден
+## Исправлено: Python не найден
 
 Обновлены конфигурационные файлы для Windows:
-- ✅ `.vscode/tasks.json` - использует Python из VS Code
-- ✅ `.vscode/settings.json` - Windows пути
+- `.vscode/tasks.json` - использует Python из VS Code
+- `.vscode/settings.json` - Windows пути
 
 ---
 
-## 📋 Следующие шаги (5 минут)
+## Следующие шаги (5 минут)
 
 ### Шаг 1: Выбрать Python интерпретатор
 
@@ -114,7 +114,7 @@ python manage.py test
 
 ---
 
-## ✅ Проверка что всё работает
+## Проверка что всё работает
 
 ### 1. Python интерпретатор выбран
 ```
@@ -299,7 +299,7 @@ docker-compose down
 
 ---
 
-## ✅ Чеклист готовности
+## Чеклист готовности
 
 - [ ] Python 3.11+ установлен
 - [ ] venv создан и активирован

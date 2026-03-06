@@ -162,11 +162,11 @@ try:
     cache.set('test_key', 'test_value', 10)
     value = cache.get('test_key')
     if value == 'test_value':
-        print('✅ Redis работает!')
+        print('[OK] Redis работает!')
     else:
-        print('❌ Redis не отвечает')
+        print('[ERROR] Redis не отвечает')
 except Exception as e:
-    print(f'❌ Ошибка Redis: {e}')
+    print(f'[ERROR] Ошибка Redis: {e}')
 ```
 
 ## Graceful Degradation

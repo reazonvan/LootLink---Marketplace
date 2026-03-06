@@ -593,7 +593,7 @@ class ChatWebSocket {
             this.socket = new WebSocket(wsUrl);
             
             this.socket.onopen = () => {
-                console.log('✅ WebSocket подключен');
+                console.log('WebSocket подключен');
                 this.reconnectAttempts = 0;
                 this.showConnectionStatus('connected');
                 this.useWebSocket = true;
@@ -605,7 +605,7 @@ class ChatWebSocket {
             };
             
             this.socket.onclose = (event) => {
-                console.log('❌ WebSocket отключен:', event.code, event.reason);
+                console.log('WebSocket отключен:', event.code, event.reason);
                 this.showConnectionStatus('disconnected');
                 this.useWebSocket = false;
                 
