@@ -1,63 +1,63 @@
 # LootLink Marketplace
 
-> P2P gaming marketplace for trading in-game items between players
+> P2P маркетплейс для торговли внутриигровыми предметами между игроками
 
 [![Live Demo](https://img.shields.io/badge/demo-lootlink.ru-blue)](https://lootlink.ru)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/django-4.2-green.svg)](https://www.djangoproject.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-LootLink is a full-stack web application that enables direct peer-to-peer trading of gaming items. Built with Django and PostgreSQL, it provides a secure platform for gamers to buy, sell, and trade virtual items without intermediaries.
+LootLink — это full-stack веб-приложение для прямой торговли игровыми предметами между игроками. Построено на Django и PostgreSQL, предоставляет безопасную платформу для покупки, продажи и обмена виртуальных предметов без посредников.
 
-**Live Demo:** [lootlink.ru](https://lootlink.ru)
-
----
-
-## Table of Contents
-
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [API Documentation](#api-documentation)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [Performance](#performance)
-- [Security](#security)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
+**Демо:** [lootlink.ru](https://lootlink.ru)
 
 ---
 
-## Features
+## Содержание
 
-### Core Functionality
-- **Marketplace**: Create, browse, and search listings with advanced filtering
-- **Real-time Chat**: Direct messaging between buyers and sellers
-- **Transaction System**: Formalized purchase requests with status tracking
-- **User Profiles**: Reputation system based on completed transactions
-- **Review System**: Ratings and feedback for users
-- **Email Verification**: Account verification via email
-- **Admin Panel**: Custom admin interface for moderation
-
-### Technical Features
-- RESTful API with Django REST Framework
-- Real-time notifications
-- Image upload and optimization
-- Full-text search with PostgreSQL
-- Redis caching for performance
-- Responsive design with Bootstrap 5
-- CSRF protection and security headers
-- Rate limiting and brute-force protection
-- Comprehensive test coverage
+- [Возможности](#возможности)
+- [Технологии](#технологии)
+- [Требования](#требования)
+- [Установка](#установка)
+- [Конфигурация](#конфигурация)
+- [Использование](#использование)
+- [Структура проекта](#структура-проекта)
+- [API документация](#api-документация)
+- [Тестирование](#тестирование)
+- [Развертывание](#развертывание)
+- [Производительность](#производительность)
+- [Безопасность](#безопасность)
+- [Участие в разработке](#участие-в-разработке)
+- [Лицензия](#лицензия)
+- [Контакты](#контакты)
 
 ---
 
-## Tech Stack
+## Возможности
+
+### Основной функционал
+- **Маркетплейс**: Создание, просмотр и поиск объявлений с расширенной фильтрацией
+- **Чат в реальном времени**: Прямой обмен сообщениями между покупателями и продавцами
+- **Система транзакций**: Формализованные запросы на покупку с отслеживанием статуса
+- **Профили пользователей**: Система репутации на основе завершенных сделок
+- **Система отзывов**: Рейтинги и отзывы о пользователях
+- **Верификация email**: Подтверждение аккаунта через электронную почту
+- **Панель администратора**: Кастомный интерфейс администратора для модерации
+
+### Технические возможности
+- RESTful API на Django REST Framework
+- Уведомления в реальном времени
+- Загрузка и оптимизация изображений
+- Полнотекстовый поиск с PostgreSQL
+- Кэширование с Redis для производительности
+- Адаптивный дизайн на Bootstrap 5
+- CSRF защита и заголовки безопасности
+- Rate limiting и защита от brute-force атак
+- Комплексное покрытие тестами
+
+---
+
+## Технологии
 
 **Backend:**
 - Python 3.10+
@@ -65,7 +65,7 @@ LootLink is a full-stack web application that enables direct peer-to-peer tradin
 - Django REST Framework 3.16
 - PostgreSQL 15
 - Redis 7.0
-- Celery 5.5 (async tasks)
+- Celery 5.5 (асинхронные задачи)
 - Django Channels 4.0 (WebSockets)
 
 **Frontend:**
@@ -74,13 +74,13 @@ LootLink is a full-stack web application that enables direct peer-to-peer tradin
 - jQuery 3.6
 - HTML5/CSS3
 
-**Infrastructure:**
+**Инфраструктура:**
 - Docker & Docker Compose
 - Nginx 1.24
 - Gunicorn
 - Systemd (production)
 
-**Development:**
+**Разработка:**
 - Git
 - pytest
 - flake8, black, isort
@@ -88,33 +88,33 @@ LootLink is a full-stack web application that enables direct peer-to-peer tradin
 
 ---
 
-## Prerequisites
+## Требования
 
-Before installation, ensure you have:
+Перед установкой убедитесь, что у вас установлено:
 
-- Python 3.10 or higher
+- Python 3.10 или выше
 - PostgreSQL 15+
-- Redis 7.0+ (optional, for caching)
+- Redis 7.0+ (опционально, для кэширования)
 - Git
-- Virtual environment tool (venv or virtualenv)
+- Инструмент для виртуального окружения (venv или virtualenv)
 
-For Docker deployment:
+Для развертывания через Docker:
 - Docker 20.10+
 - Docker Compose 2.0+
 
 ---
 
-## Installation
+## Установка
 
-### Local Development
+### Локальная разработка
 
-1. **Clone the repository**
+1. **Клонируйте репозиторий**
 ```bash
 git clone https://github.com/reazonvan/LootLink---Marketplace.git
 cd LootLink---Marketplace
 ```
 
-2. **Create and activate virtual environment**
+2. **Создайте и активируйте виртуальное окружение**
 ```bash
 # Windows
 python -m venv venv
@@ -125,63 +125,63 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-3. **Install dependencies**
+3. **Установите зависимости**
 ```bash
 pip install -r requirements/development.txt
 ```
 
-4. **Set up environment variables**
+4. **Настройте переменные окружения**
 ```bash
 cp env.example.txt .env
-# Edit .env with your configuration
+# Отредактируйте .env с вашими настройками
 ```
 
-5. **Create database**
+5. **Создайте базу данных**
 ```bash
 # PostgreSQL
 createdb lootlink_db
 ```
 
-6. **Run migrations**
+6. **Выполните миграции**
 ```bash
 python manage.py migrate
 ```
 
-7. **Create superuser**
+7. **Создайте суперпользователя**
 ```bash
 python manage.py createsuperuser
 ```
 
-8. **Run development server**
+8. **Запустите сервер разработки**
 ```bash
 python manage.py runserver
 ```
 
-Visit `http://localhost:8000` in your browser.
+Откройте `http://localhost:8000` в браузере.
 
-### Docker Deployment
+### Развертывание через Docker
 
 ```bash
-# Build and start containers
+# Соберите и запустите контейнеры
 docker-compose up -d
 
-# Run migrations
+# Выполните миграции
 docker-compose exec web python manage.py migrate
 
-# Create superuser
+# Создайте суперпользователя
 docker-compose exec web python manage.py createsuperuser
 
-# Collect static files
+# Соберите статические файлы
 docker-compose exec web python manage.py collectstatic --noinput
 ```
 
 ---
 
-## Configuration
+## Конфигурация
 
-### Environment Variables
+### Переменные окружения
 
-Create a `.env` file in the project root with the following variables:
+Создайте файл `.env` в корне проекта со следующими переменными:
 
 ```env
 # Django
@@ -189,14 +189,14 @@ SECRET_KEY=your-secret-key-here
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 
-# Database
+# База данных
 DB_NAME=lootlink_db
 DB_USER=postgres
 DB_PASSWORD=your-password
 DB_HOST=localhost
 DB_PORT=5432
 
-# Redis (optional)
+# Redis (опционально)
 USE_REDIS=True
 REDIS_URL=redis://localhost:6379/1
 
@@ -208,138 +208,138 @@ EMAIL_USE_TLS=True
 EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
 
-# AWS S3 (optional)
+# AWS S3 (опционально)
 USE_S3=False
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_STORAGE_BUCKET_NAME=
 
-# Security (production only)
+# Безопасность (только для production)
 SECURE_SSL_REDIRECT=False
 SESSION_COOKIE_SECURE=False
 CSRF_COOKIE_SECURE=False
 ```
 
-See `env.example.txt` for complete configuration options.
+Полный список настроек смотрите в `env.example.txt`.
 
 ---
 
-## Usage
+## Использование
 
-### Admin Panel
-Access the Django admin at `http://localhost:8000/admin/` with your superuser credentials.
+### Панель администратора
+Доступ к Django admin по адресу `http://localhost:8000/admin/` с учетными данными суперпользователя.
 
-### Creating Listings
-1. Register an account or log in
-2. Navigate to "Create Listing"
-3. Fill in item details and upload an image
-4. Submit for publication
+### Создание объявлений
+1. Зарегистрируйте аккаунт или войдите
+2. Перейдите в "Создать объявление"
+3. Заполните детали предмета и загрузите изображение
+4. Отправьте на публикацию
 
-### Making Purchases
-1. Browse listings or use search/filters
-2. Click on an item to view details
-3. Send a purchase request to the seller
-4. Communicate via built-in chat
-5. Complete the transaction
+### Совершение покупок
+1. Просматривайте объявления или используйте поиск/фильтры
+2. Нажмите на предмет для просмотра деталей
+3. Отправьте запрос на покупку продавцу
+4. Общайтесь через встроенный чат
+5. Завершите транзакцию
 
-### API Access
-API endpoints are available at `/api/`. See [API Documentation](#api-documentation) for details.
+### Доступ к API
+API endpoints доступны по адресу `/api/`. Подробности в разделе [API документация](#api-документация).
 
 ---
 
-## Project Structure
+## Структура проекта
 
 ```
 LootLink---Marketplace/
-├── accounts/           # User authentication and profiles
-├── listings/           # Marketplace listings and categories
-├── chat/              # Real-time messaging system
-├── transactions/      # Purchase requests and reviews
-├── payments/          # Payment processing (future)
+├── accounts/           # Аутентификация и профили пользователей
+├── listings/           # Объявления маркетплейса и категории
+├── chat/              # Система обмена сообщениями в реальном времени
+├── transactions/      # Запросы на покупку и отзывы
+├── payments/          # Обработка платежей (в разработке)
 ├── api/               # REST API endpoints
-├── admin_panel/       # Custom admin interface
-├── core/              # Shared utilities and middleware
-├── config/            # Django settings and configuration
-├── static/            # Static files (CSS, JS, images)
-├── templates/         # HTML templates
-├── nginx/             # Nginx configuration files
-├── scripts/           # Deployment and utility scripts
-├── tests/             # Test suite
-├── docs/              # Documentation
-├── requirements/      # Python dependencies
-│   ├── base.txt       # Core dependencies
-│   ├── development.txt # Development tools
-│   └── production.txt  # Production requirements
+├── admin_panel/       # Кастомный интерфейс администратора
+├── core/              # Общие утилиты и middleware
+├── config/            # Настройки и конфигурация Django
+├── static/            # Статические файлы (CSS, JS, изображения)
+├── templates/         # HTML шаблоны
+├── nginx/             # Конфигурационные файлы Nginx
+├── scripts/           # Скрипты развертывания и утилиты
+├── tests/             # Набор тестов
+├── docs/              # Документация
+├── requirements/      # Python зависимости
+│   ├── base.txt       # Основные зависимости
+│   ├── development.txt # Инструменты разработки
+│   └── production.txt  # Production зависимости
 ├── docker-compose.yml
 ├── Dockerfile
 ├── manage.py
 └── README.md
 ```
 
-### Django Apps
+### Django приложения
 
-- **accounts**: User registration, authentication, profiles, verification
-- **listings**: Item listings, categories, games, favorites
-- **chat**: Conversations and messages between users
-- **transactions**: Purchase requests, transaction history, reviews
-- **payments**: Payment integration (planned)
-- **api**: RESTful API with DRF
-- **admin_panel**: Enhanced admin interface
-- **core**: Middleware, utilities, notifications
+- **accounts**: Регистрация пользователей, аутентификация, профили, верификация
+- **listings**: Объявления о предметах, категории, игры, избранное
+- **chat**: Диалоги и сообщения между пользователями
+- **transactions**: Запросы на покупку, история транзакций, отзывы
+- **payments**: Интеграция платежей (планируется)
+- **api**: RESTful API на DRF
+- **admin_panel**: Расширенный интерфейс администратора
+- **core**: Middleware, утилиты, уведомления
 
 ---
 
-## API Documentation
+## API документация
 
-The REST API provides programmatic access to marketplace functionality.
+REST API предоставляет программный доступ к функционалу маркетплейса.
 
-**Base URL:** `https://lootlink.ru/api/`
+**Базовый URL:** `https://lootlink.ru/api/`
 
-### Authentication
-API uses session-based authentication. Include CSRF token in POST requests.
+### Аутентификация
+API использует session-based аутентификацию. Включайте CSRF токен в POST запросы.
 
 ### Endpoints
 
 ```
-GET    /api/listings/              # List all listings
-GET    /api/listings/{id}/         # Get listing details
-POST   /api/listings/              # Create listing (auth required)
-PUT    /api/listings/{id}/         # Update listing (owner only)
-DELETE /api/listings/{id}/         # Delete listing (owner only)
+GET    /api/listings/              # Список всех объявлений
+GET    /api/listings/{id}/         # Детали объявления
+POST   /api/listings/              # Создать объявление (требуется авторизация)
+PUT    /api/listings/{id}/         # Обновить объявление (только владелец)
+DELETE /api/listings/{id}/         # Удалить объявление (только владелец)
 
-GET    /api/games/                 # List games
-GET    /api/categories/            # List categories
+GET    /api/games/                 # Список игр
+GET    /api/categories/            # Список категорий
 
-GET    /api/conversations/         # List user conversations
-POST   /api/conversations/         # Create conversation
-GET    /api/messages/              # List messages
+GET    /api/conversations/         # Список диалогов пользователя
+POST   /api/conversations/         # Создать диалог
+GET    /api/messages/              # Список сообщений
 
-GET    /api/transactions/          # List user transactions
-POST   /api/transactions/          # Create purchase request
+GET    /api/transactions/          # Список транзакций пользователя
+POST   /api/transactions/          # Создать запрос на покупку
 ```
 
-For complete API documentation, see `docs/API_DOCUMENTATION.md`.
+Полная документация API доступна в `docs/API_DOCUMENTATION.md`.
 
 ---
 
-## Testing
+## Тестирование
 
-### Run Tests
+### Запуск тестов
 
 ```bash
-# All tests
+# Все тесты
 python manage.py test
 
-# Specific app
+# Конкретное приложение
 python manage.py test accounts
 
-# With coverage
+# С покрытием кода
 coverage run --source='.' manage.py test
 coverage report
 coverage html
 ```
 
-### Test Structure
+### Структура тестов
 
 ```
 tests/
@@ -350,94 +350,94 @@ tests/
 └── test_integration.py
 ```
 
-### Linting
+### Линтеры
 
 ```bash
 # Flake8
 flake8 . --exclude=migrations,venv
 
-# Black formatting
+# Black форматирование
 black . --exclude="migrations|venv"
 
-# Import sorting
+# Сортировка импортов
 isort . --skip migrations --skip venv
 ```
 
 ---
 
-## Deployment
+## Развертывание
 
-### Production Checklist
+### Production чеклист
 
-- [ ] Set `DEBUG=False`
-- [ ] Generate strong `SECRET_KEY`
-- [ ] Configure `ALLOWED_HOSTS`
-- [ ] Set up SSL/TLS certificates
-- [ ] Configure production database
-- [ ] Set up Redis for caching
-- [ ] Configure email backend
-- [ ] Set up static file serving
-- [ ] Configure Nginx/Apache
-- [ ] Set up monitoring (Sentry)
-- [ ] Configure automated backups
-- [ ] Set up firewall rules
+- [ ] Установить `DEBUG=False`
+- [ ] Сгенерировать надежный `SECRET_KEY`
+- [ ] Настроить `ALLOWED_HOSTS`
+- [ ] Настроить SSL/TLS сертификаты
+- [ ] Настроить production базу данных
+- [ ] Настроить Redis для кэширования
+- [ ] Настроить email backend
+- [ ] Настроить раздачу статических файлов
+- [ ] Настроить Nginx/Apache
+- [ ] Настроить мониторинг (Sentry)
+- [ ] Настроить автоматические бэкапы
+- [ ] Настроить правила firewall
 
-### Deployment Guide
+### Руководство по развертыванию
 
-See `docs/DEPLOYMENT.md` for detailed production deployment instructions including:
-- Server setup
-- Nginx configuration
-- SSL with Let's Encrypt
-- Systemd service configuration
-- Database optimization
-- Security hardening
+Подробные инструкции по production развертыванию смотрите в `docs/DEPLOYMENT.md`, включая:
+- Настройка сервера
+- Конфигурация Nginx
+- SSL с Let's Encrypt
+- Конфигурация Systemd сервиса
+- Оптимизация базы данных
+- Усиление безопасности
 
-### Quick Deploy
+### Быстрое развертывание
 
 ```bash
-# Using provided script
+# Используя предоставленный скрипт
 bash scripts/deploy_with_smoke.sh
 ```
 
 ---
 
-## Performance
+## Производительность
 
-### Optimization Techniques
+### Техники оптимизации
 
-- **Database**: Query optimization with `select_related` and `prefetch_related`
-- **Caching**: Redis caching for frequently accessed data
-- **Static Files**: CDN delivery and minification
-- **Images**: Automatic compression and optimization
-- **Indexes**: Database indexes on frequently queried fields
-- **Connection Pooling**: Persistent database connections
+- **База данных**: Оптимизация запросов с `select_related` и `prefetch_related`
+- **Кэширование**: Redis кэширование для часто запрашиваемых данных
+- **Статические файлы**: CDN доставка и минификация
+- **Изображения**: Автоматическое сжатие и оптимизация
+- **Индексы**: Индексы базы данных на часто запрашиваемых полях
+- **Connection Pooling**: Постоянные соединения с базой данных
 
-### Benchmarks
+### Бенчмарки
 
-- Average page load: < 200ms
-- API response time: < 100ms
-- Concurrent users: 1000+
-- Database queries per page: < 10
+- Среднее время загрузки страницы: < 200ms
+- Время ответа API: < 100ms
+- Одновременные пользователи: 1000+
+- Запросов к БД на страницу: < 10
 
 ---
 
-## Security
+## Безопасность
 
-### Implemented Security Measures
+### Реализованные меры безопасности
 
-- **CSRF Protection**: Django CSRF tokens on all forms
-- **SQL Injection**: ORM-based queries prevent SQL injection
-- **XSS Protection**: Template auto-escaping and CSP headers
-- **Password Security**: PBKDF2 hashing with salt
-- **Session Security**: Secure, HttpOnly cookies
-- **Rate Limiting**: Brute-force protection on login/registration
-- **Email Verification**: Required for account activation
-- **HTTPS**: SSL/TLS encryption in production
-- **Security Headers**: X-Frame-Options, X-Content-Type-Options, etc.
+- **CSRF защита**: Django CSRF токены на всех формах
+- **SQL инъекции**: ORM-запросы предотвращают SQL инъекции
+- **XSS защита**: Автоматическое экранирование шаблонов и CSP заголовки
+- **Безопасность паролей**: PBKDF2 хэширование с солью
+- **Безопасность сессий**: Secure, HttpOnly cookies
+- **Rate Limiting**: Защита от brute-force атак на login/регистрацию
+- **Верификация Email**: Требуется для активации аккаунта
+- **HTTPS**: SSL/TLS шифрование в production
+- **Заголовки безопасности**: X-Frame-Options, X-Content-Type-Options и др.
 
-### Security Audit
+### Аудит безопасности
 
-Run security checks:
+Запуск проверок безопасности:
 ```bash
 python manage.py check --deploy
 bandit -r . -x ./venv
@@ -446,49 +446,49 @@ safety check
 
 ---
 
-## Contributing
+## Участие в разработке
 
-Contributions are welcome! Please follow these steps:
+Мы приветствуем вклад в проект! Пожалуйста, следуйте этим шагам:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Сделайте Fork репозитория
+2. Создайте ветку для новой функции (`git checkout -b feature/amazing-feature`)
+3. Закоммитьте ваши изменения (`git commit -m 'Add amazing feature'`)
+4. Отправьте изменения в ветку (`git push origin feature/amazing-feature`)
+5. Откройте Pull Request
 
-### Development Guidelines
+### Рекомендации по разработке
 
-- Follow PEP 8 style guide
-- Write tests for new features
-- Update documentation as needed
-- Run linters before committing
-- Keep commits atomic and well-described
+- Следуйте PEP 8 style guide
+- Пишите тесты для новых функций
+- Обновляйте документацию при необходимости
+- Запускайте линтеры перед коммитом
+- Делайте атомарные и хорошо описанные коммиты
 
-See `CONTRIBUTING.md` for detailed guidelines.
-
----
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Подробные рекомендации смотрите в `CONTRIBUTING.md`.
 
 ---
 
-## Contact
+## Лицензия
 
-**Developer:** Ivan Petrov
+Этот проект распространяется под лицензией MIT License - подробности смотрите в файле [LICENSE](LICENSE).
+
+---
+
+## Контакты
+
+**Разработчик:** Иван Петров
 **Email:** ivanpetrov20066.ip@gmail.com
-**Demo:** [lootlink.ru](https://lootlink.ru)
+**Демо:** [lootlink.ru](https://lootlink.ru)
 **Issues:** [GitHub Issues](https://github.com/reazonvan/LootLink---Marketplace/issues)
 
 ---
 
-## Acknowledgments
+## Благодарности
 
-- Django community for excellent documentation
-- Bootstrap team for the UI framework
-- All contributors and testers
+- Django сообществу за отличную документацию
+- Команде Bootstrap за UI фреймворк
+- Всем участникам и тестировщикам
 
 ---
 
-**[⬆ Back to Top](#lootlink-marketplace)**
+**[⬆ Вернуться к началу](#lootlink-marketplace)**
