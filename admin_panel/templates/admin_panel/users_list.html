@@ -104,11 +104,11 @@
                     </td>
                     <td>
                         {% if user.is_superuser %}
-                        <span class="badge" style="background: var(--admin-danger);">👑 Владелец</span>
+                        <span class="badge" style="background: var(--admin-danger);">Владелец</span>
                         {% elif user.is_staff %}
-                        <span class="badge" style="background: var(--admin-primary);">🛡️ Админ</span>
+                        <span class="badge" style="background: var(--admin-primary);">Админ</span>
                         {% elif user.profile.is_moderator %}
-                        <span class="badge" style="background: var(--admin-success);">⚖️ Модератор</span>
+                        <span class="badge" style="background: var(--admin-success);">Модератор</span>
                         {% else %}
                         <span class="badge bg-secondary">Пользователь</span>
                         {% endif %}
