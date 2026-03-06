@@ -180,7 +180,7 @@ def listing_create(request):
     if hasattr(profile, 'is_verified') and not profile.is_verified:
         messages.warning(
             request,
-            '⚠️ Рекомендуем подтвердить email для повышения доверия к вашим объявлениям. '
+            'Рекомендуем подтвердить email для повышения доверия к вашим объявлениям. '
             '<a href="/accounts/resend-verification/" class="alert-link">Отправить письмо повторно</a>',
             extra_tags='safe'  # Разрешаем HTML в сообщении
         )

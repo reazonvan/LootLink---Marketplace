@@ -43,7 +43,7 @@ echo "Database: $DB_NAME"
 echo ""
 
 # Предупреждение
-echo -e "${RED}⚠️  WARNING: This will DESTROY all data in database '$DB_NAME'${NC}"
+echo -e "${RED}WARNING: This will DESTROY all data in database '$DB_NAME'${NC}"
 read -p "Are you sure you want to continue? (yes/no): " -r
 echo
 
