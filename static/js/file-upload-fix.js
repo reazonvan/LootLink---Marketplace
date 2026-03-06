@@ -54,14 +54,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Проверка типа
             if (!file.type.match('image.*')) {
-                alert('❌ Пожалуйста, выберите изображение (JPG, PNG, GIF)');
+                alert('Пожалуйста, выберите изображение (JPG, PNG, GIF)');
                 input.value = '';
                 return;
             }
-            
+
             // Проверка размера (5MB)
             if (file.size > 5 * 1024 * 1024) {
-                alert('❌ Файл слишком большой! Максимум 5 МБ');
+                alert('Файл слишком большой! Максимум 5 МБ');
                 input.value = '';
                 return;
             }

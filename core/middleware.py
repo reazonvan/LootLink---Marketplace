@@ -57,7 +57,7 @@ class SimpleRateLimitMiddleware:
                     f'Rate limit exceeded: {request.path} | User: {user} | IP: {ip}'
                 )
                 return HttpResponseForbidden(
-                    '❌ Слишком много попыток. Пожалуйста, подождите несколько минут.'
+                    'Слишком много попыток. Пожалуйста, подождите несколько минут.'
                 )
         
         response = self.get_response(request)

@@ -31,7 +31,7 @@ def verify_email(request, token):
         # Верифицируем
         verification.verify()
         
-        messages.success(request, '✅ Email успешно верифицирован! Теперь вы можете пользоваться всеми функциями сайта.')
+        messages.success(request, 'Email успешно верифицирован! Теперь вы можете пользоваться всеми функциями сайта.')
         return redirect('accounts:profile', username=verification.user.username)
         
     except EmailVerification.DoesNotExist:
@@ -176,7 +176,7 @@ def phone_verification_confirm(request):
                 del request.session['phone_verification_phone']
                 del request.session['phone_verification_expires']
                 
-                messages.success(request, '✅ Телефон успешно верифицирован!')
+                messages.success(request, 'Телефон успешно верифицирован!')
                 return redirect('accounts:verification_status')
             else:
                 messages.error(request, 'Неверный код верификации.')

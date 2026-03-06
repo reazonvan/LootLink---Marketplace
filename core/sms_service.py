@@ -30,13 +30,13 @@ class SMSService:
             bool: True если отправлено успешно, False если ошибка
         """
         if not self.enabled:
-            logger.info(f'📱 SMS отключены. Сообщение для {phone}: {message}')
-            print(f'\n📱 SMS (отключено): {phone}\n{message}\n')
+            logger.info(f'SMS отключены. Сообщение для {phone}: {message}')
+            print(f'\nSMS (отключено): {phone}\n{message}\n')
             return True
-        
+
         if not self.api_id:
             logger.error('SMS_RU_API_KEY не настроен!')
-            print(f'\n⚠️ SMS_RU_API_KEY не настроен. Сообщение для {phone}:\n{message}\n')
+            print(f'\nSMS_RU_API_KEY не настроен. Сообщение для {phone}:\n{message}\n')
             return False
         
         try:
@@ -56,17 +56,17 @@ class SMSService:
             
             # Проверяем статус
             if data.get('status') == 'OK':
-                logger.info(f'✅ SMS успешно отправлено на {phone}')
+                logger.info(f'SMS успешно отправлено на {phone}')
                 return True
             else:
                 error_code = data.get('status_code')
                 error_text = data.get('status_text', 'Unknown error')
-                logger.error(f'❌ Ошибка отправки SMS: {error_code} - {error_text}')
+                logger.error(f'Ошибка отправки SMS: {error_code} - {error_text}')
                 return False
-                
+
         except Exception as e:
-            logger.error(f'❌ Исключение при отправке SMS: {e}')
-            print(f'\n⚠️ Ошибка отправки SMS на {phone}: {e}\n{message}\n')
+            logger.error(f'Исключение при отправке SMS: {e}')
+            print(f'\nОшибка отправки SMS на {phone}: {e}\n{message}\n')
             return False
     
     def send_verification_code(self, phone, code):
