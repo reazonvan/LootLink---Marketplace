@@ -167,7 +167,7 @@ class WebSocketChat {
         if (messageDiv) {
             const timeElement = messageDiv.querySelector('.message-time');
             if (timeElement) {
-                timeElement.innerHTML = timeElement.innerHTML.replace('✓', '✓✓');
+                timeElement.innerHTML = timeElement.innerHTML.replace('✔', '✔✔');
             }
         }
     }
