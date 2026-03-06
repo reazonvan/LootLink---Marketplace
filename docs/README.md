@@ -17,10 +17,15 @@
 - **[Руководство по установке](SETUP_GUIDE.md)** - полная инструкция по установке
 - **[Развертывание](DEPLOYMENT.md)** - деплой в production
 - **[Чеклист развертывания](deployment/checklist.md)** - проверка перед запуском
-- **[Настройка Celery](CELERY_SETUP.md)** - асинхронные задачи
-- **[Настройка Email](EMAIL_PRODUCTION_SETUP.md)** - отправка писем
-- **[Настройка Redis](REDIS_USAGE.md)** - кэширование и сессии
-- **[Настройка бэкапов](BACKUP_SETUP.md)** - резервное копирование
+- **[Настройка бэкапов](deployment/BACKUP_SETUP.md)** - резервное копирование
+
+### Технические компоненты
+
+- **[Настройка Celery](setup/CELERY_SETUP.md)** - асинхронные задачи
+- **[Настройка Redis](setup/REDIS_USAGE.md)** - кэширование и сессии
+- **[Настройка Email (Production)](setup/EMAIL_PRODUCTION_SETUP.md)** - отправка писем
+- **[Настройка Email и SMS](setup/EMAIL_SMS_SETUP.md)** - уведомления
+- **[Кастомная админ-панель](setup/CUSTOM_ADMIN_PANEL.md)** - расширенная админка
 
 ---
 
@@ -41,17 +46,6 @@
 ## 🎨 Дизайн
 
 - **[Рабочий процесс дизайна](design/workflow.md)** - работа с дизайном
-- **[Принципы дизайна](DESIGN_PRINCIPLES.md)** - дизайн-система
-- **[Гайд по Pencil](PENCIL_DESIGN_GUIDE.md)** - работа с Pencil
-
----
-
-## 🛠️ Разработка
-
-- **[VS Code быстрый старт](VSCODE_QUICKSTART.md)** - настройка VS Code
-- **[Оптимизация с Claude](CLAUDE_OPTIMIZATION_GUIDE.md)** - работа с Claude AI
-- **[Библиотека промптов](PROMPT_LIBRARY.md)** - полезные промпты
-- **[Анализ конкурентов](COMPETITOR_ANALYSIS.md)** - исследование рынка
 
 ---
 
@@ -65,17 +59,6 @@
 ## 📖 Справочники
 
 - **[Быстрый справочник](reference/quick-reference.md)** - команды и шпаргалки
-- **[Оптимизация](OPTIMIZATION_SUMMARY.md)** - советы по оптимизации
-- **[Дорожная карта улучшений](IMPROVEMENT_ROADMAP.md)** - планы развития
-
----
-
-## 🎯 Дополнительно
-
-- **[Использование бейджей](BADGES_USAGE_EXAMPLES.md)** - бейджи пользователей
-- **[Email и SMS](EMAIL_SMS_SETUP.md)** - настройка уведомлений
-- **[Задачи редизайна](REDESIGN_TASKS.md)** - планы по дизайну
-- **[Фаза 1 реализации](PHASE1_IMPLEMENTATION.md)** - история разработки
 
 ---
 
@@ -83,11 +66,11 @@
 
 ```
 docs/
-├── setup/              # Установка и настройка
-├── deployment/         # Развертывание
+├── setup/              # Установка и настройка компонентов
+├── deployment/         # Развертывание и бэкапы
 ├── troubleshooting/    # Решение проблем
 ├── design/             # Дизайн и UI/UX
-└── reference/          # Справочники
+└── reference/          # Справочники и шпаргалки
 ```
 
 ---
@@ -95,9 +78,3 @@ docs/
 ## 🤝 Вклад в проект
 
 См. [CONTRIBUTING.md](../CONTRIBUTING.md) в корне проекта.
-
----
-
-## 📋 Правила проекта
-
-См. [PROJECT_RULES.md](../PROJECT_RULES.md) в корне проекта.
