@@ -1,6 +1,6 @@
 # LootLink Development Quick Reference
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # Setup (first time)
@@ -16,7 +16,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-## ⌨️ VS Code Shortcuts
+## VS Code Shortcuts
 
 | Action | Shortcut |
 |--------|----------|
@@ -30,7 +30,7 @@ python manage.py runserver
 | Format Document | `Shift+Alt+F` |
 | Comment/Uncomment | `Ctrl+/` |
 
-## 📋 Common Tasks
+## Common Tasks
 
 ### Django Commands
 ```bash
@@ -118,7 +118,7 @@ pytest -v --no-cov
 pytest -n auto
 ```
 
-## 🔍 Code Quality
+## Code Quality
 
 ```bash
 # Format code
@@ -136,7 +136,7 @@ bandit -r . -c pyproject.toml
 make lint
 ```
 
-## 🐛 Debugging
+## Debugging
 
 ### In VS Code:
 1. Set breakpoint: `F9`
@@ -174,7 +174,7 @@ pip freeze > requirements.txt
 pip install --upgrade -r requirements.txt
 ```
 
-## 🗄️ Database
+## Database
 
 ```bash
 # PostgreSQL shell
@@ -190,7 +190,7 @@ pg_dump lootlink > backup.sql
 psql lootlink < backup.sql
 ```
 
-## 🔧 Useful Django Shell Commands
+## Useful Django Shell Commands
 
 ```python
 # Import models
@@ -232,7 +232,7 @@ npm run build
 npm run lint
 ```
 
-## 📊 Performance
+## Performance
 
 ```bash
 # Profile view
@@ -247,7 +247,7 @@ python manage.py shell
 >>> cache.get_stats()
 ```
 
-## 🔐 Security
+## Security
 
 ```bash
 # Check for vulnerabilities
@@ -260,7 +260,7 @@ pip install --upgrade -r requirements.txt
 bandit -r .
 ```
 
-## 📝 Documentation
+## Documentation
 
 ```bash
 # Generate API docs
@@ -271,7 +271,7 @@ cd docs
 make html
 ```
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Port already in use:
 ```bash

@@ -627,29 +627,29 @@ class ChatWebSocket {
                         timeout = 5000;  // Дальше 5 секунд
                     }
                     
-                    console.log(`🔄 Переподключение через ${timeout}ms... (попытка ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+                    console.log(`Переподключение через ${timeout}ms... (попытка ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
                     setTimeout(() => this.connect(), timeout);
                 } else {
-                    console.warn('⚠️ WebSocket недоступен, используем polling');
+                    console.warn('WebSocket недоступен, используем polling');
                     this.startPolling();
                 }
             };
-            
+
             this.socket.onerror = (error) => {
-                console.error('❌ WebSocket ошибка:', error);
+                console.error('WebSocket ошибка:', error);
                 this.showConnectionStatus('error');
             };
         } catch (error) {
             console.error('Ошибка создания WebSocket:', error);
             this.showConnectionStatus('error');
-            console.warn('⚠️ Fallback на polling');
+            console.warn('Fallback на polling');
             this.startPolling();
         }
     }
-    
+
     startPolling() {
         // Fallback на старый polling если WebSocket не работает
-        console.log('📡 Запуск polling режима');
+        console.log('Запуск polling режима');
         this.pollingInterval = setInterval(() => {
             this.pollNewMessages();
         }, 3000);
