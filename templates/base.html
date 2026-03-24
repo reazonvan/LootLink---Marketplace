@@ -64,7 +64,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
     
-    <link rel="stylesheet" href="{% static 'css/lootlink.css' %}?v=20260322b">
+    <link rel="stylesheet" href="{% static 'css/lootlink.css' %}?v=20260325m3">
     <link rel="stylesheet" href="{% static 'css/image-cropper.css' %}?v=20260322">
     
     {% block extra_css %}{% endblock %}
@@ -222,6 +222,23 @@
                     </ul>
                 </div>
             </div>
+            <!-- Mobile compact footer (visible only on small screens) -->
+            <div class="footer-mobile">
+                <div class="footer-brand">LootLink</div>
+                <div class="footer-mobile__links">
+                    <a href="{% url 'about' %}">О нас</a>
+                    <a href="{% url 'listings:catalog' %}">Каталог</a>
+                    <a href="{% url 'rules' %}">Правила</a>
+                    <a href="{% url 'core:faq' %}">FAQ</a>
+                    <a href="{% url 'requisites' %}">Реквизиты</a>
+                    <a href="mailto:ivanpetrov20066.ip@gmail.com">Контакты</a>
+                </div>
+                <div class="footer-mobile__social">
+                    <a href="#" aria-label="Discord"><i data-lucide="disc-3"></i></a>
+                    <a href="#" aria-label="Telegram"><i data-lucide="send"></i></a>
+                    <a href="#" aria-label="VK"><i data-lucide="users"></i></a>
+                </div>
+            </div>
             <div class="footer-bottom">
                 &copy; 2026 LootLink. Все права защищены.
             </div>
@@ -229,26 +246,10 @@
     </footer>
     {% endblock %}
 
-    <!-- Mobile Drawer -->
-    <div class="mobile-overlay" id="mobileOverlay"></div>
-    <div class="mobile-drawer" id="mobileDrawer">
-        <div class="mobile-drawer-header">
-            {% if user.is_authenticated %}
-            <div class="mobile-drawer-user">
-                <div class="avatar avatar--round">
-                    {% if user.profile.avatar %}
-                    <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}">
-                    {% else %}
-                    {{ user.username|first|upper }}
-                    {% endif %}
-                </div>
-                <div class="mobile-drawer-user-info">
-                    <div class="mobile-drawer-user-name">{{ user.username }}</div>
-                    <div class="mobile-drawer-user-balance">{{ user.profile.balance|floatformat:2|default:"0.00" }} ₽</div>
-                </div>
-            </div>
-            {% else %}
-            <a class="logo" href="{% url 'listings:home' %}" style="gap:10px;">
+    <!-- Fullscreen Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu__header">
+            <a class="logo" href="{% url 'listings:home' %}">
                 <span class="logo-icon">
                     <svg class="logo-svg" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" style="width:28px;height:28px;">
                         <circle class="logo-circle" cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -257,34 +258,94 @@
                 </span>
                 <span class="logo-text" style="font-size:20px;">LootLink</span>
             </a>
-            {% endif %}
-            <button class="mobile-drawer-close" id="mobileClose">
+            <button class="mobile-menu__close" id="mobileClose">
                 <i data-lucide="x"></i>
             </button>
         </div>
-        <div class="mobile-drawer-nav">
+
+        {% if user.is_authenticated %}
+        <div class="mobile-menu__user">
+            <div class="avatar avatar--lg avatar--round">
+                {% if user.profile.avatar %}
+                <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}">
+                {% else %}
+                {{ user.username|first|upper }}
+                {% endif %}
+            </div>
+            <div>
+                <div class="mobile-menu__user-name">{{ user.username }}</div>
+                <div class="mobile-menu__user-balance"><i data-lucide="wallet" style="width:14px;height:14px;"></i> {{ user.profile.balance|floatformat:0|default:"0" }} ₽</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="mobile-menu__body">
+            <div class="mobile-menu__group">
+                <div class="mobile-menu__group-label">Навигация</div>
+                <div class="mobile-menu__grid">
+                    <a href="{% url 'listings:home' %}" class="mobile-menu__tile">
+                        <div class="mobile-menu__tile-icon"><i data-lucide="home"></i></div>
+                        <span>Главная</span>
+                    </a>
+                    <a href="{% url 'listings:catalog' %}" class="mobile-menu__tile">
+                        <div class="mobile-menu__tile-icon"><i data-lucide="grid-3x3"></i></div>
+                        <span>Каталог</span>
+                    </a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'chat:conversations_list' %}" class="mobile-menu__tile">
+                        <div class="mobile-menu__tile-icon"><i data-lucide="message-circle"></i></div>
+                        <span>Сообщения</span>
+                    </a>
+                    <a href="{% url 'core:notifications_list' %}" class="mobile-menu__tile">
+                        <div class="mobile-menu__tile-icon">
+                            <i data-lucide="bell"></i>
+                            {% if unread_notifications_count > 0 %}<span class="mobile-menu__tile-badge">{{ unread_notifications_count }}</span>{% endif %}
+                        </div>
+                        <span>Уведомления</span>
+                    </a>
+                    {% else %}
+                    <a href="{% url 'core:faq' %}" class="mobile-menu__tile">
+                        <div class="mobile-menu__tile-icon"><i data-lucide="help-circle"></i></div>
+                        <span>Помощь</span>
+                    </a>
+                    <a href="{% url 'about' %}" class="mobile-menu__tile">
+                        <div class="mobile-menu__tile-icon"><i data-lucide="info"></i></div>
+                        <span>О нас</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
             {% if user.is_authenticated %}
-            <a href="{% url 'accounts:profile' user.username %}" class="mobile-drawer-link"><i data-lucide="user"></i> Мой профиль</a>
-            <a href="{% url 'accounts:my_listings' %}" class="mobile-drawer-link"><i data-lucide="package"></i> Мои объявления</a>
-            <a href="{% url 'listings:favorites' %}" class="mobile-drawer-link"><i data-lucide="heart"></i> Избранное</a>
-            <a href="{% url 'accounts:my_purchases' %}" class="mobile-drawer-link"><i data-lucide="shopping-bag"></i> Мои покупки</a>
-            <a href="{% url 'accounts:my_sales' %}" class="mobile-drawer-link"><i data-lucide="coins"></i> Мои продажи</a>
-            <div class="mobile-drawer-divider"></div>
-            <a href="{% url 'listings:listing_create' %}" class="mobile-drawer-link primary"><i data-lucide="plus-circle"></i> Создать объявление</a>
-            <a href="{% url 'chat:conversations_list' %}" class="mobile-drawer-link"><i data-lucide="message-circle"></i> Сообщения</a>
-            <a href="{% url 'core:notifications_list' %}" class="mobile-drawer-link"><i data-lucide="bell"></i> Уведомления</a>
-            <a href="{% url 'listings:catalog' %}" class="mobile-drawer-link"><i data-lucide="grid-3x3"></i> Каталог</a>
-            <a href="{% url 'payments:wallet_dashboard' %}" class="mobile-drawer-link"><i data-lucide="wallet"></i> Кошелёк</a>
-            <div class="mobile-drawer-divider"></div>
-            <a href="{% url 'accounts:profile_edit' %}" class="mobile-drawer-link"><i data-lucide="settings"></i> Настройки</a>
-            <a href="{% url 'accounts:logout' %}" class="mobile-drawer-link danger"><i data-lucide="log-out"></i> Выйти</a>
+            <div class="mobile-menu__group">
+                <div class="mobile-menu__group-label">Аккаунт</div>
+                <a href="{% url 'accounts:profile' user.username %}" class="mobile-menu__link"><i data-lucide="user"></i> Мой профиль</a>
+                <a href="{% url 'accounts:my_listings' %}" class="mobile-menu__link"><i data-lucide="package"></i> Мои объявления</a>
+                <a href="{% url 'listings:favorites' %}" class="mobile-menu__link"><i data-lucide="heart"></i> Избранное</a>
+                <a href="{% url 'accounts:my_purchases' %}" class="mobile-menu__link"><i data-lucide="shopping-bag"></i> Мои покупки</a>
+                <a href="{% url 'accounts:my_sales' %}" class="mobile-menu__link"><i data-lucide="coins"></i> Мои продажи</a>
+                <a href="{% url 'payments:wallet_dashboard' %}" class="mobile-menu__link"><i data-lucide="wallet"></i> Кошелёк</a>
+            </div>
+
+            <a href="{% url 'listings:listing_create' %}" class="mobile-menu__cta">
+                <i data-lucide="plus"></i> Создать объявление
+            </a>
+
+            <div class="mobile-menu__footer">
+                <a href="{% url 'accounts:profile_edit' %}" class="mobile-menu__footer-link"><i data-lucide="settings"></i> Настройки</a>
+                <a href="{% url 'accounts:logout' %}" class="mobile-menu__footer-link mobile-menu__footer-link--danger"><i data-lucide="log-out"></i> Выйти</a>
+            </div>
             {% else %}
-            <a href="{% url 'listings:catalog' %}" class="mobile-drawer-link"><i data-lucide="grid-3x3"></i> Каталог</a>
-            <a href="{% url 'core:faq' %}" class="mobile-drawer-link"><i data-lucide="help-circle"></i> Помощь</a>
-            <a href="{% url 'about' %}" class="mobile-drawer-link"><i data-lucide="info"></i> О нас</a>
-            <div class="mobile-drawer-divider"></div>
-            <a href="{% url 'accounts:login' %}" class="mobile-drawer-link primary"><i data-lucide="log-in"></i> Войти</a>
-            <a href="{% url 'accounts:register' %}" class="mobile-drawer-link"><i data-lucide="user-plus"></i> Регистрация</a>
+            <div class="mobile-menu__group">
+                <div class="mobile-menu__group-label">Информация</div>
+                <a href="{% url 'rules' %}" class="mobile-menu__link"><i data-lucide="scroll-text"></i> Правила</a>
+                <a href="{% url 'core:faq' %}" class="mobile-menu__link"><i data-lucide="help-circle"></i> FAQ</a>
+            </div>
+
+            <div class="mobile-menu__auth">
+                <a href="{% url 'accounts:login' %}" class="btn btn-primary w-100"><i data-lucide="log-in"></i> Войти</a>
+                <a href="{% url 'accounts:register' %}" class="btn btn-secondary w-100"><i data-lucide="user-plus"></i> Регистрация</a>
+            </div>
             {% endif %}
         </div>
     </div>
@@ -413,17 +474,38 @@
 
         (function() {
             var toggle = document.getElementById('mobileToggle');
-            var overlay = document.getElementById('mobileOverlay');
-            var drawer = document.getElementById('mobileDrawer');
+            var menu = document.getElementById('mobileMenu');
             var close = document.getElementById('mobileClose');
-            if (!toggle || !drawer) return;
+            if (!toggle || !menu) return;
 
-            function open() { drawer.classList.add('active'); overlay.classList.add('active'); document.body.style.overflow = 'hidden'; lucide.createIcons(); }
-            function shut() { drawer.classList.remove('active'); overlay.classList.remove('active'); document.body.style.overflow = ''; }
+            function open() {
+                menu.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                lucide.createIcons();
+                toggle.innerHTML = '';
+                var ico = document.createElement('i');
+                ico.setAttribute('data-lucide', 'x');
+                toggle.appendChild(ico);
+                lucide.createIcons({ nodes: [toggle] });
+            }
+            function shut() {
+                menu.classList.remove('active');
+                document.body.style.overflow = '';
+                toggle.innerHTML = '';
+                var ico = document.createElement('i');
+                ico.setAttribute('data-lucide', 'menu');
+                toggle.appendChild(ico);
+                lucide.createIcons({ nodes: [toggle] });
+            }
 
-            toggle.addEventListener('click', open);
-            if (overlay) overlay.addEventListener('click', shut);
+            toggle.addEventListener('click', function() {
+                menu.classList.contains('active') ? shut() : open();
+            });
             if (close) close.addEventListener('click', shut);
+
+            menu.querySelectorAll('a').forEach(function(link) {
+                link.addEventListener('click', shut);
+            });
         })();
 
         document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
