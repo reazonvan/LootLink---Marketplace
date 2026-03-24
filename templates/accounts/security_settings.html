@@ -1,11 +1,73 @@
 {% extends 'base.html' %}
 
-{% block title %}security_settings - LootLink{% endblock %}
+{% block title %}Безопасность - LootLink{% endblock %}
 
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>security_settings</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
-</div>
-{% endblock %}
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:640px;margin:0 auto;">
+        <div class="page-header">
+            <h1>Безопасность</h1>
+            <p>Управление настройками безопасности аккаунта</p>
+        </div>
 
+        <div class="card-glass" style="margin-bottom:var(--space-4);">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="display:flex;align-items:center;gap:var(--space-3);">
+                    <div style="width:44px;height:44px;border-radius:var(--radius-md);background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;">
+                        <i data-lucide="shield" style="width:22px;height:22px;color:var(--accent-primary);"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--text-primary);">Двухфакторная аутентификация</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-secondary);">
+                            {% if has_2fa %}
+                            <span style="color:var(--color-success);font-weight:var(--weight-semibold);">Включена</span>
+                            {% else %}
+                            <span style="color:var(--color-danger);">Отключена</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <a href="{% url 'accounts:setup_2fa' %}" class="btn {% if has_2fa %}btn-secondary{% else %}btn-primary{% endif %} btn-sm">
+                    {% if has_2fa %}Управление{% else %}Включить{% endif %}
+                </a>
+            </div>
+        </div>
+
+        <div class="card-glass" style="margin-bottom:var(--space-4);">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="display:flex;align-items:center;gap:var(--space-3);">
+                    <div style="width:44px;height:44px;border-radius:var(--radius-md);background:var(--color-warning-light);display:flex;align-items:center;justify-content:center;">
+                        <i data-lucide="key-round" style="width:22px;height:22px;color:var(--color-warning);"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--text-primary);">Пароль</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-secondary);">Изменить пароль аккаунта</div>
+                    </div>
+                </div>
+                <a href="{% url 'accounts:password_reset_request' %}" class="btn btn-secondary btn-sm">Изменить</a>
+            </div>
+        </div>
+
+        {% if recent_logins %}
+        <div class="card-glass" style="margin-top:var(--space-6);">
+            <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+                <i data-lucide="clock" style="width:18px;height:18px;color:var(--accent-primary);"></i> Последние входы
+            </h3>
+            {% for login in recent_logins %}
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-3) 0;{% if not forloop.last %}border-bottom:1px solid var(--card-border);{% endif %}font-size:var(--text-sm);">
+                <div>
+                    <div style="font-weight:var(--weight-medium);color:var(--text-primary);">{{ login.ip_address }}</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);">{{ login.device|default:"Неизвестное устройство" }}</div>
+                </div>
+                <span style="font-size:var(--text-xs);color:var(--text-tertiary);">{{ login.created_at|date:"d.m.Y H:i" }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}

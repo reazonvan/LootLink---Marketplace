@@ -3,1110 +3,141 @@
 {% block title %}Каталог игр - LootLink{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <!-- Современный заголовок -->
-    <div class="catalog-header">
-        <div class="row align-items-center mb-4">
-            <div class="col-lg-6">
-                <h1 class="catalog-title">Каталог игр</h1>
-                <p class="catalog-subtitle">Выберите игру и начните торговлю на маркетплейсе</p>
-            </div>
-            <div class="col-lg-6">
-                <div class="catalog-stats">
-                    <div class="stat-item-small">
-                        <i class="bi bi-joystick"></i>
-                        <div>
-                            <div class="stat-number">{{ games|length }}</div>
-                            <div class="stat-label">{{ games|length|pluralize:"Игра,Игры,Игр" }}</div>
-                        </div>
-                    </div>
-                    <div class="stat-item-small">
-                        <i class="bi bi-box"></i>
-                        <div>
-                            <div class="stat-number">{{ total_listings|default:"0" }}</div>
-                            <div class="stat-label">{{ total_listings|default:"0"|pluralize:"Объявление,Объявления,Объявлений" }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Умный поиск -->
-        <div class="search-box-clean">
-            <i class="bi bi-search search-icon-clean"></i>
-            <input 
-                type="text" 
-                id="gameSearchInput" 
-                class="search-input-clean" 
-                placeholder="Поиск по названию игры..."
-                autocomplete="off"
-            >
-            <div id="searchResults" class="search-dropdown-clean"></div>
-        </div>
+<div class="catalog-page">
+    <div style="text-align:center;margin-bottom:var(--space-6);">
+        <span class="section-label">Каталог</span>
+        <h1 style="font-size:var(--text-3xl);margin-bottom:var(--space-2);">Выберите игру</h1>
+        <p style="color:var(--text-secondary);font-size:var(--text-base);margin-bottom:0;">{{ games|length }} игр &middot; {{ total_listings|default:"0" }} объявлений на маркетплейсе</p>
     </div>
 
-    <!-- Алфавитная навигация -->
+    <div class="catalog-page__search">
+        <i data-lucide="search"></i>
+        <input type="text" id="gameSearchInput" placeholder="Поиск по названию игры..." autocomplete="off">
+        <div id="searchResults" class="search-dropdown"></div>
+    </div>
+
     {% if alphabet %}
-    <div class="alphabet-section" id="alphabetSection">
-        <div class="alphabet-header">
-            <i class="bi bi-grid-3x3-gap"></i>
-            <span>Быстрый переход по алфавиту</span>
-        </div>
-        <div class="alphabet-nav" id="alphabetNav">
-            {% for letter in alphabet %}
-            <a href="#letter-{{ letter }}" class="letter-link" data-letter="{{ letter }}">{{ letter }}</a>
-            {% endfor %}
-        </div>
+    <div class="catalog-page__alphabet" id="alphabetSection">
+        {% for letter in alphabet %}
+        <a href="#letter-{{ letter }}" class="catalog-page__letter" data-letter="{{ letter }}">{{ letter }}</a>
+        {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Сетка игр -->
-    <div class="games-grid-clean">
+    <div class="catalog-page__games-grid" id="gamesGrid">
         {% for game in games %}
         {% if game.first_in_letter %}
-        <div class="letter-divider" id="letter-{{ game.first_letter }}">
-            <div class="letter-divider-content">
-                <span class="letter-mark">{{ game.first_letter }}</span>
-                <div class="letter-nav-actions">
-                    <a href="#alphabetSection" class="letter-nav-btn" title="К алфавиту">
-                        <i class="bi bi-arrow-up-circle"></i>
-                    </a>
-                </div>
-            </div>
+        <div class="catalog-page__letter-divider" id="letter-{{ game.first_letter }}">
+            {{ game.first_letter }}
         </div>
         {% endif %}
-        
+
         <div class="game-card-clean" data-game-name="{{ game.name|lower }}">
-            <div class="game-header-clean game-toggle" data-game-id="{{ forloop.counter }}">
-                <div class="game-icon-clean">
-                    <i class="bi bi-controller"></i>
+            <a href="{% url 'listings:game_listings' game.slug %}" class="game-card-ll" style="text-decoration:none;height:100%;">
+                {% if game.icon and game.icon.name %}
+                <img src="{{ game.icon.url }}" alt="{{ game.name }}" class="game-card-ll__icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="game-card-ll__icon-placeholder" style="display:none;">
+                    <i data-lucide="gamepad-2"></i>
                 </div>
-                <div class="game-info-clean">
-                    <h3 class="game-name-clean">{{ game.name }}</h3>
-                    <span class="game-count-clean">
-                        {% if game.listings_count %}
-                            Товаров: {{ game.listings_count }}
-                        {% else %}
-                            Нет товаров
-                        {% endif %}
-                    </span>
+                {% else %}
+                <div class="game-card-ll__icon-placeholder">
+                    <i data-lucide="gamepad-2"></i>
                 </div>
-            </div>
-            
-            {% if game.categories.all %}
-            <div class="categories-list-clean">
-                {% for category in game.categories.all %}
-                <a href="{% url 'listings:category_listings' game.slug category.slug %}" class="category-item-clean">
-                    <div class="category-content">
-                        <i class="{{ category.icon }}"></i>
-                        <span class="category-name">{{ category.name }}</span>
-                    </div>
-                    <span class="category-badge">{{ category.count|default:"0" }}</span>
-                </a>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="no-categories-clean">
-                <i class="bi bi-info-circle"></i>
-                <span>Категории появятся позже</span>
-            </div>
-            {% endif %}
+                {% endif %}
+                <div class="game-card-ll__name">{{ game.name }}</div>
+                <div class="game-card-ll__count">
+                    {% if game.listings_count %}{{ game.listings_count }} товаров{% else %}Нет товаров{% endif %}
+                </div>
+            </a>
         </div>
         {% empty %}
-        <div class="empty-state-clean">
-            <i class="bi bi-controller"></i>
-            <h3>Игры пока не добавлены</h3>
-            <p>Администратор скоро добавит игры в каталог</p>
+        <div class="empty-state" style="grid-column:1/-1;">
+            <div class="empty-state__icon"><i data-lucide="gamepad-2"></i></div>
+            <div class="empty-state__title">Игры пока не добавлены</div>
+            <p class="empty-state__text">Администратор скоро добавит игры в каталог</p>
         </div>
         {% endfor %}
     </div>
 </div>
 
-<!-- Кнопка наверх -->
-<button id="scrollTopBtn" class="scroll-top-btn">
-    <i class="bi bi-arrow-up"></i>
-</button>
-
 <style>
-/* ═════════════════════════════════════════════════════════════════════
-   КАТАЛОГ ИГР - ЧИСТЫЙ И МИНИМАЛИСТИЧНЫЙ ДИЗАЙН
-   ═════════════════════════════════════════════════════════════════════ */
-
-/* Заголовок каталога */
-.catalog-header {
-    margin-bottom: 2rem;
-}
-
-.catalog-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: var(--dark);
-    margin-bottom: 0.5rem;
-}
-
-.catalog-subtitle {
-    font-size: 1.125rem;
-    color: var(--gray-600);
-    margin: 0;
-}
-
-/* Статистика */
-.catalog-stats {
-    display: flex;
-    gap: 1.5rem;
-    justify-content: flex-end;
-}
-
-.stat-item-small {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1rem 1.5rem;
-    background: white;
-    border-radius: 12px;
-    border: 1px solid var(--gray-200);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.stat-item-small i {
-    font-size: 1.75rem;
-    color: var(--primary);
-}
-
-.stat-number {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--dark);
-    line-height: 1;
-}
-
-.stat-label {
-    font-size: 0.8125rem;
-    color: var(--gray-600);
-    margin-top: 0.25rem;
-}
-
-/* Поиск */
-.search-box-clean {
-    position: relative;
-    max-width: 600px;
-    margin-bottom: 2rem;
-}
-
-.search-icon-clean {
-    position: absolute;
-    left: 1.25rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--gray-600);
-    font-size: 1.125rem;
-}
-
-.search-input-clean {
-    width: 100%;
-    padding: 1rem 1rem 1rem 3.25rem;
-    border: 2px solid var(--gray-200);
-    border-radius: 12px;
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--dark);
-    background: white;
-    transition: all 0.2s;
-}
-
-.search-input-clean:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
-}
-
-.search-input-clean::placeholder {
-    color: var(--gray-600);
-}
-
-/* Dropdown поиска */
-.search-dropdown-clean {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    left: 0;
-    right: 0;
-    background: white;
-    border-radius: 12px;
-    border: 2px solid var(--gray-200);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    max-height: 400px;
-    overflow-y: auto;
-    display: none;
-    z-index: 100;
-}
-
-.search-dropdown-clean.active {
-    display: block;
-}
-
-.search-result-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.875rem 1.25rem;
-    cursor: pointer;
-    transition: background 0.15s;
-    border-bottom: 1px solid var(--gray-200);
-}
-
-.search-result-item:last-child {
-    border-bottom: none;
-}
-
-.search-result-item:hover {
-    background: var(--gray-50);
-}
-
-.search-result-icon {
-    color: var(--primary);
-    font-size: 1.125rem;
-}
-
-.search-result-name {
-    font-weight: 600;
-    color: var(--dark);
-}
-
-.search-no-result {
-    padding: 2rem 1.5rem;
-    text-align: center;
-    color: var(--gray-600);
-}
-
-/* Алфавитная навигация */
-.alphabet-section {
-    margin-bottom: 2.5rem;
-    position: sticky;
-    top: 76px;
-    z-index: 90;
-    background: white;
-    padding: 1rem 0;
-    transition: all 0.2s;
-    border-radius: 0 0 16px 16px;
-    margin-left: -1rem;
-    margin-right: -1rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
-.alphabet-section.scrolled {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    padding: 0.75rem 1rem;
-    background: white;
-    border-radius: 0 0 16px 16px;
-}
-
-.alphabet-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--dark);
-    transition: all 0.2s;
-}
-
-.alphabet-section.scrolled .alphabet-header {
-    margin-bottom: 0.75rem;
-    font-size: 0.875rem;
-}
-
-.alphabet-header i {
-    font-size: 1.125rem;
-    color: var(--primary);
-}
-
-.alphabet-nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    padding: 1.5rem;
-    background: white;
-    border: 2px solid var(--gray-200);
-    border-radius: 12px;
-    transition: all 0.2s;
-}
-
-.alphabet-section.scrolled .alphabet-nav {
-    padding: 1rem;
-    gap: 0.375rem;
-}
-
-.letter-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    background: var(--gray-50);
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.9375rem;
-    color: var(--gray-700);
-    text-decoration: none;
-    transition: background 0.15s, color 0.15s, width 0.2s, height 0.2s, font-size 0.2s;
-}
-
-.alphabet-section.scrolled .letter-link {
-    width: 36px;
-    height: 36px;
-    font-size: 0.875rem;
-}
-
-.letter-link:hover,
-.letter-link.active {
-    background: var(--primary);
-    color: white;
-}
-
-/* Разделитель букв */
-.letter-divider {
-    grid-column: 1 / -1;
-    margin: 1.5rem 0 1rem;
-    scroll-margin-top: 220px;
-}
-
-.letter-divider-content {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.letter-mark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 54px;
-    height: 54px;
-    background: var(--primary);
-    color: white;
-    font-size: 1.75rem;
-    font-weight: 800;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
-}
-
-.letter-nav-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.letter-nav-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    background: white;
-    border: 2px solid var(--gray-200);
-    border-radius: 8px;
-    color: var(--gray-600);
-    text-decoration: none;
-    font-size: 1.125rem;
-    transition: all 0.15s;
-}
-
-.letter-nav-btn:hover {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-}
-
-/* Сетка игр - 4 карточки в строке */
-.games-grid-clean {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
-}
-
-/* Карточка игры - компактная */
-.game-card-clean {
-    background: white;
-    border: 2px solid var(--gray-200);
-    border-radius: 12px;
-    padding: 1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    position: relative;
-}
-
-.game-card-clean:hover {
-    border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.08);
-}
-
-.game-card-clean.expanded {
-    z-index: 10;
-    box-shadow: 0 8px 24px rgba(0, 102, 255, 0.15);
-    border-color: var(--primary);
-}
-
-/* Заголовок карточки - компактный */
-.game-header-clean {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding-bottom: 0;
-    margin-bottom: 0;
-    border-bottom: none;
-}
-
-.game-header-clean.game-toggle {
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.2s;
-    border-radius: 8px;
-    margin: -0.5rem;
-    padding: 0.5rem;
-}
-
-.game-header-clean.game-toggle:hover {
-    background: var(--gray-50);
-}
-
-.game-icon-clean {
-    width: 44px;
-    height: 44px;
-    background: var(--primary);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.4rem;
-    flex-shrink: 0;
-}
-
-.game-info-clean {
-    flex: 1;
-    min-width: 0;
-}
-
-.game-name-clean {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--dark);
-    margin: 0 0 0.25rem;
-    line-height: 1.2;
-    word-break: keep-all;
-    overflow-wrap: normal;
-    hyphens: none;
-}
-
-.game-count-clean {
-    display: inline-block;
-    font-size: 0.8rem;
-    color: var(--gray-600);
-    font-weight: 500;
-}
-
-/* Список категорий - компактный popup в 2 колонки */
-.categories-list-clean {
-    display: none;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.35rem;
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    left: 0;
-    right: 0;
-    background: white;
-    border: 2px solid var(--primary);
-    border-radius: 10px;
-    padding: 0.65rem;
-    box-shadow: 0 12px 32px rgba(0, 102, 255, 0.2);
-    z-index: 100;
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    pointer-events: none;
-    max-height: 600px;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
-.game-card-clean.expanded .categories-list-clean {
-    display: grid;
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-}
-
-/* Кастомная прокрутка для категорий */
-.categories-list-clean::-webkit-scrollbar {
-    width: 6px;
-}
-
-.categories-list-clean::-webkit-scrollbar-track {
-    background: var(--gray-100);
-    border-radius: 3px;
-}
-
-.categories-list-clean::-webkit-scrollbar-thumb {
-    background: var(--gray-300);
-    border-radius: 3px;
-}
-
-.categories-list-clean::-webkit-scrollbar-thumb:hover {
-    background: var(--gray-400);
-}
-
-/* Убираем анимацию slideDown */
-
-.category-item-clean {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    padding: 0.5rem 0.65rem;
-    background: var(--gray-50);
-    border: 1px solid transparent;
-    border-radius: 7px;
-    text-decoration: none;
-    color: var(--dark);
-    font-weight: 500;
-    font-size: 0.8rem;
-    transition: all 0.2s;
-    min-height: 34px;
-}
-
-.category-content {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    flex: 1;
-    min-width: 0;
-}
-
-.category-name {
-    flex: 1;
-    word-break: normal;
-    overflow-wrap: break-word;
-    hyphens: none;
-    line-height: 1.25;
-}
-
-.category-badge {
-    background: white;
-    color: var(--primary);
-    font-weight: 600;
-    font-size: 0.75rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 5px;
-    min-width: 22px;
-    text-align: center;
-    flex-shrink: 0;
-    transition: all 0.2s;
-}
-
-/* Улучшенный стиль для бейджей при наведении */
-
-.category-item-clean:hover {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.2);
-    transform: translateX(2px);
-}
-
-.category-item-clean:hover .category-badge {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-.category-content i {
-    font-size: 0.9rem;
-    flex-shrink: 0;
-    width: 18px;
-    text-align: center;
-}
-
-/* Удалено - показываем все категории */
-
-/* Нет категорий */
-.no-categories-clean {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 1rem;
-    background: var(--gray-50);
-    border-radius: 10px;
-    color: var(--gray-600);
-    font-size: 0.9375rem;
-    grid-column: 1 / -1;
-}
-
-/* Пустое состояние */
-.empty-state-clean {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 4rem 2rem;
-    background: var(--gray-50);
-    border-radius: 16px;
-    border: 2px dashed var(--gray-300);
-}
-
-.empty-state-clean i {
-    font-size: 4rem;
-    color: var(--gray-300);
-    margin-bottom: 1rem;
-}
-
-.empty-state-clean h3 {
-    font-size: 1.5rem;
-    color: var(--dark);
-    margin-bottom: 0.5rem;
-}
-
-.empty-state-clean p {
-    color: var(--gray-600);
-    font-size: 1rem;
-    margin: 0;
-}
-
-/* Кнопка наверх */
-.scroll-top-btn {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    width: 52px;
-    height: 52px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.2);
-    transition: background 0.2s;
-    z-index: 100;
-    font-size: 1.25rem;
-}
-
-.scroll-top-btn.visible {
-    display: flex;
-}
-
-.scroll-top-btn:hover {
-    background: var(--primary-hover);
-}
-
-/* Скрытие при поиске */
-.game-card-clean.search-hidden,
-.letter-divider.search-hidden {
-    display: none;
-}
-
-/* Адаптивность */
-@media (max-width: 1400px) {
-    .games-grid-clean {
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    }
-}
-
-@media (max-width: 1200px) {
-    .games-grid-clean {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    }
-}
-
-@media (max-width: 992px) {
-    .games-grid-clean {
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    }
-}
-
-@media (max-width: 768px) {
-    .catalog-title {
-        font-size: 2rem;
-    }
-    
-    .catalog-stats {
-        justify-content: flex-start;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-top: 1rem;
-    }
-    
-    .stat-item-small {
-        padding: 0.75rem 1rem;
-    }
-    
-    .stat-number {
-        font-size: 1.25rem;
-    }
-    
-    .games-grid-clean {
-        grid-template-columns: 1fr;
-        gap: 1.25rem;
-    }
-    
-    .alphabet-section {
-        top: 70px;
-        padding: 0.75rem 0;
-    }
-    
-    .alphabet-section.scrolled {
-        padding: 0.5rem 0;
-    }
-    
-    .alphabet-header {
-        font-size: 0.875rem;
-        margin-bottom: 0.75rem;
-    }
-    
-    .alphabet-section.scrolled .alphabet-header {
-        font-size: 0.8125rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .alphabet-nav {
-        gap: 0.375rem;
-        padding: 1rem;
-    }
-    
-    .alphabet-section.scrolled .alphabet-nav {
-        padding: 0.75rem;
-        gap: 0.25rem;
-    }
-    
-    .letter-link {
-        width: 36px;
-        height: 36px;
-        font-size: 0.875rem;
-    }
-    
-    .alphabet-section.scrolled .letter-link {
-        width: 32px;
-        height: 32px;
-        font-size: 0.8125rem;
-    }
-    
-    .letter-divider {
-        scroll-margin-top: 200px;
-    }
-    
-    .letter-mark {
-        width: 48px;
-        height: 48px;
-        font-size: 1.5rem;
-    }
-    
-    .letter-nav-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 1rem;
-    }
-    
-    .scroll-top-btn {
-        width: 48px;
-        height: 48px;
-        bottom: 1.5rem;
-        right: 1.5rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .catalog-title {
-        font-size: 1.75rem;
-    }
-    
-    .catalog-subtitle {
-        font-size: 1rem;
-    }
-    
-    /* Сетка игр - 2 колонки на мобильных */
-    .games-grid-clean {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.75rem;
-    }
-    
-    /* Разделитель букв занимает всю ширину */
-    .letter-divider {
-        grid-column: 1 / -1;
-    }
-    
-    .game-card-clean {
-        padding: 0.75rem;
-    }
-    
-    .game-header-clean {
-        gap: 0.5rem;
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 0.4rem;
-    }
-    
-    .game-icon-clean {
-        width: 36px;
-        height: 36px;
-        font-size: 1.15rem;
-    }
-    
-    .game-name-clean {
-        font-size: 0.875rem;
-        line-height: 1.3;
-    }
-    
-    .game-count-clean {
-        font-size: 0.7rem;
-    }
-    
-    /* Категории - 1 колонка на мобильных */
-    .categories-list-clean {
-        padding: 0.5rem;
-        gap: 0.3rem;
-        max-height: 400px;
-        grid-template-columns: 1fr;
-    }
-    
-    .category-item-clean {
-        padding: 0.5rem 0.65rem;
-        font-size: 0.8rem;
-        gap: 0.4rem;
-        min-height: 34px;
-    }
-    
-    .category-content {
-        gap: 0.4rem;
-        min-width: 0;
-        flex: 1;
-    }
-    
-    .category-content i {
-        font-size: 0.85rem;
-        width: 18px;
-    }
-    
-    .category-name {
-        flex: 1;
-    }
-    
-    .category-badge {
-        font-size: 0.7rem;
-        padding: 0.15rem 0.4rem;
-        min-width: 20px;
-        font-weight: 600;
-    }
-}
-
-@media (min-width: 577px) and (max-width: 768px) {
-    /* На планшетах тоже 2 колонки для категорий */
-    .categories-list-clean {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
+.search-dropdown { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: var(--card-bg); backdrop-filter: blur(20px); border-radius: var(--radius-lg); border: 1px solid var(--card-border); box-shadow: var(--shadow-xl); max-height: 360px; overflow-y: auto; display: none; z-index: var(--z-dropdown); }
+.search-dropdown.active { display: block; }
+.search-result-item { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); cursor: pointer; transition: background 0.15s; font-size: var(--text-sm); }
+.search-result-item:hover { background: var(--gray-50); }
+.search-result-icon { color: var(--accent-primary); }
+.search-result-name { font-weight: var(--weight-semibold); color: var(--text-primary); }
+.search-no-result { padding: var(--space-6); text-align: center; color: var(--text-secondary); font-size: var(--text-sm); }
+.game-card-clean.search-hidden, .catalog-page__letter-divider.search-hidden { display: none; }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('gameSearchInput');
-    const searchResults = document.getElementById('searchResults');
-    const gameCards = document.querySelectorAll('.game-card-clean');
-    const letterDividers = document.querySelectorAll('.letter-divider');
-    const scrollTopBtn = document.getElementById('scrollTopBtn');
-    
-    // Индекс игр для поиска
-    const gamesIndex = Array.from(gameCards).map(card => ({
-        name: card.dataset.gameName,
-        card: card
-    }));
-    
-    // Поиск игр
+    lucide.createIcons();
+    var searchInput = document.getElementById('gameSearchInput');
+    var searchResults = document.getElementById('searchResults');
+    var gameCards = document.querySelectorAll('.game-card-clean');
+    var letterDividers = document.querySelectorAll('.catalog-page__letter-divider');
+    var gamesIndex = Array.from(gameCards).map(function(card) {
+        return { name: card.dataset.gameName, card: card };
+    });
+
     if (searchInput) {
         searchInput.addEventListener('input', function() {
-            const query = this.value.toLowerCase().trim();
-            
+            var query = this.value.toLowerCase().trim();
             if (!query) {
-                gameCards.forEach(card => card.classList.remove('search-hidden'));
-                letterDividers.forEach(divider => divider.classList.remove('search-hidden'));
+                gameCards.forEach(function(c) { c.classList.remove('search-hidden'); });
+                letterDividers.forEach(function(d) { d.classList.remove('search-hidden'); });
                 searchResults.classList.remove('active');
                 searchResults.innerHTML = '';
                 return;
             }
-            
-            const matches = gamesIndex.filter(game => game.name.includes(query));
-            
+            var matches = gamesIndex.filter(function(g) { return g.name.includes(query); });
             if (matches.length > 0) {
-                searchResults.innerHTML = matches.slice(0, 10).map(game => `
-                    <div class="search-result-item" data-game="${game.name}">
-                        <i class="bi bi-controller search-result-icon"></i>
-                        <span class="search-result-name">${game.card.querySelector('.game-name-clean').textContent}</span>
-                    </div>
-                `).join('');
+                searchResults.innerHTML = matches.slice(0, 10).map(function(g) {
+                    var displayName = g.card.querySelector('.game-card-ll__name').textContent;
+                    return '<div class="search-result-item" data-game="' + g.name + '"><span class="search-result-name">' + displayName + '</span></div>';
+                }).join('');
                 searchResults.classList.add('active');
-                
-                // Клик по результату
-                searchResults.querySelectorAll('.search-result-item').forEach(item => {
+                searchResults.querySelectorAll('.search-result-item').forEach(function(item) {
                     item.addEventListener('click', function() {
-                        const gameName = this.dataset.game;
-                        const gameCard = gamesIndex.find(g => g.name === gameName).card;
-                        gameCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        var target = gamesIndex.find(function(g) { return g.name === item.dataset.game; });
+                        if (target) target.card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         searchResults.classList.remove('active');
                         searchInput.value = '';
-                        gameCards.forEach(card => card.classList.remove('search-hidden'));
-                        letterDividers.forEach(divider => divider.classList.remove('search-hidden'));
+                        gameCards.forEach(function(c) { c.classList.remove('search-hidden'); });
+                        letterDividers.forEach(function(d) { d.classList.remove('search-hidden'); });
                     });
                 });
             } else {
                 searchResults.innerHTML = '<div class="search-no-result">Игры не найдены</div>';
                 searchResults.classList.add('active');
             }
-            
-            // Фильтр карточек
-            gameCards.forEach(card => {
-                if (card.dataset.gameName.includes(query)) {
-                    card.classList.remove('search-hidden');
-                } else {
-                    card.classList.add('search-hidden');
-                }
+            gameCards.forEach(function(card) {
+                card.classList.toggle('search-hidden', !card.dataset.gameName.includes(query));
             });
-            
-            // Скрытие пустых разделителей
-            letterDividers.forEach(divider => {
-                const letter = divider.id.replace('letter-', '');
-                const hasVisible = Array.from(gameCards).some(card => 
-                    !card.classList.contains('search-hidden') && 
-                    card.dataset.gameName[0].toUpperCase() === letter
-                );
+            letterDividers.forEach(function(divider) {
+                var letter = divider.id.replace('letter-', '');
+                var hasVisible = Array.from(gameCards).some(function(c) {
+                    return !c.classList.contains('search-hidden') && c.dataset.gameName[0] && c.dataset.gameName[0].toUpperCase() === letter;
+                });
                 divider.classList.toggle('search-hidden', !hasVisible);
             });
         });
     }
-    
-    // Закрытие dropdown
+
     document.addEventListener('click', function(e) {
         if (searchInput && !searchInput.contains(e.target) && !searchResults.contains(e.target)) {
             searchResults.classList.remove('active');
         }
     });
-    
-    // Кнопка наверх
-    if (scrollTopBtn) {
-        window.addEventListener('scroll', function() {
-            if (window.pageYOffset > 300) {
-                scrollTopBtn.classList.add('visible');
-            } else {
-                scrollTopBtn.classList.remove('visible');
-            }
-        });
-        
-        scrollTopBtn.addEventListener('click', function() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    }
-    
-    // Плавная прокрутка для алфавитной навигации
-    document.querySelectorAll('.letter-link').forEach(link => {
+
+    document.querySelectorAll('.catalog-page__letter').forEach(function(link) {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            const targetId = this.getAttribute('href');
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) {
-                targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            var target = document.querySelector(this.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
-    });
-    
-    // Sticky навигация и подсветка активной буквы
-    const alphabetSection = document.getElementById('alphabetSection');
-    const letterLinks = document.querySelectorAll('.letter-link');
-    // letterDividers уже объявлена выше
-    
-    if (alphabetSection && letterDividers.length > 0) {
-        // Создаем массив с позициями букв
-        const letterPositions = Array.from(letterDividers).map(divider => ({
-            letter: divider.id.replace('letter-', ''),
-            position: divider.offsetTop
-        }));
-        
-        // Обработка прокрутки
-        let ticking = false;
-        window.addEventListener('scroll', function() {
-            if (!ticking) {
-                window.requestAnimationFrame(function() {
-                    const scrollY = window.pageYOffset;
-                    
-                    // Компактный режим при прокрутке
-                    if (scrollY > 100) {
-                        alphabetSection.classList.add('scrolled');
-                    } else {
-                        alphabetSection.classList.remove('scrolled');
-                    }
-                    
-                    // Подсветка активной буквы
-                    let currentLetter = '';
-                    for (let i = letterPositions.length - 1; i >= 0; i--) {
-                        if (scrollY >= letterPositions[i].position - 300) {
-                            currentLetter = letterPositions[i].letter;
-                            break;
-                        }
-                    }
-                    
-                    if (currentLetter) {
-                        letterLinks.forEach(link => {
-                            if (link.dataset.letter === currentLetter) {
-                                link.classList.add('active');
-                            } else {
-                                link.classList.remove('active');
-                            }
-                        });
-                    }
-                    
-                    ticking = false;
-                });
-                ticking = true;
-            }
-        });
-    }
-    
-    // Плавная прокрутка для кнопки "к алфавиту"
-    document.querySelectorAll('.letter-nav-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) {
-                targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        });
-    });
-    
-    // Аккордеон для категорий игр
-    document.querySelectorAll('.game-toggle').forEach(toggle => {
-        toggle.addEventListener('click', function(e) {
-            e.stopPropagation();
-            
-            const gameCard = this.closest('.game-card-clean');
-            const wasExpanded = gameCard.classList.contains('expanded');
-            
-            // Закрываем все другие карточки
-            document.querySelectorAll('.game-card-clean.expanded').forEach(card => {
-                if (card !== gameCard) {
-                    card.classList.remove('expanded');
-                }
-            });
-            
-            // Переключаем текущую
-            gameCard.classList.toggle('expanded');
-        });
-    });
-    
-    // Закрытие категорий при клике вне карточки
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.game-card-clean')) {
-            document.querySelectorAll('.game-card-clean.expanded').forEach(card => {
-                card.classList.remove('expanded');
-            });
-        }
     });
 });
 </script>

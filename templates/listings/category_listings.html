@@ -3,203 +3,136 @@
 {% block title %}{{ category.name }} - {{ game.name }} - LootLink{% endblock %}
 
 {% block content %}
-<div class="container">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'listings:home' %}">Главная</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'listings:catalog' %}">Игры</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'listings:game_listings' game.slug %}">{{ game.name }}</a></li>
-            <li class="breadcrumb-item active">{{ category.name }}</li>
-        </ol>
-    </nav>
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <ul class="ll-breadcrumb">
+        <li><a href="{% url 'listings:home' %}">Главная</a></li>
+        <li><a href="{% url 'listings:catalog' %}">Игры</a></li>
+        <li><a href="{% url 'listings:game_listings' game.slug %}">{{ game.name }}</a></li>
+        <li><span class="current">{{ category.name }}</span></li>
+    </ul>
 
-    <!-- Header -->
-    <div class="page-header mb-4">
-        <div class="d-flex align-items-center justify-content-between">
-            <div>
-                <h1 class="h2 mb-2">
-                    <i class="{{ category.icon }}"></i>
-                    {{ category.name }}
-                </h1>
-                <p class="text-muted mb-0">{{ game.name }}</p>
-                {% if category.description %}
-                <p class="mt-2">{{ category.description }}</p>
-                {% endif %}
-            </div>
-            {% if user.is_authenticated %}
-            <a href="{% url 'listings:listing_create' %}" class="btn btn-primary">
-                <i class="bi bi-plus-lg"></i> Создать объявление
-            </a>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:var(--space-3);margin-bottom:var(--space-6);">
+        <div>
+            <h1 style="font-size:var(--text-2xl);font-weight:var(--weight-extrabold);">{{ category.name }}</h1>
+            <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:var(--space-1);">{{ game.name }}</p>
+            {% if category.description %}
+            <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:var(--space-1);">{{ category.description }}</p>
             {% endif %}
         </div>
-    </div>
-
-    <div class="row">
-        <!-- Filters Sidebar -->
-        {% if category_filters %}
-        <div class="col-lg-3 mb-4">
-            <div class="filters-sidebar">
-                <div class="filters-header">
-                    <h5><i class="bi bi-funnel"></i> Фильтры</h5>
-                    {% if applied_filters %}
-                    <a href="{% url 'listings:category_listings' game.slug category.slug %}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-x-circle"></i> Сбросить
-                    </a>
-                    {% endif %}
-                </div>
-                
-                <form method="get" id="filtersForm">
-                    <!-- Сортировка -->
-                    <div class="filter-group">
-                        <label class="filter-label">
-                            <i class="bi bi-sort-down"></i> Сортировка
-                        </label>
-                        <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
-                            <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Сначала новые</option>
-                            <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Сначала старые</option>
-                            <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Дешевле</option>
-                            <option value="-price" {% if sort_by == '-price' %}selected{% endif %}>Дороже</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Динамические фильтры -->
-                    {% for filter in category_filters %}
-                    <div class="filter-group">
-                        <label class="filter-label">
-                            {{ filter.name }}
-                            {% if filter.is_required %}<span class="text-danger">*</span>{% endif %}
-                        </label>
-                        
-                        {% if filter.filter_type == 'select' %}
-                            <select name="{{ filter.field_name }}" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="">Все</option>
-                                {% for option in filter.options.all %}
-                                    {% if option.is_active %}
-                                    <option value="{{ option.value }}">
-                                        {{ option.value }}
-                                    </option>
-                                    {% endif %}
-                                {% endfor %}
-                            </select>
-                        
-                        {% elif filter.filter_type == 'checkbox' %}
-                            <div class="form-check">
-                                <input type="checkbox" name="{{ filter.field_name }}" value="true" 
-                                    class="form-check-input" id="filter_{{ filter.field_name }}"
-                                    onchange="this.form.submit()">
-                                <label class="form-check-label" for="filter_{{ filter.field_name }}">
-                                    Да
-                                </label>
-                            </div>
-                        
-                        {% elif filter.filter_type == 'multiselect' %}
-                            {% for option in filter.options.all %}
-                                {% if option.is_active %}
-                                <div class="form-check">
-                                    <input type="checkbox" name="{{ filter.field_name }}" value="{{ option.value }}" 
-                                        class="form-check-input" id="opt_{{ option.id }}">
-                                    <label class="form-check-label" for="opt_{{ option.id }}">
-                                        {{ option.value }}
-                                    </label>
-                                </div>
-                                {% endif %}
-                            {% endfor %}
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                    
-                    <button type="submit" class="btn btn-primary w-100 mt-3">
-                        <i class="bi bi-search"></i> Применить фильтры
-                    </button>
-                </form>
-            </div>
-        </div>
-        <div class="col-lg-9">
-        {% else %}
-        <div class="col-12">
-        {% endif %}
-
-    <!-- Listings -->
-    {% if page_obj %}
-    <div class="mb-3">
-        <p class="text-muted">Найдено объявлений: {{ page_obj.paginator.count }}</p>
-    </div>
-    
-    <div class="listings-grid">
-        {% for listing in page_obj %}
-        <article class="listing-item">
-            <a href="{% url 'listings:listing_detail' listing.pk %}" class="listing-link">
-                <div class="listing-image">
-                    {% if listing.image %}
-                    <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
-                    {% else %}
-                    <div class="no-image-placeholder-sm">
-                        <i class="bi bi-image"></i>
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="listing-content">
-                    <div class="listing-meta">
-                        <span class="seller-name">{{ listing.seller.username }}</span>
-                        <span class="listing-date">{{ listing.created_at|date:"d.m.Y" }}</span>
-                    </div>
-                    <h3 class="listing-title">{{ listing.title }}</h3>
-                    <p class="listing-description">{{ listing.description|truncatewords:15 }}</p>
-                    <div class="listing-footer">
-                        <div class="listing-price">{{ listing.price }} ₽</div>
-                        <span class="listing-action">Подробнее <i class="bi bi-arrow-right"></i></span>
-                    </div>
-                </div>
-            </a>
-        </article>
-        {% endfor %}
-    </div>
-
-    <!-- Пагинация -->
-    {% if page_obj.has_other_pages %}
-    <nav class="mt-5">
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Назад</a>
-            </li>
-            {% endif %}
-
-            {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                </li>
-                {% endif %}
-            {% endfor %}
-
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Вперед</a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
-
-    {% else %}
-    <div class="empty-state text-center py-5">
-        <i class="bi bi-inbox display-1 text-muted"></i>
-        <h4 class="mt-3">Объявлений в этой категории пока нет</h4>
-        <p class="text-muted">Станьте первым, кто разместит объявление!</p>
         {% if user.is_authenticated %}
-        <a href="{% url 'listings:listing_create' %}" class="btn btn-primary mt-3">
-            <i class="bi bi-plus-lg"></i> Создать объявление
-        </a>
+        <a href="{% url 'listings:listing_create' %}" class="btn btn-primary btn-sm"><i data-lucide="plus"></i> Создать объявление</a>
         {% endif %}
     </div>
-    {% endif %}
-    
-        </div><!-- End column -->
-    </div><!-- End row -->
-</div>
-{% endblock %}
 
+    <div style="display:grid;grid-template-columns:{% if category_filters %}260px 1fr{% else %}1fr{% endif %};gap:var(--space-6);align-items:start;" class="cat-layout">
+        {% if category_filters %}
+        <div class="card-glass" style="position:sticky;top:var(--space-6);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);">
+                <h5 style="font-size:var(--text-base);margin:0;display:flex;align-items:center;gap:var(--space-2);"><i data-lucide="sliders-horizontal" style="width:16px;height:16px;"></i> Фильтры</h5>
+                {% if applied_filters %}
+                <a href="{% url 'listings:category_listings' game.slug category.slug %}" class="btn btn-ghost btn-sm"><i data-lucide="x"></i> Сбросить</a>
+                {% endif %}
+            </div>
+
+            <form method="get" id="filtersForm">
+                <div class="form-group">
+                    <label class="form-label">Сортировка</label>
+                    <select name="sort" onchange="this.form.submit()">
+                        <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Сначала новые</option>
+                        <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Сначала старые</option>
+                        <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Дешевле</option>
+                        <option value="-price" {% if sort_by == '-price' %}selected{% endif %}>Дороже</option>
+                    </select>
+                </div>
+
+                {% for filter in category_filters %}
+                <div class="form-group">
+                    <label class="form-label">{{ filter.name }}</label>
+                    {% if filter.filter_type == 'select' %}
+                    <select name="{{ filter.field_name }}" onchange="this.form.submit()">
+                        <option value="">Все</option>
+                        {% for option in filter.options.all %}{% if option.is_active %}<option value="{{ option.value }}">{{ option.value }}</option>{% endif %}{% endfor %}
+                    </select>
+                    {% elif filter.filter_type == 'checkbox' %}
+                    <div class="form-check">
+                        <input type="checkbox" name="{{ filter.field_name }}" value="true" id="filter_{{ filter.field_name }}" onchange="this.form.submit()">
+                        <label for="filter_{{ filter.field_name }}" style="font-size:var(--text-sm);">Да</label>
+                    </div>
+                    {% elif filter.filter_type == 'multiselect' %}
+                    {% for option in filter.options.all %}{% if option.is_active %}
+                    <div class="form-check">
+                        <input type="checkbox" name="{{ filter.field_name }}" value="{{ option.value }}" id="opt_{{ option.id }}">
+                        <label for="opt_{{ option.id }}" style="font-size:var(--text-sm);">{{ option.value }}</label>
+                    </div>
+                    {% endif %}{% endfor %}
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <button type="submit" class="btn btn-primary w-100"><i data-lucide="search"></i> Применить</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <div>
+            {% if page_obj %}
+            <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-4);">Найдено: {{ page_obj.paginator.count }}</p>
+
+            <div class="listings-grid-ll">
+                {% for listing in page_obj %}
+                <a href="{% url 'listings:listing_detail' listing.pk %}" style="text-decoration:none;color:inherit;">
+                    <div class="listing-card">
+                        <div class="listing-card__image">
+                            {% if listing.image %}<img src="{{ listing.image.url }}" alt="{{ listing.title }}">
+                            {% else %}<div class="listing-card__image-placeholder"><i data-lucide="image"></i></div>{% endif %}
+                        </div>
+                        <div class="listing-card__body">
+                            <div class="listing-card__seller">
+                                <span class="listing-card__seller-name">{{ listing.seller.username }}</span>
+                                <span class="listing-card__seller-date">{{ listing.created_at|date:"d.m.Y" }}</span>
+                            </div>
+                            <div class="listing-card__title">{{ listing.title }}</div>
+                            <div class="listing-card__desc">{{ listing.description|truncatewords:15 }}</div>
+                            <div class="listing-card__footer">
+                                <div class="listing-card__price">{{ listing.price }} ₽</div>
+                                <span class="listing-card__action">Подробнее <i data-lucide="arrow-right"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+
+            {% if page_obj.has_other_pages %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}"><i data-lucide="chevron-left"></i></a>{% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}<span class="active">{{ num }}</span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?page={{ num }}">{{ num }}</a>{% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}"><i data-lucide="chevron-right"></i></a>{% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state__icon"><i data-lucide="inbox"></i></div>
+                <div class="empty-state__title">Объявлений в этой категории пока нет</div>
+                <div class="empty-state__text">Станьте первым, кто разместит объявление!</div>
+                {% if user.is_authenticated %}
+                <a href="{% url 'listings:listing_create' %}" class="btn btn-primary"><i data-lucide="plus"></i> Создать объявление</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+@media (max-width: 768px) { .cat-layout { grid-template-columns: 1fr !important; } }
+</style>
+
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}

@@ -350,3 +350,46 @@ class SMSVerificationForm(forms.Form):
 class ResendVerificationForm(forms.Form):
     """Форма повторной отправки верификации"""
     pass
+
+
+class DocumentVerificationForm(forms.ModelForm):
+    """Форма загрузки документов для верификации"""
+
+    class Meta:
+        from .models import DocumentVerification
+        model = DocumentVerification
+        fields = ['document_type', 'document_file']
+        widgets = {
+            'document_type': forms.Select(attrs={
+                'class': 'form-select',
+            }),
+            'document_file': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': '.jpg,.jpeg,.png,.pdf'
+            })
+        }
+        labels = {
+            'document_type': 'Тип документа',
+            'document_file': 'Файл документа'
+        }
+        help_texts = {
+            'document_file': 'Макс. 10 МБ. Форматы: JPG, PNG, PDF'
+        }
+
+    def clean_document_file(self):
+        """Валидация файла документа."""
+        file = self.cleaned_data.get('document_file')
+
+        if file:
+            # Проверка размера (макс 10 МБ)
+            if file.size > 10 * 1024 * 1024:
+                raise forms.ValidationError('Размер файла не должен превышать 10 МБ.')
+
+            # Проверка расширения
+            import os
+            ext = os.path.splitext(file.name)[1].lower()
+            allowed_extensions = ['.jpg', '.jpeg', '.png', '.pdf']
+            if ext not in allowed_extensions:
+                raise forms.ValidationError(f'Разрешены только файлы: {", ".join(allowed_extensions)}')
+
+        return file

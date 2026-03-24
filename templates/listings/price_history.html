@@ -1,11 +1,54 @@
 {% extends 'base.html' %}
 
-{% block title %}price_history - LootLink{% endblock %}
+{% block title %}История цены - {{ listing.title }} - LootLink{% endblock %}
 
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>price_history</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
-</div>
-{% endblock %}
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:560px;margin:0 auto;">
+        <ul class="ll-breadcrumb">
+            <li><a href="{% url 'listings:listing_detail' listing.pk %}">{{ listing.title|truncatewords:4 }}</a></li>
+            <li><span class="current">История цены</span></li>
+        </ul>
 
+        <div class="page-header">
+            <h1>История цены</h1>
+        </div>
+
+        <div class="card-glass" style="text-align:center;margin-bottom:var(--space-6);">
+            <div style="font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:var(--space-1);">Текущая цена</div>
+            <div style="font-size:var(--text-3xl);font-weight:var(--weight-extrabold);background:var(--accent-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+                {{ listing.price }} ₽
+            </div>
+        </div>
+
+        {% if price_history %}
+        <div class="card-glass">
+            {% for change in price_history %}
+            <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) 0;{% if not forloop.last %}border-bottom:1px solid var(--card-border);{% endif %}">
+                <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:{% if change.new_price > change.old_price %}var(--color-danger-light){% else %}var(--color-success-light){% endif %};">
+                    <i data-lucide="{% if change.new_price > change.old_price %}trending-up{% else %}trending-down{% endif %}" style="width:16px;height:16px;color:{% if change.new_price > change.old_price %}var(--color-danger){% else %}var(--color-success){% endif %};"></i>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:var(--text-sm);">
+                        <span style="text-decoration:line-through;color:var(--text-tertiary);">{{ change.old_price }} ₽</span>
+                        → <span style="font-weight:var(--weight-semibold);">{{ change.new_price }} ₽</span>
+                    </div>
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);">{{ change.changed_at|date:"d.m.Y H:i" }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state__icon"><i data-lucide="bar-chart-2"></i></div>
+            <div class="empty-state__title">Цена не менялась</div>
+            <p class="empty-state__text">Текущая цена установлена при создании</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}

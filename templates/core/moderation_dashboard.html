@@ -1,11 +1,68 @@
 {% extends 'base.html' %}
-
-{% block title %}moderation_dashboard - LootLink{% endblock %}
-
+{% block title %}Панель модерации - LootLink{% endblock %}
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>moderation_dashboard</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="margin-bottom:var(--space-6);">
+        <span class="section-label">Модерация</span>
+        <h1 style="font-size:var(--text-2xl);margin-bottom:var(--space-1);">Панель модерации</h1>
+        <p style="font-size:var(--text-sm);color:var(--text-secondary);">Обзор текущего состояния платформы</p>
+    </div>
+
+    <div class="grid-4" style="margin-bottom:var(--space-8);">
+        <div class="card-glass" style="text-align:center;">
+            <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-3);">
+                <i data-lucide="flag" style="width:20px;height:20px;color:var(--accent-primary);"></i>
+            </div>
+            <div style="font-size:var(--text-2xl);font-weight:var(--weight-extrabold);color:var(--text-primary);">{{ stats.pending_reports|default:"0" }}</div>
+            <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Ожидающие жалобы</div>
+        </div>
+        <div class="card-glass" style="text-align:center;">
+            <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-success-light);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-3);">
+                <i data-lucide="check-circle" style="width:20px;height:20px;color:var(--color-success);"></i>
+            </div>
+            <div style="font-size:var(--text-2xl);font-weight:var(--weight-extrabold);color:var(--text-primary);">{{ stats.resolved_today|default:"0" }}</div>
+            <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Решено сегодня</div>
+        </div>
+        <div class="card-glass" style="text-align:center;">
+            <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-warning-light);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-3);">
+                <i data-lucide="user-x" style="width:20px;height:20px;color:var(--color-warning);"></i>
+            </div>
+            <div style="font-size:var(--text-2xl);font-weight:var(--weight-extrabold);color:var(--text-primary);">{{ stats.banned_users|default:"0" }}</div>
+            <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Заблокировано</div>
+        </div>
+        <div class="card-glass" style="text-align:center;">
+            <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-3);">
+                <i data-lucide="bar-chart-3" style="width:20px;height:20px;color:var(--accent-primary);"></i>
+            </div>
+            <div style="font-size:var(--text-2xl);font-weight:var(--weight-extrabold);color:var(--text-primary);">{{ stats.total_reports|default:"0" }}</div>
+            <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Всего жалоб</div>
+        </div>
+    </div>
+
+    <div class="grid-2" style="gap:var(--space-4);">
+        <a href="{% url 'core:reports_queue' %}" class="card-glass" style="text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+            <div style="display:flex;align-items:center;gap:var(--space-3);">
+                <div style="width:44px;height:44px;border-radius:var(--radius-md);background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;">
+                    <i data-lucide="inbox" style="width:22px;height:22px;color:var(--accent-primary);"></i>
+                </div>
+                <div>
+                    <div style="font-size:var(--text-base);font-weight:var(--weight-semibold);">Очередь жалоб</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Рассмотреть поступившие жалобы</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'core:user_bans_list' %}" class="card-glass" style="text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+            <div style="display:flex;align-items:center;gap:var(--space-3);">
+                <div style="width:44px;height:44px;border-radius:var(--radius-md);background:var(--color-danger-light);display:flex;align-items:center;justify-content:center;">
+                    <i data-lucide="shield-alert" style="width:22px;height:22px;color:var(--color-danger);"></i>
+                </div>
+                <div>
+                    <div style="font-size:var(--text-base);font-weight:var(--weight-semibold);">Заблокированные</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Управление блокировками</div>
+                </div>
+            </div>
+        </a>
+    </div>
 </div>
 {% endblock %}
-
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}

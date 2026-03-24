@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Загрузка документов - LootLink{% endblock %}
+
+{% block content %}
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:640px;margin:0 auto;">
+        <ul class="ll-breadcrumb">
+            <li><a href="{% url 'accounts:verification_status' %}">Верификация</a></li>
+            <li><span class="current">Загрузка документов</span></li>
+        </ul>
+
+        {% if user.profile.is_verified %}
+        <div class="alert alert-success" style="margin-bottom:var(--space-6);">
+            <i data-lucide="check-circle"></i> Ваш аккаунт уже верифицирован
+        </div>
+        {% else %}
+        <div class="alert alert-info" style="margin-bottom:var(--space-6);">
+            <i data-lucide="info"></i> Загрузите документ для прохождения верификации. Проверка занимает до 24 часов.
+        </div>
+
+        <div class="card-glass" style="margin-bottom:var(--space-6);">
+            <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);">Загрузить документ</h3>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="{{ form.document_type.id_for_label }}" class="form-label">Тип документа</label>
+                    {{ form.document_type }}
+                    {% if form.document_type.errors %}<div class="form-error">{{ form.document_type.errors }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.document_file.id_for_label }}" class="form-label">Файл</label>
+                    {{ form.document_file }}
+                    {% if form.document_file.errors %}<div class="form-error">{{ form.document_file.errors }}</div>{% endif %}
+                    {% if form.document_file.help_text %}<p class="form-text">{{ form.document_file.help_text }}</p>{% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100"><i data-lucide="upload"></i> Загрузить</button>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if documents %}
+        <div class="card-glass" style="margin-bottom:var(--space-6);">
+            <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+                <i data-lucide="file-text" style="width:18px;height:18px;color:var(--accent-primary);"></i> Загруженные документы
+            </h3>
+            {% for doc in documents %}
+            <div style="padding:var(--space-3) 0;{% if not forloop.last %}border-bottom:1px solid var(--card-border);{% endif %}">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-size:var(--text-sm);font-weight:var(--weight-medium);">{{ doc.get_document_type_display }}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-tertiary);">{{ doc.created_at|date:"d.m.Y H:i" }}</div>
+                    </div>
+                    <span class="badge badge-{% if doc.status == 'approved' %}success{% elif doc.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                        {% if doc.status == 'approved' %}<i data-lucide="check"></i> Одобрен
+                        {% elif doc.status == 'rejected' %}<i data-lucide="x"></i> Отклонён
+                        {% else %}<i data-lucide="clock"></i> На проверке{% endif %}
+                    </span>
+                </div>
+                {% if doc.admin_comment %}
+                <div style="margin-top:var(--space-2);padding:var(--space-2) var(--space-3);background:var(--gray-50);border-radius:var(--radius-sm);font-size:var(--text-xs);color:var(--text-secondary);">
+                    <i data-lucide="message-square" style="width:12px;height:12px;display:inline;vertical-align:middle;"></i> {{ doc.admin_comment }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="padding:var(--space-4);background:var(--gray-50);border-radius:var(--radius-md);margin-bottom:var(--space-4);">
+            <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:var(--space-3);display:flex;align-items:center;gap:var(--space-2);">
+                <i data-lucide="shield-check" style="width:16px;height:16px;color:var(--accent-primary);"></i> Требования к документам
+            </div>
+            <ul style="padding-left:var(--space-5);margin:0;display:flex;flex-direction:column;gap:var(--space-1);">
+                <li style="font-size:var(--text-xs);color:var(--text-secondary);">Паспорт или водительское удостоверение</li>
+                <li style="font-size:var(--text-xs);color:var(--text-secondary);">Фото документа должно быть чётким</li>
+                <li style="font-size:var(--text-xs);color:var(--text-secondary);">Все данные должны быть читаемы</li>
+                <li style="font-size:var(--text-xs);color:var(--text-secondary);">Максимальный размер файла: 10 МБ</li>
+            </ul>
+        </div>
+
+        <div class="auth-page__alt">
+            <a href="{% url 'accounts:verification_status' %}"><i data-lucide="arrow-left" style="width:14px;height:14px;display:inline;vertical-align:middle;"></i> Назад к верификации</a>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}

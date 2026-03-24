@@ -299,6 +299,13 @@ EMAIL_TIMEOUT = 10  # секунд
 SMS_ENABLED = config('SMS_ENABLED', default=False, cast=bool)
 SMS_RU_API_KEY = config('SMS_RU_API_KEY', default='')
 
+# Telegram Bot
+TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN', default='')
+
+# Web Push Notifications
+VAPID_PUBLIC_KEY = config('VAPID_PUBLIC_KEY', default='')
+VAPID_PRIVATE_KEY = config('VAPID_PRIVATE_KEY', default='')
+
 # Security settings for production
 if not DEBUG:
     # Важно: Для работы за nginx reverse proxy
@@ -441,10 +448,6 @@ YOOKASSA_SHOP_ID = config('YOOKASSA_SHOP_ID', default='')
 YOOKASSA_SECRET_KEY = config('YOOKASSA_SECRET_KEY', default='')
 YOOKASSA_WEBHOOK_ALLOWED_IPS = config('YOOKASSA_WEBHOOK_ALLOWED_IPS', default='')
 SITE_URL = config('SITE_URL', default='https://lootlink.ru')
-
-# Web Push settings
-VAPID_PUBLIC_KEY = config('VAPID_PUBLIC_KEY', default='')
-VAPID_PRIVATE_KEY = config('VAPID_PRIVATE_KEY', default='')
 
 # Logging configuration
 LOGGING = {

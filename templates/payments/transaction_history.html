@@ -1,11 +1,38 @@
 {% extends 'base.html' %}
-
-{% block title %}transaction_history - LootLink{% endblock %}
-
+{% block title %}История операций - LootLink{% endblock %}
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>transaction_history</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <ul class="ll-breadcrumb">
+        <li><a href="{% url 'payments:wallet_dashboard' %}">Кошелёк</a></li>
+        <li><span class="current">История</span></li>
+    </ul>
+    <div class="page-header"><h1>История операций</h1></div>
+    {% if transactions %}
+    <div class="card-glass" style="padding:0;overflow:hidden;">
+        {% for tx in transactions %}
+        <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4);{% if not forloop.last %}border-bottom:1px solid var(--card-border);{% endif %}">
+            <div style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:{% if tx.amount > 0 %}var(--color-success-light){% else %}var(--color-danger-light){% endif %};">
+                <i data-lucide="{% if tx.amount > 0 %}arrow-down-left{% else %}arrow-up-right{% endif %}" style="width:18px;height:18px;color:{% if tx.amount > 0 %}var(--color-success){% else %}var(--color-danger){% endif %};"></i>
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:var(--text-sm);font-weight:var(--weight-medium);">{{ tx.get_transaction_type_display }}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);">{{ tx.description|truncatewords:8 }}</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-weight:var(--weight-bold);{% if tx.amount > 0 %}color:var(--color-success){% else %}color:var(--color-danger){% endif %};">{% if tx.amount > 0 %}+{% endif %}{{ tx.amount }} ₽</div>
+                <div style="font-size:10px;color:var(--text-tertiary);">{{ tx.created_at|date:"d.m.Y" }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state__icon"><i data-lucide="receipt"></i></div>
+        <div class="empty-state__title">Нет операций</div>
+        <p class="empty-state__text">Здесь будет отображаться история ваших операций</p>
+        <a href="{% url 'payments:deposit' %}" class="btn btn-primary">Пополнить</a>
+    </div>
+    {% endif %}
 </div>
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}
 {% endblock %}
-

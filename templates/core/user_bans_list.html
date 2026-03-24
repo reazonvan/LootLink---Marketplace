@@ -1,11 +1,61 @@
 {% extends 'base.html' %}
-
-{% block title %}user_bans_list - LootLink{% endblock %}
-
+{% block title %}Список банов - LootLink{% endblock %}
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>user_bans_list</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:900px;margin:0 auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);flex-wrap:wrap;gap:var(--space-3);">
+            <h1 style="font-size:var(--text-xl);">Список банов</h1>
+            <div style="display:flex;gap:var(--space-2);">
+                <a href="?active=true" class="btn btn-sm {% if active_only %}btn-primary{% else %}btn-secondary{% endif %}">Активные</a>
+                <a href="?active=false" class="btn btn-sm {% if not active_only %}btn-primary{% else %}btn-secondary{% endif %}">Все</a>
+            </div>
+        </div>
+
+        {% if bans %}
+        <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+            {% for ban in bans %}
+            <div class="card-glass">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:var(--space-3);">
+                        <div style="width:40px;height:40px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;flex-shrink:0;background:{% if ban.is_active %}var(--color-danger-light){% else %}var(--gray-100){% endif %};">
+                            <i data-lucide="user-x" style="width:18px;height:18px;color:{% if ban.is_active %}var(--color-danger){% else %}var(--gray-400){% endif %};"></i>
+                        </div>
+                        <div>
+                            <a href="{% url 'accounts:profile' ban.user.username %}" style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">{{ ban.user.username }}</a>
+                            <div style="font-size:var(--text-xs);color:var(--text-tertiary);">{{ ban.get_reason_display }} &middot; {{ ban.get_ban_type_display }}</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:var(--space-3);">
+                        {% if ban.is_active %}
+                        <span class="badge badge-danger">Активен</span>
+                        {% else %}
+                        <span class="badge badge-neutral">Истёк</span>
+                        {% endif %}
+                        <div style="text-align:right;">
+                            <div style="font-size:var(--text-xs);color:var(--text-tertiary);">{{ ban.created_at|date:"d.m.Y" }}</div>
+                            {% if ban.expires_at %}
+                            <div style="font-size:var(--text-xs);color:var(--text-tertiary);">до {{ ban.expires_at|date:"d.m.Y" }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% if ban.description %}
+                <div style="margin-top:var(--space-2);padding:var(--space-2) var(--space-3);background:var(--gray-50);border-radius:var(--radius-sm);font-size:var(--text-sm);color:var(--text-secondary);margin-left:52px;">{{ ban.description|truncatechars:150 }}</div>
+                {% endif %}
+                {% if ban.moderator %}
+                <div style="margin-top:var(--space-1);margin-left:52px;font-size:var(--text-xs);color:var(--text-tertiary);">Модератор: {{ ban.moderator.username }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state__icon"><i data-lucide="shield-check"></i></div>
+            <div class="empty-state__title">Нет банов</div>
+            <p class="empty-state__text">{% if active_only %}Активных банов нет.{% else %}Банов не найдено.{% endif %}</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
-
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}

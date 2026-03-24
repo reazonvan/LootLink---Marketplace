@@ -3,36 +3,39 @@
 {% block title %}Удалить объявление - LootLink{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-6 mx-auto">
-            <div class="card shadow-sm">
-                <div class="card-header bg-danger text-white">
-                    <h4 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Подтверждение удаления</h4>
-                </div>
-                <div class="card-body">
-                    <h5>Вы уверены, что хотите удалить это объявление?</h5>
-                    <div class="alert alert-warning mt-3">
-                        <strong>{{ listing.title }}</strong><br>
-                        Цена: {{ listing.price }} ₽
-                    </div>
-                    <p class="text-muted">Это действие нельзя будет отменить.</p>
-                    
-                    <form method="post" class="mt-4">
-                        {% csrf_token %}
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'listings:listing_detail' listing.pk %}" class="btn btn-secondary">
-                                <i class="bi bi-x-circle"></i> Отмена
-                            </a>
-                            <button type="submit" class="btn btn-danger">
-                                <i class="bi bi-trash"></i> Удалить
-                            </button>
-                        </div>
-                    </form>
-                </div>
+<div class="auth-page">
+    <div style="max-width:480px;width:100%;">
+        <div class="card-glass" style="text-align:center;">
+            <div style="width:64px;height:64px;border-radius:50%;background:var(--color-danger-light);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-5);">
+                <i data-lucide="alert-triangle" style="width:28px;height:28px;color:var(--color-danger);"></i>
             </div>
+
+            <h2 style="font-size:var(--text-xl);font-weight:var(--weight-extrabold);margin-bottom:var(--space-2);">Подтверждение удаления</h2>
+            <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-5);">Вы уверены, что хотите удалить это объявление?</p>
+
+            <div style="background:var(--color-warning-light);border-radius:var(--radius-md);padding:var(--space-4);margin-bottom:var(--space-4);text-align:left;">
+                <div style="font-size:var(--text-base);font-weight:var(--weight-semibold);color:var(--text-primary);">{{ listing.title }}</div>
+                <div style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:var(--space-1);">Цена: {{ listing.price }} ₽</div>
+            </div>
+
+            <p style="font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:var(--space-5);">Это действие нельзя будет отменить.</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div style="display:flex;gap:var(--space-3);justify-content:center;">
+                    <a href="{% url 'listings:listing_detail' listing.pk %}" class="btn btn-ghost">
+                        <i data-lucide="x"></i> Отмена
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i data-lucide="trash-2"></i> Удалить
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-{% endblock %}
 
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}

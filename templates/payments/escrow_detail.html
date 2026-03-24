@@ -1,11 +1,62 @@
 {% extends 'base.html' %}
-
-{% block title %}escrow_detail - LootLink{% endblock %}
-
+{% block title %}Эскроу #{{ escrow.pk }} - LootLink{% endblock %}
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>escrow_detail</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
-</div>
-{% endblock %}
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:640px;margin:0 auto;">
+        <ul class="ll-breadcrumb">
+            <li><a href="{% url 'payments:wallet_dashboard' %}">Кошелёк</a></li>
+            <li><span class="current">Эскроу #{{ escrow.pk }}</span></li>
+        </ul>
+        <div class="card-glass" style="margin-bottom:var(--space-5);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);">
+                <h2 style="font-size:var(--text-lg);font-weight:var(--weight-extrabold);">Эскроу #{{ escrow.pk }}</h2>
+                <span class="badge badge-{% if escrow.status == 'released' %}success{% elif escrow.status == 'held' %}warning{% else %}neutral{% endif %}">
+                    {{ escrow.get_status_display }}
+                </span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
+                <div>
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Покупатель</div>
+                    <div style="font-size:var(--text-sm);font-weight:var(--weight-medium);">{{ escrow.buyer.username }}</div>
+                </div>
+                <div>
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Продавец</div>
+                    <div style="font-size:var(--text-sm);font-weight:var(--weight-medium);">{{ escrow.seller.username }}</div>
+                </div>
+                <div>
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Сумма</div>
+                    <div style="font-size:var(--text-xl);font-weight:var(--weight-extrabold);color:var(--accent-primary);">{{ escrow.amount }} ₽</div>
+                </div>
+                <div>
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Дата</div>
+                    <div style="font-size:var(--text-sm);">{{ escrow.created_at|date:"d.m.Y H:i" }}</div>
+                </div>
+            </div>
+        </div>
 
+        {% if escrow.purchase_request %}
+        <div class="card-glass" style="margin-bottom:var(--space-5);">
+            <h3 style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:var(--space-3);">Объявление</h3>
+            <div style="display:flex;align-items:center;gap:var(--space-3);">
+                <div style="width:56px;height:56px;border-radius:var(--radius-md);overflow:hidden;background:var(--offer-image-gradient);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    {% if escrow.purchase_request.listing.image %}<img src="{{ escrow.purchase_request.listing.image.url }}" style="width:100%;height:100%;object-fit:cover;">
+                    {% else %}<i data-lucide="image" style="width:24px;height:24px;color:white;opacity:0.5;"></i>{% endif %}
+                </div>
+                <div>
+                    <a href="{% url 'listings:listing_detail' escrow.purchase_request.listing.pk %}" style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">{{ escrow.purchase_request.listing.title }}</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="alert alert-info"><i data-lucide="info"></i> Эскроу защищает обе стороны сделки. Средства удерживаются до подтверждения передачи.</div>
+
+        {% if escrow.purchase_request %}
+        <div style="text-align:center;margin-top:var(--space-5);">
+            <a href="{% url 'transactions:purchase_request_detail' escrow.purchase_request.pk %}" class="btn btn-secondary"><i data-lucide="eye"></i> К сделке</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}
+{% endblock %}

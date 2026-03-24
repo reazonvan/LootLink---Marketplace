@@ -1,189 +1,125 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
 
 {% block title %}Редактировать - {{ listing.title }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="page-header">
-                <h1>Редактировать объявление</h1>
-                <p class="text-muted">Обновите информацию о вашем объявлении</p>
-            </div>
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:680px;margin:0 auto;">
+        <div class="page-header">
+            <span class="section-label">Редактирование</span>
+            <h1>Редактировать объявление</h1>
+            <p>Обновите информацию о вашем объявлении</p>
+        </div>
 
-            <div class="form-card">
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-4">
-                            <label for="{{ form.game.id_for_label }}" class="form-label fw-semibold">Игра *</label>
-                            {{ form.game }}
-                            {% if form.game.errors %}
-                            <div class="text-danger small mt-1">{{ form.game.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="col-md-6 mb-4">
-                            <label for="{{ form.category.id_for_label }}" class="form-label fw-semibold">Категория</label>
-                            {{ form.category }}
-                            {% if form.category.errors %}
-                            <div class="text-danger small mt-1">{{ form.category.errors }}</div>
-                            {% endif %}
-                            {% if form.category.help_text %}
-                            <small class="form-text text-muted">{{ form.category.help_text }}</small>
-                            {% endif %}
-                        </div>
+        <div class="card-glass">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger" style="margin-bottom:var(--space-4);"><i data-lucide="alert-circle"></i> {{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);" class="form-row-responsive">
+                    <div class="form-group">
+                        <label for="{{ form.game.id_for_label }}" class="form-label">Игра *</label>
+                        {{ form.game }}
+                        {% if form.game.errors %}<div class="form-error">{{ form.game.errors }}</div>{% endif %}
                     </div>
-                    
-                    <div class="mb-4">
-                        <label for="{{ form.title.id_for_label }}" class="form-label fw-semibold">Название предмета *</label>
-                        {{ form.title }}
-                        {% if form.title.errors %}
-                        <div class="text-danger small mt-1">{{ form.title.errors }}</div>
-                        {% endif %}
+                    <div class="form-group">
+                        <label for="{{ form.category.id_for_label }}" class="form-label">Категория</label>
+                        {{ form.category }}
+                        {% if form.category.errors %}<div class="form-error">{{ form.category.errors }}</div>{% endif %}
                     </div>
-                    
-                    <div class="mb-4">
-                        <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold">Описание *</label>
-                        {{ form.description }}
-                        {% if form.description.errors %}
-                        <div class="text-danger small mt-1">{{ form.description.errors }}</div>
-                        {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.title.id_for_label }}" class="form-label">Название предмета *</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}<div class="form-error">{{ form.title.errors }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">Описание *</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}<div class="form-error">{{ form.description.errors }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.price.id_for_label }}" class="form-label">Цена (₽) *</label>
+                    {{ form.price }}
+                    {% if form.price.errors %}<div class="form-error">{{ form.price.errors }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.image.id_for_label }}" class="form-label">{{ form.image.label }}</label>
+                    {% if listing.image %}
+                    <div style="margin-bottom:var(--space-3);">
+                        <div style="font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:var(--space-2);">Текущее изображение:</div>
+                        <img src="{{ listing.image.url }}" alt="{{ listing.title }}" style="max-width:240px;max-height:240px;border-radius:var(--radius-md);border:1px solid var(--card-border);">
                     </div>
-                    
-                    <div class="mb-4">
-                        <label for="{{ form.price.id_for_label }}" class="form-label fw-semibold">Цена (₽) *</label>
-                        {{ form.price }}
-                        {% if form.price.errors %}
-                        <div class="text-danger small mt-1">{{ form.price.errors }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="{{ form.image.id_for_label }}" class="form-label fw-semibold">{{ form.image.label }}</label>
-                        
-                        {% if listing.image %}
-                        <div class="mb-3">
-                            <p class="text-muted mb-2">Текущее изображение:</p>
-                            <img src="{{ listing.image.url }}" alt="{{ listing.title }}" class="img-thumbnail" style="max-width: 300px; max-height: 300px;">
-                        </div>
-                        {% endif %}
-                        
-                        {{ form.image }}
-                        {% if form.image.errors %}
-                        <div class="text-danger small mt-1">{{ form.image.errors }}</div>
-                        {% endif %}
-                        {% if form.image.help_text %}
-                        <small class="form-text text-muted d-block mt-1">{{ form.image.help_text }}</small>
-                        {% endif %}
-                        <small class="form-text text-muted d-block mt-1">После выбора нового изображения вы сможете его обрезать.</small>
-                        <!-- Контейнер для предпросмотра -->
-                        <div id="listingImagePreviewContainer"></div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="{{ form.status.id_for_label }}" class="form-label fw-semibold">Статус *</label>
-                        {{ form.status }}
-                        {% if form.status.errors %}
-                        <div class="text-danger small mt-1">{{ form.status.errors }}</div>
-                        {% endif %}
-                        <small class="form-text text-muted d-block mt-1">
-                            <strong>active</strong> - объявление активно и видно всем<br>
-                            <strong>sold</strong> - предмет продан<br>
-                            <strong>inactive</strong> - объявление скрыто
-                        </small>
-                    </div>
-                    
-                    <hr class="my-4">
-                    
-                    <div class="form-actions">
-                        <a href="{% url 'listings:listing_detail' listing.pk %}" class="btn btn-outline-secondary btn-lg">
-                            <i class="bi bi-x-circle"></i> Отмена
-                        </a>
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="bi bi-check-circle"></i> Сохранить изменения
-                        </button>
-                    </div>
-                </form>
-            </div>
+                    {% endif %}
+                    {{ form.image }}
+                    {% if form.image.errors %}<div class="form-error">{{ form.image.errors }}</div>{% endif %}
+                    <p class="form-text">После выбора нового изображения вы сможете его обрезать.</p>
+                    <div id="listingImagePreviewContainer"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.status.id_for_label }}" class="form-label">Статус *</label>
+                    {{ form.status }}
+                    {% if form.status.errors %}<div class="form-error">{{ form.status.errors }}</div>{% endif %}
+                    <p class="form-text">active — активно и видно всем, sold — продан, inactive — скрыто</p>
+                </div>
+
+                <div class="divider"></div>
+
+                <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
+                    <a href="{% url 'listings:listing_detail' listing.pk %}" class="btn btn-ghost btn-lg">
+                        <i data-lucide="x"></i> Отмена
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i data-lucide="check"></i> Сохранить
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+<style>
+@media (max-width: 560px) { .form-row-responsive { grid-template-columns: 1fr !important; } }
+</style>
 {% endblock %}
 
 {% block extra_js %}
-{% load static %}
 <script src="{% static 'js/listing-image-cropper.js' %}"></script>
 <script>
-// Динамическая загрузка категорий при выборе игры
+lucide.createIcons();
 document.addEventListener('DOMContentLoaded', function() {
-    const gameSelect = document.getElementById('id_game');
-    const categorySelect = document.getElementById('id_category');
-    
+    var gameSelect = document.getElementById('id_game');
+    var categorySelect = document.getElementById('id_category');
     if (gameSelect && categorySelect) {
         gameSelect.addEventListener('change', function() {
-            const gameId = this.value;
-            
-            if (!gameId) {
-                categorySelect.innerHTML = '<option value="">---------</option>';
-                categorySelect.disabled = true;
-                return;
-            }
-            
-            // Показываем loading
+            var gameId = this.value;
+            if (!gameId) { categorySelect.innerHTML = '<option value="">---------</option>'; categorySelect.disabled = true; return; }
             categorySelect.disabled = true;
             categorySelect.innerHTML = '<option value="">Загрузка...</option>';
-            
-            // AJAX запрос за категориями
-            fetch(`/listings/api/categories/?game=${gameId}`)
-                .then(response => response.json())
-                .then(data => {
+            fetch('/listings/api/categories/?game=' + gameId)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
                     categorySelect.innerHTML = '<option value="">---------</option>';
-                    
                     if (data.categories && data.categories.length > 0) {
-                        data.categories.forEach(category => {
-                            const option = document.createElement('option');
-                            option.value = category.id;
-                            option.textContent = category.icon ? `${category.icon} ${category.name}` : category.name;
-                            categorySelect.appendChild(option);
+                        data.categories.forEach(function(cat) {
+                            var opt = document.createElement('option');
+                            opt.value = cat.id;
+                            opt.textContent = cat.icon ? cat.icon + ' ' + cat.name : cat.name;
+                            categorySelect.appendChild(opt);
                         });
                         categorySelect.disabled = false;
-                    } else {
-                        categorySelect.innerHTML = '<option value="">Нет доступных категорий</option>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Ошибка загрузки категорий:', error);
-                    categorySelect.innerHTML = '<option value="">Ошибка загрузки</option>';
-                });
-        });
-    }
-    
-    // Предпросмотр изображения перед загрузкой
-    const imageInput = document.getElementById('id_image');
-    if (imageInput) {
-        imageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Создаем или обновляем превью
-                    let preview = document.getElementById('image-preview');
-                    if (!preview) {
-                        preview = document.createElement('div');
-                        preview.id = 'image-preview';
-                        preview.className = 'mt-3';
-                        imageInput.parentElement.appendChild(preview);
-                    }
-                    preview.innerHTML = `
-                        <p class="text-muted mb-2">Новое изображение (предпросмотр):</p>
-                        <img src="${e.target.result}" alt="Preview" class="img-thumbnail" style="max-width: 300px; max-height: 300px;">
-                    `;
-                }
-                reader.readAsDataURL(file);
-            }
+                    } else { categorySelect.innerHTML = '<option value="">Нет доступных категорий</option>'; }
+                }).catch(function() { categorySelect.innerHTML = '<option value="">Ошибка загрузки</option>'; });
         });
     }
 });

@@ -1,113 +1,50 @@
 {% extends 'admin_panel/base.html' %}
-
 {% block title %}{{ user.username }}{% endblock %}
 {% block page_title %}Пользователь: {{ user.username }}{% endblock %}
 
 {% block breadcrumb %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'admin_panel:users_list' %}">Пользователи</a></li>
-        <li class="breadcrumb-item active">{{ user.username }}</li>
-    </ol>
-</nav>
+<ul class="ap-breadcrumb"><li><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li><li><a href="{% url 'admin_panel:users_list' %}">Пользователи</a></li><li>{{ user.username }}</li></ul>
 {% endblock %}
 
 {% block content %}
-<div class="row g-4">
-    <!-- Профиль -->
-    <div class="col-md-4">
-        <div class="admin-card text-center">
-            {% if user.profile.avatar %}
-            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" style="width: 120px; height: 120px; border-radius: 16px; object-fit: cover; margin-bottom: 1rem; border: 3px solid var(--admin-border);">
-            {% else %}
-            <div style="width: 120px; height: 120px; border-radius: 16px; background: var(--admin-primary); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem; font-weight: 700; margin: 0 auto 1rem; border: 3px solid var(--admin-border);">
-                {{ user.username|first|upper }}
-            </div>
+<div class="g-4 g-4-8">
+    <div class="ap-card" style="text-align:center;">
+        {% if user.profile.avatar %}
+        <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" style="width:120px;height:120px;border-radius:16px;object-fit:cover;margin-bottom:1rem;border:3px solid var(--ap-border);">
+        {% else %}
+        <div style="width:120px;height:120px;border-radius:16px;background:var(--ap-primary);display:flex;align-items:center;justify-content:center;color:white;font-size:3rem;font-weight:700;margin:0 auto 1rem;">{{ user.username|first|upper }}</div>
+        {% endif %}
+        <h3 style="font-weight:700;margin-bottom:0.5rem;">{{ user.username }}</h3>
+        <div style="color:#6B7280;margin-bottom:1rem;">{{ user.email }}</div>
+        <div style="color:#FBBF24;font-size:1.25rem;margin-bottom:0.25rem;">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <div style="font-weight:700;font-size:1.5rem;margin-bottom:1.5rem;">{{ user.profile.rating|floatformat:1 }}</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+            <button class="ap-btn ap-btn-primary" onclick="verifyUser({{ user.id }})"><i data-lucide="check-circle"></i> {% if user.profile.is_verified %}Снять верификацию{% else %}Верифицировать{% endif %}</button>
+            {% if not user.is_superuser %}
+            {% if user.is_active %}<button class="ap-btn ap-btn-danger" onclick="banUser({{ user.id }})"><i data-lucide="ban"></i> Заблокировать</button>
+            {% else %}<button class="ap-btn ap-btn-success" onclick="unbanUser({{ user.id }})"><i data-lucide="check-circle"></i> Разблокировать</button>{% endif %}
             {% endif %}
-            
-            <h3 style="font-weight: 700; margin-bottom: 0.5rem;">{{ user.username }}</h3>
-            <div style="color: #6B7280; margin-bottom: 1rem;">{{ user.email }}</div>
-            
-            <div class="mb-3">
-                <div style="color: #FBBF24; font-size: 1.25rem; margin-bottom: 0.5rem;">
-                    ★★★★★
-                </div>
-                <div style="font-weight: 700; font-size: 1.5rem;">{{ user.profile.rating|floatformat:1 }}</div>
-            </div>
-            
-            <div class="d-grid gap-2">
-                <button class="btn-admin btn-admin-primary" onclick="verifyUser({{ user.id }}, {{ user.profile.is_verified|yesno:'true,false' }})">
-                    <i class="bi bi-check-circle"></i> {% if user.profile.is_verified %}Снять верификацию{% else %}Верифицировать{% endif %}
-                </button>
-                
-                {% if not user.is_superuser %}
-                {% if user.is_active %}
-                <button class="btn-admin btn-admin-danger" onclick="banUser({{ user.id }})">
-                    <i class="bi bi-ban"></i> Заблокировать
-                </button>
-                {% else %}
-                <button class="btn-admin btn-admin-success" onclick="unbanUser({{ user.id }})">
-                    <i class="bi bi-check-circle"></i> Разблокировать
-                </button>
-                {% endif %}
-                {% endif %}
-                
-                <a href="{% url 'accounts:profile' user.username %}" target="_blank" class="btn-admin btn-admin-outline">
-                    <i class="bi bi-box-arrow-up-right"></i> Профиль на сайте
-                </a>
-            </div>
+            <a href="{% url 'accounts:profile' user.username %}" target="_blank" class="ap-btn ap-btn-outline"><i data-lucide="external-link"></i> Профиль на сайте</a>
         </div>
     </div>
-    
-    <!-- Информация и статистика -->
-    <div class="col-md-8">
-        <div class="admin-card mb-4">
-            <h4 style="margin-bottom: 1rem;">Статистика</h4>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div style="background: var(--admin-light); padding: 1rem; border-radius: 8px;">
-                        <div style="font-size: 2rem; font-weight: 800; color: var(--admin-success);">{{ user_sales }}</div>
-                        <div style="color: #6B7280; font-size: 0.875rem;">Продаж</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div style="background: var(--admin-light); padding: 1rem; border-radius: 8px;">
-                        <div style="font-size: 2rem; font-weight: 800; color: var(--admin-info);">{{ user_purchases }}</div>
-                        <div style="color: #6B7280; font-size: 0.875rem;">Покупок</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div style="background: var(--admin-light); padding: 1rem; border-radius: 8px;">
-                        <div style="font-size: 2rem; font-weight: 800; color: var(--admin-primary);">{{ user_listings }}</div>
-                        <div style="color: #6B7280; font-size: 0.875rem;">Объявлений</div>
-                    </div>
-                </div>
+    <div>
+        <div class="ap-card" style="margin-bottom:1.5rem;">
+            <h4 style="margin-bottom:1rem;">Статистика</h4>
+            <div class="g-4 g-3-cols">
+                <div style="background:var(--ap-light);padding:1rem;border-radius:8px;"><div style="font-size:2rem;font-weight:800;color:var(--ap-success);">{{ user_sales }}</div><div style="color:#6B7280;font-size:0.875rem;">Продаж</div></div>
+                <div style="background:var(--ap-light);padding:1rem;border-radius:8px;"><div style="font-size:2rem;font-weight:800;color:var(--ap-info);">{{ user_purchases }}</div><div style="color:#6B7280;font-size:0.875rem;">Покупок</div></div>
+                <div style="background:var(--ap-light);padding:1rem;border-radius:8px;"><div style="font-size:2rem;font-weight:800;color:var(--ap-primary);">{{ user_listings }}</div><div style="color:#6B7280;font-size:0.875rem;">Объявлений</div></div>
             </div>
         </div>
-        
-        <!-- Последние объявления -->
-        <div class="admin-card">
-            <h4 style="margin-bottom: 1rem;">Последние объявления</h4>
+        <div class="ap-card">
+            <h4 style="margin-bottom:1rem;">Последние объявления</h4>
             {% for listing in recent_listings %}
-            <div class="d-flex gap-3 mb-3 pb-3" style="border-bottom: 1px solid var(--admin-border);">
-                {% if listing.image %}
-                <img src="{{ listing.image.url }}" alt="" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
-                {% else %}
-                <div style="width: 80px; height: 80px; background: var(--admin-light); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                    <i class="bi bi-image" style="color: #9CA3AF; font-size: 2rem;"></i>
-                </div>
-                {% endif %}
-                
-                <div class="flex-grow-1">
-                    <h6 style="font-weight: 600; margin-bottom: 0.25rem;">{{ listing.title }}</h6>
-                    <div style="font-size: 0.875rem; color: #6B7280;">{{ listing.game.name }} • {{ listing.price }} ₽</div>
-                    <span class="status-badge status-{{ listing.status }} mt-2">{{ listing.get_status_display }}</span>
-                </div>
+            <div style="display:flex;gap:1rem;padding-bottom:1rem;margin-bottom:1rem;border-bottom:1px solid var(--ap-border);">
+                {% if listing.image %}<img src="{{ listing.image.url }}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;flex-shrink:0;">
+                {% else %}<div style="width:80px;height:80px;background:var(--ap-light);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i data-lucide="image" style="width:32px;height:32px;color:#9CA3AF;"></i></div>{% endif %}
+                <div style="flex:1;"><h6 style="font-weight:600;margin-bottom:0.25rem;">{{ listing.title }}</h6><div style="font-size:0.875rem;color:#6B7280;">{{ listing.game.name }} &bull; {{ listing.price }} ₽</div><span class="ap-badge ap-badge-{{ listing.status }}" style="margin-top:0.5rem;">{{ listing.get_status_display }}</span></div>
             </div>
-            {% empty %}
-            <div class="text-center text-muted">Нет объявлений</div>
-            {% endfor %}
+            {% empty %}<div style="text-align:center;color:#6B7280;">Нет объявлений</div>{% endfor %}
         </div>
     </div>
 </div>
@@ -115,41 +52,9 @@
 
 {% block extra_js %}
 <script>
-    // Копируем функции из users_list
-    async function verifyUser(userId, currentStatus) {
-        const url = `/custom-admin/api/users/${userId}/verify/`;
-        const result = await adminAjax(url);
-        
-        if (result.success) {
-            showToast(result.message, 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showToast(result.message, 'danger');
-        }
-    }
-    
-    async function banUser(userId) {
-        if (!confirm('Вы уверены?')) return;
-        const url = `/custom-admin/api/users/${userId}/ban/`;
-        const result = await adminAjax(url);
-        if (result.success) {
-            showToast(result.message, 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showToast(result.message, 'danger');
-        }
-    }
-    
-    async function unbanUser(userId) {
-        const url = `/custom-admin/api/users/${userId}/unban/`;
-        const result = await adminAjax(url);
-        if (result.success) {
-            showToast(result.message, 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showToast(result.message, 'danger');
-        }
-    }
+lucide.createIcons();
+async function verifyUser(id) { var r = await adminAjax('/custom-admin/api/users/'+id+'/verify/'); if(r.success){showToast(r.message);setTimeout(function(){location.reload()},1000);}else{showToast(r.message,'danger');} }
+async function banUser(id) { if(!confirm('Заблокировать?'))return; var r = await adminAjax('/custom-admin/api/users/'+id+'/ban/'); if(r.success){showToast(r.message);setTimeout(function(){location.reload()},1000);}else{showToast(r.message,'danger');} }
+async function unbanUser(id) { var r = await adminAjax('/custom-admin/api/users/'+id+'/unban/'); if(r.success){showToast(r.message);setTimeout(function(){location.reload()},1000);}else{showToast(r.message,'danger');} }
 </script>
 {% endblock %}
-

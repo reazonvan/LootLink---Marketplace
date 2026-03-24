@@ -76,10 +76,14 @@ def user_login(request):
     else:
         form = CustomAuthenticationForm()
     
+    from listings.models import Game
+    total_games = Game.objects.filter(is_active=True).count()
+
     context = {
         'form': form,
         'total_users': total_users,
         'total_deals': total_deals,
+        'total_games': total_games,
     }
     return render(request, 'accounts/login.html', context)
 

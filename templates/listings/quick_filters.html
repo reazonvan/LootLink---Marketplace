@@ -1,11 +1,46 @@
 {% extends 'base.html' %}
 
-{% block title %}quick_filters - LootLink{% endblock %}
+{% block title %}Быстрые фильтры - LootLink{% endblock %}
 
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>quick_filters</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
-</div>
-{% endblock %}
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div class="page-header">
+        <h1>Быстрые фильтры</h1>
+        <p>Найдите нужное быстрее</p>
+    </div>
 
+    {% if popular_categories %}
+    <h3 style="font-size:var(--text-lg);font-weight:var(--weight-bold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+        <i data-lucide="flame" style="width:20px;height:20px;color:var(--color-danger);"></i> Популярные категории
+    </h3>
+    <div class="grid-3" style="margin-bottom:var(--space-8);">
+        {% for category in popular_categories %}
+        <a href="{% url 'listings:global_search' %}?category={{ category.slug }}" class="card-glass" style="text-decoration:none;color:inherit;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">{{ category.name }}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);">{{ category.listing_count }} товаров</div>
+            </div>
+            <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--text-tertiary);"></i>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if price_ranges %}
+    <h3 style="font-size:var(--text-lg);font-weight:var(--weight-bold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+        <i data-lucide="tag" style="width:20px;height:20px;color:var(--accent-primary);"></i> Ценовые диапазоны
+    </h3>
+    <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;">
+        {% for range in price_ranges %}
+        <a href="{% url 'listings:global_search' %}?min_price={{ range.min }}&max_price={{ range.max }}" class="btn btn-secondary">
+            {{ range.label }}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}

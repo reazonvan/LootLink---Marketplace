@@ -16,9 +16,6 @@ redis>=7.0.0
 django-redis>=6.0.0
 hiredis>=3.3.0
 
-# Async tasks
-celery>=5.5.0
-
 # Monitoring and error tracking
 sentry-sdk>=2.42.0
 

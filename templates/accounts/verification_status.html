@@ -1,109 +1,126 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Статус верификации - LootLink{% endblock %}
+{% block title %}Верификация - LootLink{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
-            <h1 class="mb-4"><i class="bi bi-shield-check"></i> Статус верификации</h1>
-            
-            <!-- Email верификация -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header {% if email_verification and email_verification.is_verified %}bg-success text-white{% else %}bg-warning text-dark{% endif %}">
-                    <h5 class="mb-0">
-                        <i class="bi bi-envelope-check"></i> Email верификация
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% if email_verification and email_verification.is_verified %}
-                        <div class="alert alert-success mb-0">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <strong>Верифицирован!</strong> Ваш email {{ user.email }} подтвержден.
-                            <br><small class="text-muted">Дата верификации: {{ email_verification.verified_at|date:"d.m.Y H:i" }}</small>
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:720px;margin:0 auto;">
+        <div class="page-header">
+            <h1>Верификация аккаунта</h1>
+            <p>Подтвердите данные для повышения доверия</p>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:var(--space-4);">
+            <div class="card-glass">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="display:flex;align-items:center;gap:var(--space-3);">
+                        <div style="width:44px;height:44px;border-radius:var(--radius-md);background:{% if email_verification.is_verified %}var(--color-success-light){% else %}var(--color-warning-light){% endif %};display:flex;align-items:center;justify-content:center;">
+                            <i data-lucide="{% if email_verification.is_verified %}mail-check{% else %}mail{% endif %}" style="width:22px;height:22px;color:{% if email_verification.is_verified %}var(--color-success){% else %}var(--color-warning){% endif %};"></i>
                         </div>
+                        <div>
+                            <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Email</div>
+                            <div style="font-size:var(--text-xs);color:var(--text-secondary);">
+                                {% if email_verification.is_verified %}
+                                <span style="color:var(--color-success);">Подтверждён</span>
+                                {% if email_verification.verified_at %} · {{ email_verification.verified_at|date:"d.m.Y" }}{% endif %}
+                                {% else %}
+                                <span style="color:var(--color-warning);">Не подтверждён</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% if not email_verification.is_verified %}
+                    <form method="post" action="{% url 'accounts:resend_verification_email' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary btn-sm"><i data-lucide="refresh-cw"></i> Повторить</button>
+                    </form>
                     {% else %}
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            <strong>Требуется верификация!</strong> Email {{ user.email }} не подтвержден.
-                        </div>
-                        <p>Проверьте свою почту и перейдите по ссылке из письма.</p>
-                        <form method="post" action="{% url 'accounts:resend_verification_email' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-arrow-repeat"></i> Отправить письмо повторно
-                            </button>
-                        </form>
+                    <span class="badge badge-success"><i data-lucide="check"></i> OK</span>
                     {% endif %}
                 </div>
             </div>
-            
-            <!-- Телефон верификация -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header {% if phone_verified %}bg-success text-white{% else %}bg-warning text-dark{% endif %}">
-                    <h5 class="mb-0">
-                        <i class="bi bi-phone-vibrate"></i> Телефон верификация
-                    </h5>
-                </div>
-                <div class="card-body">
+
+            <div class="card-glass">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="display:flex;align-items:center;gap:var(--space-3);">
+                        <div style="width:44px;height:44px;border-radius:var(--radius-md);background:{% if phone_verified %}var(--color-success-light){% else %}var(--color-warning-light){% endif %};display:flex;align-items:center;justify-content:center;">
+                            <i data-lucide="{% if phone_verified %}phone{% else %}phone{% endif %}" style="width:22px;height:22px;color:{% if phone_verified %}var(--color-success){% else %}var(--color-warning){% endif %};"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Телефон</div>
+                            <div style="font-size:var(--text-xs);color:var(--text-secondary);">
+                                {% if phone_verified %}
+                                <span style="color:var(--color-success);">Подтверждён</span>
+                                {% elif user.profile.phone %}
+                                {{ user.profile.phone }} · <span style="color:var(--color-warning);">Не подтверждён</span>
+                                {% else %}
+                                <span style="color:var(--text-tertiary);">Не указан</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                     {% if phone_verified %}
-                        <div class="alert alert-success mb-0">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <strong>Верифицирован!</strong> Ваш телефон {{ user.profile.phone }} подтвержден.
-                            <br><small class="text-muted">Дата верификации: {{ user.profile.verification_date|date:"d.m.Y H:i" }}</small>
-                        </div>
+                    <span class="badge badge-success"><i data-lucide="check"></i> OK</span>
+                    {% elif user.profile.phone %}
+                    <a href="{% url 'accounts:phone_verification_request' %}" class="btn btn-secondary btn-sm"><i data-lucide="send"></i> Подтвердить</a>
                     {% else %}
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            <strong>Требуется верификация!</strong> 
-                            {% if user.profile.phone %}
-                                Телефон {{ user.profile.phone }} не подтвержден.
-                            {% else %}
-                                Добавьте номер телефона в настройках профиля.
-                            {% endif %}
-                        </div>
-                        {% if user.profile.phone %}
-                            <p>Мы отправим вам SMS с кодом подтверждения.</p>
-                            <a href="{% url 'accounts:phone_verification_request' %}" class="btn btn-primary">
-                                <i class="bi bi-phone"></i> Верифицировать телефон
-                            </a>
-                        {% else %}
-                            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
-                                <i class="bi bi-pencil"></i> Добавить телефон
-                            </a>
-                        {% endif %}
+                    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-ghost btn-sm"><i data-lucide="pencil"></i> Указать</a>
                     {% endif %}
                 </div>
             </div>
-            
-            <!-- Преимущества верификации -->
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-star"></i> Преимущества верификации</h5>
+
+            <div class="card-glass">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="display:flex;align-items:center;gap:var(--space-3);">
+                        <div style="width:44px;height:44px;border-radius:var(--radius-md);background:{% if user.profile.is_verified %}var(--color-success-light){% else %}var(--color-info-light){% endif %};display:flex;align-items:center;justify-content:center;">
+                            <i data-lucide="{% if user.profile.is_verified %}file-check{% else %}file-text{% endif %}" style="width:22px;height:22px;color:{% if user.profile.is_verified %}var(--color-success){% else %}var(--color-info){% endif %};"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">KYC документы</div>
+                            <div style="font-size:var(--text-xs);color:var(--text-secondary);">
+                                {% if user.profile.is_verified %}
+                                <span style="color:var(--color-success);">Верифицирован</span> · {{ user.profile.verification_date|date:"d.m.Y" }}
+                                {% else %}
+                                <span style="color:var(--text-tertiary);">Не пройден</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% if user.profile.is_verified %}
+                    <span class="badge badge-success"><i data-lucide="check"></i> OK</span>
+                    {% else %}
+                    <div style="display:flex;gap:var(--space-2);">
+                        <a href="{% url 'accounts:document_verification_upload' %}" class="btn btn-secondary btn-sm"><i data-lucide="upload"></i> Загрузить</a>
+                        <a href="{% url 'accounts:document_verification_status' %}" class="btn btn-ghost btn-sm"><i data-lucide="eye"></i></a>
+                    </div>
+                    {% endif %}
                 </div>
-                <div class="card-body">
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="bi bi-check2 text-success"></i> Повышенное доверие со стороны покупателей
-                        </li>
-                        <li class="mb-2">
-                            <i class="bi bi-check2 text-success"></i> Значок "Проверенный продавец" в профиле
-                        </li>
-                        <li class="mb-2">
-                            <i class="bi bi-check2 text-success"></i> Приоритет в поисковой выдаче
-                        </li>
-                        <li class="mb-2">
-                            <i class="bi bi-check2 text-success"></i> Доступ ко всем функциям платформы
-                        </li>
-                        <li class="mb-2">
-                            <i class="bi bi-check2 text-success"></i> Возможность выводить средства
-                        </li>
-                    </ul>
+            </div>
+        </div>
+
+        <div class="card-glass" style="margin-top:var(--space-8);">
+            <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+                <i data-lucide="star" style="width:18px;height:18px;color:var(--accent-primary);"></i> Преимущества верификации
+            </h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--text-secondary);">
+                    <i data-lucide="check-circle" style="width:16px;height:16px;color:var(--color-success);flex-shrink:0;"></i> Повышенное доверие
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--text-secondary);">
+                    <i data-lucide="check-circle" style="width:16px;height:16px;color:var(--color-success);flex-shrink:0;"></i> Увеличенные лимиты
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--text-secondary);">
+                    <i data-lucide="check-circle" style="width:16px;height:16px;color:var(--color-success);flex-shrink:0;"></i> Значок верификации
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--text-secondary);">
+                    <i data-lucide="check-circle" style="width:16px;height:16px;color:var(--color-success);flex-shrink:0;"></i> Приоритет в поиске
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}

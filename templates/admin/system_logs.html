@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-
-{% block title %}system_logs - LootLink{% endblock %}
-
+{% block title %}Системные логи - LootLink{% endblock %}
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>system_logs</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
+<div style="padding:var(--space-6) 0 var(--space-12);text-align:center;">
+    <i data-lucide="scroll-text" style="width:48px;height:48px;color:var(--accent-primary);margin-bottom:var(--space-4);"></i>
+    <h1 style="font-size:var(--text-2xl);margin-bottom:var(--space-3);">Системные логи</h1>
+    <p style="color:var(--text-secondary);margin-bottom:var(--space-5);">Просмотр доступен в расширенной панели</p>
+    <a href="{% url 'admin_panel:security_logs' %}" class="btn btn-primary"><i data-lucide="shield"></i> Логи безопасности</a>
 </div>
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}
 {% endblock %}
-

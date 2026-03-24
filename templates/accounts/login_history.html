@@ -1,11 +1,66 @@
 {% extends 'base.html' %}
 
-{% block title %}login_history - LootLink{% endblock %}
+{% block title %}История входов - LootLink{% endblock %}
 
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>login_history</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
-</div>
-{% endblock %}
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:800px;margin:0 auto;">
+        <ul class="ll-breadcrumb">
+            <li><a href="{% url 'accounts:security_settings' %}">Безопасность</a></li>
+            <li><span class="current">История входов</span></li>
+        </ul>
 
+        <div class="page-header">
+            <h1>История входов</h1>
+        </div>
+
+        {% if stats %}
+        <div class="grid-4" style="margin-bottom:var(--space-8);">
+            <div class="card-glass" style="text-align:center;padding:var(--space-4);">
+                <div style="font-size:var(--text-2xl);font-weight:var(--weight-extrabold);color:var(--text-primary);">{{ stats.total_logins }}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Всего</div>
+            </div>
+            <div class="card-glass" style="text-align:center;padding:var(--space-4);">
+                <div style="font-size:var(--text-2xl);font-weight:var(--weight-extrabold);color:var(--color-success);">{{ stats.successful_logins }}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Успешных</div>
+            </div>
+            <div class="card-glass" style="text-align:center;padding:var(--space-4);">
+                <div style="font-size:var(--text-2xl);font-weight:var(--weight-extrabold);color:var(--color-danger);">{{ stats.failed_logins }}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Неудачных</div>
+            </div>
+            <div class="card-glass" style="text-align:center;padding:var(--space-4);">
+                <div style="font-size:var(--text-2xl);font-weight:var(--weight-extrabold);color:var(--accent-primary);">{{ stats.unique_ips }}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Уникальных IP</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if history %}
+        <div class="card-glass" style="padding:0;overflow:hidden;">
+            {% for entry in history %}
+            <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4);{% if not forloop.last %}border-bottom:1px solid var(--card-border);{% endif %}">
+                <div style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:{% if entry.success %}var(--color-success-light){% else %}var(--color-danger-light){% endif %};">
+                    <i data-lucide="{% if entry.success %}check-circle{% else %}x-circle{% endif %}" style="width:18px;height:18px;color:{% if entry.success %}var(--color-success){% else %}var(--color-danger){% endif %};"></i>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--text-primary);">{{ entry.ip_address }}</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ entry.user_agent|truncatewords:10 }}</div>
+                </div>
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);flex-shrink:0;">{{ entry.created_at|date:"d.m.Y H:i" }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state__icon"><i data-lucide="clock"></i></div>
+            <div class="empty-state__title">История входов пуста</div>
+            <p class="empty-state__text">Данные о входах будут записываться автоматически</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}

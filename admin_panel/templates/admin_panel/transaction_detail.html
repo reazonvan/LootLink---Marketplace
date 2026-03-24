@@ -1,40 +1,32 @@
 {% extends 'admin_panel/base.html' %}
-
 {% block title %}Сделка #{{ transaction.id }}{% endblock %}
 {% block page_title %}Сделка #{{ transaction.id }}{% endblock %}
 
 {% block breadcrumb %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'admin_panel:transactions_list' %}">Сделки</a></li>
-        <li class="breadcrumb-item active">#{{ transaction.id }}</li>
-    </ol>
-</nav>
+<ul class="ap-breadcrumb"><li><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li><li><a href="{% url 'admin_panel:transactions_list' %}">Сделки</a></li><li>#{{ transaction.id }}</li></ul>
 {% endblock %}
 
 {% block content %}
-<div class="admin-card">
-    <div class="row">
-        <div class="col-md-6">
-            <h5>Покупатель:</h5>
-            <p><strong>{{ transaction.buyer.username }}</strong></p>
+<div class="ap-card">
+    <div class="g-4 g-2-cols" style="margin-bottom:1.5rem;">
+        <div style="background:var(--ap-light);padding:1.25rem;border-radius:12px;">
+            <div style="font-size:0.75rem;color:#6B7280;margin-bottom:0.25rem;">Покупатель</div>
+            <div style="font-weight:700;">{{ transaction.buyer.username }}</div>
         </div>
-        <div class="col-md-6">
-            <h5>Продавец:</h5>
-            <p><strong>{{ transaction.listing.seller.username }}</strong></p>
+        <div style="background:var(--ap-light);padding:1.25rem;border-radius:12px;">
+            <div style="font-size:0.75rem;color:#6B7280;margin-bottom:0.25rem;">Продавец</div>
+            <div style="font-weight:700;">{{ transaction.listing.seller.username }}</div>
         </div>
     </div>
-    
-    <hr>
-    
-    <h5>Товар:</h5>
-    <p><strong>{{ transaction.listing.title }}</strong> - {{ transaction.listing.price }} ₽</p>
-    
-    <hr>
-    
-    <h5>Статус:</h5>
-    <span class="status-badge status-{{ transaction.status }}">{{ transaction.get_status_display }}</span>
+    <div style="border-top:1px solid var(--ap-border);padding-top:1.5rem;margin-bottom:1.5rem;">
+        <div style="font-size:0.75rem;color:#6B7280;margin-bottom:0.25rem;">Товар</div>
+        <div style="font-weight:700;font-size:1.25rem;margin-bottom:0.5rem;">{{ transaction.listing.title }}</div>
+        <div style="font-size:2rem;font-weight:800;color:var(--ap-success);">{{ transaction.listing.price }} ₽</div>
+    </div>
+    <div style="border-top:1px solid var(--ap-border);padding-top:1.5rem;">
+        <div style="font-size:0.75rem;color:#6B7280;margin-bottom:0.5rem;">Статус</div>
+        <span class="ap-badge ap-badge-{{ transaction.status }}">{{ transaction.get_status_display }}</span>
+    </div>
 </div>
 {% endblock %}
-
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}

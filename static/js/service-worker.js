@@ -1,108 +1,76 @@
 /**
- * Service Worker для Push уведомлений и offline режима.
+ * Service Worker для обработки push уведомлений
  */
 
-const CACHE_NAME = 'lootlink-v1';
-const urlsToCache = [
-    '/',
-    '/static/css/styles.css',
-    '/static/js/main.js',
-    '/static/favicon.svg'
-];
-
-// Установка Service Worker
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                return cache.addAll(urlsToCache);
-            })
-    );
+    console.log('Service Worker installing...');
+    self.skipWaiting();
 });
 
-// Активация
 self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
-    );
+    console.log('Service Worker activating...');
+    event.waitUntil(clients.claim());
 });
 
-// Fetch - offline support
-self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                // Возвращаем из кэша если есть
-                if (response) {
-                    return response;
-                }
-                
-                // Иначе делаем запрос
-                return fetch(event.request);
-            })
-    );
-});
-
-// Push notifications
 self.addEventListener('push', (event) => {
-    
+    console.log('Push notification received');
+
     let data = {
         title: 'LootLink',
-        body: 'Новое уведомление',
-        icon: '/static/favicon.svg',
+        body: 'У вас новое уведомление',
+        icon: '/static/img/logo.png',
+        badge: '/static/img/badge.png',
         url: '/'
     };
-    
+
     if (event.data) {
         try {
-            data = event.data.json();
+            data = { ...data, ...event.data.json() };
         } catch (e) {
-            data.body = event.data.text();
+            console.error('Failed to parse push data:', e);
         }
     }
-    
+
     const options = {
         body: data.body,
         icon: data.icon,
-        badge: '/static/favicon.svg',
+        badge: data.badge,
+        data: {url: data.url},
         vibrate: [200, 100, 200],
-        data: {
-            url: data.url
-        },
-        actions: [
-            {
-                action: 'open',
-                title: 'Открыть'
-            },
-            {
-                action: 'close',
-                title: 'Закрыть'
-            }
-        ]
+        tag: 'lootlink-notification',
+        requireInteraction: false
     };
-    
+
     event.waitUntil(
         self.registration.showNotification(data.title, options)
     );
 });
 
-// Обработка кликов по уведомлениям
 self.addEventListener('notificationclick', (event) => {
+    console.log('Notification clicked');
     event.notification.close();
-    
-    if (event.action === 'open' || !event.action) {
-        const url = event.notification.data.url || '/';
-        event.waitUntil(
-            clients.openWindow(url)
-        );
-    }
+
+    const urlToOpen = event.notification.data?.url || '/';
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true })
+            .then((clientList) => {
+                for (let client of clientList) {
+                    if (client.url.includes(self.location.origin) && 'focus' in client) {
+                        return client.focus().then(() => {
+                            if ('navigate' in client) {
+                                return client.navigate(urlToOpen);
+                            }
+                        });
+                    }
+                }
+                if (clients.openWindow) {
+                    return clients.openWindow(urlToOpen);
+                }
+            })
+    );
 });
 
+self.addEventListener('notificationclose', (event) => {
+    console.log('Notification closed');
+});

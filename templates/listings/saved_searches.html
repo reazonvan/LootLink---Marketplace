@@ -1,11 +1,43 @@
 {% extends 'base.html' %}
 
-{% block title %}saved_searches - LootLink{% endblock %}
+{% block title %}Сохранённые поиски - LootLink{% endblock %}
 
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>saved_searches</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
-</div>
-{% endblock %}
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:640px;margin:0 auto;">
+        <div class="page-header">
+            <h1>Сохранённые поиски</h1>
+        </div>
 
+        {% if saved_searches %}
+        <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+            {% for search in saved_searches %}
+            <a href="{% url 'listings:global_search' %}?q={{ search.query }}&{{ search.filters }}" class="card-glass" style="text-decoration:none;color:inherit;display:flex;justify-content:space-between;align-items:center;">
+                <div style="display:flex;align-items:center;gap:var(--space-3);">
+                    <div style="width:36px;height:36px;border-radius:var(--radius-md);background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;">
+                        <i data-lucide="search" style="width:18px;height:18px;color:var(--accent-primary);"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">{{ search.query }}</div>
+                        {% if search.filters %}<div style="font-size:var(--text-xs);color:var(--text-tertiary);">{{ search.filters }}</div>{% endif %}
+                    </div>
+                </div>
+                <i data-lucide="arrow-right" style="width:16px;height:16px;color:var(--text-tertiary);"></i>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state__icon"><i data-lucide="bookmark"></i></div>
+            <div class="empty-state__title">Нет сохранённых поисков</div>
+            <p class="empty-state__text">Сохраняйте поисковые запросы для быстрого доступа</p>
+            <a href="{% url 'listings:catalog' %}" class="btn btn-primary">К каталогу</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}

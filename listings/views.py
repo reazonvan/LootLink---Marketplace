@@ -65,7 +65,7 @@ def landing_page(request):
         'top_sellers': top_sellers,  # РЕАЛЬНЫЕ топ продавцы
     }
 
-    return render(request, 'listings/landing_page_v2.html', context)
+    return render(request, 'listings/landing_page.html', context)
 
 
 def games_catalog(request):
@@ -129,7 +129,12 @@ def listing_detail(request, pk):
         Listing.objects.select_related('game', 'seller__profile'),
         pk=pk
     )
-    
+
+    # Записываем просмотр в историю
+    if request.user.is_authenticated:
+        from listings.models_history import ViewHistory
+        ViewHistory.record_view(request.user, listing)
+
     # Проверяем, есть ли активный запрос на покупку от текущего пользователя
     user_has_request = False
     is_favorited = False

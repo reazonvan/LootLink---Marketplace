@@ -1,11 +1,96 @@
 {% extends 'base.html' %}
-
-{% block title %}dispute_detail - LootLink{% endblock %}
-
+{% block title %}Спор #{{ dispute.id }} - LootLink{% endblock %}
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>dispute_detail</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
-</div>
-{% endblock %}
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <ul class="ll-breadcrumb">
+        <li><a href="{% url 'payments:disputes_list' %}">Споры</a></li>
+        <li><span class="current">#{{ dispute.id }}</span></li>
+    </ul>
+    <div style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:var(--space-6);align-items:start;" class="tx-layout">
+        <div>
+            <div class="card-glass" style="margin-bottom:var(--space-5);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);">
+                    <h2 style="font-size:var(--text-lg);font-weight:var(--weight-extrabold);">Спор #{{ dispute.id }}</h2>
+                    <span class="badge badge-{% if dispute.status == 'resolved' %}success{% elif dispute.status == 'open' %}warning{% else %}neutral{% endif %}">{{ dispute.get_status_display }}</span>
+                </div>
+                <div style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-2);"><strong>Причина:</strong> {{ dispute.get_reason_display }}</div>
+                <div style="font-size:var(--text-sm);color:var(--text-secondary);">{{ dispute.description }}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);margin-top:var(--space-3);">Открыт: {{ dispute.opened_by.username }} · {{ dispute.created_at|date:"d.m.Y H:i" }}</div>
+            </div>
 
+            {% if evidences %}
+            <div class="card-glass" style="margin-bottom:var(--space-5);">
+                <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);">Доказательства</h3>
+                {% for ev in evidences %}
+                <div style="padding:var(--space-3) 0;{% if not forloop.last %}border-bottom:1px solid var(--card-border);{% endif %}">
+                    <div style="display:flex;justify-content:space-between;font-size:var(--text-sm);">
+                        <span style="font-weight:var(--weight-medium);">{{ ev.get_evidence_type_display }}</span>
+                        <span style="font-size:var(--text-xs);color:var(--text-tertiary);">{{ ev.uploaded_by.username }} · {{ ev.created_at|date:"d.m.Y" }}</span>
+                    </div>
+                    <p style="font-size:var(--text-xs);color:var(--text-secondary);margin-top:2px;">{{ ev.description|truncatechars:100 }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="card-glass">
+                <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);">Переписка</h3>
+                {% for msg in messages %}
+                <div style="display:flex;gap:var(--space-3);margin-bottom:var(--space-3);">
+                    <div class="avatar avatar--sm avatar--round" style="{% if msg.is_moderator_message %}background:var(--color-warning);{% endif %}">{{ msg.sender.username|first|upper }}</div>
+                    <div style="flex:1;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">{{ msg.sender.username }}{% if msg.is_moderator_message %} <span class="badge badge-warning" style="font-size:9px;">Модератор</span>{% endif %}</span>
+                            <span style="font-size:10px;color:var(--text-tertiary);">{{ msg.created_at|date:"H:i d.m" }}</span>
+                        </div>
+                        <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:2px;">{{ msg.message }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+
+                {% if dispute.status == 'open' %}
+                <form method="post" action="{% url 'payments:add_dispute_message' dispute.id %}" style="display:flex;gap:var(--space-2);margin-top:var(--space-4);">
+                    {% csrf_token %}
+                    <input type="text" name="message" placeholder="Сообщение..." required style="flex:1;">
+                    <button type="submit" class="btn btn-primary"><i data-lucide="send"></i></button>
+                </form>
+                {% endif %}
+            </div>
+
+            {% if is_moderator and dispute.status == 'open' %}
+            <div class="card-glass" style="margin-top:var(--space-5);">
+                <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);"><i data-lucide="shield" style="width:18px;height:18px;color:var(--accent-primary);"></i> Модерация</h3>
+                <form method="post" action="{% url 'payments:moderate_dispute' dispute.id %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Решение</label>
+                        <textarea name="decision" required rows="3" placeholder="Опишите решение..."></textarea>
+                    </div>
+                    <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;">
+                        <button type="submit" name="action" value="resolve_buyer" class="btn btn-success btn-sm"><i data-lucide="user-check"></i> В пользу покупателя</button>
+                        <button type="submit" name="action" value="resolve_seller" class="btn btn-primary btn-sm"><i data-lucide="store"></i> В пользу продавца</button>
+                        <button type="submit" name="action" value="close" class="btn btn-ghost btn-sm"><i data-lucide="x-circle"></i> Закрыть</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        <div>
+            <div class="card-glass" style="margin-bottom:var(--space-4);">
+                <h3 style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:var(--space-3);">Сделка</h3>
+                <div style="font-size:var(--text-sm);">{{ dispute.escrow.buyer.username }} ↔ {{ dispute.escrow.seller.username }}</div>
+                <div style="font-size:var(--text-xl);font-weight:var(--weight-bold);color:var(--accent-primary);margin-top:var(--space-2);">{{ dispute.escrow.amount }} ₽</div>
+            </div>
+            {% if dispute.moderator_decision %}
+            <div class="card-glass">
+                <h3 style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:var(--space-3);">Решение модератора</h3>
+                <p style="font-size:var(--text-sm);color:var(--text-secondary);">{{ dispute.moderator_decision }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<style>@media(max-width:768px){.tx-layout{grid-template-columns:1fr!important;}}</style>
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}
+{% endblock %}

@@ -1,102 +1,146 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Редактирование профиля - LootLink{% endblock %}
 
+{% block extra_css %}
+<style>
+.profile-edit { padding: var(--space-6) 0 var(--space-12); }
+.profile-edit__inner { max-width: 640px; margin: 0 auto; }
+.profile-edit__readonly { margin-bottom: var(--space-6); padding: var(--space-5); background: var(--gray-50); border-radius: var(--radius-lg); border: 1px solid var(--card-border); }
+.profile-edit__readonly-label { font-size: var(--text-xs); color: var(--accent-primary); font-weight: var(--weight-semibold); margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-2); }
+.profile-edit__readonly-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.profile-edit__readonly-item label { font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: 2px; display: block; }
+.profile-edit__readonly-item .value { font-size: var(--text-sm); color: var(--text-primary); font-weight: var(--weight-medium); }
+
+.avatar-upload { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-3); }
+.avatar-upload__preview { width: 72px; height: 72px; border-radius: 50%; background: var(--accent-gradient); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: var(--weight-bold); overflow: hidden; flex-shrink: 0; border: 3px solid var(--card-border); }
+.avatar-upload__preview img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-upload__controls { flex: 1; }
+
+.file-input-wrap { position: relative; }
+.file-input-wrap input[type="file"] { position: absolute; width: 0; height: 0; opacity: 0; overflow: hidden; }
+.file-input-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--btn-secondary-bg); border: 1px solid var(--btn-secondary-border); border-radius: var(--radius-md); color: var(--text-primary); font-size: var(--text-sm); font-weight: var(--weight-medium); cursor: pointer; transition: all 0.2s; }
+.file-input-btn:hover { background: var(--btn-secondary-hover); }
+.file-input-btn svg { width: 16px; height: 16px; }
+.file-input-name { font-size: var(--text-xs); color: var(--text-tertiary); margin-top: 6px; }
+
+.profile-edit textarea { resize: vertical; min-height: 100px; }
+.profile-edit__actions { display: flex; gap: var(--space-3); justify-content: flex-end; padding-top: var(--space-4); border-top: 1px solid var(--card-border); margin-top: var(--space-6); }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 mx-auto">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h3 class="mb-0"><i class="bi bi-pencil"></i> Редактирование профиля</h3>
-                </div>
-                <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        
-                        <h5 class="mb-3">Неизменяемые данные</h5>
-                        <div class="alert alert-info">
-                            <small>
-                                <i class="bi bi-info-circle"></i> 
-                                <strong>Важно:</strong> Никнейм, email и телефон задаются один раз при регистрации и не могут быть изменены.
-                            </small>
+<div class="profile-edit">
+    <div class="profile-edit__inner">
+        <div class="page-header">
+            <h1>Редактировать профиль</h1>
+            <p>Обновите информацию о себе</p>
+        </div>
+
+        <div class="card-glass" style="padding:var(--space-6);">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="profile-edit__readonly">
+                    <div class="profile-edit__readonly-label">
+                        <i data-lucide="lock" style="width:14px;height:14px;"></i> Неизменяемые данные
+                    </div>
+                    <div class="profile-edit__readonly-grid">
+                        <div class="profile-edit__readonly-item">
+                            <label>Имя пользователя</label>
+                            <div class="value">{{ user.username }}</div>
                         </div>
-                        
-                        <!-- Никнейм (readonly) -->
-                        <div class="mb-3">
-                            <label class="form-label"><strong>Никнейм</strong></label>
-                            <input type="text" class="form-control bg-light" value="{{ user.username }}" readonly disabled>
-                            <small class="form-text text-muted">Никнейм нельзя изменить</small>
+                        <div class="profile-edit__readonly-item">
+                            <label>Email</label>
+                            <div class="value">{{ user.email }}</div>
                         </div>
-                        
-                        <!-- Email (readonly) -->
-                        <div class="mb-3">
-                            <label class="form-label"><strong>Email</strong></label>
-                            <input type="text" class="form-control bg-light" value="{{ user.email }}" readonly disabled>
-                            <small class="form-text text-muted">Email нельзя изменить</small>
-                        </div>
-                        
-                        <!-- Телефон (readonly) -->
-                        <div class="mb-3">
-                            <label class="form-label"><strong>Телефон</strong></label>
-                            <input type="text" class="form-control bg-light" value="{{ user.profile.phone|default:'Не указан' }}" readonly disabled>
-                            <small class="form-text text-muted">Телефон нельзя изменить</small>
-                        </div>
-                        
-                        <hr class="my-4">
-                        
-                        <h5 class="mb-3">Изменяемая информация</h5>
-                        
-                        <!-- Текущий аватар -->
-                        {% if user.profile.avatar %}
-                        <div class="mb-3">
-                            <label class="form-label">Текущий аватар</label>
-                            <div class="current-avatar-preview">
-                                <img src="{{ user.profile.avatar.url }}" alt="Avatar" style="max-width: 150px; border-radius: 50%;">
-                            </div>
+                        {% if user.profile.phone %}
+                        <div class="profile-edit__readonly-item">
+                            <label>Телефон</label>
+                            <div class="value">{{ user.profile.phone }}</div>
                         </div>
                         {% endif %}
-                        
-                        <!-- Загрузка нового аватара -->
-                        <div class="mb-3">
-                            <label for="id_avatar" class="form-label">Аватар</label>
-                            {{ profile_form.avatar }}
-                            {% if profile_form.avatar.errors %}
-                                <div class="text-danger small mt-1">{{ profile_form.avatar.errors }}</div>
-                            {% endif %}
-                            <small class="form-text text-muted">Загрузите ваше фото (необязательно). Рекомендуемый размер: 300x300px. Максимум 2 МБ.</small>
-                            <!-- Контейнер для предпросмотра -->
-                            <div id="avatarPreviewContainer"></div>
-                        </div>
-                        
-                        <!-- О себе -->
-                        <div class="mb-3">
-                            <label for="id_bio" class="form-label">О себе</label>
-                            {{ profile_form.bio }}
-                            {% if profile_form.bio.errors %}
-                                <div class="text-danger small mt-1">{{ profile_form.bio.errors }}</div>
-                            {% endif %}
-                            <small class="form-text text-muted">Расскажите о себе (до 500 символов)</small>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{% url 'accounts:profile' user.username %}" class="btn btn-secondary">
-                                <i class="bi bi-x-circle"></i> Отмена
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> Сохранить изменения
-                            </button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+
+                <div class="form-group">
+                    <label class="form-label">Аватар</label>
+                    <div class="avatar-upload">
+                        <div class="avatar-upload__preview" id="avatarPreview">
+                            {% if user.profile.avatar %}
+                            <img src="{{ user.profile.avatar.url }}" alt="">
+                            {% else %}
+                            {{ user.username|first|upper }}
+                            {% endif %}
+                        </div>
+                        <div class="avatar-upload__controls">
+                            <div class="file-input-wrap">
+                                <input type="file" name="avatar" id="{{ profile_form.avatar.id_for_label }}" accept="image/*" onchange="updateFileName(this)">
+                                <label for="{{ profile_form.avatar.id_for_label }}" class="file-input-btn">
+                                    <i data-lucide="upload"></i> Загрузить фото
+                                </label>
+                            </div>
+                            <div class="file-input-name" id="avatarFileName">Макс. 5 МБ, JPG/PNG</div>
+                        </div>
+                    </div>
+                    {% if profile_form.avatar.errors %}<div class="form-error">{{ profile_form.avatar.errors }}</div>{% endif %}
+                    <div id="avatarPreviewContainer"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ profile_form.bio.id_for_label }}" class="form-label">О себе</label>
+                    <textarea name="bio" id="{{ profile_form.bio.id_for_label }}" class="form-input" rows="4" placeholder="Расскажите о себе...">{{ profile_form.bio.value|default:"" }}</textarea>
+                    {% if profile_form.bio.errors %}<div class="form-error">{{ profile_form.bio.errors }}</div>{% endif %}
+                </div>
+
+                {% if not user.profile.phone %}
+                <div class="form-group">
+                    <label for="{{ profile_form.phone.id_for_label }}" class="form-label">Телефон</label>
+                    <input type="text" name="phone" id="{{ profile_form.phone.id_for_label }}" class="form-input" placeholder="+7 (999) 123-45-67" value="{{ profile_form.phone.value|default:"" }}">
+                    <div class="form-hint"><i data-lucide="alert-circle" style="width:12px;height:12px;"></i> Телефон нельзя изменить после первого указания</div>
+                    {% if profile_form.phone.errors %}<div class="form-error">{{ profile_form.phone.errors }}</div>{% endif %}
+                </div>
+                {% endif %}
+
+                <div class="profile-edit__actions">
+                    <a href="{% url 'accounts:profile' user.username %}" class="btn btn-ghost">Отмена</a>
+                    <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Сохранить</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-{% load static %}
-<script src="{% static 'js/avatar-cropper.js' %}"></script>
+<script>
+lucide.createIcons();
+function updateFileName(input) {
+    var label = document.getElementById('avatarFileName');
+    if (input.files && input.files[0]) {
+        var file = input.files[0];
+        if (!file.type.match('image.*')) {
+            label.textContent = 'Выберите изображение (JPG/PNG)';
+            label.style.color = 'var(--color-danger)';
+            input.value = '';
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            label.textContent = 'Файл слишком большой (макс. 5 МБ)';
+            label.style.color = 'var(--color-danger)';
+            input.value = '';
+            return;
+        }
+        label.textContent = file.name;
+        label.style.color = '';
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var preview = document.getElementById('avatarPreview');
+            preview.innerHTML = '<img src="' + e.target.result + '" alt="">';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+</script>
 {% endblock %}
-

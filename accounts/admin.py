@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
-from .models import CustomUser, Profile, PasswordResetCode, EmailVerification
+from django.utils import timezone
+from .models import CustomUser, Profile, PasswordResetCode, EmailVerification, PhoneVerification, DocumentVerification
 
 
 @admin.register(CustomUser)
@@ -116,8 +117,86 @@ class EmailVerificationAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'user__email', 'token']
     readonly_fields = ['token', 'created_at', 'verified_at']
     ordering = ['-created_at']
-    
+
     def has_add_permission(self, request):
         # Создаются автоматически при регистрации
         return False
+
+
+@admin.register(PhoneVerification)
+class PhoneVerificationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'phone', 'code', 'is_verified', 'attempts', 'created_at', 'expires_at', 'status_badge']
+    list_filter = ['is_verified', 'created_at']
+    search_fields = ['user__username', 'phone', 'code']
+    readonly_fields = ['code', 'created_at', 'verified_at', 'attempts']
+    ordering = ['-created_at']
+
+    def status_badge(self, obj):
+        """Статус верификации"""
+        if obj.is_verified:
+            return format_html('<span style="background: #10b981; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px;">✔ Верифицирован</span>')
+        elif timezone.now() > obj.expires_at:
+            return format_html('<span style="background: #ef4444; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px;">⏱ Истек</span>')
+        elif obj.attempts >= 5:
+            return format_html('<span style="background: #f59e0b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px;">⚠ Превышены попытки</span>')
+        else:
+            return format_html('<span style="background: #3b82f6; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px;">⏳ Ожидает</span>')
+    status_badge.short_description = 'Статус'
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(DocumentVerification)
+class DocumentVerificationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'document_type', 'status_badge', 'created_at', 'reviewed_by', 'reviewed_at']
+    list_filter = ['status', 'document_type', 'created_at']
+    search_fields = ['user__username', 'admin_comment']
+    readonly_fields = ['user', 'document_file', 'created_at', 'reviewed_at', 'reviewed_by']
+    ordering = ['-created_at']
+
+    fieldsets = (
+        ('Информация о документе', {
+            'fields': ('user', 'document_type', 'document_file', 'created_at')
+        }),
+        ('Проверка', {
+            'fields': ('status', 'admin_comment', 'reviewed_by', 'reviewed_at')
+        }),
+    )
+
+    def status_badge(self, obj):
+        """Статус проверки"""
+        if obj.status == 'approved':
+            return format_html('<span style="background: #10b981; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px;">✔ Одобрено</span>')
+        elif obj.status == 'rejected':
+            return format_html('<span style="background: #ef4444; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px;">✘ Отклонено</span>')
+        else:
+            return format_html('<span style="background: #f59e0b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px;">⏳ На проверке</span>')
+    status_badge.short_description = 'Статус'
+
+    def get_readonly_fields(self, request, obj=None):
+        """Делаем поля только для чтения после создания"""
+        if obj:
+            return self.readonly_fields + ('status',)
+        return self.readonly_fields
+
+    actions = ['approve_documents', 'reject_documents']
+
+    def approve_documents(self, request, queryset):
+        """Массовое одобрение документов"""
+        count = 0
+        for doc in queryset.filter(status='pending'):
+            doc.approve(request.user, 'Одобрено администратором')
+            count += 1
+        self.message_user(request, f'Одобрено документов: {count}')
+    approve_documents.short_description = 'Одобрить выбранные документы'
+
+    def reject_documents(self, request, queryset):
+        """Массовое отклонение документов"""
+        count = 0
+        for doc in queryset.filter(status='pending'):
+            doc.reject(request.user, 'Отклонено администратором')
+            count += 1
+        self.message_user(request, f'Отклонено документов: {count}')
+    reject_documents.short_description = 'Отклонить выбранные документы'
 

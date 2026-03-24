@@ -8,247 +8,194 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'listings:home' %}">Главная</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'listings:catalog' %}">Каталог</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'listings:game_listings' listing.game.slug %}">{{ listing.game.name }}</a></li>
-            <li class="breadcrumb-item active">{{ listing.title }}</li>
-        </ol>
-    </nav>
+<div class="listing-detail">
+    <ul class="ll-breadcrumb">
+        <li><a href="{% url 'listings:home' %}">Главная</a></li>
+        <li><a href="{% url 'listings:catalog' %}">Каталог</a></li>
+        <li><a href="{% url 'listings:game_listings' listing.game.slug %}">{{ listing.game.name }}</a></li>
+        <li><span class="current">{{ listing.title|truncatewords:5 }}</span></li>
+    </ul>
 
-    <div class="row">
-        <!-- Main Content -->
-        <div class="col-lg-8">
-            <!-- Listing Card -->
-            <div class="listing-detail-card">
-                <div class="listing-detail-header">
-                    <span class="listing-game-badge">{{ listing.game.name }}</span>
-                    <span class="listing-status-badge status-{{ listing.status }}">
+    <div class="listing-detail__grid">
+        <div>
+            <div class="listing-detail__image-wrap">
+                {% if listing.image %}
+                <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
+                {% else %}
+                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--offer-image-gradient);">
+                    <i data-lucide="image" style="width:64px;height:64px;color:white;opacity:0.5;"></i>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="listing-detail__info">
+                <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-3);">
+                    <span class="badge badge-primary">{{ listing.game.name }}</span>
+                    <span class="badge badge-{% if listing.status == 'active' %}success{% elif listing.status == 'sold' %}neutral{% else %}warning{% endif %}">
                         {{ listing.get_status_display }}
                     </span>
                 </div>
-                
-                {% if listing.image %}
-                <div class="listing-detail-image">
-                    <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
+
+                <h1>{{ listing.title }}</h1>
+
+                <div class="listing-detail__meta">
+                    <span class="listing-detail__meta-item"><i data-lucide="calendar"></i> {{ listing.created_at|date:"d.m.Y" }}</span>
+                    <span class="listing-detail__meta-item"><i data-lucide="eye"></i> {{ listing.id|add:"47" }} просмотров</span>
+                    <span class="listing-detail__meta-item"><i data-lucide="clock"></i> {{ listing.updated_at|timesince }} назад</span>
                 </div>
-                {% else %}
-                <div class="listing-detail-image listing-no-image">
-                    <div class="no-image-placeholder">
-                        <i class="bi bi-image"></i>
-                        <p>Изображение не загружено</p>
-                    </div>
-                </div>
-                {% endif %}
-                
-                <div class="listing-detail-content">
-                    <h1 class="listing-detail-title">{{ listing.title }}</h1>
-                    
-                    <div class="listing-detail-meta">
-                        <span><i class="bi bi-calendar"></i> Опубликовано: {{ listing.created_at|date:"d.m.Y" }}</span>
-                        <span><i class="bi bi-clock"></i> Обновлено: {{ listing.updated_at|date:"d.m.Y" }}</span>
-                    </div>
-                    
-                    <div class="listing-detail-description">
-                        <h3>Описание</h3>
-                        <p>{{ listing.description }}</p>
-                    </div>
+
+                <div class="listing-detail__description">
+                    {{ listing.description|linebreaksbr }}
                 </div>
             </div>
         </div>
 
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-            <!-- Action Sidebar - Sticky -->
-            <div class="listing-action-sidebar">
-                <div class="listing-price-large">{{ listing.price }} ₽</div>
+        <div class="listing-detail__sidebar">
+            <div class="listing-detail__price-card">
+                <div class="listing-detail__price">{{ listing.price }} <small>₽</small></div>
                 
-                <div class="listing-cta-buttons">
+                <div class="listing-detail__actions">
                     {% if user.is_authenticated %}
                         {% if user == listing.seller %}
-                            <a href="{% url 'listings:listing_edit' listing.pk %}" class="btn btn-warning w-100">
-                                <i class="bi bi-pencil-fill"></i> Редактировать
-                            </a>
-                            <a href="{% url 'listings:listing_delete' listing.pk %}" class="btn btn-outline-danger w-100">
-                                <i class="bi bi-trash-fill"></i> Удалить
-                            </a>
+                        <a href="{% url 'listings:listing_edit' listing.pk %}" class="btn btn-primary w-100">
+                            <i data-lucide="pencil"></i> Редактировать
+                        </a>
+                        <a href="{% url 'listings:listing_delete' listing.pk %}" class="btn btn-ghost w-100" style="color:var(--color-danger);">
+                            <i data-lucide="trash-2"></i> Удалить
+                        </a>
                         {% else %}
                             {% if listing.is_available %}
                                 {% if user_has_request %}
-                                    <div class="alert alert-info mb-0">
-                                        <i class="bi bi-info-circle"></i> У вас уже есть активный запрос
-                                    </div>
+                                <div class="alert alert-info" style="margin:0;">
+                                    <i data-lucide="info"></i> У вас уже есть активный запрос
+                                </div>
                                 {% else %}
-                                    <a href="{% url 'transactions:purchase_request_create' listing.pk %}" class="btn btn-success w-100 btn-lg">
-                                        <i class="bi bi-cart-check-fill"></i> Купить сейчас
-                                    </a>
+                                <a href="{% url 'transactions:purchase_request_create' listing.pk %}" class="btn btn-accent w-100 btn-lg">
+                                    <i data-lucide="shopping-bag"></i> Купить
+                                </a>
                                 {% endif %}
                             {% else %}
-                                <button class="btn btn-secondary w-100 btn-lg" disabled>
-                                    <i class="bi bi-x-circle"></i> Недоступно
-                                </button>
+                            <button class="btn btn-ghost w-100" disabled style="color:var(--text-tertiary);">Недоступно</button>
                             {% endif %}
-                            
                             <a href="{% url 'chat:conversation_start' listing.pk %}" class="btn btn-primary w-100">
-                                <i class="bi bi-chat-dots-fill"></i> Написать продавцу
+                                <i data-lucide="message-circle"></i> Написать продавцу
                             </a>
-                            
-                            <button 
-                                id="favorite-btn" 
-                                class="btn btn-outline-danger w-100 favorite-btn-detail {% if is_favorited %}active{% endif %}"
-                                data-listing-id="{{ listing.pk }}"
-                                data-is-favorited="{{ is_favorited|yesno:'true,false' }}"
-                            >
-                                <i class="bi {% if is_favorited %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                            <button id="favorite-btn" class="btn btn-ghost w-100 favorite-btn-detail {% if is_favorited %}active{% endif %}" data-listing-id="{{ listing.pk }}" data-is-favorited="{{ is_favorited|yesno:'true,false' }}">
+                                <i data-lucide="{% if is_favorited %}heart{% else %}heart{% endif %}"></i>
                                 <span id="favorite-text">{% if is_favorited %}В избранном{% else %}В избранное{% endif %}</span>
                             </button>
                         {% endif %}
                     {% else %}
-                        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-success w-100 btn-lg">
-                            <i class="bi bi-cart-check-fill"></i> Купить сейчас
-                        </a>
-                        <a href="{% url 'accounts:register' %}" class="btn btn-outline-primary w-100">
-                            <i class="bi bi-person-plus-fill"></i> Зарегистрироваться
-                        </a>
-                        <div class="alert alert-info mt-3 mb-0">
-                            <i class="bi bi-info-circle"></i> Войдите для полного доступа
-                        </div>
+                    <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-accent w-100 btn-lg">
+                        <i data-lucide="shopping-bag"></i> Купить
+                    </a>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-outline-primary w-100">Зарегистрироваться</a>
+                    <div class="alert alert-info" style="margin:0;"><i data-lucide="info"></i> Войдите для полного доступа</div>
                     {% endif %}
                 </div>
-                
-                <!-- Meta Info -->
-                <div class="listing-meta-info">
-                    <div class="meta-item">
-                        <i class="bi bi-eye"></i>
-                        <span>Просмотров: {{ listing.id|add:"47" }}</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="bi bi-clock"></i>
-                        <span>Обновлено: {{ listing.updated_at|timesince }} назад</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="bi bi-shield-check"></i>
-                        <span>Безопасная сделка</span>
-                    </div>
-                    {% if listing.created_at|timesince|slice:":1" == "0" or listing.created_at|timesince|slice:":6" == "0 мину" %}
-                    <div class="urgency-badge">
-                        Новое объявление!
-                    </div>
-                    {% endif %}
-                </div>
-                
-                <!-- Trust badges -->
-                <div class="trust-badges">
-                    <div class="trust-badge">
-                        <i class="bi bi-shield-fill-check"></i>
-                        <span>Гарантия</span>
-                    </div>
-                    <div class="trust-badge">
-                        <i class="bi bi-arrow-repeat"></i>
-                        <span>Возврат</span>
-                    </div>
-                    <div class="trust-badge">
-                        <i class="bi bi-headset"></i>
-                        <span>Поддержка</span>
-                    </div>
+
+                <div style="display:flex;gap:var(--space-2);margin-top:var(--space-4);flex-wrap:wrap;">
+                    <span class="badge badge-success"><i data-lucide="shield-check"></i> Гарантия</span>
+                    <span class="badge badge-primary"><i data-lucide="refresh-cw"></i> Возврат</span>
+                    <span class="badge badge-neutral"><i data-lucide="headphones"></i> Поддержка</span>
                 </div>
             </div>
-            
-            <!-- Enhanced Seller Card (NOT sticky) -->
-            <div class="seller-card-enhanced" style="position: static !important;">
-                <h5 class="mb-3"><i class="bi bi-person-badge"></i> О продавце</h5>
-                <div class="seller-header">
-                    <div class="seller-avatar-medium">
-                        {% if listing.seller.profile.avatar %}
-                        <img src="{{ listing.seller.profile.avatar.url }}" alt="{{ listing.seller.username }}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
-                        {% else %}
-                        <i class="bi bi-person-fill"></i>
-                        {% endif %}
-                        <span class="online-status {{ listing.seller.profile.get_online_status }}" title="{{ listing.seller.profile.get_last_seen_display }}"></span>
+
+            <div class="seller-card">
+                <div class="seller-card__header">
+                    {% if listing.seller.profile.avatar %}
+                    <div class="avatar avatar--lg avatar--round">
+                        <img src="{{ listing.seller.profile.avatar.url }}" alt="{{ listing.seller.username }}">
                     </div>
-                    <div class="seller-info-main">
-                        <h5>
-                            <a href="{% url 'accounts:profile' listing.seller.username %}" style="text-decoration:none;color:#2c3e50;">
-                                {{ listing.seller.username }}
-                            </a>
-                        </h5>
-                        <div class="seller-rating-inline">
-                            <i class="bi bi-star-fill"></i> {{ listing.seller.profile.rating|floatformat:1 }} 
-                            <span style="color:#6c757d;">({{ listing.seller.profile.total_sales }} отзывов)</span>
+                    {% else %}
+                    <div class="avatar avatar--lg avatar--round">{{ listing.seller.username|first|upper }}</div>
+                    {% endif %}
+                    <div>
+                        <a href="{% url 'accounts:profile' listing.seller.username %}" class="seller-card__name" style="text-decoration:none;color:inherit;">
+                            {{ listing.seller.username }}
+                        </a>
+                        <div class="stars" style="margin-top:2px;">
+                            {% for i in "12345" %}
+                            {% if forloop.counter <= listing.seller.profile.rating %}
+                            <i data-lucide="star" class="filled" style="width:14px;height:14px;fill:#fbbf24;color:#fbbf24;"></i>
+                            {% else %}
+                            <i data-lucide="star" class="empty" style="width:14px;height:14px;"></i>
+                            {% endif %}
+                            {% endfor %}
+                            <span style="color:var(--text-tertiary);font-size:var(--text-xs);margin-left:4px;">{{ listing.seller.profile.rating|floatformat:1 }}</span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="seller-stats-detailed">
-                    <div class="seller-stat-item">
-                        <div class="seller-stat-value">{{ listing.seller.profile.total_sales }}</div>
-                        <div class="seller-stat-label">Продаж</div>
+
+                <div class="seller-card__stats">
+                    <div class="seller-card__stat">
+                        <div class="seller-card__stat-value">{{ listing.seller.profile.total_sales }}</div>
+                        <div class="seller-card__stat-label">Продаж</div>
                     </div>
-                    <div class="seller-stat-item">
-                        <div class="seller-stat-value">
-                            {% widthratio listing.seller.profile.total_sales listing.seller.profile.total_sales|add:listing.seller.profile.total_purchases 100 %}%
-                        </div>
-                        <div class="seller-stat-label">Успешных</div>
+                    <div class="seller-card__stat">
+                        <div class="seller-card__stat-value">{{ listing.seller.profile.total_purchases }}</div>
+                        <div class="seller-card__stat-label">Покупок</div>
                     </div>
                 </div>
-                
-                <div class="seller-badges">
+
+                <div class="trust-meter">
+                    {% widthratio listing.seller.profile.rating 5 100 as trust_percent %}
+                    <div class="trust-meter__bar">
+                        <div class="trust-meter__fill" style="width:{{ trust_percent }}%;"></div>
+                    </div>
+                    <div class="trust-meter__label">
+                        <span>Уровень доверия</span>
+                        <span>{{ trust_percent }}%</span>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-top:var(--space-3);">
                     {% if listing.seller.profile.is_verified %}
-                    <span class="badge bg-success"><i class="bi bi-patch-check-fill"></i> Проверен</span>
+                    <span class="badge badge-success"><i data-lucide="badge-check"></i> Проверен</span>
                     {% endif %}
                     {% if listing.seller.profile.total_sales > 20 %}
-                    <span class="badge bg-primary"><i class="bi bi-star-fill"></i> Надежный</span>
-                    {% endif %}
-                    {% if listing.seller.profile.total_sales > 5 %}
-                    <span class="badge bg-info"><i class="bi bi-lightning-fill"></i> Быстрый</span>
+                    <span class="badge badge-primary"><i data-lucide="award"></i> Надёжный</span>
                     {% endif %}
                 </div>
-                
-                <div style="margin-top:15px;padding-top:15px;border-top:1px solid #dee2e6;">
-                    <small class="text-muted">
-                        <i class="bi bi-calendar"></i> На сайте с {{ listing.seller.date_joined|date:"F Y" }}
-                    </small>
+
+                <div style="margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--card-border);font-size:var(--text-xs);color:var(--text-tertiary);">
+                    <i data-lucide="calendar" style="width:12px;height:12px;display:inline;vertical-align:middle;"></i> На сайте с {{ listing.seller.date_joined|date:"F Y" }}
                 </div>
             </div>
-            
-            <!-- Report link -->
+
             {% if user.is_authenticated and user != listing.seller %}
-            <div class="text-center mt-3">
-                <a href="{% url 'listings:report_listing' listing.pk %}" class="text-danger text-decoration-none small">
-                    <i class="bi bi-flag"></i> Пожаловаться
+            <div style="text-align:center;">
+                <a href="{% url 'listings:report_listing' listing.pk %}" style="font-size:var(--text-xs);color:var(--text-tertiary);">
+                    <i data-lucide="flag" style="width:12px;height:12px;display:inline;vertical-align:middle;"></i> Пожаловаться
                 </a>
             </div>
             {% endif %}
         </div>
     </div>
-    
-    <!-- Similar Listings Section -->
+
     {% if similar_listings %}
-    <div class="similar-listings-section mt-5">
-        <h3 class="mb-4"><i class="bi bi-grid-3x3-gap"></i> Похожие предложения</h3>
-        <div class="row g-3">
+    <div class="similar-listings">
+        <h3>Похожие предложения</h3>
+        <div class="scroll-row">
             {% for similar in similar_listings %}
-            <div class="col-md-3 col-6">
-                <a href="{% url 'listings:listing_detail' similar.pk %}" class="text-decoration-none">
-                    <div class="similar-listing-card">
+            <a href="{% url 'listings:listing_detail' similar.pk %}" style="text-decoration:none;width:240px;flex-shrink:0;">
+                <div class="listing-card" style="height:100%;">
+                    <div class="listing-card__image">
                         {% if similar.image %}
-                        <img src="{{ similar.image.url }}" alt="{{ similar.title }}" class="similar-listing-image">
+                        <img src="{{ similar.image.url }}" alt="{{ similar.title }}" loading="lazy">
                         {% else %}
-                        <div class="similar-listing-image" style="display:flex;align-items:center;justify-content:center;background:#667eea;">
-                            <i class="bi bi-image" style="font-size:48px;color:white;"></i>
-                        </div>
+                        <div class="listing-card__image-placeholder"><i data-lucide="image"></i></div>
                         {% endif %}
-                        <div class="similar-listing-content">
-                            <div class="similar-listing-title">{{ similar.title|truncatewords:5 }}</div>
-                            <div class="similar-listing-price">{{ similar.price }} ₽</div>
-                            <small class="text-muted">{{ similar.seller.username }}</small>
+                    </div>
+                    <div class="listing-card__body">
+                        <div class="listing-card__title">{{ similar.title|truncatewords:5 }}</div>
+                        <div class="listing-card__footer">
+                            <span class="listing-card__price">{{ similar.price }} ₽</span>
+                            <span style="font-size:var(--text-xs);color:var(--text-tertiary);">{{ similar.seller.username }}</span>
                         </div>
                     </div>
-                </a>
-            </div>
+                </div>
+            </a>
             {% endfor %}
         </div>
     </div>
@@ -258,4 +205,5 @@
 
 {% block extra_js %}
 <script src="{% static 'js/favorites.js' %}"></script>
+<script>lucide.createIcons();</script>
 {% endblock %}

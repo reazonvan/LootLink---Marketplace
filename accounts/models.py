@@ -10,6 +10,10 @@ import random
 import string
 
 
+# Import export model
+from .models_export import DataExportRequest
+
+
 class CustomUser(AbstractUser):
     """
     Кастомная модель пользователя.
@@ -342,15 +346,15 @@ class PasswordResetCode(models.Model):
     expires_at = models.DateTimeField(
         verbose_name='Действителен до'
     )
-    
+
     class Meta:
         verbose_name = 'Код сброса пароля'
         verbose_name_plural = 'Коды сброса пароля'
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return f'Код {self.code} для {self.user.username}'
-    
+
     @classmethod
     def generate_code(cls):
         """
@@ -361,13 +365,13 @@ class PasswordResetCode(models.Model):
         # Исключаем похожие символы: 0/O, 1/I/L для удобства пользователя
         safe_chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'
         return ''.join(random.choices(safe_chars, k=8))
-    
+
     @classmethod
     def create_code(cls, user):
         """Создаёт новый код для пользователя."""
         # Деактивируем все старые неиспользованные коды
         cls.objects.filter(user=user, is_used=False).update(is_used=True)
-        
+
         # Генерируем уникальный код (проверка на дубликаты)
         max_attempts = 10
         for attempt in range(max_attempts):
@@ -379,21 +383,249 @@ class PasswordResetCode(models.Model):
                 # В крайнем случае используем timestamp для уникальности
                 import time
                 code = str(int(time.time() * 1000))[-6:]
-        
+
         expires_at = timezone.now() + timezone.timedelta(minutes=15)
-        
+
         return cls.objects.create(
             user=user,
             code=code,
             expires_at=expires_at
         )
-    
+
     def is_valid(self):
         """Проверяет, действителен ли код."""
         return not self.is_used and timezone.now() < self.expires_at
-    
+
     def mark_as_used(self):
         """Помечает код как использованный."""
         self.is_used = True
         self.save()
+
+
+class PhoneVerification(models.Model):
+    """
+    Модель для верификации телефона через SMS код.
+    """
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='phone_verifications',
+        verbose_name='Пользователь'
+    )
+    phone = models.CharField(
+        max_length=20,
+        verbose_name='Номер телефона'
+    )
+    code = models.CharField(
+        max_length=6,
+        verbose_name='Код верификации'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    is_verified = models.BooleanField(
+        default=False,
+        verbose_name='Верифицирован'
+    )
+    verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата верификации'
+    )
+    expires_at = models.DateTimeField(
+        verbose_name='Действителен до'
+    )
+    attempts = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Количество попыток'
+    )
+
+    class Meta:
+        verbose_name = 'Верификация телефона'
+        verbose_name_plural = 'Верификации телефонов'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_verified']),
+            models.Index(fields=['phone', 'is_verified']),
+        ]
+
+    def __str__(self):
+        status = 'Верифицирован' if self.is_verified else 'Не верифицирован'
+        return f'{self.user.username} - {self.phone} - {status}'
+
+    @classmethod
+    def generate_code(cls):
+        """Генерирует 6-значный код."""
+        return ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+    @classmethod
+    def create_for_user(cls, user, phone):
+        """Создает новую верификацию для пользователя."""
+        # Деактивируем старые неверифицированные коды
+        cls.objects.filter(user=user, phone=phone, is_verified=False).delete()
+
+        code = cls.generate_code()
+        expires_at = timezone.now() + timezone.timedelta(minutes=10)
+
+        return cls.objects.create(
+            user=user,
+            phone=phone,
+            code=code,
+            expires_at=expires_at
+        )
+
+    def is_valid(self):
+        """Проверяет, действителен ли код."""
+        return not self.is_verified and timezone.now() < self.expires_at and self.attempts < 5
+
+    def verify(self, entered_code):
+        """
+        Проверяет код и верифицирует телефон.
+        Returns: (success: bool, message: str)
+        """
+        self.attempts += 1
+        self.save()
+
+        if self.attempts >= 5:
+            return False, 'Превышено количество попыток. Запросите новый код.'
+
+        if timezone.now() > self.expires_at:
+            return False, 'Код истек. Запросите новый код.'
+
+        if self.is_verified:
+            return False, 'Телефон уже верифицирован.'
+
+        if entered_code != self.code:
+            return False, f'Неверный код. Осталось попыток: {5 - self.attempts}'
+
+        # Верифицируем
+        self.is_verified = True
+        self.verified_at = timezone.now()
+        self.save()
+
+        # Обновляем профиль
+        self.user.profile.is_verified = True
+        self.user.profile.verification_date = timezone.now()
+        self.user.profile.save()
+
+        return True, 'Телефон успешно верифицирован!'
+
+
+class DocumentVerification(models.Model):
+    """
+    Модель для верификации документов (KYC).
+    """
+    STATUS_CHOICES = [
+        ('pending', 'На проверке'),
+        ('approved', 'Одобрено'),
+        ('rejected', 'Отклонено'),
+    ]
+
+    DOCUMENT_TYPE_CHOICES = [
+        ('passport', 'Паспорт'),
+        ('id_card', 'ID карта'),
+        ('driver_license', 'Водительские права'),
+        ('selfie', 'Селфи с документом'),
+    ]
+
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='document_verifications',
+        verbose_name='Пользователь'
+    )
+    document_type = models.CharField(
+        max_length=20,
+        choices=DOCUMENT_TYPE_CHOICES,
+        verbose_name='Тип документа'
+    )
+    document_file = models.FileField(
+        upload_to='verification_documents/%Y/%m/',
+        verbose_name='Файл документа',
+        help_text='Макс. 10 МБ. Форматы: JPG, PNG, PDF'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        db_index=True,
+        verbose_name='Статус'
+    )
+    admin_comment = models.TextField(
+        blank=True,
+        verbose_name='Комментарий администратора'
+    )
+    reviewed_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_documents',
+        verbose_name='Проверил'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата загрузки'
+    )
+    reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата проверки'
+    )
+
+    class Meta:
+        verbose_name = 'Верификация документа'
+        verbose_name_plural = 'Верификации документов'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'status']),
+            models.Index(fields=['status', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.user.username} - {self.get_document_type_display()} - {self.get_status_display()}'
+
+    def approve(self, admin_user, comment=''):
+        """Одобряет документ."""
+        self.status = 'approved'
+        self.admin_comment = comment
+        self.reviewed_by = admin_user
+        self.reviewed_at = timezone.now()
+        self.save()
+
+        # Проверяем, все ли обязательные документы одобрены
+        required_types = ['passport', 'selfie']
+        approved_types = DocumentVerification.objects.filter(
+            user=self.user,
+            status='approved'
+        ).values_list('document_type', flat=True)
+
+        if all(doc_type in approved_types for doc_type in required_types):
+            # Верифицируем пользователя
+            self.user.profile.is_verified = True
+            self.user.profile.verification_date = timezone.now()
+            self.user.profile.save()
+
+    def reject(self, admin_user, comment):
+        """Отклоняет документ."""
+        self.status = 'rejected'
+        self.admin_comment = comment
+        self.reviewed_by = admin_user
+        self.reviewed_at = timezone.now()
+        self.save()
+
+    def clean(self):
+        """Валидация файла."""
+        if self.document_file:
+            # Проверка размера (макс 10 МБ)
+            if self.document_file.size > 10 * 1024 * 1024:
+                raise ValidationError('Размер файла не должен превышать 10 МБ.')
+
+            # Проверка расширения
+            import os
+            ext = os.path.splitext(self.document_file.name)[1].lower()
+            allowed_extensions = ['.jpg', '.jpeg', '.png', '.pdf']
+            if ext not in allowed_extensions:
+                raise ValidationError(f'Разрешены только файлы: {", ".join(allowed_extensions)}')
 

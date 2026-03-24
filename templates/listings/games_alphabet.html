@@ -3,116 +3,73 @@
 {% block title %}Каталог игр - LootLink{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <!-- Заголовок -->
-    <div class="mb-4">
-        <h1 class="h2">Каталог игр</h1>
-        <p class="text-muted">{{ total_games }} игр доступно на платформе</p>
-    </div>
+<div class="container">
+    <div class="catalog-page">
+        <div style="text-align:center;margin-bottom:var(--space-6);">
+            <span class="section-label">Каталог</span>
+            <h1>Все игры</h1>
+            <p style="font-size:var(--text-base);color:var(--gray-500);">{{ total_games }} игр доступно на платформе</p>
+        </div>
 
-    <!-- Алфавитная навигация -->
-    <div class="alphabet-nav sticky-top bg-white py-3 mb-4 border-bottom">
-        <div class="d-flex flex-wrap gap-2 justify-content-center">
+        <div class="catalog-page__alphabet">
             {% for letter in alphabet_letters %}
-            <a href="#letter-{{ letter }}" class="btn btn-sm btn-outline-primary alphabet-link">
-                {{ letter }}
+            <a href="#letter-{{ letter }}" class="catalog-page__letter">{{ letter }}</a>
+            {% endfor %}
+        </div>
+
+        <div class="catalog-page__games-grid">
+            {% for letter, games in alphabet %}
+            <div id="letter-{{ letter }}" class="catalog-page__letter-divider">{{ letter }}</div>
+
+            {% for game in games %}
+            <a href="{% url 'listings:game_listings' game.slug %}" class="game-card-ll">
+                {% if game.icon %}
+                <img src="{{ game.icon.url }}" alt="{{ game.name }}" class="game-card-ll__icon"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <div class="game-card-ll__icon-placeholder" style="display:none;">
+                    <i data-lucide="gamepad-2"></i>
+                </div>
+                {% else %}
+                <div class="game-card-ll__icon-placeholder">
+                    <i data-lucide="gamepad-2"></i>
+                </div>
+                {% endif %}
+                <div class="game-card-ll__name">{{ game.name }}</div>
+                <div class="game-card-ll__count">{{ game.listings_count|default:"0" }} объявлений</div>
             </a>
             {% endfor %}
-        </div>
-    </div>
-
-    <!-- Список игр по буквам -->
-    {% for letter, games in alphabet %}
-    <div id="letter-{{ letter }}" class="alphabet-section mb-5">
-        <h2 class="h3 mb-3 pb-2 border-bottom">
-            <span class="badge bg-primary me-2">{{ letter }}</span>
-            <span class="text-muted small">({{ games|length }} игр)</span>
-        </h2>
-
-        <div class="row g-3">
-            {% for game in games %}
-            <div class="col-md-6 col-lg-4">
-                <a href="{% url 'listings:game_listings' game.slug %}" class="game-card-link text-decoration-none">
-                    <div class="card h-100 game-card-hover">
-                        <div class="card-body d-flex align-items-center">
-                            <!-- Иконка игры -->
-                            <div class="game-icon-wrapper me-3">
-                                {% if game.icon %}
-                                <img src="{{ game.icon.url }}"
-                                     alt="{{ game.name }}"
-                                     class="game-icon"
-                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                <div class="game-icon-placeholder" class="d-none">
-                                    <i class="bi bi-controller"></i>
-                                </div>
-                                {% else %}
-                                <div class="game-icon-placeholder">
-                                    <i class="bi bi-controller"></i>
-                                </div>
-                                {% endif %}
-                            </div>
-
-                            <!-- Информация об игре -->
-                            <div class="flex-grow-1">
-                                <h5 class="card-title mb-1">{{ game.name }}</h5>
-                                <p class="card-text text-muted small mb-0">
-                                    <i class="bi bi-box-seam"></i>
-                                    <strong>{{ game.listings_count|default:"0" }}</strong>
-                                    {% if game.listings_count == 1 %}
-                                        объявление
-                                    {% elif game.listings_count < 5 %}
-                                        объявления
-                                    {% else %}
-                                        объявлений
-                                    {% endif %}
-                                </p>
-                            </div>
-
-                            <!-- Стрелка -->
-                            <div class="ms-2">
-                                <i class="bi bi-chevron-right text-muted"></i>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            </div>
             {% endfor %}
         </div>
-    </div>
-    {% endfor %}
 
-    <!-- Кнопка "Наверх" -->
-    <div class="text-center mt-5 mb-4">
-        <a href="#" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-up"></i> Наверх
-        </a>
+        <div style="text-align:center;margin-top:var(--space-8);">
+            <a href="#" class="btn btn-ghost">
+                <i data-lucide="arrow-up"></i> Наверх
+            </a>
+        </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-// Подсветка активной буквы при скролле
-document.addEventListener('DOMContentLoaded', function() {
-    const sections = document.querySelectorAll('.alphabet-section');
-    const navLinks = document.querySelectorAll('.alphabet-link');
+(function() {
+    var sections = document.querySelectorAll('[id^="letter-"]');
+    var navLinks = document.querySelectorAll('.catalog-page__letter');
 
     window.addEventListener('scroll', function() {
-        let current = '';
-
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            const sectionHeight = section.clientHeight;
-            if (pageYOffset >= sectionTop - 150) {
+        var current = '';
+        sections.forEach(function(section) {
+            if (window.pageYOffset >= section.offsetTop - 150) {
                 current = section.getAttribute('id');
             }
         });
-
-        navLinks.forEach(link => {
+        navLinks.forEach(function(link) {
             link.classList.remove('active');
             if (link.getAttribute('href') === '#' + current) {
                 link.classList.add('active');
             }
         });
-    });
-});
+    }, {passive: true});
+})();
 </script>
 {% endblock %}

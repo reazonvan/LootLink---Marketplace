@@ -107,7 +107,7 @@ def conversation_detail(request, pk):
     
     context = {
         'conversation': conversation,
-        'messages': messages_list,
+        'chat_messages': messages_list,
         'form': form,
         'other_user': other_user,
     }

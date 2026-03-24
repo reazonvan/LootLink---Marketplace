@@ -23,7 +23,7 @@ known_django = "django"
 sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "lootlink.settings"
+DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py", "*_test.py", "tests.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -34,7 +34,7 @@ addopts = [
     "--cov-report=html",
     "--cov-report=term-missing",
 ]
-testpaths = ["tests"]
+testpaths = ["tests", "accounts", "listings", "transactions", "chat", "payments", "api", "core"]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
@@ -73,7 +73,7 @@ disallow_untyped_defs = false
 plugins = ["mypy_django_plugin.main"]
 
 [tool.django-stubs]
-django_settings_module = "lootlink.settings"
+django_settings_module = "config.settings"
 
 [tool.bandit]
 exclude_dirs = ["tests", "venv", "migrations"]

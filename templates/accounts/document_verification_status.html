@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Статус верификации - LootLink{% endblock %}
+
+{% block content %}
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:640px;margin:0 auto;">
+        <ul class="ll-breadcrumb">
+            <li><a href="{% url 'accounts:verification_status' %}">Верификация</a></li>
+            <li><span class="current">Статус документов</span></li>
+        </ul>
+
+        <div class="page-header">
+            <h1>Статус проверки документов</h1>
+        </div>
+
+        {% if user.profile.is_verified %}
+        <div class="alert alert-success" style="margin-bottom:var(--space-6);">
+            <i data-lucide="check-circle"></i> Верификация пройдена. Ваш аккаунт подтверждён.
+        </div>
+        {% endif %}
+
+        {% if documents %}
+        <div class="card-glass" style="margin-bottom:var(--space-6);">
+            {% for doc in documents %}
+            <div style="padding:var(--space-4) 0;{% if not forloop.last %}border-bottom:1px solid var(--card-border);{% endif %}">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-3);">
+                    <div style="display:flex;align-items:center;gap:var(--space-3);">
+                        <div style="width:40px;height:40px;border-radius:var(--radius-md);background:{% if doc.status == 'approved' %}var(--color-success-light){% elif doc.status == 'rejected' %}var(--color-danger-light){% else %}var(--color-warning-light){% endif %};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i data-lucide="{% if doc.status == 'approved' %}check-circle{% elif doc.status == 'rejected' %}x-circle{% else %}clock{% endif %}" style="width:20px;height:20px;color:{% if doc.status == 'approved' %}var(--color-success){% elif doc.status == 'rejected' %}var(--color-danger){% else %}var(--color-warning){% endif %};"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">{{ doc.get_document_type_display }}</div>
+                            <div style="font-size:var(--text-xs);color:var(--text-tertiary);">
+                                Загружен {{ doc.created_at|date:"d.m.Y" }}
+                                {% if doc.reviewed_at %} · Проверен {{ doc.reviewed_at|date:"d.m.Y" }}{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <span class="badge badge-{% if doc.status == 'approved' %}success{% elif doc.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                        {% if doc.status == 'approved' %}Одобрен{% elif doc.status == 'rejected' %}Отклонён{% else %}На проверке{% endif %}
+                    </span>
+                </div>
+                {% if doc.admin_comment %}
+                <div style="margin-top:var(--space-3);margin-left:52px;padding:var(--space-3);background:var(--gray-50);border-radius:var(--radius-sm);font-size:var(--text-sm);color:var(--text-secondary);">
+                    <i data-lucide="message-square" style="width:14px;height:14px;display:inline;vertical-align:middle;"></i> {{ doc.admin_comment }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if not user.profile.is_verified %}
+        <div class="alert alert-info" style="margin-bottom:var(--space-4);">
+            <i data-lucide="info"></i> Проверка документов занимает до 24 часов.
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state__icon"><i data-lucide="file-x"></i></div>
+            <div class="empty-state__title">Документы не загружены</div>
+            <p class="empty-state__text">Загрузите документы для прохождения верификации</p>
+            <a href="{% url 'accounts:document_verification_upload' %}" class="btn btn-primary"><i data-lucide="upload"></i> Загрузить документ</a>
+        </div>
+        {% endif %}
+
+        <div style="display:flex;gap:var(--space-3);justify-content:center;margin-top:var(--space-6);">
+            <a href="{% url 'accounts:document_verification_upload' %}" class="btn btn-secondary"><i data-lucide="upload"></i> Загрузить ещё</a>
+            <a href="{% url 'accounts:verification_status' %}" class="btn btn-ghost"><i data-lucide="arrow-left"></i> Назад</a>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}

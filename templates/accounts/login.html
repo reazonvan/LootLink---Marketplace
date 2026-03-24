@@ -1,105 +1,114 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Вход - LootLink{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-10 col-lg-8">
-            <div class="auth-container">
-                <div class="row">
-                    <!-- Left side - Form -->
-                    <div class="col-md-6">
-                        <div class="auth-form">
-                            <h2 class="auth-title">Вход</h2>
-                            <p class="auth-subtitle">Войдите в свой аккаунт</p>
-                            
-                            <!-- Вывод сообщений -->
-                            {% if messages %}
-                            <div class="messages-container mb-3">
-                                {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                            
-                            <form method="post" action="{% url 'accounts:login' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
-                                
-                                <div class="mb-3">
-                                    <label for="{{ form.username.id_for_label }}" class="form-label">Имя пользователя или Email</label>
-                                    {{ form.username }}
-                                    {% if form.username.errors %}
-                                    <div class="text-danger small mt-1">{{ form.username.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="{{ form.password.id_for_label }}" class="form-label">Пароль</label>
-                                    {{ form.password }}
-                                    {% if form.password.errors %}
-                                    <div class="text-danger small mt-1">{{ form.password.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="mb-4 text-end">
-                                    <a href="{% url 'accounts:password_reset_request' %}" class="link-secondary small">
-                                        <i class="bi bi-key"></i> Забыли пароль?
-                                    </a>
-                                </div>
-                                
-                                {% if form.non_field_errors %}
-                                <div class="alert alert-danger">
-                                    {{ form.non_field_errors }}
-                                </div>
-                                {% endif %}
-                                
-                                <button type="submit" class="btn btn-primary w-100 btn-lg mb-3">
-                                    Войти
-                                </button>
-                                
-                                <p class="text-center mb-0">
-                                    Нет аккаунта? 
-                                    <a href="{% url 'accounts:register' %}" class="link-primary">Зарегистрироваться</a>
-                                </p>
-                            </form>
-                        </div>
-                    </div>
-                    
-                    <!-- Right side - Info -->
-                    <div class="col-md-6">
-                        <div class="auth-info">
-                            <h3 class="info-title">С возвращением!</h3>
-                            <p class="info-description">Продолжайте торговать игровыми предметами на LootLink</p>
-                            <div class="info-stats">
-                                <div class="info-stat-item">
-                                    <div class="info-stat-icon">
-                                        <i class="bi bi-people"></i>
-                                    </div>
-                                    <div class="info-stat-text">
-                                        <div class="info-stat-value">{{ total_users|default:0 }}</div>
-                                        <div class="info-stat-label">Активных пользователей</div>
-                                    </div>
-                                </div>
-                                <div class="info-stat-item">
-                                    <div class="info-stat-icon">
-                                        <i class="bi bi-box"></i>
-                                    </div>
-                                    <div class="info-stat-text">
-                                        <div class="info-stat-value">{{ total_deals|default:0 }}</div>
-                                        <div class="info-stat-label">Успешных сделок</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<div class="auth-split">
+    <div class="auth-split__form">
+        <div class="auth-page__card">
+            <a href="{% url 'listings:home' %}" class="auth-page__logo">
+                <svg class="logo-svg" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="logo-circle" cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path class="logo-path" d="M15 25 L22 32 L35 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>LootLink</span>
+            </a>
+            
+            <h2 class="auth-page__title">С возвращением</h2>
+            <p class="auth-page__subtitle">Войдите, чтобы продолжить торговлю</p>
+            
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                <i data-lucide="alert-circle"></i>
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+            
+            <form method="post" action="{% url 'accounts:login' %}" class="auth-page__form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
+                
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}" class="form-label">Имя пользователя или Email</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                    <div class="form-error">{{ form.username.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.password.id_for_label }}" class="form-label">Пароль</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                    <div class="form-error">{{ form.password.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <a href="{% url 'accounts:password_reset_request' %}" class="auth-page__forgot">Забыли пароль?</a>
+                
+                <button type="submit" class="btn btn-primary btn-lg auth-page__submit">
+                    <i data-lucide="log-in"></i> Войти
+                </button>
+                
+                <p class="auth-page__alt">
+                    Нет аккаунта? <a href="{% url 'accounts:register' %}">Зарегистрироваться</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <div class="auth-split__decor">
+        <div class="auth-decor-content">
+            <div class="auth-decor-icon">
+                <i data-lucide="shield-check"></i>
+            </div>
+            <h3>Безопасная торговля</h3>
+            <p>Защищённые сделки между игроками. Рейтинги, отзывы и гарантии на каждую покупку.</p>
+            <div class="auth-decor-stats">
+                <div class="auth-decor-stat">
+                    <span class="auth-decor-stat-num">{{ total_games|default:"0" }}</span>
+                    <span class="auth-decor-stat-label">Игр</span>
+                </div>
+                <div class="auth-decor-stat">
+                    <span class="auth-decor-stat-num">24/7</span>
+                    <span class="auth-decor-stat-label">Поддержка</span>
+                </div>
+                <div class="auth-decor-stat">
+                    <span class="auth-decor-stat-num">0%</span>
+                    <span class="auth-decor-stat-label">Комиссия</span>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.auth-split { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 200px); gap: 0; margin: 0 calc(var(--space-10) * -1); }
+.auth-split__form { display: flex; align-items: center; justify-content: center; padding: var(--space-8); }
+.auth-split__form .auth-page__card { max-width: 440px; width: 100%; border: none; box-shadow: none; background: transparent; backdrop-filter: none; padding: var(--space-6) 0; }
+.auth-split__decor { background: var(--accent-gradient); border-radius: var(--radius-xl) 0 0 var(--radius-xl); display: flex; align-items: center; justify-content: center; padding: var(--space-10); position: relative; overflow: hidden; }
+.auth-split__decor::before { content: ''; position: absolute; width: 300px; height: 300px; border-radius: 50%; background: rgba(255,255,255,0.08); top: -80px; right: -80px; }
+.auth-split__decor::after { content: ''; position: absolute; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,0.05); bottom: -60px; left: -40px; }
+.auth-decor-content { position: relative; z-index: 1; color: white; text-align: center; max-width: 340px; }
+.auth-decor-icon { width: 80px; height: 80px; margin: 0 auto var(--space-6); border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
+.auth-decor-icon svg { width: 40px; height: 40px; }
+.auth-decor-content h3 { font-size: var(--text-2xl); font-weight: var(--weight-extrabold); margin-bottom: var(--space-3); }
+.auth-decor-content p { opacity: 0.85; line-height: var(--leading-relaxed); margin-bottom: var(--space-8); }
+.auth-decor-stats { display: flex; gap: var(--space-6); justify-content: center; }
+.auth-decor-stat { text-align: center; }
+.auth-decor-stat-num { display: block; font-size: var(--text-2xl); font-weight: var(--weight-extrabold); }
+.auth-decor-stat-label { font-size: var(--text-xs); opacity: 0.7; }
+
+@media (max-width: 768px) {
+    .auth-split { grid-template-columns: 1fr; margin: 0; }
+    .auth-split__decor { display: none; }
+    .auth-split__form .auth-page__card { padding: var(--space-6); background: var(--card-bg); backdrop-filter: blur(30px); border: 1px solid var(--card-border); box-shadow: var(--shadow-xl); border-radius: var(--radius-xl); }
+}
+</style>
+
+{% block extra_js %}
+<script src="{% static 'js/registration-validator.js' %}"></script>
+<script>lucide.createIcons();</script>
+{% endblock %}
 {% endblock %}

@@ -4,6 +4,8 @@ Middleware для rate limiting и защиты от брутфорса.
 from django.core.cache import cache
 from django.http import HttpResponseForbidden
 from django.conf import settings
+from django.contrib import messages
+from django.shortcuts import redirect
 import time
 import logging
 
@@ -56,9 +58,11 @@ class SimpleRateLimitMiddleware:
                 security_logger.warning(
                     f'Rate limit exceeded: {request.path} | User: {user} | IP: {ip}'
                 )
-                return HttpResponseForbidden(
+                messages.warning(
+                    request,
                     'Слишком много попыток. Пожалуйста, подождите несколько минут.'
                 )
+                return redirect(request.path)
         
         response = self.get_response(request)
         return response

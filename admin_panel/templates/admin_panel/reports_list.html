@@ -1,105 +1,55 @@
 {% extends 'admin_panel/base.html' %}
-
 {% block title %}Жалобы{% endblock %}
 {% block page_title %}Жалобы на объявления{% endblock %}
 
 {% block breadcrumb %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
-        <li class="breadcrumb-item active">Жалобы</li>
-    </ol>
-</nav>
+<ul class="ap-breadcrumb"><li><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li><li>Жалобы</li></ul>
 {% endblock %}
 
 {% block content %}
-<div class="admin-card">
-    <h3 class="card-title mb-3">Жалобы ({{ total_count }})</h3>
-    
+<div class="ap-card">
+    <h3 class="ap-card-title" style="margin-bottom:1rem;">Жалобы ({{ total_count }})</h3>
     {% for report in reports %}
-    <div style="padding: 1.5rem; border: 1px solid var(--admin-border); border-radius: 12px; margin-bottom: 1rem; {% if report.status == 'pending' %}border-left: 4px solid var(--admin-warning);{% endif %}">
-        <div class="d-flex gap-3">
-            <!-- Превью объявления -->
-            <div style="flex-shrink: 0;">
-                {% if report.listing.image %}
-                <img src="{{ report.listing.image.url }}" alt="" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
-                {% else %}
-                <div style="width: 100px; height: 100px; background: var(--admin-light); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                    <i class="bi bi-image" style="font-size: 2rem; color: #9CA3AF;"></i>
-                </div>
-                {% endif %}
+    <div style="padding:1.5rem;border:1px solid var(--ap-border);border-radius:12px;margin-bottom:1rem;{% if report.status == 'pending' %}border-left:4px solid var(--ap-warning);{% endif %}">
+        <div style="display:flex;gap:1rem;">
+            <div style="flex-shrink:0;">
+                {% if report.listing.image %}<img src="{{ report.listing.image.url }}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;">
+                {% else %}<div style="width:100px;height:100px;background:var(--ap-light);border-radius:8px;display:flex;align-items:center;justify-content:center;"><i data-lucide="image" style="width:32px;height:32px;color:#9CA3AF;"></i></div>{% endif %}
             </div>
-            
-            <!-- Информация -->
-            <div class="flex-grow-1">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <h5 style="font-weight: 700; margin-bottom: 0.5rem;">{{ report.listing.title }}</h5>
-                        <div style="font-size: 0.875rem; color: #6B7280;">
-                            Продавец: <strong>{{ report.listing.seller.username }}</strong> • 
-                            Игра: {{ report.listing.game.name }}
-                        </div>
-                    </div>
-                    <span class="status-badge status-{{ report.status }}">{{ report.get_status_display }}</span>
+            <div style="flex:1;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+                    <div><h5 style="font-weight:700;margin-bottom:0.25rem;">{{ report.listing.title }}</h5><div style="font-size:0.875rem;color:#6B7280;">Продавец: <strong>{{ report.listing.seller.username }}</strong> &bull; {{ report.listing.game.name }}</div></div>
+                    <span class="ap-badge ap-badge-{{ report.status }}">{{ report.get_status_display }}</span>
                 </div>
-                
-                <div style="background: rgba(245, 158, 11, 0.05); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--admin-warning); margin: 1rem 0;">
-                    <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">
-                        Причина: {{ report.get_reason_display }}
-                    </div>
-                    <div style="font-size: 0.875rem; color: #6B7280;">
-                        {{ report.description }}
-                    </div>
-                    <div style="font-size: 0.75rem; color: #9CA3AF; margin-top: 0.75rem;">
-                        От: <strong>{{ report.reporter.username }}</strong> • {{ report.created_at|date:"d.m.Y H:i" }}
-                    </div>
+                <div style="background:rgba(245,158,11,0.05);padding:1rem;border-radius:8px;border-left:3px solid var(--ap-warning);margin:0.75rem 0;">
+                    <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.5rem;">Причина: {{ report.get_reason_display }}</div>
+                    <div style="font-size:0.875rem;color:#6B7280;">{{ report.description }}</div>
+                    <div style="font-size:0.75rem;color:#9CA3AF;margin-top:0.75rem;">От: <strong>{{ report.reporter.username }}</strong> &bull; {{ report.created_at|date:"d.m.Y H:i" }}</div>
                 </div>
-                
                 {% if report.status == 'pending' %}
-                <div class="d-flex gap-2">
-                    <button class="btn-admin btn-admin-danger" onclick="processReport({{ report.id }}, 'approve')">
-                        <i class="bi bi-shield-x"></i> Заблокировать объявление
-                    </button>
-                    <button class="btn-admin btn-admin-success" onclick="processReport({{ report.id }}, 'reject')">
-                        <i class="bi bi-check-lg"></i> Жалоба необоснована
-                    </button>
-                    <a href="{% url 'listings:listing_detail' report.listing.id %}" target="_blank" class="btn-admin btn-admin-outline">
-                        <i class="bi bi-box-arrow-up-right"></i> Открыть объявление
-                    </a>
+                <div style="display:flex;gap:0.5rem;">
+                    <button class="ap-btn ap-btn-danger ap-btn-sm" onclick="processReport({{ report.id }},'approve')"><i data-lucide="shield-x"></i> Заблокировать</button>
+                    <button class="ap-btn ap-btn-success ap-btn-sm" onclick="processReport({{ report.id }},'reject')"><i data-lucide="check"></i> Необоснована</button>
+                    <a href="{% url 'listings:listing_detail' report.listing.id %}" target="_blank" class="ap-btn ap-btn-outline ap-btn-sm"><i data-lucide="external-link"></i></a>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
     {% empty %}
-    <div class="text-center py-5">
-        <i class="bi bi-inbox" style="font-size: 4rem; color: var(--admin-border); display: block; margin-bottom: 1rem;"></i>
-        <h4 style="color: #6B7280;">Нет жалоб</h4>
-    </div>
+    <div style="text-align:center;padding:4rem;"><i data-lucide="inbox" style="width:64px;height:64px;color:var(--ap-border);display:block;margin:0 auto 1rem;"></i><h4 style="color:#6B7280;">Нет жалоб</h4></div>
     {% endfor %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    async function processReport(reportId, action) {
-        const messages = {
-            'approve': 'Вы уверены, что хотите заблокировать это объявление?',
-            'reject': 'Вы уверены, что жалоба необоснована?'
-        };
-        
-        if (!confirm(messages[action])) return;
-        
-        const url = `/custom-admin/api/reports/${reportId}/process/`;
-        const result = await adminAjax(url, { action });
-        
-        if (result.success) {
-            showToast(result.message, 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showToast(result.message, 'danger');
-        }
-    }
+lucide.createIcons();
+async function processReport(id, action) {
+    var msgs = { 'approve': 'Заблокировать объявление?', 'reject': 'Жалоба необоснована?' };
+    if(!confirm(msgs[action]))return;
+    var r = await adminAjax('/custom-admin/api/reports/'+id+'/process/',{action:action});
+    if(r.success){showToast(r.message);setTimeout(function(){location.reload()},1000);}else{showToast(r.message,'danger');}
+}
 </script>
 {% endblock %}
-

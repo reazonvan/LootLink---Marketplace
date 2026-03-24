@@ -4,6 +4,8 @@ from . import verification_views
 from . import views_2fa
 from . import views_security
 from . import views_analytics
+from . import views_export
+from . import views_push
 
 app_name = 'accounts'
 
@@ -28,6 +30,8 @@ urlpatterns = [
     path('verification/phone/request/', verification_views.phone_verification_request, name='phone_verification_request'),
     path('verification/phone/confirm/', verification_views.phone_verification_confirm, name='phone_verification_confirm'),
     path('verification/document/request/', verification_views.request_document_verification, name='request_document_verification'),
+    path('verification/document/upload/', verification_views.document_verification_upload, name='document_verification_upload'),
+    path('verification/document/status/', verification_views.document_verification_status, name='document_verification_status'),
     # 2FA (Two-Factor Authentication)
     path('2fa/setup/', views_2fa.setup_2fa, name='setup_2fa'),
     path('2fa/verify/', views_2fa.verify_2fa, name='verify_2fa'),
@@ -42,6 +46,13 @@ urlpatterns = [
     # Analytics
     path('analytics/', views_analytics.analytics_dashboard, name='analytics_dashboard'),
     path('analytics/export/', views_analytics.export_data, name='export_data'),
+    # Data Export (GDPR)
+    path('data-export/', views_export.request_data_export, name='data_export'),
+    path('data-export/download/<int:export_id>/', views_export.download_data_export, name='download_data_export'),
+    # Web Push Notifications
+    path('push/subscribe/', views_push.subscribe_push, name='push_subscribe'),
+    path('push/unsubscribe/', views_push.unsubscribe_push, name='push_unsubscribe'),
+    path('push/vapid-key/', views_push.get_vapid_public_key, name='push_vapid_key'),
     # AJAX endpoints для проверки уникальности
     path('api/check-username/', views.check_username_available, name='check_username'),
     path('api/check-email/', views.check_email_available, name='check_email'),
