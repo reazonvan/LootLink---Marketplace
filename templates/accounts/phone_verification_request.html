@@ -1,38 +1,35 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Верификация телефона - LootLink{% endblock %}
+{% block title %}Подтверждение телефона - LootLink{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <div class="row">
-        <div class="col-lg-6 mx-auto">
-            <h1 class="mb-4"><i class="bi bi-phone-vibrate"></i> Верификация телефона</h1>
-            
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i>
-                        Мы отправим SMS с кодом подтверждения на номер:
-                        <br><strong>{{ user.profile.phone }}</strong>
-                    </div>
-                    
-                    <form method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary btn-lg w-100">
-                            <i class="bi bi-send"></i> Отправить SMS код
-                        </button>
-                    </form>
-                </div>
-            </div>
-            
-            <div class="mt-3">
-                <a href="{% url 'accounts:verification_status' %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Назад
-                </a>
-            </div>
+<div class="auth-page">
+    <div class="auth-page__card">
+        <div style="width:64px;height:64px;border-radius:50%;background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-5);">
+            <i data-lucide="smartphone" style="width:28px;height:28px;color:var(--accent-primary);"></i>
+        </div>
+
+        <h1 class="auth-page__title">Подтвердите номер</h1>
+        <p class="auth-page__subtitle">Мы отправим SMS-код на ваш номер телефона</p>
+
+        <div style="text-align:center;padding:var(--space-4);background:var(--gray-50);border-radius:var(--radius-md);margin-bottom:var(--space-6);">
+            <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--text-primary);">{{ user.profile.phone }}</div>
+        </div>
+
+        <form method="post" class="auth-page__form">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary btn-lg auth-page__submit">
+                <i data-lucide="send"></i> Отправить SMS код
+            </button>
+        </form>
+
+        <div class="auth-page__alt">
+            <a href="{% url 'accounts:verification_status' %}"><i data-lucide="arrow-left" style="width:14px;height:14px;display:inline;vertical-align:middle;"></i> Назад к верификации</a>
         </div>
     </div>
 </div>
-{% endblock %}
 
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}

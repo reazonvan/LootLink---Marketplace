@@ -1,19 +1,35 @@
 {% extends 'admin_panel/base.html' %}
-
 {% block title %}Спор #{{ dispute.id }}{% endblock %}
 {% block page_title %}Спор #{{ dispute.id }}{% endblock %}
 
-{% block content %}
-<div class="admin-card">
-    <h4>Спор #{{ dispute.id }}</h4>
-    <p><strong>Статус:</strong> {{ dispute.get_status_display }}</p>
-    <p><strong>Причина:</strong> {{ dispute.reason }}</p>
-    
-    <hr>
-    
-    <h5>Участники:</h5>
-    <p>Покупатель: {{ dispute.purchase_request.buyer.username }}</p>
-    <p>Продавец: {{ dispute.purchase_request.listing.seller.username }}</p>
-</div>
+{% block breadcrumb %}
+<ul class="ap-breadcrumb"><li><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li><li><a href="{% url 'admin_panel:disputes_list' %}">Споры</a></li><li>#{{ dispute.id }}</li></ul>
 {% endblock %}
 
+{% block content %}
+<div class="ap-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <h4 style="font-weight:700;">Спор #{{ dispute.id }}</h4>
+        <span class="ap-badge ap-badge-{{ dispute.status }}">{{ dispute.get_status_display }}</span>
+    </div>
+    <div style="margin-bottom:1.5rem;">
+        <div style="font-weight:600;font-size:0.875rem;margin-bottom:0.5rem;">Причина:</div>
+        <p style="color:#6B7280;font-size:0.875rem;line-height:1.6;">{{ dispute.reason }}</p>
+    </div>
+    <div class="g-4 g-2-cols" style="margin-bottom:1rem;">
+        <div style="background:var(--ap-light);padding:1.25rem;border-radius:12px;">
+            <div style="font-size:0.75rem;color:#6B7280;margin-bottom:0.25rem;">Покупатель</div>
+            <div style="font-weight:700;"><a href="{% url 'admin_panel:user_detail' dispute.purchase_request.buyer.id %}" style="color:var(--ap-dark);text-decoration:none;">{{ dispute.purchase_request.buyer.username }}</a></div>
+        </div>
+        <div style="background:var(--ap-light);padding:1.25rem;border-radius:12px;">
+            <div style="font-size:0.75rem;color:#6B7280;margin-bottom:0.25rem;">Продавец</div>
+            <div style="font-weight:700;"><a href="{% url 'admin_panel:user_detail' dispute.purchase_request.listing.seller.id %}" style="color:var(--ap-dark);text-decoration:none;">{{ dispute.purchase_request.listing.seller.username }}</a></div>
+        </div>
+    </div>
+    <div style="background:var(--ap-light);padding:1.25rem;border-radius:12px;">
+        <div style="font-size:0.75rem;color:#6B7280;margin-bottom:0.25rem;">Объявление</div>
+        <div style="font-weight:700;">{{ dispute.purchase_request.listing.title }} — {{ dispute.purchase_request.listing.price }} ₽</div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}

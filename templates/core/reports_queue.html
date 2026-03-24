@@ -1,11 +1,48 @@
 {% extends 'base.html' %}
-
-{% block title %}reports_queue - LootLink{% endblock %}
-
+{% block title %}Очередь жалоб - LootLink{% endblock %}
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>reports_queue</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-6);flex-wrap:wrap;gap:var(--space-3);">
+        <div>
+            <span class="section-label">Модерация</span>
+            <h1 style="font-size:var(--text-2xl);">Очередь жалоб</h1>
+        </div>
+        <a href="{% url 'core:moderation_dashboard' %}" class="btn btn-ghost btn-sm"><i data-lucide="arrow-left"></i> К панели</a>
+    </div>
+
+    {% if reports %}
+    <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+        {% for report in reports %}
+        <div class="card-glass">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-4);flex-wrap:wrap;">
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);">
+                        <span class="badge badge-{% if report.status == 'pending' %}warning{% elif report.status == 'resolved' %}success{% else %}neutral{% endif %}">
+                            {{ report.get_status_display|default:report.status }}
+                        </span>
+                        <span class="badge badge-neutral">{{ report.get_report_type_display|default:report.report_type }}</span>
+                    </div>
+                    <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:var(--space-1);">
+                        {{ report.reason|default:"Жалоба" }}
+                    </div>
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);">
+                        От: {{ report.reporter.username }} &middot; {{ report.created_at|timesince }} назад
+                    </div>
+                </div>
+                <a href="{% url 'core:process_report' report.pk %}" class="btn btn-primary btn-sm" style="flex-shrink:0;">
+                    <i data-lucide="eye"></i> Рассмотреть
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state__icon"><i data-lucide="inbox"></i></div>
+        <div class="empty-state__title">Нет жалоб</div>
+        <p class="empty-state__text">Все жалобы обработаны</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
-
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}

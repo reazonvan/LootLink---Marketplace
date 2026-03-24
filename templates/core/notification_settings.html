@@ -1,11 +1,41 @@
 {% extends 'base.html' %}
-
-{% block title %}notification_settings - LootLink{% endblock %}
-
+{% block title %}Настройки уведомлений - LootLink{% endblock %}
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>notification_settings</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:560px;margin:0 auto;">
+        <div class="page-header"><h1>Настройки уведомлений</h1><p>Управляйте типами уведомлений</p></div>
+        <div class="card-glass">
+            <div style="display:flex;flex-direction:column;gap:var(--space-4);">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div><div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Новые сообщения</div><div style="font-size:var(--text-xs);color:var(--text-tertiary);">Уведомления о входящих сообщениях</div></div>
+                    <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+                <div class="divider" style="margin:0;"></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div><div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Покупки и продажи</div><div style="font-size:var(--text-xs);color:var(--text-tertiary);">Обновления по сделкам</div></div>
+                    <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+                <div class="divider" style="margin:0;"></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div><div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Отзывы</div><div style="font-size:var(--text-xs);color:var(--text-tertiary);">Новые отзывы о вас</div></div>
+                    <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+                <div class="divider" style="margin:0;"></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div><div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Системные</div><div style="font-size:var(--text-xs);color:var(--text-tertiary);">Важные обновления платформы</div></div>
+                    <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+<style>
+.toggle-switch { position: relative; width: 44px; height: 24px; display: inline-block; }
+.toggle-switch input { display: none; }
+.toggle-slider { position: absolute; inset: 0; background: var(--gray-300); border-radius: 12px; cursor: pointer; transition: 0.3s; }
+.toggle-slider::before { content: ''; position: absolute; width: 18px; height: 18px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: 0.3s; }
+.toggle-switch input:checked + .toggle-slider { background: var(--accent-primary); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+</style>
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}
 {% endblock %}
-

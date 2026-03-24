@@ -39,6 +39,11 @@ ENV/
 env.bak/
 venv.bak/
 
+# Security - Private keys
+*.pem
+*.key
+.vapid_private.pem
+
 # IDE
 .vscode/*
 !.vscode/settings.json
@@ -48,6 +53,12 @@ venv.bak/
 *.swp
 *.swo
 *~
+
+# Temporary and backup files
+*.bak
+*.tmp
+*.old
+.DS_Store
 .DS_Store
 
 # AI/IDE specific
@@ -55,6 +66,7 @@ venv.bak/
 .cursor/
 .cursorrules
 .cursorignore
+.planning/
 
 # Cleanup documentation
 CLEANUP_*.md

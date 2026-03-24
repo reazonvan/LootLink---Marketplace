@@ -1,250 +1,74 @@
 {% extends 'admin_panel/base.html' %}
-
 {% block title %}Пользователи{% endblock %}
 {% block page_title %}Управление пользователями{% endblock %}
 
 {% block breadcrumb %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
-        <li class="breadcrumb-item active">Пользователи</li>
-    </ol>
-</nav>
+<ul class="ap-breadcrumb"><li><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li><li>Пользователи</li></ul>
 {% endblock %}
 
 {% block content %}
-<!-- Фильтры и поиск -->
-<div class="admin-card mb-4">
-    <form method="get" class="row g-3">
-        <div class="col-md-4">
-            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Поиск</label>
-            <input type="text" name="search" class="form-control" placeholder="Имя, email..." value="{{ filters.search }}">
-        </div>
-        
-        <div class="col-md-3">
-            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Роль</label>
-            <select name="role" class="form-select">
-                <option value="">Все</option>
-                <option value="admin" {% if filters.role == 'admin' %}selected{% endif %}>Администраторы</option>
-                <option value="moderator" {% if filters.role == 'moderator' %}selected{% endif %}>Модераторы</option>
-                <option value="verified" {% if filters.role == 'verified' %}selected{% endif %}>Верифицированные</option>
-            </select>
-        </div>
-        
-        <div class="col-md-3">
-            <label class="form-label" style="font-weight: 600; font-size: 0.875rem;">Верификация</label>
-            <select name="verified" class="form-select">
-                <option value="">Все</option>
-                <option value="yes" {% if filters.verified == 'yes' %}selected{% endif %}>Верифицированные</option>
-                <option value="no" {% if filters.verified == 'no' %}selected{% endif %}>Не верифицированные</option>
-            </select>
-        </div>
-        
-        <div class="col-md-2 d-flex align-items-end gap-2">
-            <button type="submit" class="btn-admin btn-admin-primary flex-grow-1">
-                <i class="bi bi-search"></i> Поиск
-            </button>
-            <a href="{% url 'admin_panel:users_list' %}" class="btn-admin btn-admin-outline">
-                <i class="bi bi-x"></i>
-            </a>
-        </div>
+<div class="ap-card" style="margin-bottom:1.5rem;">
+    <form method="get" style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:1rem;align-items:end;">
+        <div><label class="ap-label">Поиск</label><input type="text" name="search" class="ap-input" placeholder="Имя, email..." value="{{ filters.search }}"></div>
+        <div><label class="ap-label">Роль</label><select name="role" class="ap-select"><option value="">Все</option><option value="admin" {% if filters.role == 'admin' %}selected{% endif %}>Администраторы</option><option value="moderator" {% if filters.role == 'moderator' %}selected{% endif %}>Модераторы</option><option value="verified" {% if filters.role == 'verified' %}selected{% endif %}>Верифицированные</option></select></div>
+        <div><label class="ap-label">Верификация</label><select name="verified" class="ap-select"><option value="">Все</option><option value="yes" {% if filters.verified == 'yes' %}selected{% endif %}>Верифицированные</option><option value="no" {% if filters.verified == 'no' %}selected{% endif %}>Не верифицированные</option></select></div>
+        <div style="display:flex;gap:0.5rem;"><button type="submit" class="ap-btn ap-btn-primary"><i data-lucide="search"></i> Поиск</button><a href="{% url 'admin_panel:users_list' %}" class="ap-btn ap-btn-outline"><i data-lucide="x"></i></a></div>
     </form>
 </div>
 
-<!-- Результаты -->
-<div class="admin-card">
-    <div class="card-header-custom">
-        <div>
-            <h3 class="card-title mb-1">Пользователи</h3>
-            <div style="font-size: 0.875rem; color: #6B7280;">Всего найдено: <strong>{{ total_count }}</strong></div>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="/admin/accounts/customuser/" target="_blank" class="btn-admin btn-admin-outline btn-sm">
-                <i class="bi bi-gear"></i> Django Admin
-            </a>
-        </div>
+<div class="ap-card">
+    <div class="ap-card-header">
+        <div><h3 class="ap-card-title">Пользователи</h3><div style="font-size:0.875rem;color:#6B7280;">Всего: <strong>{{ total_count }}</strong></div></div>
     </div>
-    
-    <div class="admin-table">
-        <table>
-            <thead>
-                <tr>
-                    <th>Пользователь</th>
-                    <th>Email</th>
-                    <th>Роль</th>
-                    <th>Рейтинг</th>
-                    <th>Продажи/Покупки</th>
-                    <th>Регистрация</th>
-                    <th>Статус</th>
-                    <th style="text-align: right;">Действия</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in users %}
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            {% if user.profile.avatar %}
-                            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="table-avatar">
-                            {% else %}
-                            <div class="table-avatar-placeholder">{{ user.username|first|upper }}</div>
-                            {% endif %}
-                            <div>
-                                <a href="{% url 'admin_panel:user_detail' user.id %}" style="font-weight: 600; color: var(--admin-dark); text-decoration: none;">
-                                    {{ user.username }}
-                                </a>
-                                {% if user.profile.is_verified %}
-                                <i class="bi bi-check-circle-fill ms-1" style="color: var(--admin-success); font-size: 0.875rem;"></i>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <span style="font-size: 0.875rem; color: #6B7280;">{{ user.email }}</span>
-                    </td>
-                    <td>
-                        {% if user.is_superuser %}
-                        <span class="badge" style="background: var(--admin-danger);">Владелец</span>
-                        {% elif user.is_staff %}
-                        <span class="badge" style="background: var(--admin-primary);">Админ</span>
-                        {% elif user.profile.is_moderator %}
-                        <span class="badge" style="background: var(--admin-success);">Модератор</span>
-                        {% else %}
-                        <span class="badge bg-secondary">Пользователь</span>
+    <div style="overflow-x:auto;">
+    <table class="ap-table">
+        <thead><tr><th>Пользователь</th><th>Email</th><th>Роль</th><th>Рейтинг</th><th>Продажи/Покупки</th><th>Регистрация</th><th>Статус</th><th style="text-align:right;">Действия</th></tr></thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        {% if u.profile.avatar %}<img src="{{ u.profile.avatar.url }}" class="t-avatar">{% else %}<div class="t-avatar-ph">{{ u.username|first|upper }}</div>{% endif %}
+                        <a href="{% url 'admin_panel:user_detail' u.id %}" style="font-weight:600;color:var(--ap-dark);text-decoration:none;">{{ u.username }}</a>
+                        {% if u.profile.is_verified %}<i data-lucide="check-circle" style="width:14px;height:14px;color:var(--ap-success);"></i>{% endif %}
+                    </div>
+                </td>
+                <td style="color:#6B7280;">{{ u.email }}</td>
+                <td>
+                    {% if u.is_superuser %}<span class="ap-badge ap-badge-danger">Владелец</span>
+                    {% elif u.is_staff %}<span class="ap-badge ap-badge-completed">Админ</span>
+                    {% elif u.profile.is_moderator %}<span class="ap-badge ap-badge-success">Модератор</span>
+                    {% else %}<span class="ap-badge ap-badge-neutral">Пользователь</span>{% endif %}
+                </td>
+                <td><div style="display:flex;align-items:center;gap:4px;"><i data-lucide="star" style="width:14px;height:14px;color:#FBBF24;fill:#FBBF24;"></i> <strong>{{ u.profile.rating|floatformat:1 }}</strong></div></td>
+                <td><span style="color:var(--ap-success);font-weight:600;">{{ u.profile.total_sales }}</span> / <span style="color:var(--ap-info);font-weight:600;">{{ u.profile.total_purchases }}</span></td>
+                <td style="color:#6B7280;">{{ u.date_joined|date:"d.m.Y" }}</td>
+                <td>{% if u.is_active %}<span class="ap-badge ap-badge-active">Активен</span>{% else %}<span class="ap-badge ap-badge-rejected">Заблокирован</span>{% endif %}</td>
+                <td>
+                    <div style="display:flex;justify-content:flex-end;gap:4px;">
+                        <button class="ap-btn ap-btn-ghost ap-btn-sm" onclick="verifyUser({{ u.id }},{{ u.profile.is_verified|yesno:'true,false' }})" title="{% if u.profile.is_verified %}Снять верификацию{% else %}Верифицировать{% endif %}"><i data-lucide="{% if u.profile.is_verified %}check-circle{% else %}circle{% endif %}"></i></button>
+                        {% if not u.is_superuser %}
+                        {% if u.is_active %}<button class="ap-btn ap-btn-ghost ap-btn-sm" style="color:var(--ap-danger);" onclick="banUser({{ u.id }})" title="Заблокировать"><i data-lucide="ban"></i></button>
+                        {% else %}<button class="ap-btn ap-btn-ghost ap-btn-sm" style="color:var(--ap-success);" onclick="unbanUser({{ u.id }})" title="Разблокировать"><i data-lucide="check-circle"></i></button>{% endif %}
                         {% endif %}
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-1">
-                            <i class="bi bi-star-fill" style="color: #FBBF24; font-size: 0.875rem;"></i>
-                            <span style="font-weight: 600;">{{ user.profile.rating|floatformat:1 }}</span>
-                        </div>
-                    </td>
-                    <td>
-                        <div style="font-size: 0.875rem;">
-                            <span style="color: var(--admin-success); font-weight: 600;">{{ user.profile.total_sales }}</span> /
-                            <span style="color: var(--admin-info); font-weight: 600;">{{ user.profile.total_purchases }}</span>
-                        </div>
-                    </td>
-                    <td>
-                        <span style="font-size: 0.875rem; color: #6B7280;">{{ user.date_joined|date:"d.m.Y" }}</span>
-                    </td>
-                    <td>
-                        {% if user.is_active %}
-                        <span class="status-badge status-active">Активен</span>
-                        {% else %}
-                        <span class="status-badge status-rejected">Заблокирован</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div class="d-flex justify-content-end gap-1">
-                            <button 
-                                class="btn btn-sm btn-outline-primary" 
-                                onclick="verifyUser({{ user.id }}, {{ user.profile.is_verified|yesno:'true,false' }})"
-                                title="{% if user.profile.is_verified %}Снять верификацию{% else %}Верифицировать{% endif %}">
-                                <i class="bi bi-{% if user.profile.is_verified %}check-circle-fill{% else %}check-circle{% endif %}"></i>
-                            </button>
-                            
-                            {% if not user.is_superuser %}
-                            {% if user.is_staff %}
-                            <button 
-                                class="btn btn-sm btn-outline-warning"
-                                onclick="toggleModerator({{ user.id }}, {{ user.profile.is_moderator|yesno:'true,false' }})"
-                                title="{% if user.profile.is_moderator %}Снять модератора{% else %}Назначить модератором{% endif %}">
-                                <i class="bi bi-shield"></i>
-                            </button>
-                            {% endif %}
-                            
-                            {% if user.is_active %}
-                            <button 
-                                class="btn btn-sm btn-outline-danger"
-                                onclick="banUser({{ user.id }})"
-                                title="Заблокировать">
-                                <i class="bi bi-ban"></i>
-                            </button>
-                            {% else %}
-                            <button 
-                                class="btn btn-sm btn-outline-success"
-                                onclick="unbanUser({{ user.id }})"
-                                title="Разблокировать">
-                                <i class="bi bi-check-circle"></i>
-                            </button>
-                            {% endif %}
-                            {% endif %}
-                            
-                            <a href="{% url 'admin_panel:user_detail' user.id %}" class="btn btn-sm btn-outline-secondary" title="Подробнее">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="8" class="text-center py-4" style="color: #6B7280;">
-                        <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        Пользователи не найдены
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        <a href="{% url 'admin_panel:user_detail' u.id %}" class="ap-btn ap-btn-ghost ap-btn-sm"><i data-lucide="eye"></i></a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" style="text-align:center;padding:3rem;color:#6B7280;"><i data-lucide="inbox" style="width:48px;height:48px;opacity:0.3;display:block;margin:0 auto 1rem;"></i>Пользователи не найдены</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    async function verifyUser(userId, currentStatus) {
-        const url = `/custom-admin/api/users/${userId}/verify/`;
-        const result = await adminAjax(url);
-        
-        if (result.success) {
-            showToast(result.message, 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showToast(result.message, 'danger');
-        }
-    }
-    
-    async function banUser(userId) {
-        if (!confirm('Вы уверены, что хотите заблокировать этого пользователя?')) return;
-        
-        const url = `/custom-admin/api/users/${userId}/ban/`;
-        const result = await adminAjax(url);
-        
-        if (result.success) {
-            showToast(result.message, 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showToast(result.message, 'danger');
-        }
-    }
-    
-    async function unbanUser(userId) {
-        const url = `/custom-admin/api/users/${userId}/unban/`;
-        const result = await adminAjax(url);
-        
-        if (result.success) {
-            showToast(result.message, 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showToast(result.message, 'danger');
-        }
-    }
-    
-    async function toggleModerator(userId, currentStatus) {
-        const action = currentStatus ? 'снять статус модератора' : 'назначить модератором';
-        if (!confirm(`Вы уверены, что хотите ${action}?`)) return;
-        
-        const url = `/custom-admin/api/users/${userId}/moderator/`;
-        const result = await adminAjax(url);
-        
-        if (result.success) {
-            showToast(result.message, 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showToast(result.message, 'danger');
-        }
-    }
+lucide.createIcons();
+async function verifyUser(id) { var r = await adminAjax('/custom-admin/api/users/'+id+'/verify/'); if(r.success){showToast(r.message);setTimeout(function(){location.reload()},1000);}else{showToast(r.message,'danger');} }
+async function banUser(id) { if(!confirm('Заблокировать?'))return; var r = await adminAjax('/custom-admin/api/users/'+id+'/ban/'); if(r.success){showToast(r.message);setTimeout(function(){location.reload()},1000);}else{showToast(r.message,'danger');} }
+async function unbanUser(id) { var r = await adminAjax('/custom-admin/api/users/'+id+'/unban/'); if(r.success){showToast(r.message);setTimeout(function(){location.reload()},1000);}else{showToast(r.message,'danger');} }
 </script>
 {% endblock %}
-

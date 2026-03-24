@@ -26,13 +26,14 @@ document.addEventListener('DOMContentLoaded', function() {
         customButton.type = 'button';
         customButton.className = 'btn btn-outline-primary w-100 custom-file-upload-btn';
         customButton.innerHTML = `
-            <i class="bi bi-cloud-upload"></i> 
+            <i data-lucide="upload-cloud"></i>
             <span>Выбрать ${input.id === 'id_avatar' ? 'аватар' : 'изображение'}</span>
             <small class="d-block mt-1 text-muted">Нажмите здесь для выбора файла</small>
         `;
         
         // Вставляем кнопку ПЕРЕД input
         input.parentNode.insertBefore(customButton, input);
+        if (typeof lucide !== 'undefined') lucide.createIcons({nodes: [customButton]});
         
         // КЛИК ПО КНОПКЕ = КЛИК ПО INPUT
         customButton.addEventListener('click', function(e) {
@@ -81,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <p class="mb-1"><strong>${safeFileName}</strong></p>
                             <p class="text-muted small mb-2">${fileSizeKB} КБ</p>
                             <button type="button" class="btn btn-sm btn-danger remove-file-btn">
-                                <i class="bi bi-trash"></i> Удалить
+                                <i data-lucide="trash-2"></i> Удалить
                             </button>
                         </div>
                     </div>
@@ -89,6 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 previewDiv.style.display = 'block';
                 customButton.style.display = 'none';
+                if (typeof lucide !== 'undefined') lucide.createIcons({nodes: [previewDiv]});
                 
                 // Обработчик удаления
                 previewDiv.querySelector('.remove-file-btn').addEventListener('click', function() {

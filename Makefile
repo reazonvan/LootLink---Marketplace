@@ -1,4 +1,4 @@
-.PHONY: help install test lint format clean run migrate shell
+.PHONY: help install test lint format clean run migrate shell docker-up-win
 
 help:
 	@echo "LootLink Development Commands"
@@ -25,6 +25,7 @@ help:
 	@echo ""
 	@echo "Docker:"
 	@echo "  make docker-up     Start Docker containers"
+	@echo "  make docker-up-win Windows: подставляет PROJECT_ROOT для bind mount"
 	@echo "  make docker-down   Stop Docker containers"
 	@echo "  make docker-logs   Show Docker logs"
 	@echo ""
@@ -34,8 +35,7 @@ help:
 
 install:
 	pip install --upgrade pip
-	pip install -r requirements.txt
-	pip install -r requirements-dev.txt
+	pip install -r requirements/development.txt
 
 setup: install
 	python manage.py migrate
@@ -78,6 +78,9 @@ check:
 
 docker-up:
 	docker-compose up -d
+
+docker-up-win:
+	powershell -NoProfile -ExecutionPolicy Bypass -File scripts/docker-compose-up.ps1 up -d
 
 docker-down:
 	docker-compose down

@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements-dev.txt
+          pip install -r requirements/development.txt
 
       - name: Run Black
         run: black --check .
@@ -43,9 +43,14 @@ jobs:
       - name: Run Django Check
         run: python manage.py check
         env:
-          DJANGO_SETTINGS_MODULE: lootlink.settings
+          DJANGO_SETTINGS_MODULE: config.settings
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: False
+          DB_NAME: lootlink_test
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: localhost
+          DB_PORT: 5432
 
   test:
     name: Tests
@@ -87,25 +92,32 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
+          pip install -r requirements/development.txt
 
       - name: Run migrations
         run: python manage.py migrate
         env:
-          DJANGO_SETTINGS_MODULE: lootlink.settings
+          DJANGO_SETTINGS_MODULE: config.settings
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: True
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lootlink_test
+          DB_NAME: lootlink_test
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: localhost
+          DB_PORT: 5432
           REDIS_URL: redis://localhost:6379/0
 
       - name: Run tests with coverage
         run: pytest --cov=. --cov-report=xml --cov-report=html
         env:
-          DJANGO_SETTINGS_MODULE: lootlink.settings
+          DJANGO_SETTINGS_MODULE: config.settings
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: True
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lootlink_test
+          DB_NAME: lootlink_test
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: localhost
+          DB_PORT: 5432
           REDIS_URL: redis://localhost:6379/0
 
       - name: Upload coverage to Codecov

@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from . import search_views
 from . import views_trading
+from . import views_history
 
 app_name = 'listings'
 
@@ -35,7 +36,10 @@ urlpatterns = [
     path('my-reservations/', views_trading.my_reservations, name='my_reservations'),
     path('offer/<int:offer_id>/respond/', views_trading.respond_to_offer, name='respond_to_offer'),
     path('reservation/<int:reservation_id>/cancel/', views_trading.cancel_reservation, name='cancel_reservation'),
-    
+
+    # View History
+    path('history/', views_history.view_history, name='view_history'),
+
     # API endpoints
     path('api/categories/', views.get_categories_by_game, name='api_categories'),
 ]

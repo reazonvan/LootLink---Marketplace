@@ -1,11 +1,76 @@
 {% extends 'base.html' %}
 
-{% block title %}my_price_offers - LootLink{% endblock %}
+{% block title %}Мои предложения цены - LootLink{% endblock %}
 
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>my_price_offers</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
-</div>
-{% endblock %}
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div class="page-header">
+        <h1>Мои предложения цены</h1>
+    </div>
 
+    <h3 style="font-size:var(--text-lg);font-weight:var(--weight-bold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+        <i data-lucide="send" style="width:18px;height:18px;color:var(--accent-primary);"></i> Отправленные
+    </h3>
+
+    {% if offers_made %}
+    <div style="display:flex;flex-direction:column;gap:var(--space-3);margin-bottom:var(--space-8);">
+        {% for offer in offers_made %}
+        <div class="card-glass" style="display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+                <a href="{% url 'listings:listing_detail' offer.listing.pk %}" style="font-weight:var(--weight-semibold);font-size:var(--text-sm);color:var(--text-primary);">{{ offer.listing.title|truncatewords:6 }}</a>
+                <div style="font-size:var(--text-xs);color:var(--text-secondary);margin-top:2px;">Продавец: {{ offer.listing.seller.username }} · {{ offer.created_at|date:"d.m.Y" }}</div>
+            </div>
+            <div style="font-weight:var(--weight-bold);color:var(--accent-primary);">{{ offer.offered_price }} ₽</div>
+            <span class="badge badge-{% if offer.status == 'accepted' %}success{% elif offer.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                {{ offer.get_status_display }}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="font-size:var(--text-sm);color:var(--text-tertiary);margin-bottom:var(--space-8);">Нет отправленных предложений</p>
+    {% endif %}
+
+    <div class="divider"></div>
+
+    <h3 style="font-size:var(--text-lg);font-weight:var(--weight-bold);margin-bottom:var(--space-4);margin-top:var(--space-6);display:flex;align-items:center;gap:var(--space-2);">
+        <i data-lucide="inbox" style="width:18px;height:18px;color:var(--accent-primary);"></i> Полученные
+    </h3>
+
+    {% if offers_received %}
+    <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+        {% for offer in offers_received %}
+        <div class="card-glass" style="display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+                <a href="{% url 'listings:listing_detail' offer.listing.pk %}" style="font-weight:var(--weight-semibold);font-size:var(--text-sm);color:var(--text-primary);">{{ offer.listing.title|truncatewords:6 }}</a>
+                <div style="font-size:var(--text-xs);color:var(--text-secondary);margin-top:2px;">От: {{ offer.buyer.username }} · {{ offer.created_at|date:"d.m.Y" }}</div>
+            </div>
+            <div style="font-weight:var(--weight-bold);color:var(--accent-primary);">{{ offer.offered_price }} ₽</div>
+            {% if offer.status == 'pending' %}
+            <div style="display:flex;gap:var(--space-2);">
+                <form method="post" action="{% url 'listings:respond_to_offer' offer.pk %}" style="display:inline;">
+                    {% csrf_token %}<input type="hidden" name="action" value="accept">
+                    <button type="submit" class="btn btn-success btn-sm"><i data-lucide="check"></i></button>
+                </form>
+                <form method="post" action="{% url 'listings:respond_to_offer' offer.pk %}" style="display:inline;">
+                    {% csrf_token %}<input type="hidden" name="action" value="reject">
+                    <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--color-danger);"><i data-lucide="x"></i></button>
+                </form>
+            </div>
+            {% else %}
+            <span class="badge badge-{% if offer.status == 'accepted' %}success{% elif offer.status == 'rejected' %}danger{% else %}neutral{% endif %}">
+                {{ offer.get_status_display }}
+            </span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="font-size:var(--text-sm);color:var(--text-tertiary);">Нет полученных предложений</p>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}

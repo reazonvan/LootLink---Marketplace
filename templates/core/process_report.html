@@ -1,11 +1,105 @@
 {% extends 'base.html' %}
-
-{% block title %}process_report - LootLink{% endblock %}
-
+{% block title %}Жалоба #{{ report.id }} - LootLink{% endblock %}
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>process_report</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:640px;margin:0 auto;">
+        <ul class="ll-breadcrumb">
+            <li><a href="{% url 'core:reports_queue' %}">Жалобы</a></li>
+            <li><span class="current">Жалоба #{{ report.id }}</span></li>
+        </ul>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);">
+            <h1 style="font-size:var(--text-xl);">Жалоба #{{ report.id }}</h1>
+            {% if report.status == 'pending' %}
+            <span class="badge badge-warning">Ожидает</span>
+            {% elif report.status == 'resolved' %}
+            <span class="badge badge-success">Решена</span>
+            {% elif report.status == 'rejected' %}
+            <span class="badge badge-danger">Отклонена</span>
+            {% else %}
+            <span class="badge badge-neutral">{{ report.get_status_display }}</span>
+            {% endif %}
+        </div>
+
+        <div class="card-glass" style="margin-bottom:var(--space-4);">
+            <h4 style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);">Информация</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);margin-bottom:var(--space-4);">
+                <div style="padding:var(--space-3);background:var(--gray-50);border-radius:var(--radius-md);">
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:2px;">Тип</div>
+                    <div style="font-size:var(--text-sm);font-weight:var(--weight-medium);">{{ report.get_report_type_display }}</div>
+                </div>
+                <div style="padding:var(--space-3);background:var(--gray-50);border-radius:var(--radius-md);">
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:2px;">Причина</div>
+                    <div style="font-size:var(--text-sm);font-weight:var(--weight-medium);">{{ report.get_reason_display }}</div>
+                </div>
+                <div style="padding:var(--space-3);background:var(--gray-50);border-radius:var(--radius-md);">
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:2px;">Автор</div>
+                    <div style="font-size:var(--text-sm);font-weight:var(--weight-medium);">{{ report.reporter.username }}</div>
+                </div>
+                <div style="padding:var(--space-3);background:var(--gray-50);border-radius:var(--radius-md);">
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:2px;">Дата</div>
+                    <div style="font-size:var(--text-sm);font-weight:var(--weight-medium);">{{ report.created_at|date:"d.m.Y H:i" }}</div>
+                </div>
+            </div>
+
+            {% if report.listing %}
+            <div style="padding:var(--space-3);background:var(--gray-50);border-radius:var(--radius-md);margin-bottom:var(--space-3);">
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:2px;">Объявление</div>
+                <a href="{% url 'listings:listing_detail' report.listing.id %}" style="font-size:var(--text-sm);font-weight:var(--weight-medium);">{{ report.listing.title }}</a>
+            </div>
+            {% endif %}
+
+            {% if report.reported_user %}
+            <div style="padding:var(--space-3);background:var(--gray-50);border-radius:var(--radius-md);margin-bottom:var(--space-3);">
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:2px;">Нарушитель</div>
+                <a href="{% url 'accounts:profile' report.reported_user.username %}" style="font-size:var(--text-sm);font-weight:var(--weight-medium);">{{ report.reported_user.username }}</a>
+            </div>
+            {% endif %}
+
+            <div style="margin-top:var(--space-3);">
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:2px;">Описание</div>
+                <p style="font-size:var(--text-sm);color:var(--text-secondary);margin:0;line-height:var(--leading-relaxed);">{{ report.description }}</p>
+            </div>
+        </div>
+
+        {% if report.status == 'pending' %}
+        <div class="card-glass" style="border:1.5px solid var(--accent-primary);">
+            <h4 style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+                <i data-lucide="shield" style="width:16px;height:16px;color:var(--accent-primary);"></i> Действия модератора
+            </h4>
+            <form method="post">
+                {% csrf_token %}
+                <div style="margin-bottom:var(--space-4);">
+                    <label class="form-label">Комментарий</label>
+                    <textarea name="admin_comment" rows="3" placeholder="Комментарий к решению..."></textarea>
+                </div>
+                <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;align-items:center;">
+                    <button type="submit" name="action" value="approve" class="btn btn-sm" style="background:var(--color-success);color:white;border:none;">
+                        <i data-lucide="check-circle"></i> Одобрить
+                    </button>
+                    <button type="submit" name="action" value="reject" class="btn btn-ghost btn-sm" style="color:var(--color-danger);">
+                        <i data-lucide="x-circle"></i> Отклонить
+                    </button>
+                    <div style="display:flex;align-items:center;gap:var(--space-1);margin-left:auto;">
+                        <input type="number" name="ban_days" value="7" min="1" max="365" style="width:72px;padding:6px 8px;font-size:var(--text-sm);">
+                        <button type="submit" name="action" value="ban_user" class="btn btn-sm" style="background:var(--color-danger);color:white;border:none;">
+                            <i data-lucide="user-x"></i> Бан
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if report.admin_comment %}
+        <div class="card-glass" style="border-left:3px solid var(--accent-primary);margin-top:var(--space-4);">
+            <h4 style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:var(--space-2);display:flex;align-items:center;gap:var(--space-2);">
+                <i data-lucide="message-square" style="width:14px;height:14px;color:var(--accent-primary);"></i> Решение модератора
+            </h4>
+            <p style="font-size:var(--text-sm);color:var(--text-secondary);margin:0;">{{ report.admin_comment }}</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
-
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}

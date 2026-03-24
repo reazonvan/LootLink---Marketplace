@@ -19,17 +19,18 @@ RUN apt-get update && apt-get install -y \
 
 # Копируем requirements.txt и устанавливаем зависимости
 COPY requirements.txt .
+COPY requirements/ requirements/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем проект
 COPY . .
 
 # Создаем пользователя для запуска приложения (безопасность)
-RUN useradd -m -u 1000 lootlink && chown -R lootlink:lootlink /app
-USER lootlink
+RUN useradd -m -u 1000 lootlink && \
+    mkdir -p /app/logs /app/staticfiles /app/media && \
+    chown -R lootlink:lootlink /app
 
-# Собираем статику
-RUN python manage.py collectstatic --noinput || true
+USER lootlink
 
 # Открываем порт
 EXPOSE 8000

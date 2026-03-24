@@ -1,11 +1,46 @@
 {% extends 'base.html' %}
-
-{% block title %}my_reports - LootLink{% endblock %}
-
+{% block title %}Мои жалобы - LootLink{% endblock %}
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>my_reports</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div class="page-header"><h1>Мои жалобы</h1></div>
+    {% if reports %}
+    <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+        {% for report in reports %}
+        <div class="card-glass">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-3);flex-wrap:wrap;">
+                <div>
+                    <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);">
+                        {% if report.report_type == 'listing' %}
+                        <i data-lucide="flag" style="width:16px;height:16px;color:var(--color-danger);"></i>
+                        {% else %}
+                        <i data-lucide="user-x" style="width:16px;height:16px;color:var(--color-danger);"></i>
+                        {% endif %}
+                        <span style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">{{ report.get_report_type_display }}: {{ report.get_reason_display }}</span>
+                    </div>
+                    {% if report.listing %}<div style="font-size:var(--text-xs);color:var(--text-secondary);">Объявление: {{ report.listing.title }}</div>{% endif %}
+                    {% if report.reported_user %}<div style="font-size:var(--text-xs);color:var(--text-secondary);">Пользователь: {{ report.reported_user.username }}</div>{% endif %}
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);margin-top:2px;">{{ report.created_at|date:"d.m.Y H:i" }}</div>
+                </div>
+                <span class="badge badge-{% if report.status == 'resolved' %}success{% elif report.status == 'pending' %}warning{% else %}neutral{% endif %}">{{ report.get_status_display }}</span>
+            </div>
+            {% if report.description %}
+            <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:var(--space-3);">{{ report.description|truncatewords:20 }}</p>
+            {% endif %}
+            {% if report.admin_comment %}
+            <div style="margin-top:var(--space-3);padding:var(--space-3);background:var(--gray-50);border-radius:var(--radius-sm);font-size:var(--text-xs);color:var(--text-secondary);">
+                <i data-lucide="message-square" style="width:12px;height:12px;display:inline;vertical-align:middle;"></i> {{ report.admin_comment }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state__icon"><i data-lucide="flag"></i></div>
+        <div class="empty-state__title">Нет жалоб</div>
+        <p class="empty-state__text">Вы пока не подавали жалоб</p>
+    </div>
+    {% endif %}
 </div>
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}
 {% endblock %}
-

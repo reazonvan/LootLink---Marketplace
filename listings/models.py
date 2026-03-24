@@ -8,6 +8,9 @@ from django.contrib.postgres.indexes import GinIndex
 from accounts.models import CustomUser
 from core.validators import ListingImageValidator
 
+# Import additional models
+from .models_history import ViewHistory
+
 
 class Favorite(models.Model):
     """

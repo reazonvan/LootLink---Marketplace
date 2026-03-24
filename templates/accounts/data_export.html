@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Экспорт данных - LootLink{% endblock %}
+
+{% block content %}
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:680px;margin:0 auto;">
+        <ul class="ll-breadcrumb">
+            <li><a href="{% url 'accounts:profile' user.username %}">Профиль</a></li>
+            <li><span class="current">Экспорт данных</span></li>
+        </ul>
+
+        <div class="page-header">
+            <h1>Экспорт данных</h1>
+            <p>Скачайте копию ваших данных в формате JSON</p>
+        </div>
+
+        <div class="alert alert-info" style="margin-bottom:var(--space-6);">
+            <i data-lucide="info"></i>
+            В соответствии с законодательством о защите данных, вы можете запросить экспорт всех ваших персональных данных.
+        </div>
+
+        {% if active_request %}
+        <div class="card-glass" style="text-align:center;padding:var(--space-10);">
+            <div style="width:64px;height:64px;border-radius:50%;background:var(--color-warning-light);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-4);">
+                <i data-lucide="loader" style="width:28px;height:28px;color:var(--color-warning);animation:spin 2s linear infinite;"></i>
+            </div>
+            <h3 style="font-size:var(--text-lg);font-weight:var(--weight-semibold);margin-bottom:var(--space-2);">Запрос обрабатывается</h3>
+            <p style="font-size:var(--text-sm);color:var(--text-secondary);">Запрос создан {{ active_request.created_at|date:"d.m.Y H:i" }}<br>Статус: {{ active_request.get_status_display }}</p>
+        </div>
+        {% else %}
+        <div class="card-glass">
+            <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);">Данные в экспорте</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);margin-bottom:var(--space-5);">
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--text-secondary);">
+                    <i data-lucide="check-circle" style="width:16px;height:16px;color:var(--color-success);"></i> Профиль
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--text-secondary);">
+                    <i data-lucide="check-circle" style="width:16px;height:16px;color:var(--color-success);"></i> Объявления
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--text-secondary);">
+                    <i data-lucide="check-circle" style="width:16px;height:16px;color:var(--color-success);"></i> Транзакции
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--text-secondary);">
+                    <i data-lucide="check-circle" style="width:16px;height:16px;color:var(--color-success);"></i> Отзывы
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--text-secondary);">
+                    <i data-lucide="check-circle" style="width:16px;height:16px;color:var(--color-success);"></i> Сообщения
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--text-secondary);">
+                    <i data-lucide="check-circle" style="width:16px;height:16px;color:var(--color-success);"></i> Финансы
+                </div>
+            </div>
+
+            <div class="alert alert-warning" style="margin-bottom:var(--space-5);">
+                <i data-lucide="shield"></i> Данные зашифрованы и доступны для скачивания в течение 48 часов.
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary w-100"><i data-lucide="download"></i> Запросить экспорт</button>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if completed_requests %}
+        <div class="card-glass" style="margin-top:var(--space-6);">
+            <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+                <i data-lucide="archive" style="width:18px;height:18px;color:var(--accent-primary);"></i> История экспортов
+            </h3>
+            {% for req in completed_requests %}
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-3) 0;{% if not forloop.last %}border-bottom:1px solid var(--card-border);{% endif %}">
+                <div>
+                    <div style="font-size:var(--text-sm);font-weight:var(--weight-medium);">Экспорт #{{ req.id }}</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);">{{ req.created_at|date:"d.m.Y H:i" }}</div>
+                </div>
+                {% if req.expires_at %}
+                <a href="{% url 'accounts:download_export' req.id %}" class="btn btn-secondary btn-sm"><i data-lucide="download"></i> Скачать</a>
+                {% else %}
+                <span class="badge badge-neutral">Истёк</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}

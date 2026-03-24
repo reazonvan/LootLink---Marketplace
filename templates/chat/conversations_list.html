@@ -1,63 +1,56 @@
 {% extends 'base.html' %}
 
 {% block title %}Сообщения - LootLink{% endblock %}
-
 {% block footer %}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="page-header">
-        <h1>Мои сообщения</h1>
-        <p class="text-muted">Беседы с продавцами и покупателями</p>
-    </div>
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div class="page-header"><h1>Сообщения</h1></div>
 
     {% if conversations %}
-    <div class="conversations-list">
+    <div class="card-glass" style="padding:0;overflow:hidden;">
         {% for conversation in conversations %}
-        <a href="{% url 'chat:conversation_detail' conversation.pk %}" class="conversation-item {% if conversation.unread_count > 0 %}unread{% endif %}">
-            <div class="conversation-avatar">
+        <a href="{% url 'chat:conversation_detail' conversation.pk %}" class="chat-list__item {% if conversation.unread_count %}chat-list__item--unread{% endif %}">
+            <div class="avatar avatar--round">
                 {% if conversation.other_user.profile.avatar %}
                 <img src="{{ conversation.other_user.profile.avatar.url }}" alt="{{ conversation.other_user.username }}">
                 {% else %}
-                <div class="avatar-placeholder">
-                    <i class="bi bi-person-fill"></i>
-                </div>
+                {{ conversation.other_user.username|first|upper }}
                 {% endif %}
             </div>
-            <div class="conversation-content">
-                <div class="conversation-header">
-                    <h5 class="conversation-username">{{ conversation.other_user.username }}</h5>
-                    {% if conversation.unread_count > 0 %}
-                    <span class="unread-badge">{{ conversation.unread_count }}</span>
-                    {% endif %}
+            <div class="chat-list__preview">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span class="chat-list__name">{{ conversation.other_user.username }}</span>
+                    <span class="chat-list__time">{{ conversation.updated_at|date:"d.m.Y H:i" }}</span>
                 </div>
                 {% if conversation.listing %}
-                <p class="conversation-listing">{{ conversation.listing.title }}</p>
+                <div style="font-size:var(--text-xs);color:var(--accent-primary);margin-top:1px;">{{ conversation.listing.title|truncatewords:5 }}</div>
                 {% endif %}
-                {% if conversation.last_message %}
-                <p class="conversation-preview">
-                    <strong>{% if conversation.last_message.sender == user %}Вы:{% endif %}</strong>
-                    {{ conversation.last_message.content|truncatewords:10 }}
-                </p>
-                {% else %}
-                <p class="conversation-preview text-muted">
-                    Нет сообщений
-                </p>
-                {% endif %}
-                <span class="conversation-time">{{ conversation.updated_at|date:"d.m.Y H:i" }}</span>
+                <div class="chat-list__message">
+                    {% if conversation.last_message %}
+                        {% if conversation.last_message.sender == user %}Вы: {% endif %}{{ conversation.last_message.content|truncatewords:10 }}
+                    {% else %}
+                        Нет сообщений
+                    {% endif %}
+                </div>
             </div>
+            {% if conversation.unread_count %}
+            <span class="notif-badge">{{ conversation.unread_count }}</span>
+            {% endif %}
         </a>
         {% endfor %}
     </div>
     {% else %}
     <div class="empty-state">
-        <i class="bi bi-chat-left-text"></i>
-        <h4 class="mt-3">У вас пока нет бесед</h4>
-        <p class="text-muted">Начните общение с продавцом через страницу объявления</p>
-        <a href="{% url 'listings:catalog' %}" class="btn btn-primary mt-3">
-            К каталогу
-        </a>
+        <div class="empty-state__icon"><i data-lucide="message-circle"></i></div>
+        <div class="empty-state__title">Нет сообщений</div>
+        <p class="empty-state__text">Начните общаться с продавцами и покупателями</p>
+        <a href="{% url 'listings:catalog' %}" class="btn btn-primary">К каталогу</a>
     </div>
     {% endif %}
 </div>
+
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
 {% endblock %}

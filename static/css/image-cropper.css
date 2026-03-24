@@ -1,21 +1,149 @@
 /**
- * Стили для Image Cropper
- * Исправляет проблемы с размерами и адаптивностью
+ * Image Cropper - Modal & Cropper styles
  */
 
-/* Модальное окно для cropper */
-#listingCropModal .modal-body,
-#avatarCropModal .modal-body {
-    max-height: 70vh;
-    overflow-y: auto;
+/* Custom Modal */
+.crop-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
 }
 
-/* Контейнер для изображения */
+.crop-modal-overlay.active {
+    display: flex;
+}
+
+.crop-modal {
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-200);
+    max-width: 900px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+}
+
+.crop-modal--xl {
+    max-width: 1100px;
+}
+
+.crop-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.crop-modal__header h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    color: var(--gray-900);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.crop-modal__close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--gray-500);
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+    transition: color 0.15s, background 0.15s;
+}
+
+.crop-modal__close:hover {
+    color: var(--gray-900);
+    background: var(--gray-100);
+}
+
+.crop-modal__body {
+    padding: var(--space-5);
+    overflow-y: auto;
+    flex: 1;
+}
+
+.crop-modal__layout {
+    display: grid;
+    grid-template-columns: 1fr 240px;
+    gap: var(--space-5);
+}
+
+.crop-modal__layout--xl {
+    grid-template-columns: 1fr 260px;
+}
+
+.crop-modal__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.crop-modal__sidebar-label {
+    font-size: var(--text-xs);
+    color: var(--gray-500);
+    text-align: center;
+}
+
+.crop-modal__controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.crop-modal__controls-row {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.crop-modal__controls-row .btn {
+    flex: 1;
+}
+
+.crop-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--gray-200);
+}
+
+/* Aspect ratio buttons */
+.crop-aspect-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.crop-aspect-group .btn {
+    text-align: left;
+    justify-content: flex-start;
+}
+
+.crop-aspect-group .btn.active {
+    background: var(--color-primary);
+    color: #fff;
+    border-color: var(--color-primary);
+}
+
+/* Crop container */
 .crop-container {
     max-height: 500px;
     overflow: hidden;
-    background: #f8f9fa;
-    border-radius: 8px;
+    background: var(--gray-100);
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -27,17 +155,18 @@
     display: block;
 }
 
-/* Предпросмотр для аватара (круглый) */
+/* Avatar preview (circular) */
 #avatarPreviewCircle {
     width: 150px;
     height: 150px;
     border-radius: 50%;
     overflow: hidden;
-    border: 2px solid #dee2e6;
-    background: #f8f9fa;
+    border: 2px solid var(--gray-200);
+    background: var(--gray-100);
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 0 auto;
 }
 
 #avatarPreviewCircle img {
@@ -46,14 +175,14 @@
     object-fit: cover;
 }
 
-/* Предпросмотр для объявления (прямоугольный) */
+/* Listing preview (rectangular) */
 #listingPreviewRect {
     width: 100%;
     height: 200px;
     overflow: hidden;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    background: #f8f9fa;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    background: var(--gray-100);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -65,44 +194,36 @@
     object-fit: contain;
 }
 
-/* Кнопки управления */
-.aspect-ratio-btn {
-    margin-bottom: 5px !important;
-}
-
-.aspect-ratio-btn.active {
-    background-color: #0d6efd;
-    color: white;
-    border-color: #0d6efd;
-}
-
-/* Адаптивность для мобильных */
+/* Mobile */
 @media (max-width: 768px) {
-    #listingCropModal .modal-dialog,
-    #avatarCropModal .modal-dialog {
-        margin: 0.5rem;
-        max-width: calc(100% - 1rem);
+    .crop-modal-overlay {
+        padding: var(--space-2);
     }
-    
+
+    .crop-modal__layout,
+    .crop-modal__layout--xl {
+        grid-template-columns: 1fr;
+    }
+
     .crop-container {
         max-height: 300px;
     }
-    
+
     .crop-container img {
         max-height: 300px;
     }
-    
+
     #listingPreviewRect {
         height: 150px;
     }
-    
+
     #avatarPreviewCircle {
         width: 120px;
         height: 120px;
     }
 }
 
-/* Исправление для cropper.js */
+/* Cropper.js overrides */
 .cropper-container {
     direction: ltr;
     font-size: 0;
@@ -123,42 +244,35 @@
     width: 100%;
 }
 
-/* Предпросмотр пустого состояния */
 #avatarPreviewCircle:empty::before,
 #listingPreviewRect:empty::before {
     content: 'Предпросмотр';
-    color: #6c757d;
-    font-size: 14px;
+    color: var(--gray-400);
+    font-size: var(--text-sm);
 }
 
-/* Убеждаемся что crop box видна */
 .cropper-crop-box {
     display: block !important;
 }
 
 .cropper-view-box {
     outline: 2px solid rgba(51, 153, 255, 0.75);
-    outline-color: rgba(51, 153, 255, 0.75);
 }
 
 .cropper-face {
     background-color: transparent !important;
 }
 
-/* Линии crop box */
 .cropper-line,
 .cropper-point {
     background-color: #3399ff !important;
 }
 
-/* Центральный маркер */
 .cropper-center {
     display: block !important;
     opacity: 1 !important;
 }
 
-/* Drag bar */
 .cropper-dashed {
     border-color: rgba(255, 255, 255, 0.5) !important;
 }
-

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Push уведомления - LootLink{% endblock %}
+
+{% block content %}
+<div class="account-page">
+    <div class="container" style="max-width:680px;">
+        <div class="account-page__header">
+            <h1 style="font-size:var(--text-2xl);">Push уведомления</h1>
+            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-ghost btn-sm"><i data-lucide="arrow-left"></i> Назад</a>
+        </div>
+
+        <div class="card-ll card-ll--no-hover" style="margin-bottom:var(--space-4);">
+            <div class="alert alert-info" style="margin-bottom:var(--space-4);">
+                <i data-lucide="info"></i> Push уведомления позволяют получать мгновенные оповещения о новых сообщениях, сделках и событиях, даже когда вы не на сайте.
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);margin-bottom:var(--space-4);">
+                <div>
+                    <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--gray-900);">Статус</div>
+                    <div id="notification-status" style="margin-top:var(--space-1);">
+                        <span class="badge-ll badge-ll--neutral">Проверка...</span>
+                    </div>
+                </div>
+                <button id="push-notification-toggle" class="btn btn-primary btn-sm">
+                    <i data-lucide="bell"></i> Включить
+                </button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--gray-900);margin-bottom:var(--space-3);">Что вы будете получать:</div>
+            <div style="display:flex;flex-direction:column;gap:var(--space-2);">
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--gray-700);">
+                    <i data-lucide="message-circle" style="color:var(--color-primary);width:18px;height:18px;"></i>
+                    <strong>Новые сообщения</strong> — когда кто-то пишет вам
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--gray-700);">
+                    <i data-lucide="shopping-cart" style="color:var(--color-success);width:18px;height:18px;"></i>
+                    <strong>Запросы на покупку</strong> — когда хотят купить ваш товар
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--gray-700);">
+                    <i data-lucide="refresh-cw" style="color:var(--color-info);width:18px;height:18px;"></i>
+                    <strong>Статус сделки</strong> — принятие, завершение, отмена
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--gray-700);">
+                    <i data-lucide="star" style="color:var(--color-warning);width:18px;height:18px;"></i>
+                    <strong>Новые отзывы</strong> — когда оставляют отзыв о вас
+                </div>
+            </div>
+        </div>
+
+        <div class="card-ll card-ll--flat card-ll--no-hover" style="font-size:var(--text-xs);color:var(--gray-500);">
+            <div style="font-weight:var(--weight-semibold);color:var(--gray-700);margin-bottom:var(--space-2);">Поддержка</div>
+            Chrome 42+, Firefox 44+, Edge 17+, Safari 16+, Opera 37+ и другие. Отключить можно здесь или в настройках браузера.
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/push-notifications.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    var statusDiv = document.getElementById('notification-status');
+    if (!('serviceWorker' in navigator && 'PushManager' in window)) {
+        statusDiv.innerHTML = '<span class="badge-ll badge-ll--danger">Браузер не поддерживает push</span>';
+        document.getElementById('push-notification-toggle').disabled = true;
+        return;
+    }
+    if (Notification.permission === 'denied') {
+        statusDiv.innerHTML = '<span class="badge-ll badge-ll--danger">Заблокированы в браузере</span>';
+    } else if (Notification.permission === 'granted') {
+        statusDiv.innerHTML = '<span class="badge-ll badge-ll--success">Разрешены</span>';
+    } else {
+        statusDiv.innerHTML = '<span class="badge-ll badge-ll--warning">Не настроены</span>';
+    }
+});
+</script>
+{% endblock %}

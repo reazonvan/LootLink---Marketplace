@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}LootLink - P2P маркетплейс игровых предметов{% endblock %}</title>
     
-    <!-- SEO Meta Tags -->
     <meta name="description" content="{% block meta_description %}LootLink - безопасный P2P маркетплейс для покупки и продажи внутриигровых предметов. Торгуйте напрямую с другими игроками без посредников.{% endblock %}">
     <meta name="keywords" content="{% block meta_keywords %}купить игровые предметы, продать скины, маркетплейс dota 2, csgo скины, valorant, genshin impact, торговля предметами, p2p маркетплейс, игровой маркетплейс{% endblock %}">
     <meta name="author" content="LootLink">
@@ -15,11 +14,9 @@
     <link rel="canonical" href="{{ canonical_url }}">
     <meta name="csrf-token" content="{{ csrf_token }}">
     
-    <!-- Verification Meta Tags -->
     <meta name="google-site-verification" content="sIZPJJwsVs72C3rERyKECmsPSzZ8jpBYZFVEbHMXjzI">
     <meta name="yandex-verification" content="a6899228ac192041">
     
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:locale" content="ru_RU">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
@@ -27,13 +24,11 @@
     <meta property="og:description" content="{% block og_description %}Покупайте и продавайте игровые предметы напрямую у других игроков. Без посредников и скрытых комиссий.{% endblock %}">
     <meta property="og:image" content="{% block og_image %}{{ site_url }}{% static 'images/og-image.jpg' %}{% endblock %}">
     
-    <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="{{ request.build_absolute_uri }}">
     <meta property="twitter:title" content="{% block twitter_title %}LootLink - Маркетплейс игровых предметов{% endblock %}">
     <meta property="twitter:description" content="{% block twitter_description %}Покупайте и продавайте игровые предметы напрямую у других игроков{% endblock %}">
     
-    <!-- Structured Data (Schema.org) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -64,81 +59,27 @@
     }
     </script>
     
-    <!-- Favicon -->
     <link rel="manifest" href="{% static 'manifest.json' %}">
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
-    <link rel="icon" type="image/x-icon" href="{% static 'favicon.svg' %}">
+
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
     
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Cropper.js CSS (локально) -->
-    <link rel="stylesheet" href="{% static 'css/cropper.min.css' %}">
-    
-    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=2025110702">
-    <link rel="stylesheet" href="{% static 'css/mobile-improvements.css' %}?v=2025110702">
-    <link rel="stylesheet" href="{% static 'css/landing-v2.css' %}?v=2026030601">
-    <link rel="stylesheet" href="{% static 'css/catalog-v2.css' %}?v=2026030601">
-    <link rel="stylesheet" href="{% static 'css/modern-design.css' %}?v=2025110702">
-    <link rel="stylesheet" href="{% static 'css/image-cropper.css' %}?v=2025110702">
-    <link rel="stylesheet" href="{% static 'css/ux-improvements.css' %}?v=2025110702">
-    <link rel="stylesheet" href="{% static 'css/ux-fixes.css' %}?v=2025110702">
-    <link rel="stylesheet" href="{% static 'css/chat-improvements-v2.css' %}?v=2025110702">
-    
-    <style>
-    /* Мобильное меню - современный Flat Design */
-    .mobile-nav-right { display: flex; align-items: center; gap: 0.375rem; }
-    .mobile-nav-icon { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; 
-                       border: none; background: transparent; color: #1e293b; font-size: 1.125rem; 
-                       border-radius: 8px; position: relative; transition: background-color 0.15s; }
-    .mobile-nav-icon:active { background-color: #f1f5f9; }
-    .mobile-avatar, .mobile-avatar-placeholder { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; }
-    .mobile-avatar-placeholder { background: #2563eb; display: flex; align-items: center; justify-content: center; 
-                                 color: white; font-size: 14px; font-weight: 600; }
-    .mobile-badge { position: absolute; top: 6px; right: 6px; background: #dc2626; color: white; 
-                    font-size: 0.625rem; font-weight: 700; padding: 0.125rem 0.3rem; 
-                    border-radius: 6px; min-width: 16px; text-align: center; line-height: 1.2; }
-    
-    .offcanvas.offcanvas-end { width: 280px !important; max-width: 85vw !important; }
-    .offcanvas-header.mobile-menu-header { background: #fff !important; color: #1e293b !important; 
-                                            padding: 1rem !important; border-bottom: 1px solid #e2e8f0 !important; }
-    .mobile-menu-avatar, .mobile-menu-avatar-placeholder { width: 44px; height: 44px; border-radius: 8px; 
-                                                            border: none; flex-shrink: 0; }
-    .mobile-menu-avatar-placeholder { background: #2563eb; display: flex; align-items: center; justify-content: center; 
-                                      font-size: 18px; font-weight: 600; color: white; }
-    .mobile-menu-header h6 { color: #1e293b !important; font-size: 0.95rem !important; 
-                             font-weight: 600 !important; margin-bottom: 0.15rem !important; }
-    .mobile-menu-balance { color: #64748b !important; font-size: 0.8rem !important; font-weight: 500 !important; }
-    .mobile-menu-header .btn-close { opacity: 0.6 !important; }
-    
-    .offcanvas-body.mobile-menu-body { padding: 0.5rem 0 !important; background-color: #fafafa !important; }
-    .mobile-menu-list { display: flex !important; flex-direction: column !important; width: 100% !important; gap: 2px; }
-    .mobile-menu-item { display: flex !important; align-items: center !important; padding: 0.75rem 1rem !important; 
-                        color: #475569 !important; text-decoration: none !important; font-size: 0.9rem !important; 
-                        border-radius: 0 !important; background-color: white !important; transition: all 0.15s !important; }
-    .mobile-menu-item:active { background-color: #f8fafc !important; color: #2563eb !important; }
-    .mobile-menu-item i { font-size: 1.1rem !important; width: 28px !important; flex-shrink: 0 !important; 
-                          margin-right: 0.65rem !important; color: #64748b !important; }
-    .mobile-menu-item:active i { color: #2563eb !important; }
-    .mobile-menu-item span { flex: 1 !important; }
-    .mobile-menu-item-primary { background-color: #eff6ff !important; color: #2563eb !important; font-weight: 600 !important; }
-    .mobile-menu-item-primary i { color: #2563eb !important; }
-    .mobile-menu-item-primary:active { background-color: #dbeafe !important; }
-    .mobile-menu-item-danger { color: #dc2626 !important; }
-    .mobile-menu-item-danger i { color: #dc2626 !important; }
-    .mobile-menu-item-danger:active { background-color: #fef2f2 !important; }
-    .mobile-menu-divider { height: 8px !important; background-color: transparent !important; margin: 0 !important; }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/lootlink.css' %}?v=20260322b">
+    <link rel="stylesheet" href="{% static 'css/image-cropper.css' %}?v=20260322">
     
     {% block extra_css %}{% endblock %}
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <!-- Навигация -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'listings:home' %}">
+    <div class="bg-orbs">
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <a class="logo" href="{% url 'listings:home' %}">
                 <span class="logo-icon">
                     <svg class="logo-svg" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
                         <circle class="logo-circle" cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -147,366 +88,398 @@
                 </span>
                 <span class="logo-text">LootLink</span>
             </a>
-            
-            <!-- Мобильная навигация справа -->
-            <div class="d-lg-none mobile-nav-right">
+
+            <nav>
+                <a href="{% url 'listings:catalog' %}">Категории</a>
+                <a href="{% url 'listings:home' %}#trending">Популярное</a>
                 {% if user.is_authenticated %}
-                <a href="{% url 'core:notifications_list' %}" class="mobile-nav-icon position-relative">
-                    <i class="bi bi-bell"></i>
-                    {% if unread_notifications_count > 0 %}
-                    <span class="mobile-badge">{{ unread_notifications_count }}</span>
-                    {% endif %}
-                </a>
-                <button class="mobile-nav-icon" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
-                    {% if user.profile.avatar %}
-                    <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="mobile-avatar">
-                    {% else %}
-                    <div class="mobile-avatar-placeholder">
-                        <i class="bi bi-person-fill"></i>
+                <a href="{% url 'chat:conversations_list' %}">Сообщения</a>
+                {% endif %}
+                <a href="{% url 'core:faq' %}">Помощь</a>
+            </nav>
+
+            <div class="user-actions">
+                <div class="theme-toggle" id="themeToggle">
+                    <div class="theme-toggle-slider">
+                        <i data-lucide="sun"></i>
                     </div>
+                </div>
+
+                {% if user.is_authenticated %}
+                <a href="{% url 'core:notifications_list' %}" class="notif-bell" id="notifBell">
+                    <i data-lucide="bell"></i>
+                    {% if unread_notifications_count > 0 %}
+                    <span class="notif-badge" id="notifBadge">{{ unread_notifications_count }}</span>
                     {% endif %}
-                </button>
-                {% else %}
-                <a href="{% url 'accounts:login' %}" class="mobile-nav-icon">
-                    <i class="bi bi-box-arrow-in-right"></i>
                 </a>
-                {% endif %}
-            </div>
-            
-            <!-- Десктопная навигация -->
-            <button class="navbar-toggler d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto ms-4">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'listings:catalog' %}">
-                            Каталог
-                        </a>
-                    </li>
-                    {% if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'listings:listing_create' %}">
-                            Создать объявление
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'chat:conversations_list' %}">
-                            Сообщения
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-                
-                <ul class="navbar-nav align-items-center d-none d-lg-flex">
-                    {% if user.is_authenticated %}
-                    <!-- Кнопка уведомлений -->
-                    <li class="nav-item me-3">
-                        <a href="{% url 'core:notifications_list' %}" class="nav-link position-relative">
-                            <i class="bi bi-bell fs-5"></i>
-                            {% if unread_notifications_count > 0 %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                {{ unread_notifications_count }}
-                                <span class="visually-hidden">непрочитанных уведомлений</span>
-                            </span>
-                            {% endif %}
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center user-menu-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                <div class="user-dropdown">
+                    <button class="btn btn-secondary user-dropdown-trigger">
+                        <span class="user-dropdown-avatar">
                             {% if user.profile.avatar %}
-                            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="user-avatar-small me-2">
+                            <img src="{{ user.profile.avatar.url }}" alt="">
                             {% else %}
-                            <div class="user-avatar-placeholder-small me-2">
-                                <i class="bi bi-person-fill"></i>
-                            </div>
+                            {{ user.username|first|upper }}
                             {% endif %}
-                            <div class="d-flex flex-column align-items-start user-info-nav">
-                                <span class="user-name-nav">{{ user.username }}</span>
-                                <span class="user-balance-nav">{{ user.profile.balance|floatformat:2 }} ₽</span>
-                            </div>
+                        </span>
+                        {{ user.username }}
+                        <i data-lucide="chevron-down" style="width:14px;height:14px;opacity:.5;"></i>
+                    </button>
+                    <div class="user-dropdown-menu">
+                        <a href="{% url 'accounts:profile' user.username %}" class="user-dropdown-item">
+                            <i data-lucide="user"></i> Мой профиль
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{% url 'accounts:profile' user.username %}">
-                                <i class="bi bi-person me-2"></i>Мой профиль
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'accounts:my_listings' %}">
-                                <i class="bi bi-box me-2"></i>Мои объявления
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'listings:favorites' %}">
-                                <i class="bi bi-heart me-2"></i>Избранное
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'accounts:my_purchases' %}">
-                                <i class="bi bi-cart-check me-2"></i>Мои покупки
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'accounts:my_sales' %}">
-                                <i class="bi bi-cash-coin me-2"></i>Мои продажи
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'accounts:profile_edit' %}">
-                                <i class="bi bi-gear me-2"></i>Настройки
-                            </a></li>
-                            <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}">
-                                <i class="bi bi-box-arrow-right me-2"></i>Выйти
-                            </a></li>
-                        </ul>
-                    </li>
-                    {% else %}
-                    <li class="nav-item me-2">
-                        <a class="nav-link" href="{% url 'accounts:login' %}">
-                            Вход
+                        <a href="{% url 'accounts:my_listings' %}" class="user-dropdown-item">
+                            <i data-lucide="package"></i> Мои объявления
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="btn btn-primary" href="{% url 'accounts:register' %}">
-                            Регистрация
+                        <a href="{% url 'listings:favorites' %}" class="user-dropdown-item">
+                            <i data-lucide="heart"></i> Избранное
                         </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Мобильное боковое меню -->
-    {% if user.is_authenticated %}
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="mobileMenu">
-        <div class="offcanvas-header mobile-menu-header">
-            <div class="d-flex align-items-center">
-                {% if user.profile.avatar %}
-                <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="mobile-menu-avatar me-3">
+                        <a href="{% url 'payments:wallet_dashboard' %}" class="user-dropdown-item">
+                            <i data-lucide="wallet"></i> Кошелёк
+                            <span class="user-dropdown-badge">{{ user.profile.balance|floatformat:0|default:"0" }} ₽</span>
+                        </a>
+                        <div class="user-dropdown-divider"></div>
+                        <a href="{% url 'chat:conversations_list' %}" class="user-dropdown-item">
+                            <i data-lucide="message-circle"></i> Сообщения
+                        </a>
+                        <a href="{% url 'core:notifications_list' %}" class="user-dropdown-item">
+                            <i data-lucide="bell"></i> Уведомления
+                        </a>
+                        <div class="user-dropdown-divider"></div>
+                        <a href="{% url 'accounts:profile_edit' %}" class="user-dropdown-item">
+                            <i data-lucide="settings"></i> Настройки
+                        </a>
+                        {% if user.is_staff %}
+                        <a href="{% url 'admin_panel:dashboard' %}" class="user-dropdown-item">
+                            <i data-lucide="shield"></i> Админ-панель
+                        </a>
+                        {% endif %}
+                        <div class="user-dropdown-divider"></div>
+                        <a href="{% url 'accounts:logout' %}" class="user-dropdown-item user-dropdown-item--danger">
+                            <i data-lucide="log-out"></i> Выйти
+                        </a>
+                    </div>
+                </div>
+                <a href="{% url 'listings:listing_create' %}" class="btn btn-primary">Продать</a>
                 {% else %}
-                <div class="mobile-menu-avatar-placeholder me-3">
-                    <i class="bi bi-person-fill"></i>
-                </div>
+                <a href="{% url 'accounts:login' %}" class="btn btn-secondary">Войти</a>
+                <a href="{% url 'accounts:register' %}" class="btn btn-primary">Начать продавать</a>
                 {% endif %}
-                <div>
-                    <h6 class="mb-0">{{ user.username }}</h6>
-                    <p class="mobile-menu-balance mb-0">{{ user.profile.balance|floatformat:2 }} ₽</p>
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-        </div>
-        <div class="offcanvas-body mobile-menu-body">
-            <div class="mobile-menu-list">
-                <a href="{% url 'accounts:profile' user.username %}" class="mobile-menu-item">
-                    <i class="bi bi-person"></i>
-                    <span>Мой профиль</span>
-                </a>
-                <a href="{% url 'accounts:my_listings' %}" class="mobile-menu-item">
-                    <i class="bi bi-box"></i>
-                    <span>Мои объявления</span>
-                </a>
-                <a href="{% url 'listings:favorites' %}" class="mobile-menu-item">
-                    <i class="bi bi-heart"></i>
-                    <span>Избранное</span>
-                </a>
-                <a href="{% url 'accounts:my_purchases' %}" class="mobile-menu-item">
-                    <i class="bi bi-cart-check"></i>
-                    <span>Мои покупки</span>
-                </a>
-                <a href="{% url 'accounts:my_sales' %}" class="mobile-menu-item">
-                    <i class="bi bi-cash-coin"></i>
-                    <span>Мои продажи</span>
-                </a>
-                <div class="mobile-menu-divider"></div>
-                <a href="{% url 'listings:listing_create' %}" class="mobile-menu-item mobile-menu-item-primary">
-                    <i class="bi bi-plus-circle"></i>
-                    <span>Создать объявление</span>
-                </a>
-                <a href="{% url 'chat:conversations_list' %}" class="mobile-menu-item">
-                    <i class="bi bi-chat-dots"></i>
-                    <span>Сообщения</span>
-                </a>
-                <a href="{% url 'listings:catalog' %}" class="mobile-menu-item">
-                    <i class="bi bi-grid"></i>
-                    <span>Каталог</span>
-                </a>
-                <div class="mobile-menu-divider"></div>
-                <a href="{% url 'accounts:profile_edit' %}" class="mobile-menu-item">
-                    <i class="bi bi-gear"></i>
-                    <span>Настройки</span>
-                </a>
-                <a href="{% url 'accounts:logout' %}" class="mobile-menu-item mobile-menu-item-danger">
-                    <i class="bi bi-box-arrow-right"></i>
-                    <span>Выйти</span>
-                </a>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 
-    <!-- Сообщения -->
-    <!-- Messages (будут конвертированы в Toast уведомления) -->
+                <button class="mobile-toggle" id="mobileToggle" aria-label="Меню">
+                    <i data-lucide="menu"></i>
+                </button>
+            </div>
+        </header>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
     {% if messages %}
-    <div class="d-none django-messages-data">
+    <div id="djangoMessages" style="display:none;">
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}" data-message-type="{{ message.tags }}">
-            {{ message }}
-        </div>
+        <div data-type="{% firstof message.tags 'info' %}" data-text="{{ message }}"></div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Основной контент -->
-    <main class="py-4">
-        {% block content %}{% endblock %}
-    </main>
+    <div class="container">
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 
-    <!-- Футер -->
     {% block footer %}
     <footer>
         <div class="container">
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <h5>LootLink</h5>
-                    <p class="text-muted">Безопасный маркетплейс для торговли игровыми предметами</p>
+            <div class="footer-content">
+                <div>
+                    <div class="footer-brand">LootLink</div>
+                    <p class="footer-desc">Безопасная P2P платформа для торговли игровыми ценностями. Покупайте и продавайте с уверенностью.</p>
                 </div>
-                <div class="col-md-2">
-                    <h6>Навигация</h6>
-                    <ul class="list-unstyled">
-                        <li><a href="{% url 'listings:catalog' %}">Каталог</a></li>
-                        {% if user.is_authenticated %}
-                        <li><a href="{% url 'listings:listing_create' %}">Создать объявление</a></li>
-                        <li><a href="{% url 'chat:conversations_list' %}">Сообщения</a></li>
-                        {% else %}
-                        <li><a href="{% url 'accounts:register' %}">Регистрация</a></li>
-                        <li><a href="{% url 'accounts:login' %}">Вход</a></li>
-                        {% endif %}
-                    </ul>
-                </div>
-                <div class="col-md-2">
-                    <h6>Информация</h6>
-                    <ul class="list-unstyled">
+                <div class="footer-section">
+                    <h3>Платформа</h3>
+                    <ul class="footer-links">
                         <li><a href="{% url 'about' %}">О нас</a></li>
+                        <li><a href="{% url 'listings:catalog' %}">Каталог</a></li>
                         <li><a href="{% url 'rules' %}">Правила</a></li>
-                        {% if user.is_authenticated and user.is_staff %}
-                        <li><a href="/admin/">Администрирование</a></li>
-                        {% endif %}
+                        <li><a href="{% url 'requisites' %}">Реквизиты</a></li>
                     </ul>
                 </div>
-                <div class="col-md-4">
-                    <h6>Контакты</h6>
-                    <p class="text-muted mb-1">Email: ivanpetrov20066.ip@gmail.com</p>
-                    <p class="text-muted mb-0">Техподдержка: ivanpetrov20066.ip@gmail.com</p>
+                <div class="footer-section">
+                    <h3>Поддержка</h3>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'core:faq' %}">FAQ</a></li>
+                        <li><a href="{% url 'rules' %}">Правила</a></li>
+                        <li><a href="mailto:ivanpetrov20066.ip@gmail.com">Контакты</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Сообщество</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Discord</a></li>
+                        <li><a href="#">Telegram</a></li>
+                        <li><a href="#">VK</a></li>
+                    </ul>
                 </div>
             </div>
-            <hr>
-            <div class="text-center">
-                <small>&copy; 2025 LootLink. Все права защищены.</small>
+            <div class="footer-bottom">
+                &copy; 2026 LootLink. Все права защищены.
             </div>
         </div>
     </footer>
     {% endblock %}
 
-    <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Cropper.js Library (локально) -->
-    <script src="{% static 'js/cropper.min.js' %}"></script>
-    
-    <!-- JavaScript файлы -->
-    <script src="{% static 'js/phone-formatter.js' %}"></script>
-    <script src="{% static 'js/file-upload-fix.js' %}"></script>
-    <script src="{% static 'js/toast-notifications.js' %}"></script>
-    <script src="{% static 'js/chat-improvements.js' %}"></script>
-    
-    <!-- Real-time обновление уведомлений -->
+    <!-- Mobile Drawer -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+    <div class="mobile-drawer" id="mobileDrawer">
+        <div class="mobile-drawer-header">
+            {% if user.is_authenticated %}
+            <div class="mobile-drawer-user">
+                <div class="avatar avatar--round">
+                    {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}">
+                    {% else %}
+                    {{ user.username|first|upper }}
+                    {% endif %}
+                </div>
+                <div class="mobile-drawer-user-info">
+                    <div class="mobile-drawer-user-name">{{ user.username }}</div>
+                    <div class="mobile-drawer-user-balance">{{ user.profile.balance|floatformat:2|default:"0.00" }} ₽</div>
+                </div>
+            </div>
+            {% else %}
+            <a class="logo" href="{% url 'listings:home' %}" style="gap:10px;">
+                <span class="logo-icon">
+                    <svg class="logo-svg" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" style="width:28px;height:28px;">
+                        <circle class="logo-circle" cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path class="logo-path" d="M15 25 L22 32 L35 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+                <span class="logo-text" style="font-size:20px;">LootLink</span>
+            </a>
+            {% endif %}
+            <button class="mobile-drawer-close" id="mobileClose">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="mobile-drawer-nav">
+            {% if user.is_authenticated %}
+            <a href="{% url 'accounts:profile' user.username %}" class="mobile-drawer-link"><i data-lucide="user"></i> Мой профиль</a>
+            <a href="{% url 'accounts:my_listings' %}" class="mobile-drawer-link"><i data-lucide="package"></i> Мои объявления</a>
+            <a href="{% url 'listings:favorites' %}" class="mobile-drawer-link"><i data-lucide="heart"></i> Избранное</a>
+            <a href="{% url 'accounts:my_purchases' %}" class="mobile-drawer-link"><i data-lucide="shopping-bag"></i> Мои покупки</a>
+            <a href="{% url 'accounts:my_sales' %}" class="mobile-drawer-link"><i data-lucide="coins"></i> Мои продажи</a>
+            <div class="mobile-drawer-divider"></div>
+            <a href="{% url 'listings:listing_create' %}" class="mobile-drawer-link primary"><i data-lucide="plus-circle"></i> Создать объявление</a>
+            <a href="{% url 'chat:conversations_list' %}" class="mobile-drawer-link"><i data-lucide="message-circle"></i> Сообщения</a>
+            <a href="{% url 'core:notifications_list' %}" class="mobile-drawer-link"><i data-lucide="bell"></i> Уведомления</a>
+            <a href="{% url 'listings:catalog' %}" class="mobile-drawer-link"><i data-lucide="grid-3x3"></i> Каталог</a>
+            <a href="{% url 'payments:wallet_dashboard' %}" class="mobile-drawer-link"><i data-lucide="wallet"></i> Кошелёк</a>
+            <div class="mobile-drawer-divider"></div>
+            <a href="{% url 'accounts:profile_edit' %}" class="mobile-drawer-link"><i data-lucide="settings"></i> Настройки</a>
+            <a href="{% url 'accounts:logout' %}" class="mobile-drawer-link danger"><i data-lucide="log-out"></i> Выйти</a>
+            {% else %}
+            <a href="{% url 'listings:catalog' %}" class="mobile-drawer-link"><i data-lucide="grid-3x3"></i> Каталог</a>
+            <a href="{% url 'core:faq' %}" class="mobile-drawer-link"><i data-lucide="help-circle"></i> Помощь</a>
+            <a href="{% url 'about' %}" class="mobile-drawer-link"><i data-lucide="info"></i> О нас</a>
+            <div class="mobile-drawer-divider"></div>
+            <a href="{% url 'accounts:login' %}" class="mobile-drawer-link primary"><i data-lucide="log-in"></i> Войти</a>
+            <a href="{% url 'accounts:register' %}" class="mobile-drawer-link"><i data-lucide="user-plus"></i> Регистрация</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        (function() {
+            var container = document.getElementById('toastContainer');
+            var ICONS = {
+                success: 'check-circle',
+                error: 'alert-circle',
+                danger: 'alert-circle',
+                warning: 'alert-triangle',
+                info: 'info'
+            };
+
+            window.showToast = function(text, type, duration) {
+                type = type || 'info';
+                duration = duration || 5000;
+                if (type.indexOf('error') !== -1 || type.indexOf('danger') !== -1) type = 'error';
+                else if (type.indexOf('success') !== -1) type = 'success';
+                else if (type.indexOf('warning') !== -1) type = 'warning';
+                else type = 'info';
+                var cls = type;
+
+                var el = document.createElement('div');
+                el.className = 'toast toast--' + cls;
+                el.style.setProperty('--toast-duration', duration + 'ms');
+                el.style.position = 'relative';
+                el.style.overflow = 'hidden';
+
+                el.innerHTML =
+                    '<i data-lucide="' + (ICONS[type] || 'info') + '"></i>' +
+                    '<span class="toast__content">' + text + '</span>' +
+                    '<i data-lucide="x" class="toast__close"></i>' +
+                    '<div class="toast__progress"></div>';
+
+                container.appendChild(el);
+                lucide.createIcons({ nodes: [el] });
+
+                var closeBtn = el.querySelector('.toast__close');
+                function dismiss() {
+                    if (el.classList.contains('removing')) return;
+                    el.classList.add('removing');
+                    setTimeout(function() { el.remove(); }, 300);
+                }
+                closeBtn.addEventListener('click', function(e) { e.stopPropagation(); dismiss(); });
+                el.addEventListener('click', dismiss);
+                setTimeout(dismiss, duration);
+            };
+
+            var msgBox = document.getElementById('djangoMessages');
+            if (msgBox) {
+                var items = msgBox.querySelectorAll('[data-type]');
+                items.forEach(function(item) {
+                    showToast(item.getAttribute('data-text'), item.getAttribute('data-type'));
+                });
+                msgBox.remove();
+            }
+        })();
+
+        (function() {
+            var trigger = document.querySelector('.user-dropdown-trigger');
+            var menu = document.querySelector('.user-dropdown-menu');
+
+            if (!trigger || !menu) return;
+
+            document.body.appendChild(menu);
+
+            function positionMenu() {
+                var rect = trigger.getBoundingClientRect();
+                menu.style.top = (rect.bottom + 8) + 'px';
+                menu.style.right = (window.innerWidth - rect.right) + 'px';
+            }
+
+            trigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var isOpen = menu.classList.contains('active');
+                if (isOpen) {
+                    menu.classList.remove('active');
+                } else {
+                    positionMenu();
+                    menu.classList.add('active');
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!trigger.contains(e.target) && !menu.contains(e.target)) {
+                    menu.classList.remove('active');
+                }
+            });
+
+            window.addEventListener('resize', function() {
+                if (menu.classList.contains('active')) {
+                    positionMenu();
+                }
+            });
+        })();
+
+        (function() {
+            var themeToggle = document.getElementById('themeToggle');
+            var html = document.documentElement;
+            if (!themeToggle) return;
+
+            var savedTheme = localStorage.getItem('theme') || 'light';
+            html.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+
+            themeToggle.addEventListener('click', function() {
+                var current = html.getAttribute('data-theme');
+                var next = current === 'light' ? 'dark' : 'light';
+                html.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                updateThemeIcon(next);
+            });
+
+            function updateThemeIcon(theme) {
+                var icon = themeToggle.querySelector('i');
+                if (icon) {
+                    icon.setAttribute('data-lucide', theme === 'light' ? 'sun' : 'moon');
+                    lucide.createIcons();
+                }
+            }
+        })();
+
+        (function() {
+            var toggle = document.getElementById('mobileToggle');
+            var overlay = document.getElementById('mobileOverlay');
+            var drawer = document.getElementById('mobileDrawer');
+            var close = document.getElementById('mobileClose');
+            if (!toggle || !drawer) return;
+
+            function open() { drawer.classList.add('active'); overlay.classList.add('active'); document.body.style.overflow = 'hidden'; lucide.createIcons(); }
+            function shut() { drawer.classList.remove('active'); overlay.classList.remove('active'); document.body.style.overflow = ''; }
+
+            toggle.addEventListener('click', open);
+            if (overlay) overlay.addEventListener('click', shut);
+            if (close) close.addEventListener('click', shut);
+        })();
+
+        document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+            anchor.addEventListener('click', function(e) {
+                var target = document.querySelector(this.getAttribute('href'));
+                if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+            });
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            var cards = document.querySelectorAll('.floating-card');
+            if (!cards.length) return;
+            var x = e.clientX / window.innerWidth;
+            var y = e.clientY / window.innerHeight;
+            cards.forEach(function(card, i) {
+                var speed = (i + 1) * 10;
+                card.style.transform = 'translate(' + ((x - 0.5) * speed) + 'px, ' + ((y - 0.5) * speed) + 'px)';
+            });
+        });
+    </script>
+
     {% if user.is_authenticated %}
     <script>
     (function() {
-        let updateInterval;
-        let lastCount = {{ unread_notifications_count|default:0 }};
-        
-        function updateNotificationsCount() {
+        var lastCount = {{ unread_notifications_count|default:0 }};
+
+        function updateNotifications() {
             fetch('/notifications/unread-count/', {
-                method: 'GET',
-                credentials: 'same-origin',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
+                method: 'GET', credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
             })
-                .then(response => {
-                    if (!response.ok) return null;
-                    return response.json();
-                })
-                .then(data => {
-                    if (!data) return;
-                    const count = data.count || 0;
-                    
-                    if (count !== lastCount) {
-                        lastCount = count;
-                    }
-                    
-                    updateBadge('.navbar-nav .position-relative', count);
-                    updateMobileBadge(count);
-                })
-                .catch(() => {});
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) {
+                if (!data) return;
+                var count = data.count || 0;
+                lastCount = count;
+                var bell = document.getElementById('notifBell');
+                if (!bell) return;
+                var badge = document.getElementById('notifBadge');
+                if (count > 0) {
+                    if (badge) { badge.textContent = count; }
+                    else { badge = document.createElement('span'); badge.className = 'notif-badge'; badge.id = 'notifBadge'; badge.textContent = count; bell.appendChild(badge); }
+                } else if (badge) { badge.remove(); }
+            })
+            .catch(function() {});
         }
-        
-        function updateBadge(selector, count) {
-            const container = document.querySelector(selector);
-            if (!container) return;
-            
-            let badge = container.querySelector('.badge');
-            
-            if (count > 0) {
-                if (badge) {
-                    badge.textContent = count;
-                } else {
-                    badge = document.createElement('span');
-                    badge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
-                    badge.textContent = count;
-                    container.appendChild(badge);
-                }
-            } else if (badge) {
-                badge.remove();
-            }
-        }
-        
-        function updateMobileBadge(count) {
-            const container = document.querySelector('.mobile-nav-icon .bi-bell');
-            if (!container) return;
-            
-            const parent = container.parentElement;
-            let badge = parent.querySelector('.mobile-badge');
-            
-            if (count > 0) {
-                if (badge) {
-                    badge.textContent = count;
-                } else {
-                    badge = document.createElement('span');
-                    badge.className = 'mobile-badge';
-                    badge.textContent = count;
-                    parent.appendChild(badge);
-                }
-            } else if (badge) {
-                badge.remove();
-            }
-        }
-        
-        // Глобальная функция для обновления из других скриптов
-        window.updateNotificationsCount = updateNotificationsCount;
-        
-        // Первое обновление через 2 секунды после загрузки
-        setTimeout(updateNotificationsCount, 2000);
-        
-        // Обновляем каждые 5 секунд (чаще для лучшего UX)
-        updateInterval = setInterval(updateNotificationsCount, 5000);
-        
-        // Также обновляем при фокусе окна
-        window.addEventListener('focus', updateNotificationsCount);
-        
-        // Останавливаем при уходе
-        window.addEventListener('beforeunload', () => {
-            clearInterval(updateInterval);
-        });
+
+        window.updateNotificationsCount = updateNotifications;
+        setTimeout(updateNotifications, 2000);
+        var interval = setInterval(updateNotifications, 10000);
+        window.addEventListener('focus', updateNotifications);
+        window.addEventListener('beforeunload', function() { clearInterval(interval); });
     })();
     </script>
     {% endif %}
-    
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>
-

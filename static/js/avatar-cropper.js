@@ -9,278 +9,215 @@ class AvatarCropper {
         this.previewContainer = document.getElementById(previewContainerId);
         this.cropper = null;
         this.croppedBlob = null;
-        
+        this.overlay = null;
+
         this.init();
     }
-    
+
     init() {
         if (!this.input) return;
-        
-        // Создаем модальное окно для crop
         this.createCropModal();
-        
-        // Слушаем изменение input
         this.input.addEventListener('change', (e) => this.handleFileSelect(e));
     }
-    
+
     createCropModal() {
-        const modalHtml = `
-            <div class="modal fade" id="avatarCropModal" tabindex="-1">
-                <div class="modal-dialog modal-lg modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">
-                                <i class="bi bi-crop"></i> Настройте аватар
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <div class="crop-container">
-                                        <img id="avatarCropImage" style="max-width: 100%;">
+        const html = `
+            <div class="crop-modal-overlay" id="avatarCropOverlay">
+                <div class="crop-modal">
+                    <div class="crop-modal__header">
+                        <h3><i data-lucide="crop"></i> Настройте аватар</h3>
+                        <button type="button" class="crop-modal__close" id="avatarCropClose">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                    <div class="crop-modal__body">
+                        <div class="crop-modal__layout">
+                            <div class="crop-container">
+                                <img id="avatarCropImage" style="max-width:100%;">
+                            </div>
+                            <div class="crop-modal__sidebar">
+                                <div class="crop-modal__sidebar-label">Предпросмотр:</div>
+                                <div id="avatarPreviewCircle"></div>
+                                <div class="crop-modal__controls">
+                                    <div class="crop-modal__controls-row">
+                                        <button type="button" class="btn btn-ghost btn-sm" id="avatarRotateLeft">
+                                            <i data-lucide="rotate-ccw"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-ghost btn-sm" id="avatarRotateRight">
+                                            <i data-lucide="rotate-cw"></i>
+                                        </button>
                                     </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="text-center">
-                                        <p class="text-muted mb-2">Предпросмотр:</p>
-                                        <div id="avatarPreviewCircle" class="mx-auto" style="width: 150px; height: 150px; border-radius: 50%; overflow: hidden; border: 2px solid #dee2e6;"></div>
-                                        <div class="mt-3">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="avatarRotateLeft">
-                                                <i class="bi bi-arrow-counterclockwise"></i> Повернуть влево
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="avatarRotateRight">
-                                                <i class="bi bi-arrow-clockwise"></i> Повернуть вправо
-                                            </button>
-                                        </div>
-                                        <div class="mt-2">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="avatarZoomIn">
-                                                <i class="bi bi-zoom-in"></i> +
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="avatarZoomOut">
-                                                <i class="bi bi-zoom-out"></i> -
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="avatarReset">
-                                                <i class="bi bi-arrow-clockwise"></i> Сброс
-                                            </button>
-                                        </div>
+                                    <div class="crop-modal__controls-row">
+                                        <button type="button" class="btn btn-ghost btn-sm" id="avatarZoomIn">
+                                            <i data-lucide="zoom-in"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-ghost btn-sm" id="avatarZoomOut">
+                                            <i data-lucide="zoom-out"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-ghost btn-sm" id="avatarReset">
+                                            <i data-lucide="refresh-cw"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                            <button type="button" class="btn btn-primary" id="avatarCropConfirm">
-                                <i class="bi bi-check-circle"></i> Применить
-                            </button>
-                        </div>
+                    </div>
+                    <div class="crop-modal__footer">
+                        <button type="button" class="btn btn-ghost" id="avatarCropCancel">Отмена</button>
+                        <button type="button" class="btn btn-primary" id="avatarCropConfirm">
+                            <i data-lucide="check"></i> Применить
+                        </button>
                     </div>
                 </div>
             </div>
         `;
-        
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
-        // Добавляем обработчики для кнопок
+
+        document.body.insertAdjacentHTML('beforeend', html);
+        this.overlay = document.getElementById('avatarCropOverlay');
+        if (typeof lucide !== 'undefined') lucide.createIcons({nodes: [this.overlay]});
         this.setupModalControls();
     }
-    
+
     setupModalControls() {
-        const modal = document.getElementById('avatarCropModal');
-        
-        // Поворот
-        document.getElementById('avatarRotateLeft')?.addEventListener('click', () => {
-            this.cropper?.rotate(-45);
-        });
-        
-        document.getElementById('avatarRotateRight')?.addEventListener('click', () => {
-            this.cropper?.rotate(45);
-        });
-        
-        // Zoom
-        document.getElementById('avatarZoomIn')?.addEventListener('click', () => {
-            this.cropper?.zoom(0.1);
-        });
-        
-        document.getElementById('avatarZoomOut')?.addEventListener('click', () => {
-            this.cropper?.zoom(-0.1);
-        });
-        
-        // Reset
-        document.getElementById('avatarReset')?.addEventListener('click', () => {
-            this.cropper?.reset();
-        });
-        
-        // Confirm
-        document.getElementById('avatarCropConfirm')?.addEventListener('click', () => {
-            this.cropImage();
-        });
-        
-        // Cleanup при закрытии
-        modal.addEventListener('hidden.bs.modal', () => {
-            if (this.cropper) {
-                this.cropper.destroy();
-                this.cropper = null;
-            }
+        document.getElementById('avatarRotateLeft')?.addEventListener('click', () => this.cropper?.rotate(-45));
+        document.getElementById('avatarRotateRight')?.addEventListener('click', () => this.cropper?.rotate(45));
+        document.getElementById('avatarZoomIn')?.addEventListener('click', () => this.cropper?.zoom(0.1));
+        document.getElementById('avatarZoomOut')?.addEventListener('click', () => this.cropper?.zoom(-0.1));
+        document.getElementById('avatarReset')?.addEventListener('click', () => this.cropper?.reset());
+        document.getElementById('avatarCropConfirm')?.addEventListener('click', () => this.cropImage());
+        document.getElementById('avatarCropClose')?.addEventListener('click', () => this.hideModal());
+        document.getElementById('avatarCropCancel')?.addEventListener('click', () => this.hideModal());
+
+        this.overlay.addEventListener('click', (e) => {
+            if (e.target === this.overlay) this.hideModal();
         });
     }
-    
+
+    showModal() {
+        this.overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    hideModal() {
+        this.overlay.classList.remove('active');
+        document.body.style.overflow = '';
+        if (this.cropper) {
+            this.cropper.destroy();
+            this.cropper = null;
+        }
+    }
+
     handleFileSelect(e) {
         const file = e.target.files[0];
         if (!file) return;
-        
-        // Проверка типа файла
+
         if (!file.type.match('image.*')) {
             alert('Пожалуйста, выберите изображение');
             return;
         }
-        
-        // Проверка размера (2MB)
+
         if (file.size > 2 * 1024 * 1024) {
             alert('Размер файла не должен превышать 2 МБ');
             this.input.value = '';
             return;
         }
-        
+
         const reader = new FileReader();
-        reader.onload = (e) => {
-            this.showCropModal(e.target.result);
-        };
+        reader.onload = (e) => this.showCropModal(e.target.result);
         reader.readAsDataURL(file);
     }
-    
+
     showCropModal(imageUrl) {
-        const modalElement = document.getElementById('avatarCropModal');
-        const modal = new bootstrap.Modal(modalElement);
         const image = document.getElementById('avatarCropImage');
-        
-        // Уничтожаем старый cropper если есть
+
         if (this.cropper) {
             this.cropper.destroy();
             this.cropper = null;
         }
-        
-        // Устанавливаем изображение
+
         image.src = imageUrl;
-        
-        // Показываем модальное окно
-        modal.show();
-        
-        // Инициализируем cropper после полной загрузки изображения
-        modalElement.addEventListener('shown.bs.modal', () => {
-            if (!this.cropper) {
-                image.onload = () => {
-                    this.cropper = new Cropper(image, {
-                        aspectRatio: 1, // Квадрат для круглого аватара
-                        viewMode: 1, // Crop box не может выходить за пределы canvas
-                        dragMode: 'move',
-                        autoCropArea: 0.9, // 90% области - оптимально для лица
-                        restore: false,
-                        guides: true,
-                        center: true,
-                        highlight: true,
-                        background: true,
-                        cropBoxMovable: true,
-                        cropBoxResizable: true,
-                        toggleDragModeOnDblclick: false,
-                        responsive: true,
-                        checkOrientation: true,
-                        preview: '#avatarPreviewCircle',
-                        minCropBoxWidth: 100,
-                        minCropBoxHeight: 100,
-                        initialAspectRatio: 1,
-                        zoomOnWheel: true,
-                        zoomOnTouch: true,
-                        ready: function() {
-                            this.cropper.crop();
-                            
-                            // ФИКС: Центрируем crop box
-                            const containerData = this.cropper.getContainerData();
-                            const imageData = this.cropper.getImageData();
-                            const cropBoxSize = Math.min(containerData.width, containerData.height) * 0.8;
-                            
-                            this.cropper.setCropBoxData({
-                                left: (containerData.width - cropBoxSize) / 2,
-                                top: (containerData.height - cropBoxSize) / 2,
-                                width: cropBoxSize,
-                                height: cropBoxSize
-                            });
-                        },
-                        cropstart: function(e) {
-                        },
-                        cropmove: function(e) {
-                            // ФИКС: Принудительно обновляем preview при каждом движении
-                            const previewElement = document.getElementById('avatarPreviewCircle');
-                            if (previewElement) {
-                                previewElement.style.display = 'block';
-                            }
-                        }
+        this.showModal();
+
+        const initCropper = () => {
+            this.cropper = new Cropper(image, {
+                aspectRatio: 1,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 0.9,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: true,
+                background: true,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+                responsive: true,
+                checkOrientation: true,
+                preview: '#avatarPreviewCircle',
+                minCropBoxWidth: 100,
+                minCropBoxHeight: 100,
+                zoomOnWheel: true,
+                zoomOnTouch: true,
+                ready: function() {
+                    this.cropper.crop();
+                    const containerData = this.cropper.getContainerData();
+                    const cropBoxSize = Math.min(containerData.width, containerData.height) * 0.8;
+                    this.cropper.setCropBoxData({
+                        left: (containerData.width - cropBoxSize) / 2,
+                        top: (containerData.height - cropBoxSize) / 2,
+                        width: cropBoxSize,
+                        height: cropBoxSize
                     });
-                    
-                    // Дополнительно включаем crop mode через 100ms
-                    setTimeout(() => {
-                        if (this.cropper) {
-                            this.cropper.crop();
-                        }
-                    }, 100);
-                };
-                
-                // Если изображение уже загружено
-                if (image.complete) {
-                    image.onload();
                 }
-            }
-        }, {once: true});
+            });
+        };
+
+        if (image.complete && image.naturalWidth > 0) {
+            setTimeout(initCropper, 50);
+        } else {
+            image.onload = () => setTimeout(initCropper, 50);
+        }
     }
-    
+
     cropImage() {
         if (!this.cropper) return;
-        
-        // Получаем обрезанное изображение
+
         this.cropper.getCroppedCanvas({
             width: 300,
             height: 300,
             imageSmoothingEnabled: true,
             imageSmoothingQuality: 'high'
         }).toBlob((blob) => {
-            // Создаем новый File объект
             const fileName = this.input.files[0].name;
             const croppedFile = new File([blob], fileName, {
                 type: 'image/jpeg',
                 lastModified: Date.now()
             });
-            
-            // Создаем DataTransfer для замены файла в input
+
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(croppedFile);
             this.input.files = dataTransfer.files;
-            
-            // Показываем предпросмотр
+
             this.showPreview(URL.createObjectURL(blob));
-            
-            // Закрываем модальное окно
-            bootstrap.Modal.getInstance(document.getElementById('avatarCropModal')).hide();
+            this.hideModal();
         }, 'image/jpeg', 0.9);
     }
-    
+
     showPreview(imageUrl) {
         if (!this.previewContainer) return;
-        
         this.previewContainer.innerHTML = `
-            <div class="mt-3">
-                <p class="text-muted mb-2">Выбранный аватар:</p>
-                <img src="${imageUrl}" alt="Preview" class="img-thumbnail" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover;">
+            <div style="margin-top:var(--space-3);">
+                <p style="font-size:var(--text-sm);color:var(--gray-500);margin-bottom:var(--space-2);">Выбранный аватар:</p>
+                <img src="${imageUrl}" alt="Preview" style="width:150px;height:150px;border-radius:50%;object-fit:cover;border:2px solid var(--gray-200);">
             </div>
         `;
     }
 }
 
-// Автоинициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    // Ищем input для аватара
     const avatarInput = document.getElementById('id_avatar');
     if (avatarInput) {
         new AvatarCropper('id_avatar', 'avatarPreviewContainer');
     }
 });
-

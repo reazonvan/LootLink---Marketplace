@@ -106,35 +106,33 @@ def phone_verification_request(request):
     """
     Запрос SMS кода для верификации телефона.
     """
+    from .models import PhoneVerification
+
     profile = request.user.profile
-    
+
     if not profile.phone:
         messages.error(request, 'Сначала добавьте номер телефона в настройках профиля.')
         return redirect('accounts:profile_edit')
-    
+
     if profile.is_verified:
         messages.info(request, 'Ваш телефон уже верифицирован.')
         return redirect('accounts:verification_status')
-    
+
     if request.method == 'POST':
-        # Генерируем код
-        verification_code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-        
-        # Сохраняем в сессии
-        request.session['phone_verification_code'] = verification_code
-        request.session['phone_verification_phone'] = profile.phone
-        request.session['phone_verification_expires'] = (timezone.now() + timezone.timedelta(minutes=10)).isoformat()
-        
+        # Создаем новую верификацию
+        verification = PhoneVerification.create_for_user(request.user, profile.phone)
+
         # Отправляем SMS
-        message = f'LootLink: Ваш код верификации: {verification_code}'
-        success = send_sms(profile.phone, message)
-        
+        from core.sms_service import send_verification_sms
+        success = send_verification_sms(profile.phone, verification.code)
+
         if success:
-            messages.success(request, f'SMS код отправлен на номер {profile.phone}')
+            messages.success(request, f'SMS код отправлен на номер {profile.phone}. Код действителен 10 минут.')
             return redirect('accounts:phone_verification_confirm')
         else:
             messages.error(request, 'Ошибка отправки SMS. Попробуйте позже.')
-    
+            verification.delete()
+
     return render(request, 'accounts/phone_verification_request.html')
 
 
@@ -143,46 +141,34 @@ def phone_verification_confirm(request):
     """
     Подтверждение телефона по SMS коду.
     """
+    from .models import PhoneVerification
+
     if request.method == 'POST':
         form = SMSVerificationForm(request.POST)
         if form.is_valid():
             entered_code = form.cleaned_data['code']
-            
-            # Проверяем код из сессии
-            stored_code = request.session.get('phone_verification_code')
-            stored_phone = request.session.get('phone_verification_phone')
-            expires_str = request.session.get('phone_verification_expires')
-            
-            if not stored_code:
+
+            # Получаем последнюю верификацию пользователя
+            try:
+                verification = PhoneVerification.objects.filter(
+                    user=request.user,
+                    is_verified=False
+                ).latest('created_at')
+
+                success, message = verification.verify(entered_code)
+
+                if success:
+                    messages.success(request, message)
+                    return redirect('accounts:verification_status')
+                else:
+                    messages.error(request, message)
+
+            except PhoneVerification.DoesNotExist:
                 messages.error(request, 'Код верификации не найден. Запросите новый код.')
                 return redirect('accounts:phone_verification_request')
-            
-            # Проверяем срок действия
-            expires = timezone.datetime.fromisoformat(expires_str)
-            if timezone.now() > expires:
-                messages.error(request, 'Код верификации истек. Запросите новый код.')
-                return redirect('accounts:phone_verification_request')
-            
-            # Проверяем совпадение
-            if entered_code == stored_code and request.user.profile.phone == stored_phone:
-                # Верифицируем
-                profile = request.user.profile
-                profile.is_verified = True
-                profile.verification_date = timezone.now()
-                profile.save()
-                
-                # Очищаем сессию
-                del request.session['phone_verification_code']
-                del request.session['phone_verification_phone']
-                del request.session['phone_verification_expires']
-                
-                messages.success(request, 'Телефон успешно верифицирован!')
-                return redirect('accounts:verification_status')
-            else:
-                messages.error(request, 'Неверный код верификации.')
     else:
         form = SMSVerificationForm()
-    
+
     return render(request, 'accounts/phone_verification_confirm.html', {'form': form})
 
 
@@ -194,13 +180,62 @@ def request_document_verification(request):
     """
     # Можно добавить загрузку документов
     profile = request.user.profile
-    
+
     if profile.is_verified:
         return JsonResponse({'success': False, 'error': 'Уже верифицирован'})
-    
+
     # Здесь можно добавить логику отправки документов на модерацию
     # Пока просто отправим уведомление админам
-    
+
     messages.success(request, 'Запрос на верификацию документов отправлен. Ожидайте проверки администратором.')
     return JsonResponse({'success': True})
+
+
+@login_required
+def document_verification_upload(request):
+    """
+    Загрузка документов для верификации.
+    """
+    from .models import DocumentVerification
+    from .forms import DocumentVerificationForm
+
+    if request.user.profile.is_verified:
+        messages.info(request, 'Вы уже верифицированы.')
+        return redirect('accounts:verification_status')
+
+    if request.method == 'POST':
+        form = DocumentVerificationForm(request.POST, request.FILES)
+        if form.is_valid():
+            document = form.save(commit=False)
+            document.user = request.user
+            document.save()
+
+            messages.success(request, f'Документ "{document.get_document_type_display()}" загружен. Ожидайте проверки.')
+            return redirect('accounts:document_verification_upload')
+    else:
+        form = DocumentVerificationForm()
+
+    # Получаем уже загруженные документы
+    documents = DocumentVerification.objects.filter(user=request.user).order_by('-created_at')
+
+    context = {
+        'form': form,
+        'documents': documents,
+    }
+    return render(request, 'accounts/document_verification_upload.html', context)
+
+
+@login_required
+def document_verification_status(request):
+    """
+    Статус проверки документов.
+    """
+    from .models import DocumentVerification
+
+    documents = DocumentVerification.objects.filter(user=request.user).order_by('-created_at')
+
+    context = {
+        'documents': documents,
+    }
+    return render(request, 'accounts/document_verification_status.html', context)
 

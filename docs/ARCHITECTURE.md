@@ -401,7 +401,6 @@ base.html (Layout)
 
 ```
 static/js/
-  ├─ toast-notifications.js   (Toast уведомления)
   ├─ chat-improvements.js     (Real-time чат)
   ├─ phone-formatter.js       (Форматирование телефона)
   └─ file-upload-fix.js       (Превью загрузки файлов)

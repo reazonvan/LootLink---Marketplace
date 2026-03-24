@@ -1,11 +1,96 @@
 {% extends 'base.html' %}
 
-{% block title %}setup - LootLink{% endblock %}
+{% block title %}Настройка 2FA - LootLink{% endblock %}
 
 {% block content %}
-<div class='container py-4'>
-    <h1 class='h4 mb-3'>setup</h1>
-    <p class='text-muted'>Страница активна. Расширенный интерфейс находится в доработке.</p>
-</div>
-{% endblock %}
+<div style="padding:var(--space-6) 0 var(--space-12);">
+    <div style="max-width:560px;margin:0 auto;">
+        <ul class="ll-breadcrumb">
+            <li><a href="{% url 'accounts:security_settings' %}">Безопасность</a></li>
+            <li><span class="current">Двухфакторная аутентификация</span></li>
+        </ul>
 
+        {% if 2fa_enabled %}
+        <div class="card-glass">
+            <div class="alert alert-success" style="margin-bottom:var(--space-5);">
+                <i data-lucide="check-circle"></i> Двухфакторная аутентификация включена
+            </div>
+
+            <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-6);padding:var(--space-4);background:var(--gray-50);border-radius:var(--radius-md);">
+                <div style="width:44px;height:44px;border-radius:var(--radius-md);background:var(--color-success-light);display:flex;align-items:center;justify-content:center;">
+                    <i data-lucide="shield-check" style="width:22px;height:22px;color:var(--color-success);"></i>
+                </div>
+                <div>
+                    <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">{{ device.name|default:"TOTP устройство" }}</div>
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Активно</div>
+                </div>
+            </div>
+
+            <div class="alert alert-warning" style="margin-bottom:var(--space-5);">
+                <i data-lucide="alert-triangle"></i> Отключение 2FA снизит защиту вашего аккаунта.
+            </div>
+
+            <form method="post" action="{% url 'accounts:disable_2fa' %}" onsubmit="return confirm('Вы уверены? Это снизит безопасность аккаунта.');">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_password" class="form-label">Текущий пароль</label>
+                    <input type="password" name="password" id="id_password" required>
+                </div>
+                <button type="submit" class="btn btn-danger w-100"><i data-lucide="x-circle"></i> Отключить 2FA</button>
+            </form>
+        </div>
+
+        {% else %}
+        <div class="card-glass">
+            <div style="text-align:center;margin-bottom:var(--space-6);">
+                <div style="width:64px;height:64px;border-radius:50%;background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-4);">
+                    <i data-lucide="shield" style="width:28px;height:28px;color:var(--accent-primary);"></i>
+                </div>
+                <h2 style="font-size:var(--text-xl);font-weight:var(--weight-extrabold);margin-bottom:var(--space-2);">Настройка 2FA</h2>
+                <p style="font-size:var(--text-sm);color:var(--text-secondary);">Добавьте второй уровень защиты аккаунта</p>
+            </div>
+
+            <div style="margin-bottom:var(--space-6);">
+                <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4);">
+                    <div style="width:32px;height:32px;border-radius:50%;background:var(--accent-gradient);color:white;display:flex;align-items:center;justify-content:center;font-size:var(--text-sm);font-weight:var(--weight-bold);flex-shrink:0;">1</div>
+                    <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Отсканируйте QR-код</div>
+                </div>
+                {% if qr_code %}
+                <div style="text-align:center;margin-bottom:var(--space-4);">
+                    <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" style="max-width:200px;border-radius:var(--radius-md);">
+                </div>
+                {% endif %}
+                {% if secret_key %}
+                <div style="background:var(--gray-50);border-radius:var(--radius-md);padding:var(--space-3);text-align:center;margin-bottom:var(--space-5);">
+                    <div style="font-size:var(--text-xs);color:var(--text-tertiary);margin-bottom:var(--space-1);">Или введите код вручную:</div>
+                    <code style="font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--accent-primary);letter-spacing:1px;">{{ secret_key }}</code>
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom:var(--space-6);">
+                <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4);">
+                    <div style="width:32px;height:32px;border-radius:50%;background:var(--accent-gradient);color:white;display:flex;align-items:center;justify-content:center;font-size:var(--text-sm);font-weight:var(--weight-bold);flex-shrink:0;">2</div>
+                    <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Введите код из приложения</div>
+                </div>
+
+                <form method="post" action="{% url 'accounts:verify_2fa' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="device_id" value="{{ device_id }}">
+                    <div class="form-group">
+                        <label for="id_token" class="form-label">6-значный код</label>
+                        <input type="text" name="token" id="id_token" maxlength="6" pattern="[0-9]{6}" required
+                            placeholder="000000" style="text-align:center;letter-spacing:8px;font-size:var(--text-xl);font-weight:var(--weight-bold);">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><i data-lucide="shield-check"></i> Подтвердить и включить</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}
+{% endblock %}
