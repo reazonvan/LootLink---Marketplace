@@ -13,6 +13,10 @@ www.lootlink.ru {
 lootlink.ru {
     encode zstd gzip
 
+    # Block sensitive paths — return 403 regardless of backend state
+    @sensitive path /.env* /.git* /.docker* /docker-compose* /.planning* /manage.py
+    respond @sensitive 403
+
     # Canonical SEO files from collected static
     @robots path /robots.txt
     handle @robots {
@@ -39,7 +43,11 @@ lootlink.ru {
         file_server
     }
 
-    reverse_proxy web:8000
+    reverse_proxy web:8000 {
+        lb_try_duration 5s
+        lb_try_interval 250ms
+        fail_duration 10s
+    }
 }
 
 # Redirect plain HTTP access by server IP to canonical domain.

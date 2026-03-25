@@ -55,12 +55,11 @@ class Wallet(models.Model):
     def freeze_amount(self, amount):
         """Заморозить средства для эскроу"""
         from django.db import transaction
-        
-        if self.get_available_balance() < amount:
-            raise ValueError('Недостаточно средств на балансе')
-        
+
         with transaction.atomic():
             wallet = Wallet.objects.select_for_update().get(id=self.id)
+            if wallet.get_available_balance() < amount:
+                raise ValueError('Недостаточно средств на балансе')
             wallet.frozen_balance += amount
             wallet.save(update_fields=['frozen_balance'])
     
@@ -301,17 +300,25 @@ class Escrow(models.Model):
             raise ValueError('Эскроу не профинансирован')
         
         with db_transaction.atomic():
-            # Размораживаем у покупателя
-            buyer_wallet = Wallet.objects.select_for_update().get(user=self.buyer)
-            buyer_wallet.unfreeze_amount(self.amount)
-            buyer_wallet.balance -= self.amount
-            buyer_wallet.save(update_fields=['balance'])
-            
-            # Переводим продавцу (ВАЖНО: order by id для избежания deadlock)
-            seller_wallet, created = Wallet.objects.select_for_update().get_or_create(
+            # Гарантируем get_or_create ДО блокировки
+            Wallet.objects.get_or_create(
                 user=self.seller,
                 defaults={'balance': 0, 'frozen_balance': 0}
             )
+            # Блокируем ОБА кошелька одним запросом с ORDER BY id (deadlock prevention)
+            wallets = {
+                w.user_id: w
+                for w in Wallet.objects.select_for_update().filter(
+                    user_id__in=[self.buyer_id, self.seller_id]
+                ).order_by('id')
+            }
+            buyer_wallet = wallets[self.buyer_id]
+            seller_wallet = wallets[self.seller_id]
+
+            buyer_wallet.unfreeze_amount(self.amount)
+            buyer_wallet.balance -= self.amount
+            buyer_wallet.save(update_fields=['balance'])
+
             seller_wallet.balance += self.amount
             seller_wallet.save(update_fields=['balance', 'updated_at'])
             

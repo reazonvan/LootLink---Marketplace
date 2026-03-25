@@ -149,12 +149,13 @@ def listing_detail(request, pk):
         ).exists()
     
     # Похожие объявления (та же игра, не текущее, активные)
+    # Используем последние по дате вместо ORDER BY RANDOM() (full table scan)
     similar_listings = Listing.objects.filter(
         game=listing.game,
         status='active'
     ).exclude(pk=listing.pk)\
      .select_related('seller', 'seller__profile')\
-     .order_by('?')[:4]  # 4 случайных похожих товара
+     .order_by('-created_at')[:4]
     
     context = {
         'listing': listing,
@@ -408,12 +409,13 @@ def get_categories_by_game(request):
             game_id=game_id,
             is_active=True
         ).order_by('order', 'name').values('id', 'name', 'icon')
-        
+
         return JsonResponse({
             'categories': list(categories)
         })
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+    except Exception:
+        logger.exception('Error fetching categories for game %s', game_id)
+        return JsonResponse({'error': 'Ошибка загрузки категорий'}, status=500)
 
 
 @login_required
