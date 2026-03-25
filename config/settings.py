@@ -14,8 +14,8 @@ if not config('DEBUG', default=False, cast=bool):
     sentry_sdk.init(
         dsn=config('SENTRY_DSN', default=''),
         integrations=[DjangoIntegration()],
-        traces_sample_rate=1.0,
-        send_default_pii=True,
+        traces_sample_rate=0.1,  # 10% трейсов достаточно для мониторинга
+        send_default_pii=False,  # Не отправлять персональные данные
         environment=config('ENVIRONMENT', default='production'),
         release=config('RELEASE_VERSION', default='1.0.0'),
     )
@@ -113,7 +113,8 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.middleware.gzip.GZipMiddleware',  # Сжатие ответов
+    # GZipMiddleware убран: Caddy уже сжимает (encode zstd gzip),
+    # а GZip + HTTPS = уязвимость BREACH
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -185,13 +186,14 @@ else:
             'PASSWORD': config('DB_PASSWORD'),  # Для PostgreSQL пароль обязателен.
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
-            # Connection Pooling - переиспользование подключений
-            'CONN_MAX_AGE': config('DB_CONN_MAX_AGE', default=600, cast=int),  # 10 минут
+            # Daphne (ASGI) — каждый запрос в отдельном потоке,
+            # CONN_MAX_AGE=0 закрывает соединение после запроса, предотвращая утечку.
+            'CONN_MAX_AGE': config('DB_CONN_MAX_AGE', default=0, cast=int),
+            'CONN_HEALTH_CHECKS': True,  # Django 5.x: проверка живости соединения
             'OPTIONS': {
                 'client_encoding': 'UTF8',
-                # Дополнительные оптимизации PostgreSQL
-                'connect_timeout': 10,  # Таймаут подключения 10 секунд
-                'options': '-c statement_timeout=30000'  # Таймаут запроса 30 секунд
+                'connect_timeout': 10,
+                'options': '-c statement_timeout=30000'
             },
         }
     }
@@ -325,8 +327,7 @@ if not DEBUG:
         SECURE_HSTS_INCLUDE_SUBDOMAINS = True
         SECURE_HSTS_PRELOAD = True
     
-    # Базовая безопасность (всегда включено)
-    SECURE_BROWSER_XSS_FILTER = True
+    # Базовая безопасность
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
 

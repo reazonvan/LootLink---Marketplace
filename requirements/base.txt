@@ -30,6 +30,9 @@ qrcode>=7.4.2
 django-crispy-forms>=2.4
 crispy-bootstrap5>=2024.2
 
+# File validation
+python-magic>=0.4.27
+
 # Utils
 Pillow>=11.3.0
 pywebpush==1.14.0
