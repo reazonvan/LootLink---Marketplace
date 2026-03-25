@@ -3,18 +3,14 @@
  */
 
 self.addEventListener('install', (event) => {
-    console.log('Service Worker installing...');
     self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-    console.log('Service Worker activating...');
     event.waitUntil(clients.claim());
 });
 
 self.addEventListener('push', (event) => {
-    console.log('Push notification received');
-
     let data = {
         title: 'LootLink',
         body: 'У вас новое уведомление',
@@ -26,9 +22,7 @@ self.addEventListener('push', (event) => {
     if (event.data) {
         try {
             data = { ...data, ...event.data.json() };
-        } catch (e) {
-            console.error('Failed to parse push data:', e);
-        }
+        } catch (e) { /* ignore malformed push data */ }
     }
 
     const options = {
@@ -47,7 +41,6 @@ self.addEventListener('push', (event) => {
 });
 
 self.addEventListener('notificationclick', (event) => {
-    console.log('Notification clicked');
     event.notification.close();
 
     const urlToOpen = event.notification.data?.url || '/';
@@ -69,8 +62,4 @@ self.addEventListener('notificationclick', (event) => {
                 }
             })
     );
-});
-
-self.addEventListener('notificationclose', (event) => {
-    console.log('Notification closed');
 });

@@ -32,19 +32,23 @@ function createFeedback(input) {
 
 function setFeedback(el, input, type, text) {
     el.className = 'field-feedback field-feedback--' + type;
-    el.innerHTML = '';
+    el.textContent = '';
     if (type === 'loading') {
-        el.innerHTML = '<span class="fb-spinner"></span> ' + text;
+        var spinner = document.createElement('span');
+        spinner.className = 'fb-spinner';
+        el.appendChild(spinner);
+        el.appendChild(document.createTextNode(' ' + text));
     } else if (type === 'ok') {
-        el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ' + text;
+        el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        el.appendChild(document.createTextNode(' ' + text));
         input.classList.remove('is-invalid');
         input.classList.add('is-valid');
     } else if (type === 'error') {
-        el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ' + text;
+        el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+        el.appendChild(document.createTextNode(' ' + text));
         input.classList.remove('is-valid');
         input.classList.add('is-invalid');
     } else {
-        el.textContent = '';
         input.classList.remove('is-valid', 'is-invalid');
     }
 }
