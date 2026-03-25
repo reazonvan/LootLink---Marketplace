@@ -1,3 +1,10 @@
+# Obsidian
+.obsidian/
+LootLink/
+
+# Local venv
+.venv-local/
+
 # Python
 __pycache__/
 *.py[cod]

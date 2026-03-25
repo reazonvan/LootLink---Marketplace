@@ -266,6 +266,9 @@ LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'listings:catalog'
 LOGOUT_REDIRECT_URL = 'listings:home'
 
+# Listings
+MAX_ACTIVE_LISTINGS = config('MAX_ACTIVE_LISTINGS', default=50, cast=int)
+
 # Messages framework
 from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {

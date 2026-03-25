@@ -6,6 +6,7 @@
 <div class="g-4 g-6-6">
     <div class="ap-card">
         <h3 class="ap-card-title" style="margin-bottom:1rem;">Информация о системе</h3>
+        <div class="ap-table-wrap">
         <table class="ap-table">
             <tbody>
                 <tr><td style="color:#6B7280;">Режим отладки:</td><td style="font-weight:600;">{% if debug %}<span class="ap-badge ap-badge-warning">DEBUG ON</span>{% else %}<span class="ap-badge ap-badge-success">Production</span>{% endif %}</td></tr>
@@ -13,6 +14,7 @@
                 <tr><td style="color:#6B7280;">Redis:</td><td style="font-weight:600;">{% if redis_enabled %}<span class="ap-badge ap-badge-success">Включен</span>{% else %}<span class="ap-badge ap-badge-neutral">Выключен</span>{% endif %}</td></tr>
             </tbody>
         </table>
+        </div>
     </div>
     <div class="ap-card">
         <h3 class="ap-card-title" style="margin-bottom:1rem;">Быстрые действия</h3>

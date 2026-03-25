@@ -74,31 +74,34 @@ def conversation_detail(request, pk):
     
     # Обработка отправки сообщения
     if request.method == 'POST':
-        form = MessageForm(request.POST)
+        form = MessageForm(request.POST, request.FILES)
         if form.is_valid():
             message = form.save(commit=False)
             message.conversation = conversation
             message.sender = request.user
             message.save()
-            
+
             # Обновляем last_seen отправителя сразу
             from django.utils import timezone
             from accounts.models import Profile
             Profile.objects.filter(user=request.user).update(last_seen=timezone.now())
-            
+
             # Если AJAX запрос, возвращаем JSON
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                image_url = message.image.url if message.image else None
                 return JsonResponse({
                     'success': True,
                     'message': {
                         'id': message.id,
                         'content': message.content,
-                        'sender': message.sender.username,
-                        'is_own': True,
-                        'created_at': message.created_at.strftime('%H:%M'),
+                        'sender_id': message.sender.id,
+                        'sender_username': message.sender.username,
+                        'created_at': message.created_at.isoformat(),
+                        'is_read': False,
+                        'image_url': image_url,
                     }
                 })
-            
+
             return redirect('chat:conversation_detail', pk=pk)
     else:
         form = MessageForm()
@@ -144,13 +147,7 @@ def conversation_start(request, listing_pk):
                 }
             )
             
-            # Если беседа только что создана - создаем приветственное сообщение
-            if created:
-                Message.objects.create(
-                    conversation=conversation,
-                    sender=request.user,
-                    content=f'Здравствуйте! Интересует товар: {listing.title}'
-                )
+            # Беседа создана — контекст товара показывается как карточка в чате
     except IntegrityError:
         # На случай если все равно создался дубликат (крайне редко)
         conversation = Conversation.objects.filter(
@@ -191,16 +188,18 @@ def get_new_messages(request, conversation_pk):
     # Загружаем новые сообщения с оптимизацией
     new_messages = conversation.messages.filter(
         id__gt=after_id
-    ).select_related('sender').order_by('created_at')
-    
+    ).select_related('sender').order_by('created_at')[:100]
+
     messages_data = []
     for message in new_messages:
         messages_data.append({
             'id': message.id,
             'content': message.content,
-            'sender': message.sender.username,
-            'is_own': message.sender == request.user,
-            'created_at': message.created_at.strftime('%H:%M'),
+            'sender_id': message.sender.id,
+            'sender_username': message.sender.username,
+            'created_at': message.created_at.isoformat(),
+            'is_read': message.is_read,
+            'image_url': message.image.url if message.image else None,
         })
     
     return JsonResponse({

@@ -93,7 +93,15 @@ class Message(models.Model):
     )
     content = models.TextField(
         max_length=5000,
-        verbose_name='Содержимое'
+        verbose_name='Содержимое',
+        blank=True,
+        default=''
+    )
+    image = models.ImageField(
+        upload_to='chat_images/%Y/%m/',
+        null=True,
+        blank=True,
+        verbose_name='Изображение'
     )
     is_read = models.BooleanField(
         default=False,

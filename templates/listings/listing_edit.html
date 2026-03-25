@@ -60,9 +60,15 @@
                         <img src="{{ listing.image.url }}" alt="{{ listing.title }}" style="max-width:240px;max-height:240px;border-radius:var(--radius-md);border:1px solid var(--card-border);">
                     </div>
                     {% endif %}
-                    {{ form.image }}
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <input type="file" name="image" id="id_image" accept="image/*" class="file-upload-area__input">
+                        <div class="file-upload-area__content">
+                            <i data-lucide="image-plus" style="width:32px;height:32px;color:var(--text-tertiary);"></i>
+                            <span class="file-upload-area__text">Нажмите для выбора или перетащите</span>
+                            <span class="file-upload-area__hint">JPG, PNG, WebP — до 5 МБ</span>
+                        </div>
+                    </div>
                     {% if form.image.errors %}<div class="form-error">{{ form.image.errors }}</div>{% endif %}
-                    <p class="form-text">После выбора нового изображения вы сможете его обрезать.</p>
                     <div id="listingImagePreviewContainer"></div>
                 </div>
 
@@ -94,6 +100,8 @@
 {% endblock %}
 
 {% block extra_js %}
+<link rel="stylesheet" href="{% static 'css/image-cropper.css' %}">
+<script src="{% static 'js/cropper.min.js' %}"></script>
 <script src="{% static 'js/listing-image-cropper.js' %}"></script>
 <script>
 lucide.createIcons();

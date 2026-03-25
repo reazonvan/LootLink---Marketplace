@@ -8,7 +8,7 @@
 
 {% block content %}
 <div class="ap-card" style="margin-bottom:1.5rem;">
-    <form method="get" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:1rem;align-items:end;">
+    <form method="get" class="ap-filters" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:1rem;align-items:end;">
         <div><label class="ap-label">Уровень риска</label><select name="risk_level" class="ap-select"><option value="">Все</option><option value="low" {% if filters.risk_level == 'low' %}selected{% endif %}>Низкий</option><option value="medium" {% if filters.risk_level == 'medium' %}selected{% endif %}>Средний</option><option value="high" {% if filters.risk_level == 'high' %}selected{% endif %}>Высокий</option><option value="critical" {% if filters.risk_level == 'critical' %}selected{% endif %}>Критический</option></select></div>
         <div><label class="ap-label">Тип действия</label><select name="action_type" class="ap-select"><option value="">Все</option><option value="failed_login" {% if filters.action_type == 'failed_login' %}selected{% endif %}>Неудачный вход</option><option value="suspicious_activity" {% if filters.action_type == 'suspicious_activity' %}selected{% endif %}>Подозрительная активность</option><option value="user_banned" {% if filters.action_type == 'user_banned' %}selected{% endif %}>Блокировка</option><option value="admin_action" {% if filters.action_type == 'admin_action' %}selected{% endif %}>Действие админа</option></select></div>
         <div><label class="ap-label">С</label><input type="date" name="date_from" class="ap-input" value="{{ filters.date_from }}"></div>
@@ -19,7 +19,7 @@
 
 <div class="ap-card">
     <h3 class="ap-card-title" style="margin-bottom:1rem;">Логи безопасности (последние 100)</h3>
-    <div style="overflow-x:auto;">
+    <div class="ap-table-wrap">
     <table class="ap-table">
         <thead><tr><th>Время</th><th>Пользователь</th><th>Действие</th><th>Уровень</th><th>IP адрес</th><th>Описание</th></tr></thead>
         <tbody>

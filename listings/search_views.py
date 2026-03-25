@@ -54,21 +54,21 @@ def global_search(request):
     if min_price:
         try:
             listings = listings.filter(price__gte=Decimal(min_price))
-        except:
+        except (ValueError, TypeError, ArithmeticError):
             pass
-    
+
     if max_price:
         try:
             listings = listings.filter(price__lte=Decimal(max_price))
-        except:
+        except (ValueError, TypeError, ArithmeticError):
             pass
-    
+
     # Фильтр по рейтингу продавца
     if seller_rating:
         try:
             min_rating = Decimal(seller_rating)
             listings = listings.filter(seller__profile__rating__gte=min_rating)
-        except:
+        except (ValueError, TypeError, ArithmeticError):
             pass
     
     # Только верифицированные продавцы
