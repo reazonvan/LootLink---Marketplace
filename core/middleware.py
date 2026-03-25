@@ -119,7 +119,6 @@ class SecurityHeadersMiddleware:
         # Добавляем заголовки безопасности ВСЕГДА
         response['X-Content-Type-Options'] = 'nosniff'
         response['X-Frame-Options'] = 'DENY'
-        response['X-XSS-Protection'] = '1; mode=block'
         response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         response['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
         
@@ -133,7 +132,7 @@ class SecurityHeadersMiddleware:
                 "style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
                 "img-src 'self' data: https: blob:; "
                 "font-src 'self' https://cdn.jsdelivr.net data:; "
-                "connect-src 'self' https://cdn.jsdelivr.net; "  # Добавлен CDN для загрузки ресурсов
+                "connect-src 'self' wss://lootlink.ru https://cdn.jsdelivr.net; "
                 "frame-ancestors 'none'; "
                 "base-uri 'self'; "
                 "form-action 'self';"

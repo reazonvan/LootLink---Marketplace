@@ -6,10 +6,18 @@ from django.db.models import Avg
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
-from .forms import (CustomUserCreationForm, CustomAuthenticationForm, ProfileUpdateForm, 
+from .forms import (CustomUserCreationForm, CustomAuthenticationForm, ProfileUpdateForm,
                     PasswordResetRequestForm, PasswordResetConfirmForm)
 from .models import CustomUser, Profile, PasswordResetCode
 from transactions.models import Review
+
+
+def _get_client_ip(request):
+    """Получение реального IP клиента за reverse proxy (Caddy)."""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR', '')
 
 
 def register(request):
@@ -246,6 +254,17 @@ def my_sales(request):
 def password_reset_request(request):
     """Запрос на сброс пароля - отправка кода на email и SMS."""
     if request.method == 'POST':
+        # Rate limiting: 3 запроса за 10 минут на IP
+        from django.core.cache import cache
+        ip = _get_client_ip(request)
+        cache_key = f'password_reset_rate_{ip}'
+        attempts = cache.get(cache_key, 0)
+        if attempts >= 3:
+            messages.error(request, 'Слишком много запросов. Подождите 10 минут.')
+            return render(request, 'accounts/password_reset_request.html',
+                          {'form': PasswordResetRequestForm()})
+        cache.set(cache_key, attempts + 1, 600)
+
         form = PasswordResetRequestForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
@@ -463,7 +482,7 @@ def check_username_available(request):
     from django.core.cache import cache
     
     # Rate limiting: 30 запросов в минуту на IP
-    ip = request.META.get('REMOTE_ADDR', '')
+    ip = _get_client_ip(request)
     cache_key = f'username_check_rate_{ip}'
     requests_count = cache.get(cache_key, 0)
     
@@ -506,7 +525,7 @@ def check_email_available(request):
     from django.core.cache import cache
     
     # Rate limiting: 30 запросов в минуту на IP
-    ip = request.META.get('REMOTE_ADDR', '')
+    ip = _get_client_ip(request)
     cache_key = f'email_check_rate_{ip}'
     requests_count = cache.get(cache_key, 0)
     
@@ -529,8 +548,8 @@ def check_email_available(request):
     if not re.match(email_pattern, email):
         return JsonResponse({'available': False, 'message': 'Некорректный формат email'})
     
-    exists = CustomUser.objects.filter(email=email).exists()
-    
+    exists = CustomUser.objects.filter(email__iexact=email).exists()
+
     if exists:
         return JsonResponse({'available': False, 'message': 'Этот email уже зарегистрирован'})
     
@@ -543,7 +562,7 @@ def check_phone_available(request):
     from django.core.cache import cache
     
     # Rate limiting: 30 запросов в минуту на IP
-    ip = request.META.get('REMOTE_ADDR', '')
+    ip = _get_client_ip(request)
     cache_key = f'phone_check_rate_{ip}'
     requests_count = cache.get(cache_key, 0)
     
