@@ -51,13 +51,13 @@
         </div>
 
         <div class="profile-page__stats">
-            <div class="profile-page__stat-chip">
+            <div class="profile-page__stat-chip" data-animate="scale-in">
                 <i data-lucide="package"></i> <strong>{{ profile.total_sales }}</strong> продаж
             </div>
-            <div class="profile-page__stat-chip">
+            <div class="profile-page__stat-chip" data-animate="scale-in">
                 <i data-lucide="shopping-bag"></i> <strong>{{ profile.total_purchases }}</strong> покупок
             </div>
-            <div class="profile-page__stat-chip">
+            <div class="profile-page__stat-chip" data-animate="scale-in">
                 <i data-lucide="calendar"></i> На сайте с {{ profile_user.date_joined|date:"d.m.Y" }}
             </div>
         </div>
@@ -71,7 +71,7 @@
         {% if reviews %}
         <div style="display:flex;flex-direction:column;gap:var(--space-4);">
             {% for review in reviews %}
-            <div class="card-glass">
+            <div class="card-glass" data-animate="fade-up">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-3);">
                     <div style="display:flex;align-items:center;gap:var(--space-3);">
                         <div class="avatar avatar--sm avatar--round">

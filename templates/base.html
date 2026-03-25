@@ -116,7 +116,7 @@
                     <button class="btn btn-secondary user-dropdown-trigger">
                         <span class="user-dropdown-avatar">
                             {% if user.profile.avatar %}
-                            <img src="{{ user.profile.avatar.url }}" alt="">
+                            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}">
                             {% else %}
                             {{ user.username|first|upper }}
                             {% endif %}
@@ -216,9 +216,9 @@
                 <div class="footer-section">
                     <h3>Сообщество</h3>
                     <ul class="footer-links">
-                        <li><a href="#">Discord</a></li>
-                        <li><a href="#">Telegram</a></li>
-                        <li><a href="#">VK</a></li>
+                        <li><a href="javascript:void(0)">Discord</a></li>
+                        <li><a href="javascript:void(0)">Telegram</a></li>
+                        <li><a href="javascript:void(0)">VK</a></li>
                     </ul>
                 </div>
             </div>
@@ -234,9 +234,9 @@
                     <a href="mailto:ivanpetrov20066.ip@gmail.com">Контакты</a>
                 </div>
                 <div class="footer-mobile__social">
-                    <a href="#" aria-label="Discord"><i data-lucide="disc-3"></i></a>
-                    <a href="#" aria-label="Telegram"><i data-lucide="send"></i></a>
-                    <a href="#" aria-label="VK"><i data-lucide="users"></i></a>
+                    <a href="javascript:void(0)" aria-label="Discord"><i data-lucide="disc-3"></i></a>
+                    <a href="javascript:void(0)" aria-label="Telegram"><i data-lucide="send"></i></a>
+                    <a href="javascript:void(0)" aria-label="VK"><i data-lucide="users"></i></a>
                 </div>
             </div>
             <div class="footer-bottom">
@@ -330,6 +330,22 @@
             <a href="{% url 'listings:listing_create' %}" class="mobile-menu__cta">
                 <i data-lucide="plus"></i> Создать объявление
             </a>
+
+            {% if user.is_staff %}
+            <div class="mobile-menu__group">
+                <div class="mobile-menu__group-label">Управление</div>
+                <a href="{% url 'admin_panel:dashboard' %}" class="mobile-menu__link mobile-menu__link--admin"><i data-lucide="layout-dashboard"></i> Админ-панель</a>
+                <a href="{% url 'admin_panel:users_list' %}" class="mobile-menu__link mobile-menu__link--admin"><i data-lucide="users"></i> Пользователи</a>
+                <a href="{% url 'admin_panel:listings_moderation' %}" class="mobile-menu__link mobile-menu__link--admin"><i data-lucide="shield-check"></i> Модерация</a>
+                <a href="{% url 'admin_panel:reports_list' %}" class="mobile-menu__link mobile-menu__link--admin"><i data-lucide="flag"></i> Жалобы</a>
+                <a href="{% url 'admin_panel:transactions_list' %}" class="mobile-menu__link mobile-menu__link--admin"><i data-lucide="arrow-left-right"></i> Сделки</a>
+                {% if user.is_superuser %}
+                <a href="{% url 'admin_panel:security_logs' %}" class="mobile-menu__link mobile-menu__link--admin"><i data-lucide="shield-alert"></i> Безопасность</a>
+                <a href="{% url 'admin_panel:settings' %}" class="mobile-menu__link mobile-menu__link--admin"><i data-lucide="sliders-horizontal"></i> Настройки сайта</a>
+                <a href="/admin/" class="mobile-menu__link mobile-menu__link--admin"><i data-lucide="database"></i> Django Admin</a>
+                {% endif %}
+            </div>
+            {% endif %}
 
             <div class="mobile-menu__footer">
                 <a href="{% url 'accounts:profile_edit' %}" class="mobile-menu__footer-link"><i data-lucide="settings"></i> Настройки</a>
@@ -562,6 +578,32 @@
     </script>
     {% endif %}
 
+    <script>
+    (function(){
+        function animateEntrance() {
+            var els = document.querySelectorAll('[data-animate]:not(.animated)');
+            if (!els.length) return;
+            var delay = 0;
+            var observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        var el = entry.target;
+                        var d = parseInt(el.dataset.delay || delay, 10);
+                        setTimeout(function() { el.classList.add('animated'); }, d);
+                        delay += 70;
+                        observer.unobserve(el);
+                    }
+                });
+            }, { threshold: 0.08 });
+            els.forEach(function(el) { observer.observe(el); });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', animateEntrance);
+        } else {
+            animateEntrance();
+        }
+    })();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

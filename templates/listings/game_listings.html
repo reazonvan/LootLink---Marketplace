@@ -31,7 +31,7 @@
     <div class="listings-grid-ll">
         {% for listing in page_obj %}
         <a href="{% url 'listings:listing_detail' listing.pk %}" style="text-decoration:none;color:inherit;">
-            <div class="listing-card">
+            <div class="listing-card" data-animate="fade-up">
                 <div class="listing-card__image">
                     {% if listing.image %}
                     <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
