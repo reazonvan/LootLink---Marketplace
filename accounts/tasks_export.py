@@ -103,7 +103,7 @@ def generate_data_export(self, export_request_id):
             export_request.status = 'failed'
             export_request.error_message = str(exc)
             export_request.save()
-        except:
+        except Exception:
             pass
 
         raise self.retry(exc=exc, countdown=60)

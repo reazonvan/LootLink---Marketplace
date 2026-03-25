@@ -122,7 +122,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         'sender_username': message['sender_username'],
                         'sender_avatar_url': message['sender_avatar_url'],
                         'created_at': message['created_at'],
-                        'is_read': message['is_read']
+                        'is_read': message['is_read'],
+                        'image_url': message.get('image_url'),
                     }
                 }
             )
@@ -227,6 +228,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if hasattr(message.sender, 'profile') and message.sender.profile.avatar:
                 avatar_url = message.sender.profile.avatar.url
             
+            image_url = None
+            if message.image:
+                image_url = message.image.url
+
             return {
                 'id': message.id,
                 'content': message.content,
@@ -234,7 +239,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'sender_username': message.sender.username,
                 'sender_avatar_url': avatar_url,
                 'created_at': message.created_at.isoformat(),
-                'is_read': message.is_read
+                'is_read': message.is_read,
+                'image_url': image_url,
             }
         except Exception as e:
             logger.error(f'Error saving message: {str(e)}')

@@ -56,10 +56,16 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="{{ form.image.id_for_label }}" class="form-label">Изображение (необязательно)</label>
-                    {{ form.image }}
+                    <label class="form-label">Изображение (необязательно)</label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <input type="file" name="image" id="id_image" accept="image/*" class="file-upload-area__input">
+                        <div class="file-upload-area__content">
+                            <i data-lucide="image-plus" style="width:32px;height:32px;color:var(--text-tertiary);"></i>
+                            <span class="file-upload-area__text">Нажмите для выбора или перетащите файл</span>
+                            <span class="file-upload-area__hint">JPG, PNG, WebP — до 5 МБ</span>
+                        </div>
+                    </div>
                     {% if form.image.errors %}<div class="form-error">{{ form.image.errors }}</div>{% endif %}
-                    <p class="form-text">Максимум 5 МБ. После выбора вы сможете обрезать изображение.</p>
                     <div id="listingImagePreviewContainer"></div>
                 </div>
 
@@ -86,6 +92,8 @@
 {% endblock %}
 
 {% block extra_js %}
+<link rel="stylesheet" href="{% static 'css/image-cropper.css' %}">
+<script src="{% static 'js/cropper.min.js' %}"></script>
 <script src="{% static 'js/category-selector.js' %}?v=2"></script>
 <script src="{% static 'js/listing-image-cropper.js' %}"></script>
 <script>lucide.createIcons();</script>

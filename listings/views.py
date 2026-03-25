@@ -103,14 +103,6 @@ def games_catalog(request):
         else:
             game.first_in_letter = False
         
-        # Добавляем счетчик объявлений для каждой категории
-        for category in game.categories.all():
-            category.count = Listing.objects.filter(
-                game=game,
-                category=category,
-                status='active'
-            ).count()
-    
     context = {
         'games': games,
         'alphabet': alphabet,
@@ -131,9 +123,12 @@ def listing_detail(request, pk):
     )
 
     # Записываем просмотр в историю
+    from listings.models_history import ViewHistory
     if request.user.is_authenticated:
-        from listings.models_history import ViewHistory
         ViewHistory.record_view(request.user, listing)
+
+    # Считаем уникальные просмотры
+    views_count = ViewHistory.objects.filter(listing=listing).count()
 
     # Проверяем, есть ли активный запрос на покупку от текущего пользователя
     user_has_request = False
@@ -163,6 +158,7 @@ def listing_detail(request, pk):
     
     context = {
         'listing': listing,
+        'views_count': views_count,
         'user_has_request': user_has_request,
         'is_favorited': is_favorited,
         'similar_listings': similar_listings,
@@ -186,18 +182,19 @@ def listing_create(request):
         messages.warning(
             request,
             'Рекомендуем подтвердить email для повышения доверия к вашим объявлениям. '
-            '<a href="/accounts/resend-verification/" class="alert-link">Отправить письмо повторно</a>',
-            extra_tags='safe'  # Разрешаем HTML в сообщении
+            'Отправить письмо повторно',
+            extra_tags='resend_verification'
         )
     
     # Проверка лимита активных объявлений
     active_listings_count = request.user.listings.filter(status='active').count()
-    MAX_ACTIVE_LISTINGS = 50  # Лимит активных объявлений
-    
-    if active_listings_count >= MAX_ACTIVE_LISTINGS:
+    from django.conf import settings as django_settings
+    max_listings = django_settings.MAX_ACTIVE_LISTINGS
+
+    if active_listings_count >= max_listings:
         messages.error(
             request,
-            f'Достигнут максимальный лимит активных объявлений ({MAX_ACTIVE_LISTINGS}). '
+            f'Достигнут максимальный лимит активных объявлений ({max_listings}). '
             f'Удалите или завершите некоторые объявления перед созданием новых.'
         )
         return redirect('accounts:my_listings')
@@ -225,7 +222,7 @@ def listing_create(request):
     context = {
         'form': form,
         'active_listings_count': active_listings_count,
-        'max_listings': MAX_ACTIVE_LISTINGS,
+        'max_listings': max_listings,
     }
     
     return render(request, 'listings/listing_create.html', context)

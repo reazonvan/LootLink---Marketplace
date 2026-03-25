@@ -8,7 +8,7 @@ class MessageForm(forms.ModelForm):
     """
     class Meta:
         model = Message
-        fields = ['content']
+        fields = ['content', 'image']
         widgets = {
             'content': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -17,6 +17,15 @@ class MessageForm(forms.ModelForm):
             })
         }
         labels = {
-            'content': ''
+            'content': '',
+            'image': '',
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        content = cleaned_data.get('content', '').strip()
+        image = cleaned_data.get('image')
+        if not content and not image:
+            raise forms.ValidationError('Введите сообщение или прикрепите изображение.')
+        return cleaned_data
 

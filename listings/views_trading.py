@@ -120,7 +120,7 @@ def respond_to_offer(request, offer_id):
             offer.counter(counter_price, counter_message)
             messages.success(request, 'Встречное предложение отправлено')
             return JsonResponse({'success': True, 'action': 'countered'})
-        except:
+        except (ValueError, TypeError, ArithmeticError):
             return JsonResponse({'success': False, 'error': 'Неверная цена'})
     
     return JsonResponse({'success': False, 'error': 'Неверное действие'})

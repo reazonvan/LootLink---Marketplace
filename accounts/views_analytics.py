@@ -21,7 +21,7 @@ def analytics_dashboard(request):
     period = request.GET.get('period', '30')  # дней
     try:
         days = int(period)
-    except:
+    except (ValueError, TypeError):
         days = 30
     
     start_date = timezone.now() - timedelta(days=days)
