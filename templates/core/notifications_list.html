@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}Уведомления - LootLink{% endblock %}
 {% block content %}
-<div style="padding:var(--space-6) 0 var(--space-12);">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-6);">
+<div class="notif-page">
+    <div class="notif-page__header">
         <div class="page-header" style="margin-bottom:0;"><h1>Уведомления</h1></div>
         {% if notifications %}
         <button id="markAllRead" class="btn btn-ghost btn-sm"><i data-lucide="check-check"></i> Прочитать все</button>
@@ -49,17 +49,40 @@
 </div>
 
 <style>
+.notif-page { padding: var(--space-6) 0 var(--space-12); max-width: 720px; margin: 0 auto; }
+.notif-page__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6); }
+
 .notif-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); border-bottom: 1px solid var(--card-border); transition: background 0.15s; }
 .notif-row:last-child { border-bottom: none; }
 .notif-row--unread { background: var(--color-primary-light); }
 
+/* Tablet */
 @media (max-width: 768px) {
-    .notif-row { flex-wrap: wrap; gap: var(--space-2); padding: var(--space-3); align-items: flex-start; }
-    .notif-row > div:nth-child(2) { flex: 1; min-width: 0; }
-    .notif-row > div:last-child { width: 100%; padding-left: 44px; margin-top: -2px; }
+    .notif-page { padding: var(--space-4) 0 var(--space-8); }
+    .notif-page__header { margin-bottom: var(--space-4); }
+    .notif-row { padding: 14px 16px; gap: 12px; }
 }
+
+/* Mobile */
 @media (max-width: 480px) {
-    .notif-row { padding: 10px 12px; }
+    .notif-page { padding: var(--space-3) 0 var(--space-6); }
+    .notif-page__header { margin-bottom: var(--space-3); gap: var(--space-2); }
+    .notif-page__header h1 { font-size: var(--text-xl); }
+    .notif-row { padding: 12px; gap: 10px; align-items: flex-start; }
+    .notif-row > div:first-child { width: 32px; height: 32px; min-width: 32px; }
+    .notif-row > div:first-child i { width: 15px !important; height: 15px !important; }
+    .notif-row > div:nth-child(2) > div:first-child { font-size: var(--text-xs); line-height: 1.4; }
+    .notif-row > div:nth-child(2) > div:last-child { font-size: 11px; }
+    .notif-row > div:last-child { font-size: 10px; white-space: nowrap; }
+}
+
+/* Small mobile */
+@media (max-width: 360px) {
+    .notif-row { padding: 10px 8px; gap: 8px; }
+    .notif-row > div:first-child { width: 28px; height: 28px; min-width: 28px; }
+    .notif-row > div:first-child i { width: 14px !important; height: 14px !important; }
+    .notif-row > div:nth-child(2) > div:first-child { font-size: 12px; }
+    .notif-row > div:nth-child(2) > div:last-child { font-size: 10px; }
 }
 </style>
 {% endblock %}
