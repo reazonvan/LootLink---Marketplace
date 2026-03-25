@@ -84,8 +84,8 @@ def deposit(request):
 
 @login_required
 def deposit_success(request):
-    """Успешное пополнение баланса"""
-    messages.success(request, 'Баланс успешно пополнен!')
+    """Возврат после оплаты. Реальное зачисление происходит через webhook."""
+    messages.info(request, 'Платёж обрабатывается. Баланс будет пополнен автоматически в течение нескольких минут.')
     return redirect('payments:wallet_dashboard')
 
 
@@ -93,14 +93,27 @@ def deposit_success(request):
 def withdrawal_create(request):
     """Создание заявки на вывод средств"""
     wallet, _ = Wallet.objects.get_or_create(user=request.user)
-    
+
     if request.method == 'POST':
         form = WithdrawalForm(user=request.user, data=request.POST)
         if form.is_valid():
-            withdrawal = form.save(commit=False)
-            withdrawal.user = request.user
-            withdrawal.save()
-            
+            from django.db import transaction as db_tx
+            try:
+                with db_tx.atomic():
+                    withdrawal = form.save(commit=False)
+                    withdrawal.user = request.user
+                    # Замораживаем сумму вывода чтобы нельзя было вывести больше баланса
+                    locked_wallet = Wallet.objects.select_for_update().get(user=request.user)
+                    if locked_wallet.get_available_balance() < withdrawal.amount:
+                        messages.error(request, 'Недостаточно средств на балансе.')
+                        return redirect('payments:withdrawal_create')
+                    locked_wallet.frozen_balance += withdrawal.amount
+                    locked_wallet.save(update_fields=['frozen_balance'])
+                    withdrawal.save()
+            except Exception:
+                messages.error(request, 'Ошибка при создании заявки. Попробуйте позже.')
+                return redirect('payments:withdrawal_create')
+
             messages.success(request, 'Заявка на вывод средств создана. Ожидайте обработки администратором.')
             return redirect('payments:wallet_dashboard')
     else:
@@ -146,17 +159,25 @@ def yookassa_webhook(request):
     Важно: не забудьте настроить webhook в личном кабинете ЮKassa.
     """
     try:
-        webhook_data = json.loads(request.body.decode('utf-8'))
         request_ip = _get_client_ip(request)
+
+        # Проверка IP если настроен whitelist
+        if yookassa_service.allowed_webhook_ips and request_ip not in yookassa_service.allowed_webhook_ips:
+            logger.warning(f'Webhook отклонён: недоверенный IP {request_ip}')
+            return HttpResponse(status=403)
+
+        webhook_data = json.loads(request.body.decode('utf-8'))
         logger.info(f'Получен webhook от ЮKassa: ip={request_ip}, event={webhook_data.get("event")}')
-        
+
         success = yookassa_service.handle_webhook(webhook_data, request_ip=request_ip)
-        
+
         if success:
             return HttpResponse(status=200)
         else:
             return HttpResponse(status=400)
-            
+
+    except json.JSONDecodeError:
+        return HttpResponse(status=400)
     except Exception as e:
         logger.error(f'Ошибка обработки webhook: {str(e)}')
         return HttpResponse(status=500)
@@ -165,22 +186,28 @@ def yookassa_webhook(request):
 @login_required
 def transaction_history(request):
     """История транзакций"""
+    from django.core.paginator import Paginator
+
     transactions = Transaction.objects.filter(
         user=request.user
     ).select_related('purchase_request__listing').order_by('-created_at')
-    
+
     # Фильтрация по типу
     transaction_type = request.GET.get('type')
     if transaction_type:
         transactions = transactions.filter(transaction_type=transaction_type)
-    
+
     # Фильтрация по статусу
     status = request.GET.get('status')
     if status:
         transactions = transactions.filter(status=status)
-    
+
+    paginator = Paginator(transactions, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
     context = {
-        'transactions': transactions,
+        'transactions': page_obj,
+        'page_obj': page_obj,
         'transaction_types': Transaction.TRANSACTION_TYPES,
         'statuses': Transaction.STATUS_CHOICES,
     }

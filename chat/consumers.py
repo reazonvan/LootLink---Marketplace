@@ -2,6 +2,8 @@
 WebSocket consumers для real-time чата.
 """
 import json
+import time
+from collections import deque
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.utils import timezone
@@ -9,12 +11,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Rate limiter: max 20 messages per 10 seconds per connection
+WS_RATE_LIMIT = 20
+WS_RATE_WINDOW = 10
+
 
 class ChatConsumer(AsyncWebsocketConsumer):
     """
     WebSocket consumer для чата между двумя пользователями.
     """
-    
+
     async def connect(self):
         """Подключение к WebSocket"""
         self.conversation_id = self.scope['url_route']['kwargs']['conversation_id']
@@ -43,7 +49,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         
         await self.accept()
-        
+
+        # Rate limiter timestamps
+        self._message_timestamps = deque()
+
         # Отправляем статус "онлайн"
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -79,19 +88,38 @@ class ChatConsumer(AsyncWebsocketConsumer):
             
             logger.info(f'User {self.user.username} disconnected from conversation {self.conversation_id}')
     
+    def _check_rate_limit(self):
+        """Проверка rate limit для WebSocket сообщений."""
+        now = time.time()
+        # Удаляем старые timestamps
+        while self._message_timestamps and now - self._message_timestamps[0] > WS_RATE_WINDOW:
+            self._message_timestamps.popleft()
+        if len(self._message_timestamps) >= WS_RATE_LIMIT:
+            return False
+        self._message_timestamps.append(now)
+        return True
+
     async def receive(self, text_data):
         """Получение сообщения от клиента"""
         try:
+            # Rate limiting
+            if not self._check_rate_limit():
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': 'Слишком много сообщений. Подождите немного.'
+                }))
+                return
+
             data = json.loads(text_data)
             message_type = data.get('type', 'message')
-            
+
             if message_type == 'message':
                 await self.handle_message(data)
             elif message_type == 'typing':
                 await self.handle_typing(data)
             elif message_type == 'read':
                 await self.handle_read_receipt(data)
-        
+
         except Exception as e:
             logger.error(f'Error receiving message: {str(e)}')
             await self.send(text_data=json.dumps({
