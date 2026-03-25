@@ -11,22 +11,20 @@ class PushNotificationManager {
 
     async init() {
         if (!this.isSupported) {
-            console.warn('Push notifications are not supported');
             return false;
         }
 
         try {
             this.registration = await navigator.serviceWorker.register('/static/js/service-worker.js');
-            console.log('Service Worker registered');
 
             const response = await fetch('/accounts/push/vapid-key/');
+            if (!response.ok) return false;
             const data = await response.json();
             this.vapidPublicKey = data.publicKey;
 
             await this.checkSubscriptionStatus();
             return true;
         } catch (error) {
-            console.error('Failed to initialize push notifications:', error);
             return false;
         }
     }
@@ -49,7 +47,6 @@ class PushNotificationManager {
             }
             return subscription !== null;
         } catch (error) {
-            console.error('Failed to check subscription status:', error);
             return false;
         }
     }
@@ -63,7 +60,6 @@ class PushNotificationManager {
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                console.log('Notification permission granted');
                 return true;
             } else if (permission === 'denied') {
                 alert('Вы запретили уведомления. Измените настройки браузера, чтобы включить их.');
@@ -71,7 +67,6 @@ class PushNotificationManager {
             }
             return false;
         } catch (error) {
-            console.error('Failed to request permission:', error);
             return false;
         }
     }
@@ -94,15 +89,14 @@ class PushNotificationManager {
                 body: JSON.stringify({subscription: subscription.toJSON()})
             });
 
+            if (!response.ok) return false;
             const data = await response.json();
             if (data.success) {
-                console.log('Successfully subscribed to push notifications');
                 await this.checkSubscriptionStatus();
                 return true;
             }
             return false;
         } catch (error) {
-            console.error('Failed to subscribe to push notifications:', error);
             return false;
         }
     }
@@ -120,15 +114,14 @@ class PushNotificationManager {
                 body: JSON.stringify({endpoint: subscription.endpoint})
             });
 
+            if (!response.ok) return false;
             const data = await response.json();
             if (data.success) {
-                console.log('Successfully unsubscribed from push notifications');
                 await this.checkSubscriptionStatus();
                 return true;
             }
             return false;
         } catch (error) {
-            console.error('Failed to unsubscribe from push notifications:', error);
             return false;
         }
     }
@@ -159,6 +152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         toggleButton.addEventListener('click', async (e) => {
             e.preventDefault();
             const button = e.target;
+            if (button.disabled) return;
             button.disabled = true;
             button.textContent = 'Обработка...';
             await pushManager.toggle();

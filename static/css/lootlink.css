@@ -385,6 +385,12 @@ nav a:hover::after { width: 100%; }
 
 .w-100 { width: 100%; }
 
+/* Focus-visible for keyboard accessibility (WCAG 2.4.7) */
+.btn:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+.btn-primary:focus-visible { outline-color: var(--accent-primary); }
+.btn-danger:focus-visible { outline-color: var(--color-danger); }
+.btn-success:focus-visible { outline-color: var(--color-success); }
+
 /* ── Forms ────────────────────────────────────────────────── */
 .form-group { margin-bottom: var(--space-4); }
 
@@ -419,6 +425,14 @@ select:focus {
     border-color: var(--input-focus-border);
     box-shadow: var(--input-focus-shadow);
     background: var(--input-bg);
+}
+
+.form-control:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: -2px;
 }
 
 .form-control::placeholder,
@@ -1329,15 +1343,16 @@ footer { background: var(--footer-bg); backdrop-filter: blur(30px); padding: 60p
     /* -- Floating cards hide -- */
     .floating-card { display: none; }
 
-    /* -- Orbs reduce + disable animation for performance -- */
-    .orb1 { width: 200px; height: 200px; top: -40px; left: -40px; animation: none; }
-    .orb2 { width: 180px; height: 180px; bottom: -30px; right: -30px; animation: none; }
-    .orb3 { width: 150px; height: 150px; top: 40%; right: 0; animation: none; }
+    /* -- Orbs: reposition into viewport, reduce blur, boost visibility on mobile -- */
+    .orb { filter: blur(50px); }
+    .orb1 { width: 240px; height: 240px; top: -40px; left: -30px; animation: none; opacity: 0.55; }
+    .orb2 { width: 220px; height: 220px; bottom: 10%; right: -30px; animation: none; opacity: 0.5; }
+    .orb3 { width: 200px; height: 200px; top: 35%; left: 5%; animation: none; opacity: 0.45; }
 
     /* -- Toasts -- */
-    .toast-container { top: 12px; right: 12px; max-width: calc(100% - 24px); width: calc(100% - 24px); }
-    .toast { padding: 10px 14px; font-size: var(--text-xs); gap: 8px; }
-    .toast svg { width: 16px; height: 16px; }
+    .toast-container { top: 12px; right: 12px; left: 12px; width: auto; max-width: none; }
+    .toast { padding: 12px 14px; font-size: var(--text-sm); gap: 10px; }
+    .toast svg { width: 18px; height: 18px; }
 
     /* -- Avatars -- */
     .avatar { width: 36px; height: 36px; font-size: var(--text-xs); }
