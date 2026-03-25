@@ -21,7 +21,7 @@
         <!-- Balance Cards -->
         <div class="wallet-balance-grid">
             <!-- Main Balance Card -->
-            <div class="wallet-balance-card wallet-balance-card--primary">
+            <div class="wallet-balance-card wallet-balance-card--primary" data-animate="fade-up">
                 <div class="wallet-balance-card__icon">
                     <i data-lucide="wallet"></i>
                 </div>
@@ -42,7 +42,7 @@
             </div>
 
             <!-- Frozen Balance -->
-            <div class="wallet-balance-card wallet-balance-card--warning">
+            <div class="wallet-balance-card wallet-balance-card--warning" data-animate="fade-up">
                 <div class="wallet-balance-card__icon">
                     <i data-lucide="lock"></i>
                 </div>
@@ -54,7 +54,7 @@
             </div>
 
             <!-- Available Balance -->
-            <div class="wallet-balance-card wallet-balance-card--success">
+            <div class="wallet-balance-card wallet-balance-card--success" data-animate="fade-up">
                 <div class="wallet-balance-card__icon">
                     <i data-lucide="check-circle"></i>
                 </div>
@@ -72,7 +72,7 @@
             <div class="wallet-content-col">
                 <!-- Active Escrows -->
                 {% if active_escrows %}
-                <div class="wallet-section-card">
+                <div class="wallet-section-card" data-animate="fade-up">
                     <div class="wallet-section-card__header">
                         <div class="wallet-section-card__title">
                             <i data-lucide="shield"></i>
@@ -110,7 +110,7 @@
 
                 <!-- Pending Withdrawals -->
                 {% if pending_withdrawals %}
-                <div class="wallet-section-card">
+                <div class="wallet-section-card" data-animate="fade-up">
                     <div class="wallet-section-card__header">
                         <div class="wallet-section-card__title">
                             <i data-lucide="hourglass"></i>
@@ -145,7 +145,7 @@
 
                 <!-- Empty State -->
                 {% if not active_escrows and not pending_withdrawals %}
-                <div class="wallet-section-card">
+                <div class="wallet-section-card" data-animate="fade-up">
                     <div class="empty-state">
                         <div class="empty-state__icon">
                             <i data-lucide="inbox"></i>
@@ -159,7 +159,7 @@
 
             <!-- Right Column - Recent Transactions -->
             <div class="wallet-content-col">
-                <div class="wallet-section-card">
+                <div class="wallet-section-card" data-animate="fade-up">
                     <div class="wallet-section-card__header">
                         <div class="wallet-section-card__title">
                             <i data-lucide="activity"></i>
@@ -211,21 +211,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    lucide.createIcons();
-    
-    // Анимация при загрузке
-    document.addEventListener('DOMContentLoaded', function() {
-        const cards = document.querySelectorAll('.wallet-balance-card, .wallet-section-card');
-        cards.forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            setTimeout(() => {
-                card.style.transition = 'all 0.5s ease';
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
-    });
-</script>
+<script>lucide.createIcons();</script>
 {% endblock %}
