@@ -231,7 +231,9 @@ def user_detail(request, user_id):
 @user_passes_test(is_staff_or_moderator)
 def listings_moderation(request):
     """Модерация объявлений"""
-    listings = Listing.objects.select_related('game', 'category', 'seller__profile').all()
+    listings = Listing.objects.select_related('game', 'category', 'seller__profile').annotate(
+        views_count=Count('views')
+    ).all()
     
     # Фильтры
     status = request.GET.get('status')
