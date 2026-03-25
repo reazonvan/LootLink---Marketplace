@@ -86,7 +86,7 @@ def analytics_dashboard(request):
     popular_listings = Listing.objects.filter(
         seller=user
     ).annotate(
-        views_count=Count('id')  # Можно добавить поле views в модель
+        views_count=Count('views')
     ).order_by('-views_count')[:5]
     
     # === ОТЗЫВЫ ===
