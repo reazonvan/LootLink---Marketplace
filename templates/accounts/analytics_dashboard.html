@@ -20,28 +20,28 @@
     </div>
 
     <div class="grid-4" style="margin-bottom:var(--space-8);">
-        <div class="card-glass" style="text-align:center;">
+        <div class="card-glass" style="text-align:center;" data-animate="scale-in">
             <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-success-light);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-3);">
                 <i data-lucide="shopping-cart" style="width:20px;height:20px;color:var(--color-success);"></i>
             </div>
             <div style="font-size:var(--text-2xl);font-weight:var(--weight-extrabold);color:var(--text-primary);">{{ sales_stats.total_sales|default:"0" }}</div>
             <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Продаж</div>
         </div>
-        <div class="card-glass" style="text-align:center;">
+        <div class="card-glass" style="text-align:center;" data-animate="scale-in">
             <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-3);">
                 <i data-lucide="banknote" style="width:20px;height:20px;color:var(--accent-primary);"></i>
             </div>
             <div style="font-size:var(--text-2xl);font-weight:var(--weight-extrabold);color:var(--text-primary);">{{ sales_stats.total_revenue|default:"0"|floatformat:0 }} ₽</div>
             <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Выручка</div>
         </div>
-        <div class="card-glass" style="text-align:center;">
+        <div class="card-glass" style="text-align:center;" data-animate="scale-in">
             <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-warning-light);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-3);">
                 <i data-lucide="package" style="width:20px;height:20px;color:var(--color-warning);"></i>
             </div>
             <div style="font-size:var(--text-2xl);font-weight:var(--weight-extrabold);color:var(--text-primary);">{{ sales_stats.active_listings|default:"0" }}</div>
             <div style="font-size:var(--text-xs);color:var(--text-tertiary);">Активных</div>
         </div>
-        <div class="card-glass" style="text-align:center;">
+        <div class="card-glass" style="text-align:center;" data-animate="scale-in">
             <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-info-light);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-3);">
                 <i data-lucide="star" style="width:20px;height:20px;color:var(--color-info);"></i>
             </div>
@@ -50,7 +50,7 @@
         </div>
     </div>
 
-    <div class="card-glass" style="margin-bottom:var(--space-8);">
+    <div class="card-glass" style="margin-bottom:var(--space-8);" data-animate="fade-up">
         <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
             <i data-lucide="trending-up" style="width:18px;height:18px;color:var(--accent-primary);"></i> Динамика продаж
         </h3>
@@ -60,7 +60,7 @@
     </div>
 
     <div class="grid-2">
-        <div class="card-glass">
+        <div class="card-glass" data-animate="slide-left">
             <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
                 <i data-lucide="flame" style="width:18px;height:18px;color:var(--color-danger);"></i> Популярные товары
             </h3>
@@ -76,7 +76,7 @@
             {% endif %}
         </div>
 
-        <div class="card-glass">
+        <div class="card-glass" data-animate="slide-right">
             <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
                 <i data-lucide="message-square" style="width:18px;height:18px;color:var(--accent-primary);"></i> Последние отзывы
             </h3>
@@ -101,7 +101,7 @@
         </div>
     </div>
 
-    <div class="card-glass" style="margin-top:var(--space-8);">
+    <div class="card-glass" style="margin-top:var(--space-8);" data-animate="fade-up">
         <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-3);display:flex;align-items:center;gap:var(--space-2);">
             <i data-lucide="download" style="width:18px;height:18px;color:var(--accent-primary);"></i> Экспорт данных
         </h3>

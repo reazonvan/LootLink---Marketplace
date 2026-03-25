@@ -10,7 +10,7 @@
     {% if transactions %}
     <div class="card-glass" style="padding:0;overflow:hidden;">
         {% for tx in transactions %}
-        <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4);{% if not forloop.last %}border-bottom:1px solid var(--card-border);{% endif %}">
+        <div data-animate="slide-left" style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4);{% if not forloop.last %}border-bottom:1px solid var(--card-border);{% endif %}">
             <div style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:{% if tx.amount > 0 %}var(--color-success-light){% else %}var(--color-danger-light){% endif %};">
                 <i data-lucide="{% if tx.amount > 0 %}arrow-down-left{% else %}arrow-up-right{% endif %}" style="width:18px;height:18px;color:{% if tx.amount > 0 %}var(--color-success){% else %}var(--color-danger){% endif %};"></i>
             </div>

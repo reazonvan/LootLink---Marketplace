@@ -24,7 +24,7 @@
 
         <div id="faq-list" style="display:flex;flex-direction:column;gap:var(--space-3);">
             {% for faq in faqs %}
-            <div class="faq-item card-glass" data-category="{{ faq.category|lower }}" style="cursor:pointer;">
+            <div class="faq-item card-glass" data-category="{{ faq.category|lower }}" data-animate="fade-up" style="cursor:pointer;">
                 <div class="faq-question" style="display:flex;justify-content:space-between;align-items:center;">
                     <span style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">{{ faq.question }}</span>
                     <i data-lucide="chevron-down" style="width:18px;height:18px;color:var(--text-tertiary);transition:transform 0.3s;flex-shrink:0;"></i>
@@ -42,7 +42,7 @@
             {% endfor %}
         </div>
 
-        <div class="card-glass" style="text-align:center;margin-top:var(--space-10);">
+        <div class="card-glass" style="text-align:center;margin-top:var(--space-10);" data-animate="fade-up">
             <i data-lucide="help-circle" style="width:32px;height:32px;color:var(--accent-primary);margin-bottom:var(--space-3);"></i>
             <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-2);">Не нашли ответ?</h3>
             <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-4);">Напишите нам на почту</p>

@@ -28,7 +28,7 @@
                 {% endif %}
             </div>
 
-            <div class="listing-detail__info">
+            <div class="listing-detail__info" data-animate="fade-up">
                 <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-3);">
                     <span class="badge badge-primary">{{ listing.game.name }}</span>
                     <span class="badge badge-{% if listing.status == 'active' %}success{% elif listing.status == 'sold' %}neutral{% else %}warning{% endif %}">
@@ -40,7 +40,7 @@
 
                 <div class="listing-detail__meta">
                     <span class="listing-detail__meta-item"><i data-lucide="calendar"></i> {{ listing.created_at|date:"d.m.Y" }}</span>
-                    <span class="listing-detail__meta-item"><i data-lucide="eye"></i> {{ listing.id|add:"47" }} просмотров</span>
+                    <span class="listing-detail__meta-item"><i data-lucide="eye"></i> {{ views_count }} просмотров</span>
                     <span class="listing-detail__meta-item"><i data-lucide="clock"></i> {{ listing.updated_at|timesince }} назад</span>
                 </div>
 
@@ -51,7 +51,7 @@
         </div>
 
         <div class="listing-detail__sidebar">
-            <div class="listing-detail__price-card">
+            <div class="listing-detail__price-card" data-animate="slide-right">
                 <div class="listing-detail__price">{{ listing.price }} <small>₽</small></div>
                 
                 <div class="listing-detail__actions">
@@ -101,7 +101,7 @@
                 </div>
             </div>
 
-            <div class="seller-card">
+            <div class="seller-card" data-animate="slide-right">
                 <div class="seller-card__header">
                     {% if listing.seller.profile.avatar %}
                     <div class="avatar avatar--lg avatar--round">
@@ -174,7 +174,7 @@
     </div>
 
     {% if similar_listings %}
-    <div class="similar-listings">
+    <div class="similar-listings" data-animate="fade-up">
         <h3>Похожие предложения</h3>
         <div class="scroll-row">
             {% for similar in similar_listings %}
