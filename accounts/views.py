@@ -8,8 +8,9 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
 from .forms import (CustomUserCreationForm, CustomAuthenticationForm, ProfileUpdateForm,
-                    PasswordResetRequestForm, PasswordResetConfirmForm)
+                    PasswordResetRequestForm, PasswordResetConfirmForm, ChangePasswordForm)
 from .models import CustomUser, Profile, PasswordResetCode
+from .models_security import LoginHistory
 from transactions.models import Review
 
 
@@ -594,3 +595,109 @@ def check_phone_available(request):
         return JsonResponse({'available': False, 'message': 'Этот номер уже зарегистрирован'})
     
     return JsonResponse({'available': True, 'message': 'Номер доступен'})
+
+
+# ═══════════════════════════════════════════════════════════════
+# НАСТРОЙКИ АККАУНТА
+# ═══════════════════════════════════════════════════════════════
+
+@login_required
+def account_settings(request):
+    """Страница настроек аккаунта — данные, безопасность, сессии."""
+    from django.contrib.sessions.models import Session
+    from django.utils import timezone
+    from django_otp.plugins.otp_totp.models import TOTPDevice
+
+    user = request.user
+    profile, _ = Profile.objects.get_or_create(user=user)
+
+    # 2FA статус
+    has_2fa = TOTPDevice.objects.filter(user=user, confirmed=True).exists()
+
+    # Смена пароля
+    password_form = ChangePasswordForm(user=user)
+    password_changed = False
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'change_password':
+            password_form = ChangePasswordForm(request.POST, user=user)
+            if password_form.is_valid():
+                password_form.save()
+                from django.contrib.auth import update_session_auth_hash
+                update_session_auth_hash(request, user)
+                messages.success(request, 'Пароль успешно изменён.')
+                password_changed = True
+                password_form = ChangePasswordForm(user=user)
+
+    # Активные сессии
+    current_session_key = request.session.session_key
+    sessions = Session.objects.filter(expire_date__gte=timezone.now())
+    user_sessions = []
+    for session in sessions:
+        data = session.get_decoded()
+        if str(data.get('_auth_user_id')) == str(user.pk):
+            user_sessions.append({
+                'session_key': session.session_key,
+                'expire_date': session.expire_date,
+                'is_current': session.session_key == current_session_key,
+            })
+
+    # Последние входы (с устройствами)
+    recent_logins = LoginHistory.objects.filter(
+        user=user, success=True
+    ).order_by('-created_at')[:20]
+
+    context = {
+        'profile': profile,
+        'has_2fa': has_2fa,
+        'password_form': password_form,
+        'password_changed': password_changed,
+        'user_sessions': user_sessions,
+        'recent_logins': recent_logins,
+        'active_tab': request.GET.get('tab', 'account'),
+    }
+    return render(request, 'accounts/settings.html', context)
+
+
+@login_required
+@require_POST
+def terminate_session(request):
+    """Завершить конкретную сессию."""
+    from django.contrib.sessions.models import Session
+    session_key = request.POST.get('session_key')
+    if session_key == request.session.session_key:
+        messages.error(request, 'Нельзя завершить текущую сессию.')
+        return redirect('accounts:account_settings')
+    try:
+        session = Session.objects.get(session_key=session_key)
+        data = session.get_decoded()
+        if str(data.get('_auth_user_id')) == str(request.user.pk):
+            session.delete()
+            messages.success(request, 'Сессия завершена.')
+        else:
+            messages.error(request, 'Нет доступа к этой сессии.')
+    except Session.DoesNotExist:
+        messages.error(request, 'Сессия не найдена.')
+    return redirect('accounts:account_settings')
+
+
+@login_required
+@require_POST
+def terminate_all_sessions(request):
+    """Завершить все сессии кроме текущей."""
+    from django.contrib.sessions.models import Session
+    from django.utils import timezone
+    current_key = request.session.session_key
+    sessions = Session.objects.filter(expire_date__gte=timezone.now())
+    count = 0
+    for session in sessions:
+        if session.session_key == current_key:
+            continue
+        data = session.get_decoded()
+        if str(data.get('_auth_user_id')) == str(request.user.pk):
+            session.delete()
+            count += 1
+    messages.success(request, f'Завершено сессий: {count}')
+    return redirect('accounts:account_settings')

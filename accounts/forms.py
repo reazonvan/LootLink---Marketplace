@@ -325,6 +325,59 @@ class PasswordResetConfirmForm(forms.Form):
         return self.user
 
 
+class ChangePasswordForm(forms.Form):
+    """Форма смены пароля из настроек аккаунта."""
+    current_password = forms.CharField(
+        label='Текущий пароль',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Введите текущий пароль',
+            'autocomplete': 'current-password'
+        })
+    )
+    new_password1 = forms.CharField(
+        label='Новый пароль',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Новый пароль',
+            'autocomplete': 'new-password'
+        })
+    )
+    new_password2 = forms.CharField(
+        label='Подтверждение пароля',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Повторите новый пароль',
+            'autocomplete': 'new-password'
+        })
+    )
+
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_current_password(self):
+        password = self.cleaned_data.get('current_password')
+        if not self.user.check_password(password):
+            raise forms.ValidationError('Неверный текущий пароль.')
+        return password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        p1 = cleaned_data.get('new_password1')
+        p2 = cleaned_data.get('new_password2')
+        if p1 and p2 and p1 != p2:
+            raise forms.ValidationError('Пароли не совпадают.')
+        if p1 and len(p1) < 8:
+            raise forms.ValidationError('Пароль должен быть не менее 8 символов.')
+        return cleaned_data
+
+    def save(self):
+        self.user.set_password(self.cleaned_data['new_password1'])
+        self.user.save()
+        return self.user
+
+
 class SMSVerificationForm(forms.Form):
     """Форма ввода SMS кода"""
     code = forms.CharField(

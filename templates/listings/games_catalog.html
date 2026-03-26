@@ -4,51 +4,66 @@
 
 {% block content %}
 <div class="catalog-page">
-    <div style="text-align:center;margin-bottom:var(--space-6);">
-        <span class="section-label">Каталог</span>
-        <h1 style="font-size:var(--text-3xl);margin-bottom:var(--space-2);">Выберите игру</h1>
-        <p style="color:var(--text-secondary);font-size:var(--text-base);margin-bottom:0;">{{ games|length }} игр &middot; {{ total_listings|default:"0" }} объявлений на маркетплейсе</p>
+    <!-- Header -->
+    <div class="catalog-header">
+        <h1 class="catalog-header__title">Каталог игр</h1>
+        <p class="catalog-header__stats">{{ games|length }} игр &middot; {{ total_listings }} товаров</p>
     </div>
 
-    <div class="catalog-page__search">
-        <i data-lucide="search"></i>
-        <input type="text" id="gameSearchInput" placeholder="Поиск по названию игры..." autocomplete="off">
-        <div id="searchResults" class="search-dropdown"></div>
+    <!-- Search -->
+    <div class="catalog-search">
+        <div class="catalog-search__inner">
+            <i data-lucide="search" class="catalog-search__icon"></i>
+            <input type="text" id="catalogSearch" class="catalog-search__input" placeholder="Найти игру..." autocomplete="off">
+            <kbd class="catalog-search__kbd">/</kbd>
+        </div>
+        <div id="searchDropdown" class="catalog-search__dropdown"></div>
     </div>
 
+    <!-- Alphabet -->
     {% if alphabet %}
-    <div class="catalog-page__alphabet" id="alphabetSection">
+    <div class="catalog-alphabet" id="alphabetNav">
         {% for letter in alphabet %}
-        <a href="#letter-{{ letter }}" class="catalog-page__letter" data-letter="{{ letter }}">{{ letter }}</a>
+        <a href="#section-{{ letter }}" class="catalog-alphabet__letter" data-letter="{{ letter }}">{{ letter }}</a>
         {% endfor %}
     </div>
     {% endif %}
 
-    <div class="catalog-page__games-grid" id="gamesGrid">
+    <!-- Games list -->
+    <div class="catalog-games" id="gamesContainer">
         {% for game in games %}
         {% if game.first_in_letter %}
-        <div class="catalog-page__letter-divider" id="letter-{{ game.first_letter }}">
-            {{ game.first_letter }}
+        <div class="catalog-letter-section" id="section-{{ game.first_letter }}">
+            <div class="catalog-letter-section__marker">{{ game.first_letter }}</div>
         </div>
         {% endif %}
 
-        <div class="game-card-clean" data-game-name="{{ game.name|lower }}">
-            <a href="{% url 'listings:game_listings' game.slug %}" class="game-card-ll" style="text-decoration:none;height:100%;">
-                {% if game.icon and game.icon.name %}
-                <img src="{{ game.icon.url }}" alt="{{ game.name }}" class="game-card-ll__icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="game-card-ll__icon-placeholder" style="display:none;">
-                    <i data-lucide="gamepad-2"></i>
+        <div class="catalog-game-row" data-name="{{ game.name|lower }}">
+            <a href="{% url 'listings:game_listings' game.slug %}" class="catalog-game-row__main">
+                <div class="catalog-game-row__icon">
+                    {% if game.icon and game.icon.name %}
+                    <img src="{{ game.icon.url }}" alt="{{ game.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <span class="catalog-game-row__icon-fallback" style="display:none;"><i data-lucide="gamepad-2"></i></span>
+                    {% else %}
+                    <span class="catalog-game-row__icon-fallback"><i data-lucide="gamepad-2"></i></span>
+                    {% endif %}
                 </div>
-                {% else %}
-                <div class="game-card-ll__icon-placeholder">
-                    <i data-lucide="gamepad-2"></i>
+                <div class="catalog-game-row__info">
+                    <span class="catalog-game-row__name">{{ game.name }}</span>
+                    <span class="catalog-game-row__count">{{ game.listings_count|default:"0" }} товаров</span>
                 </div>
-                {% endif %}
-                <div class="game-card-ll__name">{{ game.name }}</div>
-                <div class="game-card-ll__count">
-                    {% if game.listings_count %}{{ game.listings_count }} товаров{% else %}Нет товаров{% endif %}
-                </div>
+                <i data-lucide="chevron-right" class="catalog-game-row__arrow"></i>
             </a>
+            {% if game.active_categories %}
+            <div class="catalog-game-row__categories">
+                {% for cat in game.active_categories %}
+                <a href="{% url 'listings:category_listings' game.slug cat.slug %}" class="catalog-cat-chip">
+                    <span class="catalog-cat-chip__name">{{ cat.name }}</span>
+                    {% if cat.listings_count %}<span class="catalog-cat-chip__count">{{ cat.listings_count }}</span>{% endif %}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
         {% empty %}
         <div class="empty-state" style="grid-column:1/-1;">
@@ -61,82 +76,382 @@
 </div>
 
 <style>
-.search-dropdown { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: var(--card-bg); backdrop-filter: blur(20px); border-radius: var(--radius-lg); border: 1px solid var(--card-border); box-shadow: var(--shadow-xl); max-height: 360px; overflow-y: auto; display: none; z-index: var(--z-dropdown); }
-.search-dropdown.active { display: block; }
-.search-result-item { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); cursor: pointer; transition: background 0.15s; font-size: var(--text-sm); }
-.search-result-item:hover { background: var(--gray-50); }
-.search-result-icon { color: var(--accent-primary); }
-.search-result-name { font-weight: var(--weight-semibold); color: var(--text-primary); }
-.search-no-result { padding: var(--space-6); text-align: center; color: var(--text-secondary); font-size: var(--text-sm); }
-.game-card-clean.search-hidden, .catalog-page__letter-divider.search-hidden { display: none; }
+/* ── Catalog Page ─────────────────────────────────── */
+.catalog-page {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-4) var(--space-16);
+}
+
+.catalog-header {
+    text-align: center;
+    margin-bottom: var(--space-8);
+}
+.catalog-header__title {
+    font-size: var(--text-3xl);
+    font-weight: var(--weight-extrabold);
+    letter-spacing: -0.02em;
+    margin-bottom: var(--space-2);
+}
+.catalog-header__stats {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    margin: 0;
+}
+
+/* Search */
+.catalog-search {
+    position: relative;
+    margin-bottom: var(--space-6);
+}
+.catalog-search__inner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3) var(--space-4);
+    transition: border-color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+}
+.catalog-search__inner:focus-within {
+    border-color: var(--accent-primary);
+    box-shadow: var(--input-focus-shadow);
+}
+.catalog-search__icon {
+    width: 18px; height: 18px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+.catalog-search__input {
+    flex: 1;
+    border: none;
+    background: none;
+    font-size: var(--text-base);
+    color: var(--text-primary);
+    outline: none;
+    font-family: inherit;
+}
+.catalog-search__input::placeholder { color: var(--text-tertiary); }
+.catalog-search__kbd {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    color: var(--text-tertiary);
+    font-family: monospace;
+    line-height: 1;
+}
+[data-theme="dark"] .catalog-search__kbd {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+}
+.catalog-search__dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0; right: 0;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    max-height: 320px;
+    overflow-y: auto;
+    display: none;
+    z-index: var(--z-dropdown);
+}
+.catalog-search__dropdown.open { display: block; }
+.catalog-search__dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    cursor: pointer;
+    transition: background var(--duration-fast);
+    text-decoration: none;
+    color: inherit;
+    font-size: var(--text-sm);
+}
+.catalog-search__dropdown-item:hover,
+.catalog-search__dropdown-item.focused {
+    background: var(--gray-50);
+}
+[data-theme="dark"] .catalog-search__dropdown-item:hover,
+[data-theme="dark"] .catalog-search__dropdown-item.focused {
+    background: var(--gray-700);
+}
+.catalog-search__dropdown-empty {
+    padding: var(--space-6);
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+}
+
+/* Alphabet */
+.catalog-alphabet {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    margin-bottom: var(--space-6);
+    padding: var(--space-2) 0;
+}
+.catalog-alphabet__letter {
+    width: 32px; height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    transition: all var(--duration-fast) var(--ease-out);
+}
+.catalog-alphabet__letter:hover,
+.catalog-alphabet__letter.active {
+    background: var(--accent-primary);
+    color: #fff;
+}
+
+/* Letter section */
+.catalog-letter-section {
+    padding-top: var(--space-4);
+    margin-top: var(--space-2);
+}
+.catalog-letter-section__marker {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: var(--space-1) 0 var(--space-2);
+    border-bottom: 1px solid var(--gray-200);
+    margin-bottom: var(--space-1);
+}
+[data-theme="dark"] .catalog-letter-section__marker {
+    border-bottom-color: var(--gray-700);
+}
+
+/* Game row */
+.catalog-game-row {
+    border-radius: var(--radius-md);
+    transition: background var(--duration-fast) var(--ease-out);
+}
+.catalog-game-row:hover {
+    background: var(--card-bg);
+}
+.catalog-game-row__main {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-3);
+    text-decoration: none;
+    color: inherit;
+}
+.catalog-game-row__icon {
+    width: 40px; height: 40px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--gray-100);
+}
+[data-theme="dark"] .catalog-game-row__icon {
+    background: var(--gray-700);
+}
+.catalog-game-row__icon img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+.catalog-game-row__icon-fallback {
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+}
+.catalog-game-row__icon-fallback svg { width: 20px; height: 20px; }
+.catalog-game-row__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.catalog-game-row__name {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.catalog-game-row__count {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+}
+.catalog-game-row__arrow {
+    width: 16px; height: 16px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    transition: transform var(--duration-fast) var(--ease-out);
+}
+.catalog-game-row:hover .catalog-game-row__arrow {
+    transform: translateX(2px);
+    color: var(--accent-primary);
+}
+
+/* Category chips */
+.catalog-game-row__categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 var(--space-3) var(--space-3);
+    padding-left: calc(40px + var(--space-3) + var(--space-3));
+}
+.catalog-cat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--gray-100);
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all var(--duration-fast) var(--ease-out);
+    white-space: nowrap;
+}
+.catalog-cat-chip:hover {
+    background: var(--accent-primary);
+    color: #fff;
+}
+.catalog-cat-chip__count {
+    font-size: 10px;
+    background: rgba(0,0,0,0.08);
+    padding: 1px 5px;
+    border-radius: var(--radius-full);
+    font-weight: var(--weight-semibold);
+}
+.catalog-cat-chip:hover .catalog-cat-chip__count {
+    background: rgba(255,255,255,0.25);
+}
+[data-theme="dark"] .catalog-cat-chip {
+    background: var(--gray-700);
+    color: var(--text-secondary);
+}
+[data-theme="dark"] .catalog-cat-chip__count {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Hidden state for search */
+.catalog-game-row.search-hidden,
+.catalog-letter-section.search-hidden { display: none; }
+
+/* ── Mobile ──────────────────────────────────── */
+@media (max-width: 640px) {
+    .catalog-page { padding: var(--space-4) var(--space-3) var(--space-12); }
+    .catalog-header__title { font-size: var(--text-2xl); }
+    .catalog-alphabet__letter { width: 28px; height: 28px; font-size: 10px; }
+    .catalog-game-row__categories { padding-left: calc(40px + var(--space-3) + var(--space-3)); }
+    .catalog-search__kbd { display: none; }
+}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     lucide.createIcons();
-    var searchInput = document.getElementById('gameSearchInput');
-    var searchResults = document.getElementById('searchResults');
-    var gameCards = document.querySelectorAll('.game-card-clean');
-    var letterDividers = document.querySelectorAll('.catalog-page__letter-divider');
-    var gamesIndex = Array.from(gameCards).map(function(card) {
-        return { name: card.dataset.gameName, card: card };
+
+    var searchInput = document.getElementById('catalogSearch');
+    var dropdown = document.getElementById('searchDropdown');
+    var gameRows = document.querySelectorAll('.catalog-game-row');
+    var letterSections = document.querySelectorAll('.catalog-letter-section');
+    var alphabetLinks = document.querySelectorAll('.catalog-alphabet__letter');
+
+    // Build index
+    var games = Array.from(gameRows).map(function(row) {
+        return {
+            name: row.dataset.name,
+            el: row,
+            link: row.querySelector('.catalog-game-row__main').href,
+            displayName: row.querySelector('.catalog-game-row__name').textContent
+        };
     });
+
+    // Keyboard shortcut: / to focus search
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && document.activeElement !== searchInput) {
+            e.preventDefault();
+            searchInput.focus();
+        }
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            searchInput.blur();
+            searchInput.value = '';
+            resetSearch();
+        }
+    });
+
+    function resetSearch() {
+        dropdown.classList.remove('open');
+        dropdown.innerHTML = '';
+        gameRows.forEach(function(r) { r.classList.remove('search-hidden'); });
+        letterSections.forEach(function(s) { s.classList.remove('search-hidden'); });
+    }
 
     if (searchInput) {
         searchInput.addEventListener('input', function() {
-            var query = this.value.toLowerCase().trim();
-            if (!query) {
-                gameCards.forEach(function(c) { c.classList.remove('search-hidden'); });
-                letterDividers.forEach(function(d) { d.classList.remove('search-hidden'); });
-                searchResults.classList.remove('active');
-                searchResults.innerHTML = '';
-                return;
-            }
-            var matches = gamesIndex.filter(function(g) { return g.name.includes(query); });
+            var q = this.value.toLowerCase().trim();
+            if (!q) { resetSearch(); return; }
+
+            var matches = games.filter(function(g) { return g.name.includes(q); });
+
+            // Update dropdown
             if (matches.length > 0) {
-                searchResults.innerHTML = matches.slice(0, 10).map(function(g) {
-                    var displayName = g.card.querySelector('.game-card-ll__name').textContent;
-                    return '<div class="search-result-item" data-game="' + g.name + '"><span class="search-result-name">' + displayName + '</span></div>';
+                dropdown.innerHTML = matches.slice(0, 8).map(function(g) {
+                    return '<a href="' + g.link + '" class="catalog-search__dropdown-item">' + g.displayName + '</a>';
                 }).join('');
-                searchResults.classList.add('active');
-                searchResults.querySelectorAll('.search-result-item').forEach(function(item) {
-                    item.addEventListener('click', function() {
-                        var target = gamesIndex.find(function(g) { return g.name === item.dataset.game; });
-                        if (target) target.card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        searchResults.classList.remove('active');
-                        searchInput.value = '';
-                        gameCards.forEach(function(c) { c.classList.remove('search-hidden'); });
-                        letterDividers.forEach(function(d) { d.classList.remove('search-hidden'); });
-                    });
-                });
+                dropdown.classList.add('open');
             } else {
-                searchResults.innerHTML = '<div class="search-no-result">Игры не найдены</div>';
-                searchResults.classList.add('active');
+                dropdown.innerHTML = '<div class="catalog-search__dropdown-empty">Ничего не найдено</div>';
+                dropdown.classList.add('open');
             }
-            gameCards.forEach(function(card) {
-                card.classList.toggle('search-hidden', !card.dataset.gameName.includes(query));
+
+            // Filter visible rows
+            gameRows.forEach(function(row) {
+                row.classList.toggle('search-hidden', !row.dataset.name.includes(q));
             });
-            letterDividers.forEach(function(divider) {
-                var letter = divider.id.replace('letter-', '');
-                var hasVisible = Array.from(gameCards).some(function(c) {
-                    return !c.classList.contains('search-hidden') && c.dataset.gameName[0] && c.dataset.gameName[0].toUpperCase() === letter;
+            letterSections.forEach(function(section) {
+                var id = section.id.replace('section-', '');
+                var hasVisible = games.some(function(g) {
+                    return !g.el.classList.contains('search-hidden') &&
+                           g.name[0] && g.name[0].toUpperCase() === id;
                 });
-                divider.classList.toggle('search-hidden', !hasVisible);
+                section.classList.toggle('search-hidden', !hasVisible);
             });
         });
     }
 
+    // Click outside closes dropdown
     document.addEventListener('click', function(e) {
-        if (searchInput && !searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-            searchResults.classList.remove('active');
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('open');
         }
     });
 
-    document.querySelectorAll('.catalog-page__letter').forEach(function(link) {
+    // Smooth scroll for alphabet
+    alphabetLinks.forEach(function(link) {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             var target = document.querySelector(this.getAttribute('href'));
-            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Highlight active letter
+                alphabetLinks.forEach(function(l) { l.classList.remove('active'); });
+                this.classList.add('active');
+            }
         });
     });
 });
