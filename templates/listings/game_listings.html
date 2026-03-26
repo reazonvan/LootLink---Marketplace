@@ -1,35 +1,70 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ game.name }} - Объявления{% endblock %}
+{% block title %}{{ game.name }} - LootLink{% endblock %}
 
 {% block content %}
-<div style="padding:var(--space-6) 0 var(--space-12);">
+<div class="game-page">
+    <!-- Breadcrumb -->
     <ul class="ll-breadcrumb">
         <li><a href="{% url 'listings:catalog' %}">Каталог</a></li>
         <li><span class="current">{{ game.name }}</span></li>
     </ul>
 
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:var(--space-3);margin-bottom:var(--space-6);">
-        <div>
-            <h1 style="font-size:var(--text-2xl);font-weight:var(--weight-extrabold);">{{ game.name }}</h1>
-            {% if game.description %}
-            <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:var(--space-1);">{{ game.description }}</p>
+    <!-- Game Header -->
+    <div class="game-page__header">
+        <div class="game-page__icon">
+            {% if game.icon and game.icon.name %}
+            <img src="{{ game.icon.url }}" alt="{{ game.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <span class="game-page__icon-fallback" style="display:none;"><i data-lucide="gamepad-2"></i></span>
+            {% else %}
+            <span class="game-page__icon-fallback"><i data-lucide="gamepad-2"></i></span>
             {% endif %}
         </div>
-        {% if user.is_authenticated %}
-        <a href="{% url 'listings:listing_create' %}" class="btn btn-primary btn-sm">
-            <i data-lucide="plus"></i> Создать объявление
-        </a>
-        {% endif %}
+        <div class="game-page__meta">
+            <h1 class="game-page__title">{{ game.name }}</h1>
+            {% if game.description %}
+            <p class="game-page__desc">{{ game.description }}</p>
+            {% endif %}
+            <div class="game-page__stats">
+                <span>{{ categories|length }} категорий</span>
+                <span class="game-page__dot">&middot;</span>
+                <span>{{ total_listings }} товаров</span>
+            </div>
+        </div>
     </div>
 
-    {% if page_obj %}
-    <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-4);">
-        Найдено объявлений: {{ page_obj.paginator.count }}
-    </p>
+    <!-- Categories Grid -->
+    {% if categories %}
+    <div class="game-page__section-title">
+        <i data-lucide="layout-grid" style="width:18px;height:18px;"></i>
+        Категории
+    </div>
+    <div class="game-cats-grid">
+        {% for cat in categories %}
+        <a href="{% url 'listings:category_listings' game.slug cat.slug %}" class="game-cat-card">
+            <div class="game-cat-card__top">
+                <span class="game-cat-card__name">{{ cat.name }}</span>
+                <i data-lucide="chevron-right" class="game-cat-card__arrow"></i>
+            </div>
+            {% if cat.description %}
+            <p class="game-cat-card__desc">{{ cat.description|truncatewords:12 }}</p>
+            {% endif %}
+            <div class="game-cat-card__bottom">
+                <span class="game-cat-card__count">{{ cat.listings_count|default:"0" }} товаров</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
 
+    <!-- Recent Listings -->
+    {% if recent_listings %}
+    <div class="game-page__section-title" style="margin-top:var(--space-8);">
+        <i data-lucide="clock" style="width:18px;height:18px;"></i>
+        Последние объявления
+    </div>
     <div class="listings-grid-ll">
-        {% for listing in page_obj %}
+        {% for listing in recent_listings %}
         <a href="{% url 'listings:listing_detail' listing.pk %}" style="text-decoration:none;color:inherit;">
             <div class="listing-card" data-animate="fade-up">
                 <div class="listing-card__image">
@@ -42,12 +77,11 @@
                 <div class="listing-card__body">
                     <div class="listing-card__seller">
                         <span class="listing-card__seller-name">{{ listing.seller.username }}</span>
-                        <span class="listing-card__seller-date">{{ listing.created_at|date:"d.m.Y" }}</span>
+                        {% if listing.category %}<span class="listing-card__seller-date">{{ listing.category.name }}</span>{% endif %}
                     </div>
                     <div class="listing-card__title">{{ listing.title|truncatewords:5 }}</div>
-                    <div class="listing-card__desc">{{ listing.description|truncatewords:10 }}</div>
                     <div class="listing-card__footer">
-                        <div class="listing-card__price">{{ listing.price }} ₽</div>
+                        <div class="listing-card__price">{{ listing.price }} &#8381;</div>
                         <span class="listing-card__action">Смотреть <i data-lucide="arrow-right"></i></span>
                     </div>
                 </div>
@@ -55,34 +89,173 @@
         </a>
         {% endfor %}
     </div>
+    {% endif %}
 
-    {% if page_obj.has_other_pages %}
-    <div class="pagination">
-        {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}"><i data-lucide="chevron-left"></i></a>
-        {% endif %}
-        {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
-            <span class="active">{{ num }}</span>
-            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <a href="?page={{ num }}">{{ num }}</a>
-            {% endif %}
-        {% endfor %}
-        {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}"><i data-lucide="chevron-right"></i></a>
-        {% endif %}
+    <!-- Empty state -->
+    {% if not categories and not recent_listings %}
+    <div class="empty-state">
+        <div class="empty-state__icon"><i data-lucide="inbox"></i></div>
+        <div class="empty-state__title">Для этой игры пока нет категорий</div>
+        <div class="empty-state__text">Администратор скоро добавит категории</div>
+        <a href="{% url 'listings:catalog' %}" class="btn btn-primary">Назад к каталогу</a>
     </div>
     {% endif %}
 
-    {% else %}
-    <div class="empty-state">
-        <div class="empty-state__icon"><i data-lucide="inbox"></i></div>
-        <div class="empty-state__title">Объявления для этой игры пока отсутствуют</div>
-        <div class="empty-state__text">Станьте первым, кто разместит объявление</div>
-        <a href="{% url 'listings:catalog' %}" class="btn btn-primary">К каталогу</a>
+    {% if user.is_authenticated %}
+    <div style="text-align:center;margin-top:var(--space-8);">
+        <a href="{% url 'listings:listing_create' %}" class="btn btn-primary">
+            <i data-lucide="plus"></i> Создать объявление
+        </a>
     </div>
     {% endif %}
 </div>
+
+<style>
+.game-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: var(--space-4) var(--space-4) var(--space-16);
+}
+
+/* Header */
+.game-page__header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-5);
+    margin-bottom: var(--space-8);
+    padding: var(--space-5);
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-xl);
+}
+.game-page__icon {
+    width: 72px; height: 72px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--gray-100);
+}
+[data-theme="dark"] .game-page__icon { background: var(--gray-700); }
+.game-page__icon img { width: 100%; height: 100%; object-fit: cover; }
+.game-page__icon-fallback {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-tertiary);
+}
+.game-page__icon-fallback svg { width: 32px; height: 32px; }
+.game-page__meta { flex: 1; min-width: 0; }
+.game-page__title {
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-extrabold);
+    letter-spacing: -0.02em;
+    margin-bottom: var(--space-1);
+}
+.game-page__desc {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-2);
+    line-height: var(--leading-relaxed);
+}
+.game-page__stats {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+.game-page__dot { font-size: 8px; }
+
+/* Section title */
+.game-page__section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-4);
+}
+
+/* Categories grid */
+.game-cats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--space-3);
+}
+.game-cat-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-4);
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: inherit;
+    transition: all var(--duration-normal) var(--ease-out);
+}
+.game-cat-card:hover {
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+.game-cat-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+}
+.game-cat-card__name {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    color: var(--text-primary);
+}
+.game-cat-card__arrow {
+    width: 16px; height: 16px;
+    color: var(--text-tertiary);
+    transition: transform var(--duration-fast) var(--ease-out);
+}
+.game-cat-card:hover .game-cat-card__arrow {
+    transform: translateX(3px);
+    color: var(--accent-primary);
+}
+.game-cat-card__desc {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    line-height: var(--leading-normal);
+    margin: 0 0 auto;
+    padding-bottom: var(--space-3);
+}
+.game-cat-card__bottom {
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--gray-200);
+}
+[data-theme="dark"] .game-cat-card__bottom { border-top-color: var(--gray-700); }
+.game-cat-card__count {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    font-weight: var(--weight-medium);
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+    .game-page { padding: var(--space-3) var(--space-3) var(--space-12); }
+    .game-page__header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: var(--space-4);
+    }
+    .game-page__icon { width: 56px; height: 56px; }
+    .game-page__title { font-size: var(--text-xl); }
+    .game-page__stats { justify-content: center; }
+    .game-cats-grid { grid-template-columns: 1fr; }
+}
+</style>
 
 {% block extra_js %}
 <script>lucide.createIcons();</script>

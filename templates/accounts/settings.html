@@ -1,0 +1,557 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Настройки — LootLink{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Layout ── */
+.settings { padding: var(--space-6) 0 var(--space-12); }
+.settings__grid {
+    max-width: 1000px; margin: 0 auto;
+    display: grid; grid-template-columns: 220px 1fr; gap: var(--space-5);
+    align-items: start;
+}
+
+/* ── Sidebar (desktop) ── */
+.settings-nav {
+    position: sticky; top: 90px;
+    background: var(--card-bg); backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border); border-radius: var(--radius-lg);
+    padding: var(--space-3); display: flex; flex-direction: column; gap: 2px;
+}
+.settings-nav__link {
+    display: flex; align-items: center; gap: var(--space-2);
+    padding: 10px var(--space-3); border-radius: var(--radius-md);
+    font-size: var(--text-sm); font-weight: var(--weight-medium);
+    color: var(--text-secondary); text-decoration: none;
+    border: none; background: none; cursor: pointer;
+    width: 100%; text-align: left; transition: all 0.15s;
+}
+.settings-nav__link:hover { color: var(--text-primary); background: var(--gray-100); }
+.settings-nav__link.active { color: var(--accent-primary); background: var(--color-primary-light); font-weight: var(--weight-semibold); }
+.settings-nav__link svg { width: 18px; height: 18px; flex-shrink: 0; }
+.settings-nav__sep { height: 1px; background: var(--card-border); margin: var(--space-2) var(--space-3); }
+/* Chevron — mobile only */
+.settings-nav__chevron { display: none; }
+
+/* ── Mobile menu (full-page list) ── */
+.settings-mobile-menu { display: none; }
+
+/* ── Back button — hidden on desktop ── */
+.settings-back { display: none; }
+
+/* ── Content ── */
+.settings-content { min-width: 0; }
+.settings-panel { display: none; }
+.settings-panel.active { display: block; animation: fadeUp .2s ease; }
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Section heading ── */
+.s-heading { font-size: var(--text-lg); font-weight: var(--weight-bold); color: var(--text-primary); margin-bottom: var(--space-1); }
+.s-subheading { font-size: var(--text-sm); color: var(--text-tertiary); margin-bottom: var(--space-5); }
+
+/* ── Cards ── */
+.s-card {
+    background: var(--card-bg); backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border); border-radius: var(--radius-lg);
+    padding: var(--space-5); margin-bottom: var(--space-4);
+}
+.s-card__head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: var(--space-4); padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--card-border);
+}
+.s-card__title {
+    font-size: var(--text-sm); font-weight: var(--weight-semibold);
+    color: var(--text-primary); display: flex; align-items: center;
+    gap: var(--space-2); letter-spacing: .01em; text-transform: uppercase;
+}
+.s-card__title svg { width: 16px; height: 16px; color: var(--accent-primary); }
+
+/* ── Data rows ── */
+.data-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; }
+.data-row + .data-row { border-top: 1px solid var(--gray-100); }
+.data-row__label { font-size: var(--text-sm); color: var(--text-tertiary); display: flex; align-items: center; gap: 6px; }
+.data-row__value { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+
+/* ── Badges ── */
+.badge-on { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: var(--weight-semibold); background: var(--color-success-light); color: var(--color-success); }
+.badge-off { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: var(--weight-semibold); background: var(--color-danger-light); color: var(--color-danger); }
+.badge-soon { display: inline-flex; padding: 3px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: var(--weight-medium); background: var(--gray-100); color: var(--text-tertiary); }
+
+/* ── Sessions ── */
+.session-item { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 0; }
+.session-item + .session-item { border-top: 1px solid var(--gray-100); }
+.session-icon { width: 42px; height: 42px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.session-icon svg { width: 20px; height: 20px; }
+.session-icon--current { background: var(--color-success-light); }
+.session-icon--current svg { color: var(--color-success); }
+.session-icon--other { background: var(--gray-100); }
+.session-icon--other svg { color: var(--text-tertiary); }
+.session-body { flex: 1; min-width: 0; }
+.session-body__name { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--text-primary); }
+.session-body__meta { font-size: var(--text-xs); color: var(--text-tertiary); margin-top: 2px; }
+
+/* ── Login history ── */
+.login-entry { display: flex; align-items: center; gap: var(--space-3); padding: 10px 0; }
+.login-entry + .login-entry { border-top: 1px solid var(--gray-100); }
+.login-icon { width: 36px; height: 36px; border-radius: 50%; background: var(--color-primary-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.login-icon svg { width: 16px; height: 16px; color: var(--accent-primary); }
+.login-body { flex: 1; min-width: 0; }
+.login-body__top { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--text-primary); }
+.login-body__bottom { font-size: var(--text-xs); color: var(--text-tertiary); margin-top: 1px; }
+.login-time { font-size: var(--text-xs); color: var(--text-tertiary); flex-shrink: 0; text-align: right; line-height: 1.4; }
+
+/* ── Password form ── */
+.pw-form { display: none; margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--gray-100); }
+.pw-form.open { display: block; animation: fadeUp .2s ease; }
+.pw-form .fg { margin-bottom: var(--space-3); }
+.pw-form .fg label { display: block; font-size: var(--text-xs); font-weight: var(--weight-medium); color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .03em; }
+.pw-form .fg input { width: 100%; padding: 10px 14px; background: var(--gray-50); border: 1px solid var(--card-border); border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--text-primary); transition: border-color .2s; }
+.pw-form .fg input:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }
+.pw-form__error { margin-bottom: var(--space-3); padding: var(--space-2) var(--space-3); background: var(--color-danger-light); border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--color-danger); }
+.pw-form__field-error { font-size: var(--text-xs); color: var(--color-danger); margin-top: 3px; }
+
+/* ══════════════════════════════════════
+   MOBILE: drill-down navigation
+   ══════════════════════════════════════ */
+@media (max-width: 768px) {
+    .settings { padding: 0 0 var(--space-8); }
+    .settings__grid { grid-template-columns: 1fr; gap: 0; }
+
+    /* Hide desktop sidebar */
+    .settings-nav { display: none; }
+
+    /* ── Mobile menu ── */
+    .settings-mobile-menu {
+        display: flex; flex-direction: column;
+    }
+    .settings-mobile-menu__header {
+        padding: var(--space-4) 0; margin-bottom: var(--space-2);
+    }
+    .settings-mobile-menu__header h1 {
+        font-size: var(--text-xl); font-weight: var(--weight-bold); color: var(--text-primary);
+    }
+    .settings-mobile-menu__item {
+        display: flex; align-items: center; gap: var(--space-3);
+        padding: var(--space-4); margin-bottom: 1px;
+        background: var(--card-bg); border: 1px solid var(--card-border);
+        border-radius: var(--radius-md); cursor: pointer;
+        text-decoration: none; color: inherit; transition: all 0.15s;
+    }
+    .settings-mobile-menu__item:first-of-type { border-radius: var(--radius-md) var(--radius-md) 0 0; }
+    .settings-mobile-menu__item:last-of-type { border-radius: 0 0 var(--radius-md) var(--radius-md); }
+    .settings-mobile-menu__item:only-of-type { border-radius: var(--radius-md); }
+    .settings-mobile-menu__item + .settings-mobile-menu__item { margin-top: -1px; }
+    .settings-mobile-menu__item:active { background: var(--gray-100); }
+    .settings-mobile-menu__icon {
+        width: 40px; height: 40px; border-radius: var(--radius-md);
+        background: var(--color-primary-light);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .settings-mobile-menu__icon svg { width: 20px; height: 20px; color: var(--accent-primary); }
+    .settings-mobile-menu__text { flex: 1; }
+    .settings-mobile-menu__text-title {
+        font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--text-primary);
+    }
+    .settings-mobile-menu__text-desc {
+        font-size: var(--text-xs); color: var(--text-tertiary); margin-top: 1px;
+    }
+    .settings-mobile-menu__arrow svg { width: 18px; height: 18px; color: var(--text-tertiary); }
+
+    /* Hide content by default on mobile */
+    .settings-content { display: none; }
+    .settings-content.mob-open { display: block; animation: slideIn .2s ease; }
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    .settings-mobile-menu.mob-hidden { display: none; }
+
+    /* ── Back button ── */
+    .settings-back {
+        display: flex; align-items: center; gap: 6px;
+        padding: var(--space-3) 0; margin-bottom: var(--space-2);
+        font-size: var(--text-sm); font-weight: var(--weight-medium);
+        color: var(--accent-primary); background: none; border: none;
+        cursor: pointer;
+    }
+    .settings-back svg { width: 18px; height: 18px; }
+
+    /* ── Compact content on mobile ── */
+    .s-heading { font-size: var(--text-base); margin-bottom: 0; }
+    .s-subheading { font-size: var(--text-xs); margin-bottom: var(--space-3); }
+    .s-card { padding: var(--space-3); margin-bottom: var(--space-3); border-radius: var(--radius-md); }
+    .s-card__head { margin-bottom: var(--space-3); padding-bottom: var(--space-2); }
+    .s-card__title { font-size: 11px; text-transform: none; letter-spacing: 0; }
+    .s-card__title svg { width: 14px; height: 14px; }
+    .data-row { padding: 8px 0; }
+    .data-row__label { font-size: var(--text-xs); }
+    .data-row__value { font-size: var(--text-xs); }
+    .session-icon { width: 34px; height: 34px; }
+    .session-icon svg { width: 16px; height: 16px; }
+    .session-body__name { font-size: var(--text-xs); }
+    .session-body__meta { font-size: 10px; }
+    .login-icon { width: 30px; height: 30px; }
+    .login-icon svg { width: 14px; height: 14px; }
+    .login-body__top { font-size: var(--text-xs); }
+    .login-body__bottom { font-size: 10px; }
+    .login-time { font-size: 10px; }
+    .pw-form .fg label { font-size: 10px; }
+    .pw-form .fg input { padding: 8px 10px; font-size: var(--text-xs); }
+    .badge-on, .badge-off, .badge-soon { font-size: 10px; padding: 2px 7px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings">
+
+    <!-- ══ Mobile: menu list (shown first) ══ -->
+    <div class="settings-mobile-menu" id="mobileMenu">
+        <div class="settings-mobile-menu__header">
+            <h1>Настройки</h1>
+        </div>
+        <div class="settings-mobile-menu__item" data-mob-tab="account">
+            <div class="settings-mobile-menu__icon"><i data-lucide="user"></i></div>
+            <div class="settings-mobile-menu__text">
+                <div class="settings-mobile-menu__text-title">Аккаунт</div>
+                <div class="settings-mobile-menu__text-desc">Личные данные и информация</div>
+            </div>
+            <div class="settings-mobile-menu__arrow"><i data-lucide="chevron-right"></i></div>
+        </div>
+        <div class="settings-mobile-menu__item" data-mob-tab="security">
+            <div class="settings-mobile-menu__icon"><i data-lucide="shield"></i></div>
+            <div class="settings-mobile-menu__text">
+                <div class="settings-mobile-menu__text-title">Безопасность</div>
+                <div class="settings-mobile-menu__text-desc">Пароль, 2FA, привязки</div>
+            </div>
+            <div class="settings-mobile-menu__arrow"><i data-lucide="chevron-right"></i></div>
+        </div>
+        <div class="settings-mobile-menu__item" data-mob-tab="sessions">
+            <div class="settings-mobile-menu__icon"><i data-lucide="monitor-smartphone"></i></div>
+            <div class="settings-mobile-menu__text">
+                <div class="settings-mobile-menu__text-title">Устройства</div>
+                <div class="settings-mobile-menu__text-desc">Сессии и история входов</div>
+            </div>
+            <div class="settings-mobile-menu__arrow"><i data-lucide="chevron-right"></i></div>
+        </div>
+        <a href="{% url 'accounts:profile_edit' %}" class="settings-mobile-menu__item" style="margin-top:var(--space-3);">
+            <div class="settings-mobile-menu__icon" style="background:var(--gray-100);"><i data-lucide="image" style="color:var(--text-tertiary);"></i></div>
+            <div class="settings-mobile-menu__text">
+                <div class="settings-mobile-menu__text-title">Редактировать профиль</div>
+                <div class="settings-mobile-menu__text-desc">Аватар, обложка, описание</div>
+            </div>
+            <div class="settings-mobile-menu__arrow"><i data-lucide="chevron-right"></i></div>
+        </a>
+    </div>
+
+    <!-- ══ Desktop grid + content ══ -->
+    <div class="settings__grid">
+
+        <!-- Sidebar (desktop only) -->
+        <nav class="settings-nav">
+            <button class="settings-nav__link {% if active_tab == 'account' %}active{% endif %}" data-tab="account">
+                <i data-lucide="user"></i> Аккаунт
+            </button>
+            <button class="settings-nav__link {% if active_tab == 'security' %}active{% endif %}" data-tab="security">
+                <i data-lucide="shield"></i> Безопасность
+            </button>
+            <button class="settings-nav__link {% if active_tab == 'sessions' %}active{% endif %}" data-tab="sessions">
+                <i data-lucide="monitor-smartphone"></i> Устройства
+            </button>
+            <div class="settings-nav__sep"></div>
+            <a href="{% url 'accounts:profile_edit' %}" class="settings-nav__link">
+                <i data-lucide="image"></i> Профиль
+            </a>
+        </nav>
+
+        <!-- Content -->
+        <div class="settings-content" id="settingsContent">
+
+            <!-- Back button (mobile only) -->
+            <button class="settings-back" id="mobileBack">
+                <i data-lucide="arrow-left"></i> Настройки
+            </button>
+
+            <!-- ═══ Аккаунт ═══ -->
+            <div class="settings-panel {% if active_tab == 'account' %}active{% endif %}" id="panel-account">
+                <h2 class="s-heading">Аккаунт</h2>
+                <p class="s-subheading">Основная информация вашего аккаунта</p>
+
+                <div class="s-card">
+                    <div class="s-card__head">
+                        <span class="s-card__title"><i data-lucide="user-circle"></i> Личные данные</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-row__label">Имя пользователя</span>
+                        <span class="data-row__value">{{ user.username }}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-row__label">Email</span>
+                        <span class="data-row__value">
+                            {{ user.email }}
+                            {% if user.profile.is_verified %}
+                            <span class="badge-on"><i data-lucide="check" style="width:10px;height:10px;"></i> Подтверждён</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-row__label">Телефон</span>
+                        <span class="data-row__value">
+                            {% if profile.phone %}{{ profile.phone }}{% else %}<span style="color:var(--text-tertiary)">Не указан</span>{% endif %}
+                        </span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-row__label">Дата регистрации</span>
+                        <span class="data-row__value">{{ user.date_joined|date:"d.m.Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ Безопасность ═══ -->
+            <div class="settings-panel {% if active_tab == 'security' %}active{% endif %}" id="panel-security">
+                <h2 class="s-heading">Безопасность</h2>
+                <p class="s-subheading">Пароль, 2FA и привязанные аккаунты</p>
+
+                <div class="s-card">
+                    <div class="s-card__head">
+                        <span class="s-card__title"><i data-lucide="key-round"></i> Пароль</span>
+                        <button class="btn btn-secondary btn-sm" id="togglePwForm" type="button">Изменить</button>
+                    </div>
+                    <p style="font-size:var(--text-sm);color:var(--text-secondary);margin:0;">
+                        Рекомендуем менять пароль раз в 3 месяца
+                    </p>
+                    <div class="pw-form" id="pwForm">
+                        <form method="post" action="{% url 'accounts:account_settings' %}?tab=security">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="change_password">
+                            {% if password_form.non_field_errors %}
+                            <div class="pw-form__error">{% for e in password_form.non_field_errors %}{{ e }}{% endfor %}</div>
+                            {% endif %}
+                            <div class="fg">
+                                <label>Текущий пароль</label>
+                                {{ password_form.current_password }}
+                                {% if password_form.current_password.errors %}<div class="pw-form__field-error">{{ password_form.current_password.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="fg">
+                                <label>Новый пароль</label>
+                                {{ password_form.new_password1 }}
+                            </div>
+                            <div class="fg">
+                                <label>Повторите пароль</label>
+                                {{ password_form.new_password2 }}
+                            </div>
+                            <div style="display:flex;gap:var(--space-2);justify-content:flex-end;margin-top:var(--space-3);">
+                                <button type="button" class="btn btn-ghost btn-sm" id="cancelPw">Отмена</button>
+                                <button type="submit" class="btn btn-primary btn-sm">Сохранить</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="s-card">
+                    <div class="s-card__head">
+                        <span class="s-card__title"><i data-lucide="shield-check"></i> Двухфакторная аутентификация</span>
+                        <a href="{% url 'accounts:setup_2fa' %}" class="btn {% if has_2fa %}btn-secondary{% else %}btn-primary{% endif %} btn-sm">
+                            {% if has_2fa %}Управление{% else %}Включить{% endif %}
+                        </a>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">
+                        {% if has_2fa %}
+                        <span class="badge-on"><i data-lucide="check" style="width:10px;height:10px;"></i> Включена</span>
+                        <span style="font-size:var(--text-sm);color:var(--text-secondary);">Аккаунт защищён</span>
+                        {% else %}
+                        <span class="badge-off"><i data-lucide="x" style="width:10px;height:10px;"></i> Отключена</span>
+                        <span style="font-size:var(--text-sm);color:var(--text-secondary);">Рекомендуем включить</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="s-card">
+                    <div class="s-card__head">
+                        <span class="s-card__title"><i data-lucide="link"></i> Привязанные аккаунты</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-row__label">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                            Google
+                        </span>
+                        <span class="badge-soon">Скоро</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-row__label">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.8 19.8 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.227-1.994a.076.076 0 0 0-.041-.106 13.11 13.11 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.099.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.06.06 0 0 0-.031-.03z"/></svg>
+                            Discord
+                        </span>
+                        <span class="badge-soon">Скоро</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-row__label">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.51.51 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                            Telegram
+                        </span>
+                        <span class="badge-soon">Скоро</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ Устройства ═══ -->
+            <div class="settings-panel {% if active_tab == 'sessions' %}active{% endif %}" id="panel-sessions">
+                <h2 class="s-heading">Устройства и входы</h2>
+                <p class="s-subheading">Активные сессии и история входов</p>
+
+                <div class="s-card">
+                    <div class="s-card__head">
+                        <span class="s-card__title"><i data-lucide="wifi"></i> Активные сессии ({{ user_sessions|length }})</span>
+                        {% if user_sessions|length > 1 %}
+                        <form method="post" action="{% url 'accounts:terminate_all_sessions' %}" style="margin:0;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--color-danger);" onclick="return confirm('Завершить все сессии кроме текущей?')">
+                                <i data-lucide="log-out" style="width:14px;height:14px;"></i> Выйти со всех
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% for session in user_sessions %}
+                    <div class="session-item">
+                        <div class="session-icon {% if session.is_current %}session-icon--current{% else %}session-icon--other{% endif %}">
+                            <i data-lucide="{% if session.is_current %}monitor{% else %}smartphone{% endif %}"></i>
+                        </div>
+                        <div class="session-body">
+                            <div class="session-body__name">{% if session.is_current %}Текущая сессия{% else %}Другое устройство{% endif %}</div>
+                            <div class="session-body__meta">Активна до {{ session.expire_date|date:"d.m.Y H:i" }}</div>
+                        </div>
+                        {% if not session.is_current %}
+                        <form method="post" action="{% url 'accounts:terminate_session' %}" style="margin:0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="session_key" value="{{ session.session_key }}">
+                            <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--color-danger);" onclick="return confirm('Завершить эту сессию?')">Завершить</button>
+                        </form>
+                        {% else %}
+                        <span class="badge-on">Текущая</span>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div style="padding:var(--space-4);text-align:center;color:var(--text-tertiary);font-size:var(--text-sm);">Нет активных сессий</div>
+                    {% endfor %}
+                </div>
+
+                <div class="s-card">
+                    <div class="s-card__head">
+                        <span class="s-card__title"><i data-lucide="clock"></i> Последние входы</span>
+                        {% if recent_logins %}
+                        <a href="{% url 'accounts:login_history' %}" class="btn btn-ghost btn-sm" style="color:var(--accent-primary);">Все записи</a>
+                        {% endif %}
+                    </div>
+                    {% for entry in recent_logins %}
+                    <div class="login-entry">
+                        <div class="login-icon">
+                            <i data-lucide="{% if entry.device_type == 'Mobile' %}smartphone{% elif entry.device_type == 'Tablet' %}tablet{% else %}monitor{% endif %}"></i>
+                        </div>
+                        <div class="login-body">
+                            <div class="login-body__top">{{ entry.browser|default:"Браузер" }} · {{ entry.device_type|default:"Desktop" }}</div>
+                            <div class="login-body__bottom">IP: {{ entry.ip_address }}{% if entry.location %} · {{ entry.location }}{% endif %}</div>
+                        </div>
+                        <div class="login-time">{{ entry.created_at|date:"d.m.Y" }}<br>{{ entry.created_at|date:"H:i" }}</div>
+                    </div>
+                    {% empty %}
+                    <div style="padding:var(--space-4);text-align:center;color:var(--text-tertiary);font-size:var(--text-sm);">История входов пуста</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    lucide.createIcons();
+
+    var isMobile = function() { return window.innerWidth <= 768; };
+
+    // ── Desktop: sidebar tab switching ──
+    var links = document.querySelectorAll('.settings-nav__link[data-tab]');
+    var panels = document.querySelectorAll('.settings-panel');
+
+    links.forEach(function(link) {
+        link.addEventListener('click', function() {
+            var target = this.getAttribute('data-tab');
+            links.forEach(function(l) { l.classList.remove('active'); });
+            panels.forEach(function(p) { p.classList.remove('active'); });
+            this.classList.add('active');
+            document.getElementById('panel-' + target).classList.add('active');
+            history.replaceState(null, '', '?tab=' + target);
+        });
+    });
+
+    // ── Mobile: drill-down ──
+    var mobileMenu = document.getElementById('mobileMenu');
+    var content = document.getElementById('settingsContent');
+    var backBtn = document.getElementById('mobileBack');
+    var mobItems = document.querySelectorAll('.settings-mobile-menu__item[data-mob-tab]');
+
+    function mobOpen(tab) {
+        panels.forEach(function(p) { p.classList.remove('active'); });
+        document.getElementById('panel-' + tab).classList.add('active');
+        mobileMenu.classList.add('mob-hidden');
+        content.classList.add('mob-open');
+        history.replaceState(null, '', '?tab=' + tab);
+        window.scrollTo(0, 0);
+        lucide.createIcons();
+    }
+
+    function mobBack() {
+        mobileMenu.classList.remove('mob-hidden');
+        content.classList.remove('mob-open');
+        panels.forEach(function(p) { p.classList.remove('active'); });
+        history.replaceState(null, '', window.location.pathname);
+        window.scrollTo(0, 0);
+    }
+
+    mobItems.forEach(function(item) {
+        item.addEventListener('click', function() {
+            mobOpen(this.getAttribute('data-mob-tab'));
+        });
+    });
+
+    if (backBtn) backBtn.addEventListener('click', mobBack);
+
+    // If page loaded with ?tab= on mobile, open that tab directly
+    var urlTab = new URLSearchParams(window.location.search).get('tab');
+    if (urlTab && isMobile()) {
+        mobOpen(urlTab);
+    }
+
+    // ── Password form ──
+    var toggleBtn = document.getElementById('togglePwForm');
+    var pwForm = document.getElementById('pwForm');
+    var cancelBtn = document.getElementById('cancelPw');
+    if (toggleBtn && pwForm) {
+        toggleBtn.addEventListener('click', function() {
+            pwForm.classList.toggle('open');
+            if (pwForm.classList.contains('open')) pwForm.querySelector('input').focus();
+        });
+        if (cancelBtn) cancelBtn.addEventListener('click', function() { pwForm.classList.remove('open'); });
+        {% if password_form.errors %}
+        pwForm.classList.add('open');
+        if (isMobile()) {
+            mobOpen('security');
+        } else {
+            links.forEach(function(l) { l.classList.remove('active'); });
+            panels.forEach(function(p) { p.classList.remove('active'); });
+            document.querySelector('[data-tab="security"]').classList.add('active');
+            document.getElementById('panel-security').classList.add('active');
+        }
+        {% endif %}
+    }
+})();
+</script>
+{% endblock %}

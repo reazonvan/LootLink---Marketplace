@@ -69,32 +69,37 @@ def landing_page(request):
 
 
 def games_catalog(request):
-    """Каталог игр с категориями (как на Funpay)."""
-    from django.core.cache import cache
-    from django.db.models import Count
-    
-    # Получаем все активные игры с их категориями и подсчетом объявлений
+    """Каталог игр с категориями и подсчётом лотов."""
+    from django.db.models import Count, Prefetch
+
+    # Категории с подсчётом активных лотов
+    categories_with_counts = Category.objects.filter(
+        is_active=True
+    ).annotate(
+        listings_count=Count('listings', filter=Q(listings__status='active'))
+    ).order_by('order', 'name')
+
+    # Игры с prefetch категорий (уже с подсчётами) и общим числом лотов
     games = list(Game.objects.filter(is_active=True).prefetch_related(
-        'categories'
+        Prefetch('categories', queryset=categories_with_counts, to_attr='active_categories')
     ).annotate(
         listings_count=Count('listings', filter=Q(listings__status='active'))
     ).order_by('name'))
-    
+
     # Собираем алфавит и помечаем первую игру каждой буквы
     alphabet = []
     last_letter = None
-    
+    total_listings = 0
+
     for game in games:
-        # Определяем первую букву
+        total_listings += game.listings_count or 0
         first_char = game.name[0].upper()
-        
-        # Для латиницы и кириллицы
+
         if first_char.isalpha() or first_char.isdigit():
             game.first_letter = first_char
         else:
             game.first_letter = '#'
-        
-        # Помечаем если это первая игра с этой буквой
+
         if game.first_letter != last_letter:
             game.first_in_letter = True
             if game.first_letter not in alphabet:
@@ -102,12 +107,13 @@ def games_catalog(request):
             last_letter = game.first_letter
         else:
             game.first_in_letter = False
-        
+
     context = {
         'games': games,
         'alphabet': alphabet,
+        'total_listings': total_listings,
     }
-    
+
     return render(request, 'listings/games_catalog.html', context)
 
 
@@ -353,46 +359,33 @@ def category_listings(request, game_slug, category_slug):
 
 
 def game_listings(request, game_slug):
-    """Объявления конкретной игры с оптимизацией запросов."""
-    from django.core.cache import cache
-    
+    """Страница игры: категории с подсчётом лотов + последние объявления."""
+    from django.db.models import Count
+
     game = get_object_or_404(Game, slug=game_slug, is_active=True)
-    
-    # Оптимизация: используем only() для выборки только нужных полей
-    listings = Listing.objects.filter(
+
+    # Категории с подсчётом активных лотов
+    categories = list(game.categories.filter(is_active=True).annotate(
+        listings_count=Count('listings', filter=Q(listings__status='active'))
+    ).order_by('order', 'name'))
+
+    # Общее число лотов игры
+    total_listings = sum(c.listings_count for c in categories)
+
+    # Последние объявления по этой игре (для предпросмотра)
+    recent_listings = Listing.objects.filter(
         game=game,
         status='active'
     ).select_related('seller', 'seller__profile', 'category')\
-     .only(
-        'id', 'title', 'price', 'image', 'created_at', 'status',
-        'seller__username', 'seller__profile__rating', 
-        'category__name', 'game__name'
-    ).order_by('-created_at')
-    
-    # Кэшируем категории игры (меняются редко)
-    cache_key = f'game_categories_{game.id}'
-    categories = cache.get(cache_key)
-    
-    if categories is None:
-        categories = list(game.categories.filter(is_active=True).order_by('order', 'name'))
-        cache.set(cache_key, categories, 3600)  # 1 час
-    
-    # Фильтр по категории
-    category_slug = request.GET.get('category')
-    if category_slug:
-        listings = listings.filter(category__slug=category_slug)
-    
-    # Пагинация
-    paginator = Paginator(listings, 12)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
+     .order_by('-created_at')[:6]
+
     context = {
         'game': game,
         'categories': categories,
-        'page_obj': page_obj,
+        'total_listings': total_listings,
+        'recent_listings': recent_listings,
     }
-    
+
     return render(request, 'listings/game_listings.html', context)
 
 
