@@ -41,13 +41,9 @@ class CaseInsensitiveModelBackend(ModelBackend):
                 )
             return None
         except User.MultipleObjectsReturned:
-            # Если каким-то образом есть дубликаты (не должно быть)
-            # Берем первого и логируем проблему
+            # FIX: при дубликатах — отказываем в аутентификации вместо выбора первого
             security_logger.error(f'Multiple users found with login value (case-insensitive): {login_value}')
-            if '@' in login_value:
-                user = User.objects.filter(email__iexact=login_value).first()
-            else:
-                user = User.objects.filter(username__iexact=login_value).first()
+            return None
         
         # Проверяем пароль
         if user and user.check_password(password) and self.user_can_authenticate(user):

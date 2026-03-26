@@ -23,11 +23,16 @@ def verify_email(request, token):
     """
     try:
         verification = EmailVerification.objects.get(token=token)
-        
+
         if verification.is_verified:
             messages.info(request, 'Email уже был верифицирован ранее.')
             return redirect('accounts:profile', username=verification.user.username)
-        
+
+        # FIX: проверка срока действия токена (24 часа)
+        if (timezone.now() - verification.created_at).total_seconds() > 86400:
+            messages.error(request, 'Срок действия ссылки истёк. Запросите новую.')
+            return redirect('listings:home')
+
         # Верифицируем
         verification.verify()
         

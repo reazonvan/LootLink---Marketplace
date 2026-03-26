@@ -73,13 +73,18 @@ class PurchaseRequest(models.Model):
     def accept(self):
         """Принимает запрос на покупку."""
         from django.db import transaction
-        
-        # ФИКС: Используем atomic для предотвращения race conditions
+
         with transaction.atomic():
+            # FIX: select_for_update предотвращает double-accept
+            pr = PurchaseRequest.objects.select_for_update().get(pk=self.pk)
+            if pr.status != 'pending':
+                raise ValueError('Запрос уже обработан')
+            pr.status = 'accepted'
+            pr.save(update_fields=['status'])
             self.status = 'accepted'
+
             self.listing.status = 'reserved'
-            self.listing.save()
-            self.save()
+            self.listing.save(update_fields=['status'])
     
     def reject(self):
         """Отклоняет запрос на покупку."""

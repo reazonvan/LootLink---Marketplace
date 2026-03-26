@@ -48,6 +48,9 @@ def enable_2fa(request):
         messages.info(request, '2FA уже включена')
         return redirect('accounts:security_settings')
     
+    # FIX: удаляем старые неподтверждённые устройства перед созданием нового
+    TOTPDevice.objects.filter(user=request.user, confirmed=False).delete()
+
     # Создаем новое устройство
     device = TOTPDevice.objects.create(
         user=request.user,

@@ -276,17 +276,19 @@ def process_report(request, report_id):
     action = request.POST.get('action')  # 'approve', 'reject'
     
     if action == 'approve':
-        # Жалоба обоснована - блокируем объявление
-        report.listing.status = 'blocked'
+        # Жалоба обоснована - деактивируем объявление
+        # FIX: 'blocked' не валидный статус, используем 'cancelled'
+        report.listing.status = 'cancelled'
         report.listing.save()
         report.status = 'resolved'
-        report.admin_notes = f'Обработано модератором {request.user.username}'
+        # FIX: поле называется admin_comment, не admin_notes
+        report.admin_comment = f'Обработано модератором {request.user.username}'
         report.save()
         message = 'Жалоба обоснована, объявление заблокировано'
     elif action == 'reject':
         # Жалоба необоснована
         report.status = 'rejected'
-        report.admin_notes = f'Отклонено модератором {request.user.username}'
+        report.admin_comment = f'Отклонено модератором {request.user.username}'
         report.save()
         message = 'Жалоба отклонена'
     else:
