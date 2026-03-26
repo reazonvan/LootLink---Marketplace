@@ -80,44 +80,8 @@
     </section>
     {% endif %}
 
-    <!-- Recent listings -->
-    {% if recent_listings %}
-    <section class="gpage-section">
-        <div class="gpage-section__head">
-            <span class="gpage-section__label">Последние товары</span>
-            <span class="gpage-section__line"></span>
-        </div>
-        <div class="listings-grid-ll">
-            {% for listing in recent_listings %}
-            <a href="{% url 'listings:listing_detail' listing.pk %}" style="text-decoration:none;color:inherit;">
-                <div class="listing-card" data-animate="fade-up">
-                    <div class="listing-card__image">
-                        {% if listing.image %}
-                        <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
-                        {% else %}
-                        <div class="listing-card__image-placeholder"><i data-lucide="image"></i></div>
-                        {% endif %}
-                    </div>
-                    <div class="listing-card__body">
-                        <div class="listing-card__seller">
-                            <span class="listing-card__seller-name">{{ listing.seller.username }}</span>
-                            {% if listing.category %}<span class="listing-card__seller-date">{{ listing.category.name }}</span>{% endif %}
-                        </div>
-                        <div class="listing-card__title">{{ listing.title|truncatewords:5 }}</div>
-                        <div class="listing-card__footer">
-                            <div class="listing-card__price">{{ listing.price }} &#8381;</div>
-                            <span class="listing-card__action">Смотреть <i data-lucide="arrow-right"></i></span>
-                        </div>
-                    </div>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
-
     <!-- Empty -->
-    {% if not categories and not recent_listings %}
+    {% if not categories %}
     <div class="gpage-empty">
         <i data-lucide="inbox"></i>
         <p>Категории скоро появятся</p>

@@ -1,558 +1,594 @@
 {% extends 'base.html' %}
 
-{% block title %}Каталог игр - LootLink{% endblock %}
+{% block title %}Каталог — LootLink{% endblock %}
 
 {% block content %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 
-<div class="ctlg">
-    <!-- Hero zone -->
-    <div class="ctlg-hero">
-        <div class="ctlg-hero__bg">
-            <div class="ctlg-hero__grid"></div>
-            <div class="ctlg-hero__glow ctlg-hero__glow--1"></div>
-            <div class="ctlg-hero__glow ctlg-hero__glow--2"></div>
-        </div>
-        <div class="ctlg-hero__content">
-            <div class="ctlg-hero__badge">
-                <span class="ctlg-hero__badge-dot"></span>
-                {{ games|length }} игр в каталоге
+<div class="cat">
+    <!-- Compact header strip -->
+    <div class="cat-bar">
+        <div class="cat-bar__left">
+            <h1 class="cat-bar__title">Каталог</h1>
+            <div class="cat-bar__stats">
+                <span class="cat-bar__stat">{{ games|length }} <em>игр</em></span>
+                <span class="cat-bar__dot"></span>
+                <span class="cat-bar__stat">{{ total_categories }} <em>категорий</em></span>
+                <span class="cat-bar__dot"></span>
+                <span class="cat-bar__stat">{{ total_listings }} <em>товаров</em></span>
             </div>
-            <h1 class="ctlg-hero__title">Найди<br>свою игру</h1>
-            <p class="ctlg-hero__sub">{{ total_listings }} товаров от проверенных продавцов</p>
+        </div>
+        <div class="cat-bar__search" id="searchWrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="catalogSearch" placeholder="Поиск по каталогу..." autocomplete="off" spellcheck="false">
+            <kbd>/</kbd>
         </div>
     </div>
 
-    <!-- Search -->
-    <div class="ctlg-search" id="searchWrap">
-        <div class="ctlg-search__box">
-            <svg class="ctlg-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="catalogSearch" class="ctlg-search__input" placeholder="Название игры..." autocomplete="off" spellcheck="false">
-            <kbd class="ctlg-search__key">/</kbd>
-        </div>
-        <div id="searchDrop" class="ctlg-search__drop"></div>
-    </div>
-
-    <!-- Alphabet bar -->
-    {% if alphabet %}
-    <nav class="ctlg-alpha" id="alphaNav">
-        {% for letter in alphabet %}
-        <a href="#s-{{ letter }}" class="ctlg-alpha__item" data-letter="{{ letter }}">{{ letter }}</a>
+    <!-- Game quick-jump pills -->
+    {% if games %}
+    <nav class="cat-jump" id="gameJump">
+        {% for game in games %}
+        <a href="#game-{{ game.slug }}" class="cat-jump__pill" data-slug="{{ game.slug }}">
+            {% if game.icon and game.icon.name %}
+            <img src="{{ game.icon.url }}" alt="" class="cat-jump__pill-ico">
+            {% endif %}
+            <span>{{ game.name }}</span>
+            {% if game.listings_count %}<b>{{ game.listings_count }}</b>{% endif %}
+        </a>
         {% endfor %}
     </nav>
     {% endif %}
 
-    <!-- Games -->
-    <div class="ctlg-list" id="gamesList">
+    <!-- Game shelves -->
+    <div class="cat-shelves" id="shelves">
         {% for game in games %}
-        {% if game.first_in_letter %}
-        <div class="ctlg-letter" id="s-{{ game.first_letter }}">
-            <span class="ctlg-letter__char">{{ game.first_letter }}</span>
-            <div class="ctlg-letter__line"></div>
-        </div>
-        {% endif %}
+        <section class="cat-shelf" id="game-{{ game.slug }}" data-game="{{ game.name|lower }}">
+            <!-- Shelf header -->
+            <div class="cat-shelf__head">
+                <a href="{% url 'listings:game_listings' game.slug %}" class="cat-shelf__game">
+                    <div class="cat-shelf__icon">
+                        {% if game.icon and game.icon.name %}
+                        <img src="{{ game.icon.url }}" alt="{{ game.name }}">
+                        {% else %}
+                        <span class="cat-shelf__icon-ph"><i data-lucide="gamepad-2"></i></span>
+                        {% endif %}
+                    </div>
+                    <div class="cat-shelf__info">
+                        <h2 class="cat-shelf__name">{{ game.name }}</h2>
+                        <span class="cat-shelf__meta">{{ game.active_categories|length }} категорий · {{ game.listings_count|default:"0" }} товаров</span>
+                    </div>
+                    <svg class="cat-shelf__go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                </a>
+            </div>
 
-        <article class="ctlg-game" data-name="{{ game.name|lower }}">
-            <a href="{% url 'listings:game_listings' game.slug %}" class="ctlg-game__link">
-                <div class="ctlg-game__icon">
-                    {% if game.icon and game.icon.name %}
-                    <img src="{{ game.icon.url }}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                    <span class="ctlg-game__icon-ph" style="display:none;">
-                        <i data-lucide="gamepad-2"></i>
-                    </span>
-                    {% else %}
-                    <span class="ctlg-game__icon-ph">
-                        <i data-lucide="gamepad-2"></i>
-                    </span>
-                    {% endif %}
-                </div>
-                <div class="ctlg-game__body">
-                    <h3 class="ctlg-game__name">{{ game.name }}</h3>
-                    {% if game.listings_count %}
-                    <span class="ctlg-game__count">{{ game.listings_count }} товаров</span>
-                    {% else %}
-                    <span class="ctlg-game__count ctlg-game__count--empty">Скоро</span>
-                    {% endif %}
-                </div>
-                <div class="ctlg-game__arrow">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-                </div>
-            </a>
+            <!-- Category cards row -->
             {% if game.active_categories %}
-            <div class="ctlg-game__cats">
+            <div class="cat-shelf__track">
                 {% for cat in game.active_categories %}
-                <a href="{% url 'listings:category_listings' game.slug cat.slug %}" class="ctlg-tag">
-                    {{ cat.name }}{% if cat.listings_count %}<span class="ctlg-tag__n">{{ cat.listings_count }}</span>{% endif %}
+                <a href="{% url 'listings:category_listings' game.slug cat.slug %}" class="cat-card" data-cat="{{ cat.name|lower }}" style="--i:{{ forloop.counter0 }}">
+                    <div class="cat-card__top">
+                        <span class="cat-card__label">{{ cat.name }}</span>
+                        <svg class="cat-card__arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+                    </div>
+                    {% if cat.description %}
+                    <p class="cat-card__desc">{{ cat.description|truncatewords:12 }}</p>
+                    {% endif %}
+                    <div class="cat-card__bottom">
+                        {% if cat.listings_count %}
+                        <span class="cat-card__count">{{ cat.listings_count }} товаров</span>
+                        {% else %}
+                        <span class="cat-card__count cat-card__count--empty">Скоро</span>
+                        {% endif %}
+                        {% if cat.min_price %}
+                        <span class="cat-card__price">от {{ cat.min_price|floatformat:"0" }} ₽</span>
+                        {% endif %}
+                    </div>
                 </a>
                 {% endfor %}
             </div>
+            {% else %}
+            <div class="cat-shelf__empty">
+                <span>Категории скоро появятся</span>
+            </div>
             {% endif %}
-        </article>
+        </section>
         {% empty %}
-        <div class="ctlg-empty">
-            <i data-lucide="gamepad-2"></i>
-            <p>Игры скоро появятся</p>
+        <div class="cat-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+            </svg>
+            <p>Каталог пока пуст</p>
+            <span>Игры и категории скоро появятся</span>
         </div>
         {% endfor %}
     </div>
+
+    {% if user.is_authenticated %}
+    <div class="cat-cta">
+        <a href="{% url 'listings:listing_create' %}" class="cat-cta__btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Создать объявление
+        </a>
+    </div>
+    {% endif %}
 </div>
 
 <style>
-/* ═══ CATALOG — Cyberpunk Arcade ═══ */
-.ctlg {
-    --c-accent: #00f0ff;
-    --c-accent2: #ff2d6b;
-    --c-accent-dim: rgba(0, 240, 255, 0.12);
-    --c-surface: rgba(255,255,255,0.04);
-    --c-surface-hover: rgba(255,255,255,0.07);
-    --c-border: rgba(255,255,255,0.06);
-    --c-text: var(--text-primary);
-    --c-text2: var(--text-secondary);
-    --c-text3: var(--text-tertiary);
-    --ff-display: 'Chakra Petch', sans-serif;
-    --ff-mono: 'JetBrains Mono', monospace;
-    max-width: 860px;
+/* ═══════════════════════════════════════════════
+   CATALOG — "Channel Shelf" Layout
+   Font: Manrope (display) + Fira Code (mono)
+   ═══════════════════════════════════════════════ */
+.cat {
+    --ca: #0ea5e9;
+    --ca2: #f43f5e;
+    --ca-dim: rgba(14,165,233,0.10);
+    --ca-dim2: rgba(14,165,233,0.05);
+    --cs: rgba(255,255,255,0.04);
+    --cs-h: rgba(255,255,255,0.08);
+    --cb: rgba(255,255,255,0.06);
+    --ct1: var(--text-primary);
+    --ct2: var(--text-secondary);
+    --ct3: var(--text-tertiary);
+    --ff-d: 'Manrope', sans-serif;
+    --ff-m: 'Fira Code', monospace;
+    max-width: 1080px;
     margin: 0 auto;
     padding: 0 var(--space-4) var(--space-16);
 }
-
-/* Light theme overrides */
-:root .ctlg {
-    --c-accent: #0080ff;
-    --c-accent2: #e6194b;
-    --c-accent-dim: rgba(0, 128, 255, 0.08);
-    --c-surface: rgba(0,0,0,0.02);
-    --c-surface-hover: rgba(0,0,0,0.04);
-    --c-border: rgba(0,0,0,0.06);
-}
-[data-theme="dark"] .ctlg {
-    --c-accent: #00f0ff;
-    --c-accent2: #ff2d6b;
-    --c-accent-dim: rgba(0, 240, 255, 0.1);
-    --c-surface: rgba(255,255,255,0.04);
-    --c-surface-hover: rgba(255,255,255,0.08);
-    --c-border: rgba(255,255,255,0.06);
+:root:not([data-theme="dark"]) .cat {
+    --ca: #0284c7;
+    --ca2: #e11d48;
+    --ca-dim: rgba(2,132,199,0.08);
+    --ca-dim2: rgba(2,132,199,0.04);
+    --cs: rgba(0,0,0,0.025);
+    --cs-h: rgba(0,0,0,0.05);
+    --cb: rgba(0,0,0,0.06);
 }
 
-/* ── Hero ── */
-.ctlg-hero {
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--radius-xl);
-    padding: clamp(40px, 8vw, 80px) clamp(24px, 5vw, 48px);
-    margin-bottom: var(--space-8);
-    background: linear-gradient(135deg, #0a0e27 0%, #141832 50%, #0d1224 100%);
-}
-:root:not([data-theme="dark"]) .ctlg-hero {
-    background: linear-gradient(135deg, #e8f4ff 0%, #dbeafe 50%, #e0ecff 100%);
-}
-.ctlg-hero__bg {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-}
-.ctlg-hero__grid {
-    position: absolute;
-    inset: -50%;
-    background-image:
-        linear-gradient(rgba(0,240,255,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,240,255,0.05) 1px, transparent 1px);
-    background-size: 40px 40px;
-    transform: perspective(500px) rotateX(60deg);
-    transform-origin: center center;
-    animation: gridScroll 20s linear infinite;
-}
-:root:not([data-theme="dark"]) .ctlg-hero__grid {
-    background-image:
-        linear-gradient(rgba(0,100,255,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,100,255,0.06) 1px, transparent 1px);
-}
-@keyframes gridScroll {
-    0% { background-position: 0 0; }
-    100% { background-position: 0 40px; }
-}
-.ctlg-hero__glow {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.4;
-    animation: glowPulse 6s ease-in-out infinite alternate;
-}
-.ctlg-hero__glow--1 {
-    width: 300px; height: 300px;
-    background: #00f0ff;
-    top: -100px; right: -50px;
-}
-.ctlg-hero__glow--2 {
-    width: 200px; height: 200px;
-    background: #ff2d6b;
-    bottom: -60px; left: 10%;
-    animation-delay: -3s;
-}
-:root:not([data-theme="dark"]) .ctlg-hero__glow--1 { background: #4a90e2; opacity: 0.15; }
-:root:not([data-theme="dark"]) .ctlg-hero__glow--2 { background: #e6194b; opacity: 0.1; }
-@keyframes glowPulse {
-    0% { transform: scale(1); opacity: 0.3; }
-    100% { transform: scale(1.3); opacity: 0.5; }
-}
-.ctlg-hero__content { position: relative; z-index: 1; }
-.ctlg-hero__badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 14px;
-    border-radius: var(--radius-full);
-    background: rgba(0,240,255,0.1);
-    border: 1px solid rgba(0,240,255,0.2);
-    font-family: var(--ff-mono);
-    font-size: 11px;
-    font-weight: 500;
-    color: #00f0ff;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    margin-bottom: var(--space-4);
-}
-:root:not([data-theme="dark"]) .ctlg-hero__badge {
-    background: rgba(0,128,255,0.08);
-    border-color: rgba(0,128,255,0.2);
-    color: #0070e0;
-}
-.ctlg-hero__badge-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-    animation: dotBlink 2s ease-in-out infinite;
-}
-@keyframes dotBlink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-}
-.ctlg-hero__title {
-    font-family: var(--ff-display);
-    font-size: clamp(2rem, 6vw, 3.2rem);
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.03em;
-    color: #fff;
-    margin: 0 0 var(--space-3);
-}
-:root:not([data-theme="dark"]) .ctlg-hero__title { color: var(--text-primary); }
-.ctlg-hero__sub {
-    font-family: var(--ff-mono);
-    font-size: var(--text-sm);
-    color: rgba(255,255,255,0.5);
-    margin: 0;
-    letter-spacing: 0.02em;
-}
-:root:not([data-theme="dark"]) .ctlg-hero__sub { color: var(--text-secondary); }
-
-/* ── Search ── */
-.ctlg-search {
-    position: relative;
+/* ── Header strip ── */
+.cat-bar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-6) 0 var(--space-5);
+    border-bottom: 1px solid var(--cb);
     margin-bottom: var(--space-6);
 }
-.ctlg-search__box {
+.cat-bar__title {
+    font-family: var(--ff-d);
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--ct1);
+    margin: 0;
+    line-height: 1;
+}
+.cat-bar__stats {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    padding: 12px 16px;
-    background: var(--c-surface);
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-lg);
+    gap: 8px;
+    margin-top: 6px;
+}
+.cat-bar__stat {
+    font-family: var(--ff-m);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ca);
+    letter-spacing: 0.01em;
+}
+.cat-bar__stat em {
+    font-style: normal;
+    color: var(--ct3);
+    font-weight: 400;
+}
+.cat-bar__dot {
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--ct3);
+    opacity: 0.5;
+}
+.cat-bar__search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--cs);
+    border: 1px solid var(--cb);
+    border-radius: 10px;
+    flex-shrink: 0;
+    min-width: 220px;
     transition: all 0.2s;
 }
-.ctlg-search__box:focus-within {
-    border-color: var(--c-accent);
-    box-shadow: 0 0 0 3px var(--c-accent-dim), 0 0 20px var(--c-accent-dim);
+.cat-bar__search:focus-within {
+    border-color: var(--ca);
+    box-shadow: 0 0 0 3px var(--ca-dim);
+    background: var(--cs-h);
 }
-.ctlg-search__icon { width: 18px; height: 18px; color: var(--c-text3); flex-shrink: 0; }
-.ctlg-search__input {
+.cat-bar__search svg {
+    width: 15px; height: 15px;
+    color: var(--ct3);
+    flex-shrink: 0;
+}
+.cat-bar__search input {
     flex: 1;
     border: none;
     background: none;
-    font-family: var(--ff-display);
-    font-size: var(--text-base);
-    font-weight: 500;
-    color: var(--c-text);
-    outline: none;
-}
-.ctlg-search__input::placeholder { color: var(--c-text3); font-weight: 400; }
-.ctlg-search__key {
-    font-family: var(--ff-mono);
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 4px;
-    background: var(--c-surface);
-    border: 1px solid var(--c-border);
-    color: var(--c-text3);
-}
-.ctlg-search__drop {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0; right: 0;
-    background: var(--card-bg);
-    backdrop-filter: blur(24px);
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 16px 48px rgba(0,0,0,0.2);
-    max-height: 280px;
-    overflow-y: auto;
-    display: none;
-    z-index: var(--z-dropdown);
-}
-.ctlg-search__drop.open { display: block; }
-.ctlg-search__drop-item {
-    display: block;
-    padding: 10px 16px;
-    font-family: var(--ff-display);
-    font-size: var(--text-sm);
-    font-weight: 500;
-    color: var(--c-text);
-    text-decoration: none;
-    transition: background 0.15s;
-}
-.ctlg-search__drop-item:hover { background: var(--c-accent-dim); color: var(--c-accent); }
-.ctlg-search__drop-empty { padding: 20px; text-align: center; color: var(--c-text3); font-size: var(--text-sm); }
-
-/* ── Alphabet ── */
-.ctlg-alpha {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    justify-content: center;
-    margin-bottom: var(--space-8);
-    padding: var(--space-2) 0;
-}
-.ctlg-alpha__item {
-    width: 30px; height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--ff-mono);
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--c-text3);
-    text-decoration: none;
-    border-radius: 6px;
-    transition: all 0.15s;
-    position: relative;
-}
-.ctlg-alpha__item:hover,
-.ctlg-alpha__item.active {
-    color: var(--c-accent);
-    background: var(--c-accent-dim);
-}
-.ctlg-alpha__item.active::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 50%; transform: translateX(-50%);
-    width: 12px; height: 2px;
-    background: var(--c-accent);
-    border-radius: 1px;
-}
-
-/* ── Letter section ── */
-.ctlg-letter {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding-top: var(--space-6);
-    margin-top: var(--space-2);
-}
-.ctlg-letter__char {
-    font-family: var(--ff-display);
+    font-family: var(--ff-d);
     font-size: 13px;
-    font-weight: 700;
-    color: var(--c-accent);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    flex-shrink: 0;
-}
-.ctlg-letter__line {
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, var(--c-border), transparent);
-}
-
-/* ── Game row ── */
-.ctlg-game {
-    border-radius: var(--radius-md);
-    transition: background 0.2s;
-}
-.ctlg-game:hover {
-    background: var(--c-surface-hover);
-}
-.ctlg-game__link {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-3);
-    text-decoration: none;
-    color: inherit;
-}
-.ctlg-game__icon {
-    width: 44px; height: 44px;
-    border-radius: 10px;
-    overflow: hidden;
-    flex-shrink: 0;
-    background: var(--c-surface);
-    border: 1px solid var(--c-border);
-    position: relative;
-}
-.ctlg-game__icon img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-}
-.ctlg-game__icon-ph {
-    width: 100%; height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--c-text3);
-}
-.ctlg-game__icon-ph svg { width: 20px; height: 20px; }
-.ctlg-game__body {
-    flex: 1;
+    font-weight: 500;
+    color: var(--ct1);
+    outline: none;
     min-width: 0;
 }
-.ctlg-game__name {
-    font-family: var(--ff-display);
-    font-size: var(--text-base);
-    font-weight: 600;
-    color: var(--c-text);
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.ctlg-game__count {
-    font-family: var(--ff-mono);
-    font-size: 11px;
-    color: var(--c-text3);
-    letter-spacing: 0.02em;
-}
-.ctlg-game__count--empty {
-    color: var(--c-accent);
-    opacity: 0.6;
-}
-.ctlg-game__arrow {
-    width: 32px; height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    flex-shrink: 0;
-    transition: all 0.2s;
-}
-.ctlg-game__arrow svg { width: 16px; height: 16px; color: var(--c-text3); transition: all 0.2s; }
-.ctlg-game:hover .ctlg-game__arrow {
-    background: var(--c-accent-dim);
-}
-.ctlg-game:hover .ctlg-game__arrow svg {
-    color: var(--c-accent);
-    transform: translateX(2px);
+.cat-bar__search input::placeholder { color: var(--ct3); font-weight: 400; }
+.cat-bar__search kbd {
+    font-family: var(--ff-m);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--cs);
+    border: 1px solid var(--cb);
+    color: var(--ct3);
+    line-height: 1;
 }
 
-/* ── Category tags ── */
-.ctlg-game__cats {
+/* ── Game jump pills ── */
+.cat-jump {
     display: flex;
-    flex-wrap: wrap;
     gap: 6px;
-    padding: 0 var(--space-3) var(--space-3);
-    padding-left: calc(44px + var(--space-3) + var(--space-3));
+    padding: 0 0 var(--space-6);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
 }
-.ctlg-tag {
+.cat-jump::-webkit-scrollbar { display: none; }
+.cat-jump__pill {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 3px 10px;
-    font-family: var(--ff-display);
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--c-text2);
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--cs);
+    border: 1px solid var(--cb);
+    border-radius: 8px;
+    font-family: var(--ff-d);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ct2);
     text-decoration: none;
-    background: var(--c-surface);
-    border: 1px solid var(--c-border);
-    border-radius: 6px;
-    transition: all 0.2s;
     white-space: nowrap;
+    transition: all 0.2s;
+    flex-shrink: 0;
 }
-.ctlg-tag:hover {
-    border-color: var(--c-accent);
-    color: var(--c-accent);
-    background: var(--c-accent-dim);
-    box-shadow: 0 0 12px var(--c-accent-dim);
+.cat-jump__pill:hover,
+.cat-jump__pill.active {
+    border-color: var(--ca);
+    color: var(--ca);
+    background: var(--ca-dim);
 }
-.ctlg-tag__n {
-    font-family: var(--ff-mono);
-    font-size: 9px;
+.cat-jump__pill-ico {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+.cat-jump__pill b {
+    font-family: var(--ff-m);
+    font-size: 10px;
     font-weight: 500;
     padding: 1px 5px;
     border-radius: 4px;
-    background: var(--c-surface);
-    color: var(--c-text3);
-}
-.ctlg-tag:hover .ctlg-tag__n {
-    background: rgba(0,240,255,0.15);
-    color: var(--c-accent);
+    background: var(--ca-dim);
+    color: var(--ca);
 }
 
-/* ── Empty ── */
-.ctlg-empty {
-    text-align: center;
-    padding: var(--space-12);
-    color: var(--c-text3);
+/* ── Shelf (game group) ── */
+.cat-shelf {
+    margin-bottom: var(--space-8);
+    animation: shelfIn 0.5s ease-out both;
 }
-.ctlg-empty svg { width: 48px; height: 48px; margin-bottom: var(--space-4); }
-.ctlg-empty p { font-family: var(--ff-display); font-size: var(--text-lg); margin: 0; }
-
-/* Hidden */
-.ctlg-game.s-hidden, .ctlg-letter.s-hidden { display: none; }
-
-/* ── Entrance animations ── */
-.ctlg-game {
-    animation: slideUp 0.4s ease-out both;
-}
-.ctlg-game:nth-child(2) { animation-delay: 0.02s; }
-.ctlg-game:nth-child(3) { animation-delay: 0.04s; }
-.ctlg-game:nth-child(4) { animation-delay: 0.06s; }
-.ctlg-game:nth-child(5) { animation-delay: 0.08s; }
-.ctlg-game:nth-child(6) { animation-delay: 0.10s; }
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(12px); }
+.cat-shelf:nth-child(2) { animation-delay: 0.08s; }
+.cat-shelf:nth-child(3) { animation-delay: 0.16s; }
+.cat-shelf:nth-child(4) { animation-delay: 0.24s; }
+.cat-shelf:nth-child(5) { animation-delay: 0.32s; }
+@keyframes shelfIn {
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
+.cat-shelf__head {
+    margin-bottom: var(--space-3);
+}
+.cat-shelf__game {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    text-decoration: none;
+    color: inherit;
+    padding: var(--space-2) var(--space-3);
+    margin-left: calc(var(--space-3) * -1);
+    border-radius: var(--radius-md);
+    transition: background 0.2s;
+}
+.cat-shelf__game:hover {
+    background: var(--cs-h);
+}
+.cat-shelf__icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--cs);
+    border: 1px solid var(--cb);
+}
+.cat-shelf__icon img { width: 100%; height: 100%; object-fit: cover; }
+.cat-shelf__icon-ph {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ct3);
+}
+.cat-shelf__icon-ph svg { width: 18px; height: 18px; }
+.cat-shelf__info { min-width: 0; }
+.cat-shelf__name {
+    font-family: var(--ff-d);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ct1);
+    margin: 0;
+    line-height: 1.2;
+}
+.cat-shelf__meta {
+    font-family: var(--ff-m);
+    font-size: 11px;
+    color: var(--ct3);
+}
+.cat-shelf__go {
+    width: 18px; height: 18px;
+    color: var(--ct3);
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.cat-shelf__game:hover .cat-shelf__go {
+    color: var(--ca);
+    transform: translateX(2px);
+}
+
+/* ── Category cards track (horizontal scroll) ── */
+.cat-shelf__track {
+    display: flex;
+    gap: var(--space-3);
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: var(--space-1) 0 var(--space-2);
+    margin: 0 calc(var(--space-3) * -1);
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+}
+.cat-shelf__track::-webkit-scrollbar { display: none; }
+
+/* ── Category card ── */
+.cat-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    max-width: 260px;
+    flex-shrink: 0;
+    padding: var(--space-4);
+    background: var(--cs);
+    border: 1px solid var(--cb);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: inherit;
+    scroll-snap-align: start;
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: cardPop 0.4s ease-out both;
+    animation-delay: calc(var(--i) * 60ms + 0.15s);
+    position: relative;
+    overflow: hidden;
+}
+@keyframes cardPop {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.cat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, var(--ca), var(--ca2));
+    opacity: 0;
+    transition: opacity 0.25s;
+}
+.cat-card:hover::before { opacity: 1; }
+
+.cat-card:hover {
+    border-color: var(--ca);
+    background: var(--ca-dim2);
+    box-shadow: 0 8px 32px rgba(14,165,233,0.08), 0 0 0 1px var(--ca-dim);
+    transform: translateY(-4px);
+}
+
+.cat-card__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+}
+.cat-card__label {
+    font-family: var(--ff-d);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ct1);
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+}
+.cat-card__arr {
+    width: 18px; height: 18px;
+    color: var(--ct3);
+    flex-shrink: 0;
+    transition: all 0.25s;
+    margin-top: 2px;
+}
+.cat-card:hover .cat-card__arr {
+    color: var(--ca);
+    transform: translate(2px, -2px);
+}
+
+.cat-card__desc {
+    font-family: var(--ff-d);
+    font-size: 12px;
+    color: var(--ct3);
+    line-height: 1.5;
+    margin: 0 0 auto;
+    padding-bottom: var(--space-3);
+}
+
+.cat-card__bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--cb);
+}
+.cat-card__count {
+    font-family: var(--ff-m);
+    font-size: 11px;
+    color: var(--ct2);
+}
+.cat-card__count--empty {
+    color: var(--ca);
+    opacity: 0.6;
+}
+.cat-card__price {
+    font-family: var(--ff-m);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ca);
+    background: var(--ca-dim);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Shelf empty */
+.cat-shelf__empty {
+    padding: var(--space-6) var(--space-4);
+    font-family: var(--ff-d);
+    font-size: 13px;
+    color: var(--ct3);
+    font-style: italic;
+}
+
+/* ── Catalog empty state ── */
+.cat-empty {
+    text-align: center;
+    padding: var(--space-16) var(--space-4);
+    color: var(--ct3);
+}
+.cat-empty svg { width: 48px; height: 48px; margin: 0 auto var(--space-3); }
+.cat-empty p {
+    font-family: var(--ff-d);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--ct1);
+    margin: 0 0 var(--space-1);
+}
+.cat-empty span {
+    font-family: var(--ff-d);
+    font-size: var(--text-sm);
+}
+
+/* ── CTA button ── */
+.cat-cta {
+    text-align: center;
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--cb);
+    margin-top: var(--space-4);
+}
+.cat-cta__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: linear-gradient(135deg, var(--ca), var(--ca2));
+    color: #fff;
+    font-family: var(--ff-d);
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(14,165,233,0.2);
+}
+.cat-cta__btn svg { width: 16px; height: 16px; }
+.cat-cta__btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(14,165,233,0.3);
+}
+
+/* ── Hidden by search ── */
+.cat-shelf.s-hidden { display: none; }
+.cat-card.s-hidden { display: none; }
+
+/* ── No results ── */
+.cat-noresult {
+    display: none;
+    text-align: center;
+    padding: var(--space-12) var(--space-4);
+    font-family: var(--ff-d);
+    font-size: var(--text-base);
+    color: var(--ct3);
+}
+.cat-noresult.visible { display: block; }
+
 /* ── Mobile ── */
-@media (max-width: 640px) {
-    .ctlg { padding: 0 var(--space-3) var(--space-12); }
-    .ctlg-hero { padding: 32px 20px; margin-bottom: var(--space-6); }
-    .ctlg-hero__title { font-size: 1.8rem; }
-    .ctlg-alpha__item { width: 26px; height: 26px; font-size: 10px; }
-    .ctlg-game__cats { padding-left: calc(44px + var(--space-3) + var(--space-3)); }
-    .ctlg-search__key { display: none; }
+@media (max-width: 768px) {
+    .cat { padding: 0 var(--space-3) var(--space-12); }
+    .cat-bar { flex-direction: column; align-items: stretch; gap: var(--space-3); }
+    .cat-bar__search { min-width: 0; }
+    .cat-bar__search kbd { display: none; }
+    .cat-card { min-width: 170px; max-width: 220px; }
+}
+
+@media (max-width: 480px) {
+    .cat-bar__stats { flex-wrap: wrap; }
+    .cat-shelf__name { font-size: var(--text-base); }
+    .cat-card { min-width: 155px; max-width: 200px; padding: var(--space-3); }
+    .cat-card__label { font-size: 13px; }
 }
 </style>
+
+<div class="cat-noresult" id="noResult">Ничего не найдено</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     lucide.createIcons();
 
     var input = document.getElementById('catalogSearch');
-    var drop = document.getElementById('searchDrop');
-    var games = document.querySelectorAll('.ctlg-game');
-    var letters = document.querySelectorAll('.ctlg-letter');
-    var alphaLinks = document.querySelectorAll('.ctlg-alpha__item');
+    var shelves = document.querySelectorAll('.cat-shelf');
+    var pills = document.querySelectorAll('.cat-jump__pill');
+    var noResult = document.getElementById('noResult');
 
-    var idx = Array.from(games).map(function(el) {
-        return {
-            name: el.dataset.name,
-            el: el,
-            href: el.querySelector('.ctlg-game__link').href,
-            display: el.querySelector('.ctlg-game__name').textContent
-        };
+    // Build search index
+    var idx = [];
+    shelves.forEach(function(shelf) {
+        var gameName = shelf.dataset.game;
+        var cards = shelf.querySelectorAll('.cat-card');
+        cards.forEach(function(card) {
+            idx.push({
+                game: gameName,
+                cat: card.dataset.cat,
+                shelf: shelf,
+                card: card
+            });
+        });
     });
 
     // Keyboard shortcut
@@ -564,58 +600,77 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Escape') {
             input.blur();
             input.value = '';
-            reset();
+            resetSearch();
         }
     });
 
-    function reset() {
-        drop.classList.remove('open');
-        drop.innerHTML = '';
-        games.forEach(function(g) { g.classList.remove('s-hidden'); });
-        letters.forEach(function(l) { l.classList.remove('s-hidden'); });
+    function resetSearch() {
+        shelves.forEach(function(s) { s.classList.remove('s-hidden'); });
+        idx.forEach(function(item) { item.card.classList.remove('s-hidden'); });
+        noResult.classList.remove('visible');
+        pills.forEach(function(p) { p.classList.remove('active'); });
     }
 
     input.addEventListener('input', function() {
         var q = this.value.toLowerCase().trim();
-        if (!q) { reset(); return; }
+        if (!q) { resetSearch(); return; }
 
-        var hits = idx.filter(function(g) { return g.name.includes(q); });
+        var anyVisible = false;
+        shelves.forEach(function(shelf) {
+            var gameName = shelf.dataset.game;
+            var cards = shelf.querySelectorAll('.cat-card');
+            var shelfVisible = false;
 
-        if (hits.length) {
-            drop.innerHTML = hits.slice(0, 6).map(function(g) {
-                return '<a href="' + g.href + '" class="ctlg-search__drop-item">' + g.display + '</a>';
-            }).join('');
-        } else {
-            drop.innerHTML = '<div class="ctlg-search__drop-empty">Не найдено</div>';
-        }
-        drop.classList.add('open');
+            // Check if game name matches
+            var gameMatch = gameName.includes(q);
 
-        games.forEach(function(g) { g.classList.toggle('s-hidden', !g.dataset.name.includes(q)); });
-        letters.forEach(function(l) {
-            var id = l.id.replace('s-', '');
-            var vis = idx.some(function(g) {
-                return !g.el.classList.contains('s-hidden') && g.name[0] && g.name[0].toUpperCase() === id;
+            cards.forEach(function(card) {
+                var catMatch = card.dataset.cat.includes(q);
+                var visible = gameMatch || catMatch;
+                card.classList.toggle('s-hidden', !visible);
+                if (visible) shelfVisible = true;
             });
-            l.classList.toggle('s-hidden', !vis);
+
+            shelf.classList.toggle('s-hidden', !shelfVisible);
+            if (shelfVisible) anyVisible = true;
         });
+
+        noResult.classList.toggle('visible', !anyVisible);
     });
 
-    document.addEventListener('click', function(e) {
-        if (!input.contains(e.target) && !drop.contains(e.target)) drop.classList.remove('open');
-    });
-
-    // Smooth scroll alphabet
-    alphaLinks.forEach(function(a) {
-        a.addEventListener('click', function(e) {
+    // Smooth scroll for jump pills
+    pills.forEach(function(pill) {
+        pill.addEventListener('click', function(e) {
             e.preventDefault();
-            var t = document.querySelector(this.getAttribute('href'));
-            if (t) {
-                t.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                alphaLinks.forEach(function(l) { l.classList.remove('active'); });
+            var target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                pills.forEach(function(p) { p.classList.remove('active'); });
+                this.classList.add('active');
+
+                // Reset search when jumping
+                input.value = '';
+                resetSearch();
                 this.classList.add('active');
             }
         });
     });
+
+    // Intersection observer for active pill
+    if ('IntersectionObserver' in window) {
+        var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    var slug = entry.target.id.replace('game-', '');
+                    pills.forEach(function(p) {
+                        p.classList.toggle('active', p.dataset.slug === slug);
+                    });
+                }
+            });
+        }, { rootMargin: '-20% 0px -60% 0px' });
+
+        shelves.forEach(function(s) { observer.observe(s); });
+    }
 });
 </script>
 {% endblock %}
