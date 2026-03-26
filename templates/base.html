@@ -155,9 +155,12 @@
                         </a>
                         {% endif %}
                         <div class="user-dropdown-divider"></div>
-                        <a href="{% url 'accounts:logout' %}" class="user-dropdown-item user-dropdown-item--danger">
-                            <i data-lucide="log-out"></i> Выйти
-                        </a>
+                        <form method="post" action="{% url 'accounts:logout' %}" style="margin:0">
+                            {% csrf_token %}
+                            <button type="submit" class="user-dropdown-item user-dropdown-item--danger" style="width:100%;border:none;background:none;cursor:pointer;text-align:left">
+                                <i data-lucide="log-out"></i> Выйти
+                            </button>
+                        </form>
                     </div>
                 </div>
                 <a href="{% url 'listings:listing_create' %}" class="btn btn-primary">Продать</a>
@@ -349,7 +352,10 @@
 
             <div class="mobile-menu__footer">
                 <a href="{% url 'accounts:profile_edit' %}" class="mobile-menu__footer-link"><i data-lucide="settings"></i> Настройки</a>
-                <a href="{% url 'accounts:logout' %}" class="mobile-menu__footer-link mobile-menu__footer-link--danger"><i data-lucide="log-out"></i> Выйти</a>
+                <form method="post" action="{% url 'accounts:logout' %}" style="margin:0;display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="mobile-menu__footer-link mobile-menu__footer-link--danger" style="border:none;background:none;cursor:pointer"><i data-lucide="log-out"></i> Выйти</button>
+                </form>
             </div>
             {% else %}
             <div class="mobile-menu__group">

@@ -364,7 +364,8 @@ class PasswordResetCode(models.Model):
         """
         # Исключаем похожие символы: 0/O, 1/I/L для удобства пользователя
         safe_chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'
-        return ''.join(random.choices(safe_chars, k=8))
+        import secrets
+        return ''.join(secrets.choice(safe_chars) for _ in range(8))
 
     @classmethod
     def create_code(cls, user):

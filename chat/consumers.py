@@ -279,7 +279,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """Отметка сообщения как прочитанного"""
         from .models import Message
         try:
-            message = Message.objects.get(id=message_id)
+            # FIX: проверяем что сообщение принадлежит текущей беседе (IDOR prevention)
+            message = Message.objects.get(
+                id=message_id,
+                conversation_id=self.conversation_id
+            )
             if message.sender != self.user and not message.is_read:
                 message.is_read = True
                 message.save(update_fields=['is_read'])
