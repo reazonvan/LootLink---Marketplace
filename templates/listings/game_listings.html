@@ -3,100 +3,124 @@
 {% block title %}{{ game.name }} - LootLink{% endblock %}
 
 {% block content %}
-<div class="game-page">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<div class="gpage">
     <!-- Breadcrumb -->
-    <ul class="ll-breadcrumb">
-        <li><a href="{% url 'listings:catalog' %}">Каталог</a></li>
-        <li><span class="current">{{ game.name }}</span></li>
-    </ul>
+    <nav class="gpage-crumb">
+        <a href="{% url 'listings:catalog' %}">Каталог</a>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        <span>{{ game.name }}</span>
+    </nav>
 
-    <!-- Game Header -->
-    <div class="game-page__header">
-        <div class="game-page__icon">
-            {% if game.icon and game.icon.name %}
-            <img src="{{ game.icon.url }}" alt="{{ game.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-            <span class="game-page__icon-fallback" style="display:none;"><i data-lucide="gamepad-2"></i></span>
-            {% else %}
-            <span class="game-page__icon-fallback"><i data-lucide="gamepad-2"></i></span>
-            {% endif %}
+    <!-- Game header -->
+    <header class="gpage-head">
+        <div class="gpage-head__bg">
+            <div class="gpage-head__mesh"></div>
         </div>
-        <div class="game-page__meta">
-            <h1 class="game-page__title">{{ game.name }}</h1>
-            {% if game.description %}
-            <p class="game-page__desc">{{ game.description }}</p>
-            {% endif %}
-            <div class="game-page__stats">
-                <span>{{ categories|length }} категорий</span>
-                <span class="game-page__dot">&middot;</span>
-                <span>{{ total_listings }} товаров</span>
+        <div class="gpage-head__content">
+            <div class="gpage-head__icon">
+                {% if game.icon and game.icon.name %}
+                <img src="{{ game.icon.url }}" alt="{{ game.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <span class="gpage-head__icon-ph" style="display:none;"><i data-lucide="gamepad-2"></i></span>
+                {% else %}
+                <span class="gpage-head__icon-ph"><i data-lucide="gamepad-2"></i></span>
+                {% endif %}
+            </div>
+            <div class="gpage-head__info">
+                <h1 class="gpage-head__title">{{ game.name }}</h1>
+                {% if game.description %}
+                <p class="gpage-head__desc">{{ game.description }}</p>
+                {% endif %}
+                <div class="gpage-head__stats">
+                    <div class="gpage-head__stat">
+                        <span class="gpage-head__stat-n">{{ categories|length }}</span>
+                        <span class="gpage-head__stat-l">категорий</span>
+                    </div>
+                    <div class="gpage-head__stat-sep"></div>
+                    <div class="gpage-head__stat">
+                        <span class="gpage-head__stat-n">{{ total_listings }}</span>
+                        <span class="gpage-head__stat-l">товаров</span>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </header>
 
-    <!-- Categories Grid -->
+    <!-- Categories -->
     {% if categories %}
-    <div class="game-page__section-title">
-        <i data-lucide="layout-grid" style="width:18px;height:18px;"></i>
-        Категории
-    </div>
-    <div class="game-cats-grid">
-        {% for cat in categories %}
-        <a href="{% url 'listings:category_listings' game.slug cat.slug %}" class="game-cat-card">
-            <div class="game-cat-card__top">
-                <span class="game-cat-card__name">{{ cat.name }}</span>
-                <i data-lucide="chevron-right" class="game-cat-card__arrow"></i>
-            </div>
-            {% if cat.description %}
-            <p class="game-cat-card__desc">{{ cat.description|truncatewords:12 }}</p>
-            {% endif %}
-            <div class="game-cat-card__bottom">
-                <span class="game-cat-card__count">{{ cat.listings_count|default:"0" }} товаров</span>
-            </div>
-        </a>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Recent Listings -->
-    {% if recent_listings %}
-    <div class="game-page__section-title" style="margin-top:var(--space-8);">
-        <i data-lucide="clock" style="width:18px;height:18px;"></i>
-        Последние объявления
-    </div>
-    <div class="listings-grid-ll">
-        {% for listing in recent_listings %}
-        <a href="{% url 'listings:listing_detail' listing.pk %}" style="text-decoration:none;color:inherit;">
-            <div class="listing-card" data-animate="fade-up">
-                <div class="listing-card__image">
-                    {% if listing.image %}
-                    <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
+    <section class="gpage-section">
+        <div class="gpage-section__head">
+            <span class="gpage-section__label">Категории</span>
+            <span class="gpage-section__line"></span>
+        </div>
+        <div class="gpage-cats">
+            {% for cat in categories %}
+            <a href="{% url 'listings:category_listings' game.slug cat.slug %}" class="gpage-cat" style="animation-delay: {{ forloop.counter0 }}00ms;">
+                <div class="gpage-cat__top">
+                    <h3 class="gpage-cat__name">{{ cat.name }}</h3>
+                    <div class="gpage-cat__arrow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                </div>
+                {% if cat.description %}
+                <p class="gpage-cat__desc">{{ cat.description|truncatewords:15 }}</p>
+                {% endif %}
+                <div class="gpage-cat__foot">
+                    {% if cat.listings_count %}
+                    <span class="gpage-cat__count">{{ cat.listings_count }} товаров</span>
                     {% else %}
-                    <div class="listing-card__image-placeholder"><i data-lucide="image"></i></div>
+                    <span class="gpage-cat__count gpage-cat__count--zero">Пока пусто</span>
                     {% endif %}
                 </div>
-                <div class="listing-card__body">
-                    <div class="listing-card__seller">
-                        <span class="listing-card__seller-name">{{ listing.seller.username }}</span>
-                        {% if listing.category %}<span class="listing-card__seller-date">{{ listing.category.name }}</span>{% endif %}
-                    </div>
-                    <div class="listing-card__title">{{ listing.title|truncatewords:5 }}</div>
-                    <div class="listing-card__footer">
-                        <div class="listing-card__price">{{ listing.price }} &#8381;</div>
-                        <span class="listing-card__action">Смотреть <i data-lucide="arrow-right"></i></span>
-                    </div>
-                </div>
-            </div>
-        </a>
-        {% endfor %}
-    </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
     {% endif %}
 
-    <!-- Empty state -->
+    <!-- Recent listings -->
+    {% if recent_listings %}
+    <section class="gpage-section">
+        <div class="gpage-section__head">
+            <span class="gpage-section__label">Последние товары</span>
+            <span class="gpage-section__line"></span>
+        </div>
+        <div class="listings-grid-ll">
+            {% for listing in recent_listings %}
+            <a href="{% url 'listings:listing_detail' listing.pk %}" style="text-decoration:none;color:inherit;">
+                <div class="listing-card" data-animate="fade-up">
+                    <div class="listing-card__image">
+                        {% if listing.image %}
+                        <img src="{{ listing.image.url }}" alt="{{ listing.title }}">
+                        {% else %}
+                        <div class="listing-card__image-placeholder"><i data-lucide="image"></i></div>
+                        {% endif %}
+                    </div>
+                    <div class="listing-card__body">
+                        <div class="listing-card__seller">
+                            <span class="listing-card__seller-name">{{ listing.seller.username }}</span>
+                            {% if listing.category %}<span class="listing-card__seller-date">{{ listing.category.name }}</span>{% endif %}
+                        </div>
+                        <div class="listing-card__title">{{ listing.title|truncatewords:5 }}</div>
+                        <div class="listing-card__footer">
+                            <div class="listing-card__price">{{ listing.price }} &#8381;</div>
+                            <span class="listing-card__action">Смотреть <i data-lucide="arrow-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Empty -->
     {% if not categories and not recent_listings %}
-    <div class="empty-state">
-        <div class="empty-state__icon"><i data-lucide="inbox"></i></div>
-        <div class="empty-state__title">Для этой игры пока нет категорий</div>
-        <div class="empty-state__text">Администратор скоро добавит категории</div>
+    <div class="gpage-empty">
+        <i data-lucide="inbox"></i>
+        <p>Категории скоро появятся</p>
         <a href="{% url 'listings:catalog' %}" class="btn btn-primary">Назад к каталогу</a>
     </div>
     {% endif %}
@@ -111,149 +135,239 @@
 </div>
 
 <style>
-.game-page {
-    max-width: 900px;
+.gpage {
+    --c-accent: #00f0ff;
+    --c-accent2: #ff2d6b;
+    --c-accent-dim: rgba(0, 240, 255, 0.1);
+    --c-surface: rgba(255,255,255,0.04);
+    --c-surface-hover: rgba(255,255,255,0.07);
+    --c-border: rgba(255,255,255,0.06);
+    --ff-display: 'Chakra Petch', sans-serif;
+    --ff-mono: 'JetBrains Mono', monospace;
+    max-width: 940px;
     margin: 0 auto;
-    padding: var(--space-4) var(--space-4) var(--space-16);
+    padding: 0 var(--space-4) var(--space-16);
 }
+:root .gpage {
+    --c-accent: #0080ff;
+    --c-accent-dim: rgba(0,128,255,0.08);
+    --c-surface: rgba(0,0,0,0.02);
+    --c-surface-hover: rgba(0,0,0,0.04);
+    --c-border: rgba(0,0,0,0.06);
+}
+[data-theme="dark"] .gpage {
+    --c-accent: #00f0ff;
+    --c-accent-dim: rgba(0,240,255,0.1);
+    --c-surface: rgba(255,255,255,0.04);
+    --c-surface-hover: rgba(255,255,255,0.08);
+    --c-border: rgba(255,255,255,0.06);
+}
+
+/* Breadcrumb */
+.gpage-crumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: var(--space-4) 0;
+    font-family: var(--ff-mono);
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+.gpage-crumb a { color: var(--text-tertiary); text-decoration: none; transition: color 0.15s; }
+.gpage-crumb a:hover { color: var(--c-accent); }
+.gpage-crumb svg { width: 12px; height: 12px; }
+.gpage-crumb span { color: var(--text-primary); font-weight: 500; }
 
 /* Header */
-.game-page__header {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-5);
-    margin-bottom: var(--space-8);
-    padding: var(--space-5);
-    background: var(--card-bg);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--card-border);
+.gpage-head {
+    position: relative;
+    overflow: hidden;
     border-radius: var(--radius-xl);
+    padding: clamp(28px, 5vw, 44px);
+    margin-bottom: var(--space-8);
+    background: linear-gradient(135deg, #0a0e27 0%, #141832 100%);
 }
-.game-page__icon {
+:root:not([data-theme="dark"]) .gpage-head {
+    background: linear-gradient(135deg, #e8f4ff 0%, #dbeafe 100%);
+}
+.gpage-head__bg { position: absolute; inset: 0; overflow: hidden; }
+.gpage-head__mesh {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 80% 20%, rgba(0,240,255,0.15), transparent 50%),
+        radial-gradient(circle at 20% 80%, rgba(255,45,107,0.1), transparent 50%);
+}
+:root:not([data-theme="dark"]) .gpage-head__mesh {
+    background:
+        radial-gradient(circle at 80% 20%, rgba(0,128,255,0.08), transparent 50%),
+        radial-gradient(circle at 20% 80%, rgba(230,25,75,0.05), transparent 50%);
+}
+.gpage-head__content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+}
+.gpage-head__icon {
     width: 72px; height: 72px;
-    border-radius: var(--radius-lg);
+    border-radius: 14px;
     overflow: hidden;
     flex-shrink: 0;
-    background: var(--gray-100);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
 }
-[data-theme="dark"] .game-page__icon { background: var(--gray-700); }
-.game-page__icon img { width: 100%; height: 100%; object-fit: cover; }
-.game-page__icon-fallback {
-    width: 100%; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text-tertiary);
+:root:not([data-theme="dark"]) .gpage-head__icon {
+    background: rgba(255,255,255,0.8);
+    border-color: rgba(0,0,0,0.06);
 }
-.game-page__icon-fallback svg { width: 32px; height: 32px; }
-.game-page__meta { flex: 1; min-width: 0; }
-.game-page__title {
-    font-size: var(--text-2xl);
-    font-weight: var(--weight-extrabold);
+.gpage-head__icon img { width: 100%; height: 100%; object-fit: cover; }
+.gpage-head__icon-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.3); }
+:root:not([data-theme="dark"]) .gpage-head__icon-ph { color: var(--text-tertiary); }
+.gpage-head__icon-ph svg { width: 32px; height: 32px; }
+.gpage-head__info { flex: 1; min-width: 0; }
+.gpage-head__title {
+    font-family: var(--ff-display);
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 700;
     letter-spacing: -0.02em;
-    margin-bottom: var(--space-1);
+    color: #fff;
+    margin: 0 0 var(--space-1);
 }
-.game-page__desc {
+:root:not([data-theme="dark"]) .gpage-head__title { color: var(--text-primary); }
+.gpage-head__desc {
     font-size: var(--text-sm);
-    color: var(--text-secondary);
-    margin: 0 0 var(--space-2);
-    line-height: var(--leading-relaxed);
+    color: rgba(255,255,255,0.5);
+    margin: 0 0 var(--space-3);
+    line-height: 1.5;
 }
-.game-page__stats {
-    font-size: var(--text-xs);
-    color: var(--text-tertiary);
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+:root:not([data-theme="dark"]) .gpage-head__desc { color: var(--text-secondary); }
+.gpage-head__stats { display: flex; align-items: center; gap: var(--space-4); }
+.gpage-head__stat { display: flex; align-items: baseline; gap: 6px; }
+.gpage-head__stat-n {
+    font-family: var(--ff-display);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--c-accent);
 }
-.game-page__dot { font-size: 8px; }
+:root:not([data-theme="dark"]) .gpage-head__stat-n { color: #0070e0; }
+.gpage-head__stat-l { font-family: var(--ff-mono); font-size: 11px; color: rgba(255,255,255,0.4); }
+:root:not([data-theme="dark"]) .gpage-head__stat-l { color: var(--text-tertiary); }
+.gpage-head__stat-sep { width: 1px; height: 20px; background: rgba(255,255,255,0.1); }
+:root:not([data-theme="dark"]) .gpage-head__stat-sep { background: rgba(0,0,0,0.08); }
 
-/* Section title */
-.game-page__section-title {
+/* Section */
+.gpage-section { margin-bottom: var(--space-8); }
+.gpage-section__head {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-semibold);
-    color: var(--text-secondary);
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+}
+.gpage-section__label {
+    font-family: var(--ff-display);
+    font-size: 12px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: var(--space-4);
+    letter-spacing: 0.12em;
+    color: var(--c-accent);
+    white-space: nowrap;
+}
+:root:not([data-theme="dark"]) .gpage-section__label { color: #0070e0; }
+.gpage-section__line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--c-border), transparent);
 }
 
-/* Categories grid */
-.game-cats-grid {
+/* Category cards */
+.gpage-cats {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: var(--space-3);
 }
-.game-cat-card {
+.gpage-cat {
     display: flex;
     flex-direction: column;
     padding: var(--space-4);
-    background: var(--card-bg);
-    backdrop-filter: blur(16px);
-    border: 1px solid var(--card-border);
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
     border-radius: var(--radius-lg);
     text-decoration: none;
     color: inherit;
-    transition: all var(--duration-normal) var(--ease-out);
+    transition: all 0.25s;
+    animation: catIn 0.5s ease-out both;
 }
-.game-cat-card:hover {
-    border-color: var(--accent-primary);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+@keyframes catIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
-.game-cat-card__top {
+.gpage-cat:hover {
+    border-color: var(--c-accent);
+    background: var(--c-accent-dim);
+    box-shadow: 0 0 24px var(--c-accent-dim), 0 8px 32px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+}
+.gpage-cat__top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-2);
     margin-bottom: var(--space-2);
 }
-.game-cat-card__name {
+.gpage-cat__name {
+    font-family: var(--ff-display);
     font-size: var(--text-base);
-    font-weight: var(--weight-semibold);
+    font-weight: 600;
     color: var(--text-primary);
+    margin: 0;
 }
-.game-cat-card__arrow {
-    width: 16px; height: 16px;
+.gpage-cat__arrow {
+    width: 28px; height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+.gpage-cat__arrow svg { width: 14px; height: 14px; color: var(--text-tertiary); transition: all 0.2s; }
+.gpage-cat:hover .gpage-cat__arrow { background: var(--c-accent-dim); }
+.gpage-cat:hover .gpage-cat__arrow svg { color: var(--c-accent); transform: translateX(2px); }
+.gpage-cat__desc {
+    font-size: 12px;
     color: var(--text-tertiary);
-    transition: transform var(--duration-fast) var(--ease-out);
-}
-.game-cat-card:hover .game-cat-card__arrow {
-    transform: translateX(3px);
-    color: var(--accent-primary);
-}
-.game-cat-card__desc {
-    font-size: var(--text-xs);
-    color: var(--text-tertiary);
-    line-height: var(--leading-normal);
+    line-height: 1.5;
     margin: 0 0 auto;
     padding-bottom: var(--space-3);
 }
-.game-cat-card__bottom {
+.gpage-cat__foot {
     padding-top: var(--space-2);
-    border-top: 1px solid var(--gray-200);
+    border-top: 1px solid var(--c-border);
 }
-[data-theme="dark"] .game-cat-card__bottom { border-top-color: var(--gray-700); }
-.game-cat-card__count {
-    font-size: var(--text-xs);
+.gpage-cat__count {
+    font-family: var(--ff-mono);
+    font-size: 11px;
     color: var(--text-secondary);
-    font-weight: var(--weight-medium);
 }
+.gpage-cat__count--zero { color: var(--c-accent); opacity: 0.5; }
+
+/* Empty */
+.gpage-empty {
+    text-align: center;
+    padding: var(--space-12);
+    color: var(--text-tertiary);
+}
+.gpage-empty svg { width: 48px; height: 48px; margin-bottom: var(--space-3); }
+.gpage-empty p { font-family: var(--ff-display); font-size: var(--text-lg); margin: 0 0 var(--space-4); }
 
 /* Mobile */
 @media (max-width: 640px) {
-    .game-page { padding: var(--space-3) var(--space-3) var(--space-12); }
-    .game-page__header {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        padding: var(--space-4);
-    }
-    .game-page__icon { width: 56px; height: 56px; }
-    .game-page__title { font-size: var(--text-xl); }
-    .game-page__stats { justify-content: center; }
-    .game-cats-grid { grid-template-columns: 1fr; }
+    .gpage { padding: 0 var(--space-3) var(--space-12); }
+    .gpage-head { padding: 24px 20px; }
+    .gpage-head__content { flex-direction: column; align-items: flex-start; }
+    .gpage-head__icon { width: 56px; height: 56px; }
+    .gpage-head__title { font-size: 1.4rem; }
+    .gpage-cats { grid-template-columns: 1fr; }
 }
 </style>
 
