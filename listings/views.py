@@ -69,49 +69,31 @@ def landing_page(request):
 
 
 def games_catalog(request):
-    """Каталог игр с категориями и подсчётом лотов."""
-    from django.db.models import Count, Prefetch
+    """Каталог: категории с прямым доступом, сгруппированные по играм."""
+    from django.db.models import Count, Prefetch, Min
 
-    # Категории с подсчётом активных лотов
-    categories_with_counts = Category.objects.filter(
+    # Категории с подсчётом активных лотов и минимальной ценой
+    categories_qs = Category.objects.filter(
         is_active=True
     ).annotate(
-        listings_count=Count('listings', filter=Q(listings__status='active'))
+        listings_count=Count('listings', filter=Q(listings__status='active')),
+        min_price=Min('listings__price', filter=Q(listings__status='active')),
     ).order_by('order', 'name')
 
-    # Игры с prefetch категорий (уже с подсчётами) и общим числом лотов
+    # Игры с prefetch категорий и общим числом лотов
     games = list(Game.objects.filter(is_active=True).prefetch_related(
-        Prefetch('categories', queryset=categories_with_counts, to_attr='active_categories')
+        Prefetch('categories', queryset=categories_qs, to_attr='active_categories')
     ).annotate(
         listings_count=Count('listings', filter=Q(listings__status='active'))
-    ).order_by('name'))
+    ).order_by('order', 'name'))
 
-    # Собираем алфавит и помечаем первую игру каждой буквы
-    alphabet = []
-    last_letter = None
-    total_listings = 0
-
-    for game in games:
-        total_listings += game.listings_count or 0
-        first_char = game.name[0].upper()
-
-        if first_char.isalpha() or first_char.isdigit():
-            game.first_letter = first_char
-        else:
-            game.first_letter = '#'
-
-        if game.first_letter != last_letter:
-            game.first_in_letter = True
-            if game.first_letter not in alphabet:
-                alphabet.append(game.first_letter)
-            last_letter = game.first_letter
-        else:
-            game.first_in_letter = False
+    total_listings = sum(g.listings_count or 0 for g in games)
+    total_categories = sum(len(g.active_categories) for g in games)
 
     context = {
         'games': games,
-        'alphabet': alphabet,
         'total_listings': total_listings,
+        'total_categories': total_categories,
     }
 
     return render(request, 'listings/games_catalog.html', context)
@@ -372,18 +354,10 @@ def game_listings(request, game_slug):
     # Общее число лотов игры
     total_listings = sum(c.listings_count for c in categories)
 
-    # Последние объявления по этой игре (для предпросмотра)
-    recent_listings = Listing.objects.filter(
-        game=game,
-        status='active'
-    ).select_related('seller', 'seller__profile', 'category')\
-     .order_by('-created_at')[:6]
-
     context = {
         'game': game,
         'categories': categories,
         'total_listings': total_listings,
-        'recent_listings': recent_listings,
     }
 
     return render(request, 'listings/game_listings.html', context)
