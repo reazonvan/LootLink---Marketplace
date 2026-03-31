@@ -69,8 +69,9 @@ def landing_page(request):
 
 
 def games_catalog(request):
-    """Каталог: категории с прямым доступом, сгруппированные по играм."""
+    """Каталог: алфавитный список игр с категориями-ссылками (как FunPay)."""
     from django.db.models import Count, Prefetch, Min
+    from collections import OrderedDict
 
     # Категории с подсчётом активных лотов и минимальной ценой
     categories_qs = Category.objects.filter(
@@ -80,20 +81,35 @@ def games_catalog(request):
         min_price=Min('listings__price', filter=Q(listings__status='active')),
     ).order_by('order', 'name')
 
-    # Игры с prefetch категорий и общим числом лотов
+    # Игры с prefetch категорий и общим числом лотов, сортировка по имени
     games = list(Game.objects.filter(is_active=True).prefetch_related(
         Prefetch('categories', queryset=categories_qs, to_attr='active_categories')
     ).annotate(
         listings_count=Count('listings', filter=Q(listings__status='active'))
-    ).order_by('order', 'name'))
+    ).order_by('name'))
 
     total_listings = sum(g.listings_count or 0 for g in games)
     total_categories = sum(len(g.active_categories) for g in games)
+
+    # Группировка по первой букве для алфавитного указателя
+    alphabet_groups = OrderedDict()
+    for game in games:
+        first_char = game.name[0].upper() if game.name else '#'
+        if first_char.isdigit():
+            first_char = '0-9'
+        if first_char not in alphabet_groups:
+            alphabet_groups[first_char] = []
+        alphabet_groups[first_char].append(game)
+
+    # Собираем список букв для навигации
+    alphabet_letters = list(alphabet_groups.keys())
 
     context = {
         'games': games,
         'total_listings': total_listings,
         'total_categories': total_categories,
+        'alphabet_groups': alphabet_groups,
+        'alphabet_letters': alphabet_letters,
     }
 
     return render(request, 'listings/games_catalog.html', context)
