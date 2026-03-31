@@ -1347,7 +1347,7 @@ footer { background: var(--footer-bg); backdrop-filter: blur(30px); padding: 60p
     .orb { filter: blur(50px); }
     .orb1 { width: 240px; height: 240px; top: -40px; left: -30px; animation: none; opacity: 0.55; }
     .orb2 { width: 220px; height: 220px; bottom: 10%; right: -30px; animation: none; opacity: 0.5; }
-    .orb3 { width: 200px; height: 200px; top: 35%; left: 5%; animation: none; opacity: 0.45; }
+    .orb3 { display: none; }
 
     /* -- Toasts -- */
     .toast-container { top: 12px; right: 12px; left: 12px; width: auto; max-width: none; }
