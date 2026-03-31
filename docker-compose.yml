@@ -121,14 +121,17 @@ services:
     networks:
       - lootlink_network
 
-  # Flower для мониторинга Celery (опционально)
+  # Flower для мониторинга Celery
   flower:
     build: .
     container_name: lootlink_flower
     restart: unless-stopped
-    command: celery -A config flower --port=5555
-    ports:
-      - "5555:5555"
+    command: >
+      celery -A config flower --port=5555
+      --url_prefix=flower
+      --basic-auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-changeme}
+    expose:
+      - "5555"
     env_file:
       - .env
     depends_on:
@@ -136,8 +139,6 @@ services:
       - redis
     networks:
       - lootlink_network
-    profiles:
-      - monitoring
 
   # Nginx (опционально - для production)
   nginx:

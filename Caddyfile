@@ -33,14 +33,23 @@ lootlink.ru {
     # Serve collected static and uploaded media directly from Caddy.
     @static path /static/*
     handle @static {
+        header Cache-Control "public, max-age=2592000, immutable"
         root * /srv
         file_server
     }
 
     @media path /media/*
     handle @media {
+        header Cache-Control "public, max-age=86400"
         root * /srv
         file_server
+    }
+
+    # Flower Celery monitoring (basic auth via Flower itself)
+    @flower path /flower /flower/*
+    handle @flower {
+        uri strip_prefix /flower
+        reverse_proxy flower:5555
     }
 
     reverse_proxy web:8000 {
