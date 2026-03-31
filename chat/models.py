@@ -51,7 +51,7 @@ class Conversation(models.Model):
         # Constraint: participant1.id всегда должен быть меньше participant2.id
         constraints = [
             models.CheckConstraint(
-                check=models.Q(participant1_id__lt=models.F('participant2_id')),
+                condition=models.Q(participant1_id__lt=models.F('participant2_id')),
                 name='participant1_less_than_participant2',
                 violation_error_message='participant1 должен быть меньше participant2 (сортировка по ID)'
             ),

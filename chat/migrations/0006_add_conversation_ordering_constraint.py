@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name='conversation',
             constraint=CheckConstraint(
-                check=Q(participant1_id__lt=models.F('participant2_id')),
+                condition=Q(participant1_id__lt=models.F('participant2_id')),
                 name='participant1_less_than_participant2',
                 violation_error_message='participant1 должен быть меньше participant2 (сортировка по ID)'
             ),
