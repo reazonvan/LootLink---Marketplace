@@ -18,4 +18,5 @@ hiredis>=3.3.0
 
 # Monitoring and error tracking
 sentry-sdk>=2.42.0
+flower>=2.0.0
 
