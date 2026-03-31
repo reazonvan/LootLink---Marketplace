@@ -577,7 +577,7 @@
 
         window.updateNotificationsCount = updateNotifications;
         setTimeout(updateNotifications, 2000);
-        var interval = setInterval(updateNotifications, 10000);
+        var interval = setInterval(updateNotifications, 30000);
         window.addEventListener('focus', updateNotifications);
         window.addEventListener('beforeunload', function() { clearInterval(interval); });
     })();
