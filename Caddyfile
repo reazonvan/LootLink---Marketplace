@@ -48,7 +48,6 @@ lootlink.ru {
     # Flower Celery monitoring (basic auth via Flower itself)
     @flower path /flower /flower/*
     handle @flower {
-        uri strip_prefix /flower
         reverse_proxy flower:5555
     }
 
