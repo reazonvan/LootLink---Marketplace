@@ -93,6 +93,16 @@ catalog_*.jpg
 catalog_*.png
 landing_reference.png
 
+# Old template backups
+templates/listings/games_catalog_old.html
+
+# Practice report files (university, binary)
+docs/gen_report_*.py
+docs/Отчет_*.docx
+docs/ПП01/
+docs/ПП02/
+scripts/generate_practice_report_docx.py
+
 # Cleanup documentation
 CLEANUP_*.md
 PROJECT_RULES.md
