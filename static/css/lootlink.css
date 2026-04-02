@@ -1219,6 +1219,9 @@ footer { background: var(--footer-bg); backdrop-filter: blur(30px); padding: 60p
     .similar-listings h3 { font-size: var(--text-base); margin-bottom: var(--space-3); }
     .scroll-row { gap: var(--space-3); }
     .scroll-row > a { width: 200px; }
+    /* Disable slide animations on mobile — sidebar stacks vertically */
+    .listing-detail__sidebar [data-animate] { opacity: 1 !important; transform: none !important; }
+    .similar-listings[data-animate] { opacity: 1 !important; transform: none !important; }
 
     /* -- Breadcrumbs -- */
     .ll-breadcrumb, .breadcrumb { font-size: var(--text-xs); margin-bottom: var(--space-3); gap: var(--space-1); }

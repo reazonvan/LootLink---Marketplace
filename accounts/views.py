@@ -107,7 +107,6 @@ def user_logout(request):
     return redirect('listings:home')
 
 
-@login_required
 def profile(request, username):
     """Просмотр профиля пользователя с оптимизацией запросов."""
     from django.core.paginator import Paginator
