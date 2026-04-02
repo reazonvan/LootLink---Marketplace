@@ -39,6 +39,7 @@ class CaseInsensitiveModelBackend(ModelBackend):
                 security_logger.warning(
                     f'Failed login attempt: username={login_value} | IP={ip} | Reason=UserNotFound'
                 )
+                self._log_failed_login(request, login_value, ip)
             return None
         except User.MultipleObjectsReturned:
             # FIX: при дубликатах — отказываем в аутентификации вместо выбора первого
@@ -59,6 +60,25 @@ class CaseInsensitiveModelBackend(ModelBackend):
             security_logger.warning(
                 f'Failed login attempt: username={login_value} | IP={ip} | Reason=InvalidPassword'
             )
-        
+            self._log_failed_login(request, login_value, ip)
+
         return None
+
+    @staticmethod
+    def _log_failed_login(request, username, ip_address):
+        """Записываем неудачную попытку в SecurityAuditLog для brute force protection."""
+        try:
+            from core.models_audit import SecurityAuditLog
+            SecurityAuditLog.log(
+                action_type='login_failed',
+                description=f'Неудачная попытка входа: {username}',
+                risk_level='medium',
+                request=request,
+                metadata={
+                    'username': username,
+                    'ip_address': ip_address
+                }
+            )
+        except Exception:
+            pass
 

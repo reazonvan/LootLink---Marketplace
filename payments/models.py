@@ -315,12 +315,15 @@ class Escrow(models.Model):
             buyer_wallet = wallets[self.buyer_id]
             seller_wallet = wallets[self.seller_id]
 
-            buyer_wallet.unfreeze_amount(self.amount)
+            # Размораживаем и списываем с покупателя (один save, без вложенных транзакций)
+            buyer_wallet.frozen_balance -= self.amount
+            if buyer_wallet.frozen_balance < 0:
+                buyer_wallet.frozen_balance = Decimal('0')
             buyer_wallet.balance -= self.amount
-            buyer_wallet.save(update_fields=['balance'])
+            buyer_wallet.save(update_fields=['balance', 'frozen_balance'])
 
             seller_wallet.balance += self.amount
-            seller_wallet.save(update_fields=['balance', 'updated_at'])
+            seller_wallet.save(update_fields=['balance'])
             
             # Обновляем статус
             self.status = 'released'

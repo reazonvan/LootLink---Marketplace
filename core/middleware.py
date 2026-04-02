@@ -24,12 +24,12 @@ class SimpleRateLimitMiddleware:
         # Аутентификация
         '/accounts/login/': (5, 300),  # 5 попыток за 5 минут
         '/accounts/register/': (3, 600),  # 3 попытки за 10 минут
-        '/accounts/password-reset-request/': (3, 600),  # 3 попытки за 10 минут
-        
+        '/accounts/password-reset/': (3, 600),  # 3 попытки за 10 минут
+
         # Создание контента
         '/listing/create/': (10, 3600),  # 10 объявлений в час
         '/transactions/purchase-request/': (20, 3600),  # 20 запросов в час
-        
+
         # Сообщения и уведомления
         '/chat/conversation/': (50, 60),  # 50 сообщений в минуту
         '/notifications/mark-read/': (100, 60),  # 100 запросов в минуту
@@ -95,14 +95,10 @@ class SimpleRateLimitMiddleware:
         
         return True
     
-    def _get_client_ip(self, request):
-        """Получение IP адреса клиента."""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+    @staticmethod
+    def _get_client_ip(request):
+        from core.utils import get_client_ip
+        return get_client_ip(request)
 
 
 class SecurityHeadersMiddleware:

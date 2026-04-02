@@ -53,7 +53,7 @@
       "contactPoint": {
         "@type": "ContactPoint",
         "contactType": "Customer Support",
-        "email": "ivanpetrov20066.ip@gmail.com"
+        "email": "support@lootlink.ru"
       },
       "sameAs": []
     }
@@ -136,7 +136,7 @@
                         </a>
                         <a href="{% url 'payments:wallet_dashboard' %}" class="user-dropdown-item">
                             <i data-lucide="wallet"></i> Кошелёк
-                            <span class="user-dropdown-badge">{{ user.profile.balance|floatformat:0|default:"0" }} ₽</span>
+                            <span class="user-dropdown-badge">{{ wallet_balance|floatformat:0|default:"0" }} ₽</span>
                         </a>
                         <div class="user-dropdown-divider"></div>
                         <a href="{% url 'chat:conversations_list' %}" class="user-dropdown-item">
@@ -213,15 +213,15 @@
                     <ul class="footer-links">
                         <li><a href="{% url 'core:faq' %}">FAQ</a></li>
                         <li><a href="{% url 'rules' %}">Правила</a></li>
-                        <li><a href="mailto:ivanpetrov20066.ip@gmail.com">Контакты</a></li>
+                        <li><a href="mailto:support@lootlink.ru">Контакты</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
                     <h3>Сообщество</h3>
                     <ul class="footer-links">
-                        <li><a href="javascript:void(0)">Discord</a></li>
-                        <li><a href="javascript:void(0)">Telegram</a></li>
-                        <li><a href="javascript:void(0)">VK</a></li>
+                        <li><a href="#" rel="noopener">Discord</a></li>
+                        <li><a href="#" rel="noopener">Telegram</a></li>
+                        <li><a href="#" rel="noopener">VK</a></li>
                     </ul>
                 </div>
             </div>
@@ -234,12 +234,12 @@
                     <a href="{% url 'rules' %}">Правила</a>
                     <a href="{% url 'core:faq' %}">FAQ</a>
                     <a href="{% url 'requisites' %}">Реквизиты</a>
-                    <a href="mailto:ivanpetrov20066.ip@gmail.com">Контакты</a>
+                    <a href="mailto:support@lootlink.ru">Контакты</a>
                 </div>
                 <div class="footer-mobile__social">
-                    <a href="javascript:void(0)" aria-label="Discord"><i data-lucide="disc-3"></i></a>
-                    <a href="javascript:void(0)" aria-label="Telegram"><i data-lucide="send"></i></a>
-                    <a href="javascript:void(0)" aria-label="VK"><i data-lucide="users"></i></a>
+                    <a href="#" aria-label="Discord" rel="noopener"><i data-lucide="disc-3"></i></a>
+                    <a href="#" aria-label="Telegram" rel="noopener"><i data-lucide="send"></i></a>
+                    <a href="#" aria-label="VK" rel="noopener"><i data-lucide="users"></i></a>
                 </div>
             </div>
             <div class="footer-bottom">
@@ -277,7 +277,7 @@
             </div>
             <div>
                 <div class="mobile-menu__user-name">{{ user.username }}</div>
-                <div class="mobile-menu__user-balance"><i data-lucide="wallet" style="width:14px;height:14px;"></i> {{ user.profile.balance|floatformat:0|default:"0" }} ₽</div>
+                <div class="mobile-menu__user-balance"><i data-lucide="wallet" style="width:14px;height:14px;"></i> {{ wallet_balance|floatformat:0|default:"0" }} ₽</div>
             </div>
         </div>
         {% endif %}
@@ -555,7 +555,7 @@
         var lastCount = {{ unread_notifications_count|default:0 }};
 
         function updateNotifications() {
-            fetch('/notifications/unread-count/', {
+            fetch('{% url "core:unread_notifications_count" %}', {
                 method: 'GET', credentials: 'same-origin',
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
             })
