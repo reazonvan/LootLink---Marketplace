@@ -6,3 +6,7 @@ class AccountsConfig(AppConfig):
     name = 'accounts'
     verbose_name = 'Аккаунты'
 
+    def ready(self):
+        from .models_badges import add_badges_method
+        add_badges_method()
+

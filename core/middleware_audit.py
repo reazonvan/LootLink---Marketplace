@@ -53,14 +53,10 @@ class BruteForceProtectionMiddleware(MiddlewareMixin):
         
         return None
     
-    def _get_client_ip(self, request):
-        """Получение IP адреса клиента."""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+    @staticmethod
+    def _get_client_ip(request):
+        from core.utils import get_client_ip
+        return get_client_ip(request)
 
 
 class SecurityAuditMiddleware(MiddlewareMixin):

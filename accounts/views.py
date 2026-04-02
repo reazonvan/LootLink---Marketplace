@@ -15,11 +15,8 @@ from transactions.models import Review
 
 
 def _get_client_ip(request):
-    """Получение реального IP клиента за reverse proxy (Caddy)."""
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        return x_forwarded_for.split(',')[0].strip()
-    return request.META.get('REMOTE_ADDR', '')
+    from core.utils import get_client_ip
+    return get_client_ip(request)
 
 
 def register(request):

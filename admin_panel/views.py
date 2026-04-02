@@ -12,6 +12,7 @@ from accounts.models import CustomUser, Profile
 from listings.models import Listing, Game, Category, Report
 from transactions.models import PurchaseRequest, Review
 from core.models_audit import SecurityAuditLog, DataChangeLog
+from core.utils import paginate_queryset
 from transactions.models_disputes import Dispute
 
 
@@ -54,7 +55,6 @@ def dashboard(request):
     ).count()
     
     # ═══ МОДЕРАЦИЯ ═══
-    pending_moderation = Listing.objects.filter(status='pending').count()
     pending_reports = Report.objects.filter(status='pending').count()
     active_disputes = Dispute.objects.filter(status__in=['open', 'under_review']).count()
     
@@ -125,7 +125,6 @@ def dashboard(request):
         'completed_week': completed_week,
         
         # Модерация
-        'pending_moderation': pending_moderation,
         'pending_reports': pending_reports,
         'active_disputes': active_disputes,
         
@@ -184,17 +183,20 @@ def users_list(request):
         )
     
     users = users.order_by('-date_joined')
-    
+    total_count = users.count()
+    page_obj = paginate_queryset(users, request, per_page=50)
+
     context = {
-        'users': users,
-        'total_count': users.count(),
+        'users': page_obj,
+        'page_obj': page_obj,
+        'total_count': total_count,
         'filters': {
             'role': role,
             'verified': verified,
             'search': search,
         }
     }
-    
+
     return render(request, 'admin_panel/users_list.html', context)
 
 
@@ -243,8 +245,8 @@ def listings_moderation(request):
     if status:
         listings = listings.filter(status=status)
     else:
-        # По умолчанию показываем только ожидающие модерации
-        listings = listings.filter(status='pending')
+        # По умолчанию показываем все объявления
+        pass
     
     if game:
         listings = listings.filter(game_id=game)
@@ -257,13 +259,16 @@ def listings_moderation(request):
         )
     
     listings = listings.order_by('-created_at')
-    
+    total_count = listings.count()
+    page_obj = paginate_queryset(listings, request, per_page=50)
+
     # Для фильтра игр
     games = Game.objects.all().order_by('name')
-    
+
     context = {
-        'listings': listings,
-        'total_count': listings.count(),
+        'listings': page_obj,
+        'page_obj': page_obj,
+        'total_count': total_count,
         'games': games,
         'filters': {
             'status': status,
@@ -271,7 +276,7 @@ def listings_moderation(request):
             'search': search,
         }
     }
-    
+
     return render(request, 'admin_panel/listings_moderation.html', context)
 
 
@@ -316,16 +321,19 @@ def transactions_list(request):
         )
     
     transactions = transactions.order_by('-created_at')
-    
+    total_count = transactions.count()
+    page_obj = paginate_queryset(transactions, request, per_page=50)
+
     context = {
-        'transactions': transactions,
-        'total_count': transactions.count(),
+        'transactions': page_obj,
+        'page_obj': page_obj,
+        'total_count': total_count,
         'filters': {
             'status': status,
             'search': search,
         }
     }
-    
+
     return render(request, 'admin_panel/transactions_list.html', context)
 
 
@@ -365,15 +373,18 @@ def disputes_list(request):
             disputes = disputes.filter(status=status)
     
     disputes = disputes.order_by('-created_at')
-    
+    total_count = disputes.count()
+    page_obj = paginate_queryset(disputes, request, per_page=50)
+
     context = {
-        'disputes': disputes,
-        'total_count': disputes.count(),
+        'disputes': page_obj,
+        'page_obj': page_obj,
+        'total_count': total_count,
         'filters': {
             'status': status,
         }
     }
-    
+
     return render(request, 'admin_panel/disputes_list.html', context)
 
 
@@ -411,15 +422,18 @@ def reports_list(request):
         reports = reports.filter(status=status)
     
     reports = reports.order_by('-created_at')
-    
+    total_count = reports.count()
+    page_obj = paginate_queryset(reports, request, per_page=50)
+
     context = {
-        'reports': reports,
-        'total_count': reports.count(),
+        'reports': page_obj,
+        'page_obj': page_obj,
+        'total_count': total_count,
         'filters': {
             'status': status,
         }
     }
-    
+
     return render(request, 'admin_panel/reports_list.html', context)
 
 
@@ -446,11 +460,14 @@ def security_logs(request):
     if date_to:
         logs = logs.filter(created_at__date__lte=date_to)
     
-    logs = logs.order_by('-created_at')[:100]
-    
+    logs = logs.order_by('-created_at')
+    total_count = logs.count()
+    page_obj = paginate_queryset(logs, request, per_page=100)
+
     context = {
-        'logs': logs,
-        'total_count': logs.count(),
+        'logs': page_obj,
+        'page_obj': page_obj,
+        'total_count': total_count,
         'filters': {
             'risk_level': risk_level,
             'action_type': action_type,
@@ -458,7 +475,7 @@ def security_logs(request):
             'date_to': date_to,
         }
     }
-    
+
     return render(request, 'admin_panel/security_logs.html', context)
 
 

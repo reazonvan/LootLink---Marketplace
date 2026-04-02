@@ -64,8 +64,15 @@ class PurchaseRequest(models.Model):
         verbose_name = 'Запрос на покупку'
         verbose_name_plural = 'Запросы на покупку'
         ordering = ['-created_at']
-        # Один покупатель может сделать только один запрос на конкретное объявление
-        unique_together = ['listing', 'buyer']
+        constraints = [
+            # Один активный запрос на покупку на пару listing+buyer
+            # Отменённые/отклонённые не блокируют повторную покупку
+            models.UniqueConstraint(
+                fields=['listing', 'buyer'],
+                condition=models.Q(status__in=['pending', 'accepted']),
+                name='unique_active_purchase_per_buyer',
+            ),
+        ]
     
     def __str__(self):
         return f'{self.buyer.username} → {self.listing.title}'

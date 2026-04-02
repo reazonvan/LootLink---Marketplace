@@ -31,6 +31,21 @@ def notifications_processor(request):
     }
 
 
+def wallet_balance_processor(request):
+    """
+    Добавляет баланс кошелька пользователя в контекст шаблона.
+    Использует Wallet (единый источник истины), а не Profile.balance.
+    """
+    if request.user.is_authenticated:
+        from payments.models import Wallet
+        wallet, _ = Wallet.objects.get_or_create(
+            user=request.user,
+            defaults={'balance': 0, 'frozen_balance': 0}
+        )
+        return {'wallet_balance': wallet.balance}
+    return {'wallet_balance': 0}
+
+
 def site_context(request):
     """
     Добавляет нормализованный SITE_URL и canonical URL в контекст.
