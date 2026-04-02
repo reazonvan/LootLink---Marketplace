@@ -125,13 +125,13 @@ class SecurityHeadersMiddleware:
         # Content Security Policy
         # В production - строже, в development - разрешаем eval для отладки
         if not settings.DEBUG:
-            # Production CSP - разрешаем Bootstrap и CDN
+            # Production CSP - разрешаем Bootstrap, CDN и Google Fonts
             response['Content-Security-Policy'] = (
                 "default-src 'self'; "
                 "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
-                "style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
+                "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; "
                 "img-src 'self' data: https: blob:; "
-                "font-src 'self' https://cdn.jsdelivr.net data:; "
+                "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; "
                 "connect-src 'self' wss://lootlink.ru https://cdn.jsdelivr.net; "
                 "frame-ancestors 'none'; "
                 "base-uri 'self'; "
@@ -142,9 +142,9 @@ class SecurityHeadersMiddleware:
             response['Content-Security-Policy'] = (
                 "default-src 'self'; "
                 "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; "
-                "style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
+                "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; "
                 "img-src 'self' data: https: blob: http:; "
-                "font-src 'self' https://cdn.jsdelivr.net data:; "
+                "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; "
                 "connect-src 'self'; "
                 "frame-ancestors 'none'; "
                 "base-uri 'self'; "

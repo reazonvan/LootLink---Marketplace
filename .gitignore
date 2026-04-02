@@ -74,6 +74,24 @@ venv.bak/
 .cursorrules
 .cursorignore
 .planning/
+.agents/
+.kilo/
+.serena/
+.playwright-mcp/
+skills/
+skills-lock.json
+
+# QA/exploration artifacts
+QA-REPORT.md
+qa-screenshots/
+EXPLORATION_COMPLETE.txt
+PROJECT_EXPLORATION_SUMMARY.txt
+STATIC_ASSETS_LIST.txt
+
+# Design screenshots (root)
+catalog_*.jpg
+catalog_*.png
+landing_reference.png
 
 # Cleanup documentation
 CLEANUP_*.md
