@@ -149,7 +149,6 @@ python manage.py check
 После того как всё заработает:
 
 1. **Прочитать документацию:**
-   - `docs/CLAUDE_OPTIMIZATION_GUIDE.md` - как работать с Claude
    - `docs/VSCODE_QUICKSTART.md` - как использовать VS Code
    - `QUICK_REFERENCE.md` - шпаргалка команд
 
