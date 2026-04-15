@@ -308,9 +308,7 @@ cache.clear()
 - [DRF Docs](https://www.django-rest-framework.org/)
 - [Celery Docs](https://docs.celeryproject.org/)
 - [PostgreSQL Docs](https://www.postgresql.org/docs/)
-- [Project Rules](PROJECT_RULES.md)
 - [VS Code Guide](docs/VSCODE_QUICKSTART.md)
-- [Claude Guide](docs/CLAUDE_OPTIMIZATION_GUIDE.md)
 
 ## 🆘 Getting Help
 
@@ -318,7 +316,7 @@ cache.clear()
 2. Check Django Debug Toolbar
 3. Check browser console (F12)
 4. Search in documentation
-5. Ask Claude (use prompts from docs/PROMPT_LIBRARY.md)
+5. Search StackOverflow
 
 ---
 
