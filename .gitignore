@@ -52,10 +52,7 @@ venv.bak/
 .vapid_private.pem
 
 # IDE
-.vscode/*
-!.vscode/settings.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode/
 .idea/
 *.swp
 *.swo
@@ -65,28 +62,6 @@ venv.bak/
 *.bak
 *.tmp
 *.old
-.DS_Store
-.DS_Store
-
-# AI/IDE specific
-.claude/
-.cursor/
-.cursorrules
-.cursorignore
-.planning/
-.agents/
-.kilo/
-.serena/
-.playwright-mcp/
-skills/
-skills-lock.json
-
-# QA/exploration artifacts
-QA-REPORT.md
-qa-screenshots/
-EXPLORATION_COMPLETE.txt
-PROJECT_EXPLORATION_SUMMARY.txt
-STATIC_ASSETS_LIST.txt
 
 # Design screenshots (root)
 catalog_*.jpg
@@ -103,25 +78,6 @@ docs/ПП01/
 docs/ПП02/
 scripts/generate_practice_report_docx.py
 
-# Cleanup documentation
-CLEANUP_*.md
-PROJECT_RULES.md
-FINAL_CLEANUP_REPORT.md
-
-# AI-generated documentation
-*OPTIMIZATION*.md
-*CLAUDE*.md
-*PROMPT*.md
-PENCIL_DESIGN_GUIDE.md
-BADGES_USAGE_EXAMPLES.md
-VSCODE_QUICKSTART.md
-REDESIGN_TASKS.md
-PHASE1_IMPLEMENTATION.md
-IMPROVEMENT_ROADMAP.md
-COMPETITOR_ANALYSIS.md
-DESIGN_PRINCIPLES.md
-NOTIFICATIONS_DESIGN_PREVIEW.md
-
 # Testing
 .tox/
 .coverage
@@ -135,7 +91,6 @@ coverage.xml
 htmlcov/
 
 # Backup files
-*.bak
 *.backup
 *.sql
 *.sql.gz
@@ -154,11 +109,6 @@ logs/*.log
 *.zip
 *.rar
 *.7z
-
-# IDE specific
-.cursor/
-.vscode/
-.idea/
 
 # Design files (not needed in production)
 design-exports/
