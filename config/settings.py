@@ -113,6 +113,8 @@ REST_FRAMEWORK = {
 }
 
 MIDDLEWARE = [
+    # Request ID первым — чтобы все последующие логи подхватили идентификатор
+    'core.middleware_logging.RequestIDMiddleware',
     'django.middleware.security.SecurityMiddleware',
     # GZipMiddleware убран: Caddy уже сжимает (encode zstd gzip),
     # а GZip + HTTPS = уязвимость BREACH
@@ -457,7 +459,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '[{levelname}] {asctime} {module} {message}',
+            'format': '[{levelname}] {asctime} [{request_id}] {module} {message}',
             'style': '{',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
@@ -473,12 +475,15 @@ LOGGING = {
         'require_debug_true': {
             '()': 'django.utils.log.RequireDebugTrue',
         },
+        'request_id': {
+            '()': 'core.middleware_logging.RequestIDFilter',
+        },
     },
     'handlers': {
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'simple'
+            'formatter': 'simple',
         },
         'file': {
             'level': 'WARNING',
@@ -487,6 +492,7 @@ LOGGING = {
             'maxBytes': 1024 * 1024 * 5,  # 5 MB
             'backupCount': 5,
             'formatter': 'verbose',
+            'filters': ['request_id'],
         },
         'error_file': {
             'level': 'ERROR',
@@ -495,6 +501,7 @@ LOGGING = {
             'maxBytes': 1024 * 1024 * 5,  # 5 MB
             'backupCount': 5,
             'formatter': 'verbose',
+            'filters': ['request_id'],
         },
         'security_file': {
             'level': 'WARNING',
@@ -503,6 +510,7 @@ LOGGING = {
             'maxBytes': 1024 * 1024 * 5,  # 5 MB
             'backupCount': 5,
             'formatter': 'verbose',
+            'filters': ['request_id'],
         },
     },
     'loggers': {

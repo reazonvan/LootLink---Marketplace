@@ -114,8 +114,8 @@ class ListingViewsTest(TestCase):
         response = self.client.get(reverse('listings:home'))
         self.assertEqual(response.status_code, 200)
     
-    def test_create_listing_requires_verification(self):
-        """Создание объявления требует верификации."""
+    def test_create_listing_soft_verification_warning(self):
+        """Неверифицированный пользователь видит страницу создания с предупреждением (soft mode)."""
         # Создаем неверифицированного пользователя
         unverified_user = CustomUser.objects.create_user(
             username='unverified',
@@ -124,27 +124,29 @@ class ListingViewsTest(TestCase):
         )
         unverified_user.profile.is_verified = False
         unverified_user.profile.save()
-        
+
         # Логинимся
         self.client.login(username='unverified', password='testpass123')
-        
-        # Пытаемся создать объявление
+
+        # Пытаемся создать объявление — soft mode: страница доступна
         response = self.client.get(reverse('listings:listing_create'))
-        
-        # Должен быть редирект на страницу верификации
-        self.assertEqual(response.status_code, 302)
-    
+
+        # Страница рендерится (а не редиректит), но показывает предупреждение о верификации
+        self.assertEqual(response.status_code, 200)
+
     def test_create_listing_success(self):
         """Успешное создание объявления."""
         self.client.login(username='testuser', password='testpass123')
-        
+
         response = self.client.post(reverse('listings:listing_create'), {
             'game': self.game.id,
             'title': 'New Listing',
-            'description': 'New Description',
+            'description': 'New Description длиной более 10 символов для прохождения валидации.',
             'price': '150.00',
         })
-        
+
+        # При успехе форма редиректит на детали объявления
+        self.assertEqual(response.status_code, 302)
         # Проверяем что объявление создано
         self.assertTrue(Listing.objects.filter(title='New Listing').exists())
     

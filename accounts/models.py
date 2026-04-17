@@ -488,36 +488,40 @@ class PhoneVerification(models.Model):
         """
         from django.db import transaction
 
-        with transaction.atomic():
-            pv = PhoneVerification.objects.select_for_update().get(pk=self.pk)
+        try:
+            with transaction.atomic():
+                pv = PhoneVerification.objects.select_for_update().get(pk=self.pk)
 
-            pv.attempts += 1
-            pv.save(update_fields=['attempts'])
+                pv.attempts += 1
+                pv.save(update_fields=['attempts'])
 
-            if pv.attempts >= 5:
-                return False, 'Превышено количество попыток. Запросите новый код.'
+                if pv.attempts >= 5:
+                    return False, 'Превышено количество попыток. Запросите новый код.'
 
-            if timezone.now() > pv.expires_at:
-                return False, 'Код истек. Запросите новый код.'
+                if timezone.now() > pv.expires_at:
+                    return False, 'Код истек. Запросите новый код.'
 
-            if pv.is_verified:
-                return False, 'Телефон уже верифицирован.'
+                if pv.is_verified:
+                    return False, 'Телефон уже верифицирован.'
 
-            if entered_code != pv.code:
-                return False, f'Неверный код. Осталось попыток: {5 - pv.attempts}'
+                if entered_code != pv.code:
+                    return False, f'Неверный код. Осталось попыток: {5 - pv.attempts}'
 
-            # Верифицируем
-            pv.is_verified = True
-            pv.verified_at = timezone.now()
-            pv.save(update_fields=['is_verified', 'verified_at'])
+                # Верифицируем
+                pv.is_verified = True
+                pv.verified_at = timezone.now()
+                pv.save(update_fields=['is_verified', 'verified_at'])
 
-            # Обновляем профиль
-            pv.user.profile.is_verified = True
-            pv.user.profile.verification_date = timezone.now()
-            pv.user.profile.save(update_fields=['is_verified', 'verification_date'])
+                # Обновляем профиль
+                pv.user.profile.is_verified = True
+                pv.user.profile.verification_date = timezone.now()
+                pv.user.profile.save(update_fields=['is_verified', 'verification_date'])
 
-        self.refresh_from_db()
-        return True, 'Телефон успешно верифицирован!'
+            return True, 'Телефон успешно верифицирован!'
+        finally:
+            # Всегда подтягиваем актуальное состояние из БД — в т.ч. при возврате False,
+            # чтобы вызывающая сторона увидела обновлённый attempts.
+            self.refresh_from_db()
 
 
 class DocumentVerification(models.Model):

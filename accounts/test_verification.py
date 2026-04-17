@@ -23,8 +23,20 @@ class EmailVerificationTestCase(TestCase):
         )
 
     def test_email_verification_created_on_registration(self):
-        """Email верификация создается при регистрации"""
-        verification = EmailVerification.objects.filter(user=self.user).first()
+        """Email верификация создается через CustomUserCreationForm при регистрации"""
+        from accounts.forms import CustomUserCreationForm
+
+        form = CustomUserCreationForm(data={
+            'username': 'newuser',
+            'email': 'newuser@example.com',
+            'phone': '+79990000001',
+            'password1': 'ComplexP@ss1234',
+            'password2': 'ComplexP@ss1234',
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        user = form.save()
+
+        verification = EmailVerification.objects.filter(user=user).first()
         self.assertIsNotNone(verification)
         self.assertFalse(verification.is_verified)
         self.assertIsNotNone(verification.token)

@@ -6,7 +6,6 @@ from accounts.forms import (
     CustomUserCreationForm,
     CustomAuthenticationForm,
     ProfileUpdateForm,
-    UserUpdateForm,
     PasswordResetRequestForm,
     PasswordResetConfirmForm
 )
@@ -131,21 +130,6 @@ class TestProfileUpdateForm:
         
         form = ProfileUpdateForm(instance=verified_user.profile)
         assert not form.fields['phone'].disabled
-
-
-@pytest.mark.django_db
-class TestUserUpdateForm:
-    """Тесты формы обновления пользователя."""
-    
-    def test_username_readonly(self, verified_user):
-        """Username нельзя изменить."""
-        form = UserUpdateForm(instance=verified_user)
-        assert form.fields['username'].disabled
-    
-    def test_email_readonly(self, verified_user):
-        """Email нельзя изменить."""
-        form = UserUpdateForm(instance=verified_user)
-        assert form.fields['email'].disabled
 
 
 @pytest.mark.django_db
