@@ -1,0 +1,62 @@
+name: Запрос фичи
+description: Предложить новую возможность для LootLink
+title: "[FEATURE] "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо за идею. Перед отправкой проверьте, нет ли похожих предложений в открытых issues.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Какую задачу решает
+      description: Опишите проблему или сценарий, с которым сталкивается пользователь.
+      placeholder: При создании листинга нельзя указать несколько игровых платформ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Предлагаемое решение
+      description: Как это должно работать с точки зрения пользователя.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Альтернативы
+      description: Какие ещё варианты вы рассматривали и почему они хуже.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Какая часть системы затрагивается
+      multiple: true
+      options:
+        - Объявления (listings)
+        - Чат
+        - Сделки
+        - Профиль / аккаунт
+        - Модерация / админка
+        - API
+        - UI / дизайн
+        - Инфраструктура
+        - Другое
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Дополнительный контекст
+      description: Ссылки, скриншоты, примеры из других проектов.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Чек-лист
+      options:
+        - label: Я проверил, что похожего предложения ещё нет
+          required: true

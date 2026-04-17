@@ -1,0 +1,82 @@
+name: Баг-репорт
+description: Сообщить об ошибке в LootLink
+title: "[BUG] "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо за найденную ошибку. Пожалуйста, заполните поля — это сильно ускорит разбор.
+
+        **Уязвимости безопасности НЕ сюда:** см. [SECURITY.md](../../SECURITY.md).
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Что произошло
+      description: Опишите наблюдаемое поведение.
+      placeholder: При нажатии «Купить» страница перезагружается, сделка не создаётся.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемое поведение
+      description: Что должно было произойти.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Шаги для воспроизведения
+      description: Минимальный набор шагов.
+      placeholder: |
+        1. Открыть /listings/42/
+        2. Нажать «Купить»
+        3. Заполнить форму
+        4. Нажать «Подтвердить»
+    validations:
+      required: true
+
+  - type: input
+    id: url
+    attributes:
+      label: URL (если применимо)
+      placeholder: https://lootlink.ru/...
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Окружение
+      options:
+        - Продакшен (lootlink.ru)
+        - Локальный dev
+        - Docker
+        - Другое
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Браузер / ОС
+      placeholder: Chrome 125 / Windows 11
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи / скриншоты / трейсбэк
+      description: Приложите, что есть. Скриншоты можно перетащить в поле.
+      render: shell
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Чек-лист
+      options:
+        - label: Я проверил, что такого issue ещё нет
+          required: true
+        - label: Это не запрос на фичу и не вопрос
+          required: true
