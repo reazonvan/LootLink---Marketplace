@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Уязвимость безопасности
+    url: https://github.com/reazonvan/LootLink---Marketplace/security/advisories/new
+    about: НЕ создавайте публичный issue. Используйте Private Vulnerability Reporting — см. SECURITY.md
+  - name: Вопрос или обсуждение
+    url: https://github.com/reazonvan/LootLink---Marketplace/issues
+    about: Для вопросов используйте раздел Issues с лейблом question

@@ -19,11 +19,11 @@
 ```bash
 # Fork репозитория на GitHub
 # Затем клонируйте ваш fork
-git clone https://github.com/YOUR_USERNAME/LootLink.git
-cd LootLink
+git clone https://github.com/YOUR_USERNAME/LootLink---Marketplace.git
+cd LootLink---Marketplace
 
 # Добавьте upstream remote
-git remote add upstream https://github.com/ORIGINAL_OWNER/LootLink.git
+git remote add upstream https://github.com/reazonvan/LootLink---Marketplace.git
 ```
 
 ### 2. Настройка окружения
@@ -39,7 +39,7 @@ venv\Scripts\activate
 source venv/bin/activate
 
 # Установите зависимости
-pip install -r requirements.txt
+pip install -r requirements/development.txt
 
 # Установите pre-commit hooks
 pip install pre-commit
@@ -58,7 +58,7 @@ python manage.py migrate
 # Создайте суперпользователя
 python manage.py createsuperuser
 
-# Загрузите тестовые данные
+# (опционально) Загрузите тестовые данные
 python scripts/create_test_data.py
 ```
 
@@ -309,13 +309,10 @@ git push origin feature/your-feature-name
 
 **НЕ создавайте public issue для уязвимостей!**
 
-Отправьте email на: security@lootlink.com
+Процедура приватного сообщения описана в [SECURITY.md](SECURITY.md).
 
-Укажите:
-- Описание уязвимости
-- Шаги для воспроизведения
-- Потенциальное влияние
-- Предлагаемое исправление (если есть)
+Кратко: отправьте email на `security@lootlink.ru` либо используйте
+GitHub Private Vulnerability Reporting (вкладка Security → Report a vulnerability).
 
 ### Security Best Practices
 
@@ -347,8 +344,8 @@ git push origin feature/your-feature-name
 
 ## Community
 
-- Будьте вежливы и уважительны
-- Задавайте вопросы в Discussions
+- Будьте вежливы и уважительны — см. [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- Задавайте вопросы в [GitHub Issues](https://github.com/reazonvan/LootLink---Marketplace/issues)
 - Помогайте новичкам
 - Делитесь знаниями
 

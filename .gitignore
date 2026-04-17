@@ -5,6 +5,28 @@ LootLink/
 # Local venv
 .venv-local/
 
+# AI-ассистенты и прочие локальные инструменты
+CLAUDE.md
+.playwright-mcp/
+qa-screenshots/
+skills-lock.json
+
+# Временные артефакты аудитов/отчётов (корневые)
+CLEANUP_PLAN.md
+CLEANUP_SUMMARY.md
+EXPLORATION_COMPLETE.txt
+PROJECT_EXPLORATION_SUMMARY.txt
+QA-REPORT.md
+REDESIGN_PROMPT.md
+STATIC_ASSETS_LIST.txt
+_build_report_v2.py
+_extract_pdf.py
+_meth.txt
+
+# Офисные документы в корне (практика/черновики)
+/*.docx
+/*.pdf
+
 # Python
 __pycache__/
 *.py[cod]
@@ -39,6 +61,7 @@ db.sqlite3-journal
 
 # Environment
 .env
+!.env.example
 .venv
 env/
 venv/
@@ -119,6 +142,7 @@ env_production.txt
 env_server.txt
 .env
 .env.*
+!.env.example
 .env.production
 .env.local
 exports/
