@@ -262,7 +262,3 @@ class TestReviewIDOR:
         review.refresh_from_db()
         assert review.rating == 5
         assert review.comment == 'Great buyer!'
-
-
-print("Тесты IDOR защиты созданы")
-
