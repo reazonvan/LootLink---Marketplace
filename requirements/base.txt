@@ -35,5 +35,5 @@ python-magic>=0.4.27
 
 # Utils
 Pillow>=11.3.0
-pywebpush==1.14.0
+pywebpush==2.3.0
 python-telegram-bot==20.7
