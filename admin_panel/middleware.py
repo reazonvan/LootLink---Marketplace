@@ -1,30 +1,46 @@
 """
-Middleware для админ-панели
-Добавляет счетчики в контекст для sidebar
+Middleware для админ-панели: счётчики sidebar.
 """
-from listings.models import Listing, Report
+from django.core.cache import cache
+
+from listings.models import Report
 from transactions.models_disputes import Dispute
 
 
+SIDEBAR_CACHE_TTL = 60  # секунд
+
+
 class AdminPanelContextMiddleware:
-    """
-    Добавляет счетчики для sidebar во все запросы админ-панели
-    """
+    """Подкладывает счётчики в request только на маршрутах кастомной админки."""
+
     def __init__(self, get_response):
         self.get_response = get_response
-    
+
     def __call__(self, request):
-        # Добавляем счетчики только для админ-панели
-        if request.path.startswith('/custom-admin/'):
-            if request.user.is_authenticated and (request.user.is_staff or 
-                (hasattr(request.user, 'profile') and request.user.profile.is_moderator)):
-                
-                request.pending_moderation = Report.objects.filter(status='pending').count()
-                request.pending_reports = Report.objects.filter(status='pending').count()
-                request.active_disputes = Dispute.objects.filter(
+        if request.path.startswith('/custom-admin/') and self._is_staff(request.user):
+            counters = cache.get('admin_panel:sidebar_counters')
+            if counters is None:
+                pending_reports = Report.objects.filter(status='pending').count()
+                active_disputes = Dispute.objects.filter(
                     status__in=['open', 'under_review']
                 ).count()
-        
-        response = self.get_response(request)
-        return response
+                counters = {
+                    'pending_reports': pending_reports,
+                    'active_disputes': active_disputes,
+                }
+                cache.set('admin_panel:sidebar_counters', counters, SIDEBAR_CACHE_TTL)
 
+            request.pending_moderation = counters['pending_reports']
+            request.pending_reports = counters['pending_reports']
+            request.active_disputes = counters['active_disputes']
+
+        return self.get_response(request)
+
+    @staticmethod
+    def _is_staff(user):
+        if not user.is_authenticated:
+            return False
+        if user.is_staff:
+            return True
+        profile = getattr(user, 'profile', None)
+        return bool(profile and profile.is_moderator)
