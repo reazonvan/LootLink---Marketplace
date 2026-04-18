@@ -192,8 +192,10 @@ else:
             'PORT': config('DB_PORT', default='5432'),
             # Daphne (ASGI) — каждый запрос в отдельном потоке,
             # CONN_MAX_AGE=0 закрывает соединение после запроса, предотвращая утечку.
-            'CONN_MAX_AGE': config('DB_CONN_MAX_AGE', default=0, cast=int),
-            'CONN_HEALTH_CHECKS': True,  # Django 5.x: проверка живости соединения
+            # Persistent connections: меньше latency на каждом запросе.
+            # CONN_HEALTH_CHECKS защищает от зависших соединений.
+            'CONN_MAX_AGE': config('DB_CONN_MAX_AGE', default=600, cast=int),
+            'CONN_HEALTH_CHECKS': True,
             'OPTIONS': {
                 'client_encoding': 'UTF8',
                 'connect_timeout': 10,

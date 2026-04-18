@@ -73,6 +73,11 @@ class PurchaseRequest(models.Model):
                 name='unique_active_purchase_per_buyer',
             ),
         ]
+        indexes = [
+            models.Index(fields=['buyer', 'status']),
+            models.Index(fields=['seller', 'status']),
+            models.Index(fields=['seller', '-completed_at']),
+        ]
     
     def __str__(self):
         return f'{self.buyer.username} → {self.listing.title}'
@@ -169,6 +174,10 @@ class Review(models.Model):
         ordering = ['-created_at']
         # Один пользователь может оставить только один отзыв на конкретную сделку
         unique_together = ['purchase_request', 'reviewer']
+        indexes = [
+            models.Index(fields=['reviewed_user', '-created_at']),
+            models.Index(fields=['reviewer', '-created_at']),
+        ]
     
     def __str__(self):
         return f'Отзыв от {self.reviewer.username} для {self.reviewed_user.username} ({self.rating}/5)'

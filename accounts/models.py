@@ -146,6 +146,11 @@ class Profile(models.Model):
     class Meta:
         verbose_name = 'Профиль'
         verbose_name_plural = 'Профили'
+        indexes = [
+            models.Index(fields=['is_verified']),
+            models.Index(fields=['is_moderator']),
+            models.Index(fields=['-rating', '-total_sales']),
+        ]
     
     def __str__(self):
         return f'Профиль {self.user.username}'

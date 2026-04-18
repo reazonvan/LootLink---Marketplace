@@ -1,36 +1,27 @@
 """
-Middleware для обновления last_seen пользователя
+Middleware для обновления last_seen пользователя.
 """
+from django.core.cache import cache
 from django.utils import timezone
 from django.utils.deprecation import MiddlewareMixin
-from datetime import timedelta
+
+
+LAST_SEEN_THROTTLE_SECONDS = 300  # обновляем не чаще раза в 5 минут
 
 
 class UpdateLastSeenMiddleware(MiddlewareMixin):
-    """
-    Обновляет last_seen для авторизованных пользователей.
-    Обновление происходит не чаще чем раз в 5 минут (для снижения нагрузки на БД).
-    """
-    
-    def process_request(self, request):
-        if request.user.is_authenticated:
-            # Обновляем last_seen при каждом запросе (оптимизация через cache)
-            try:
-                from django.core.cache import cache
-                from accounts.models import Profile
-                
-                # Используем кэш чтобы не обновлять БД при каждом запросе
-                cache_key = f'last_seen_updated_{request.user.id}'
-                
-                # Обновляем только если кэш отсутствует (раз в 2 минуты)
-                if not cache.get(cache_key):
-                    now = timezone.now()
-                    Profile.objects.filter(user=request.user).update(last_seen=now)
-                    # Ставим флаг на 2 минуты
-                    cache.set(cache_key, True, 120)
-            except Exception:
-                # Если профиля нет или ошибка - не ломаем запрос
-                pass
-        
-        return None
+    """Обновляет Profile.last_seen, дросселируя записи через кеш."""
 
+    def process_request(self, request):
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
+            return None
+
+        cache_key = f'last_seen:{user.id}'
+        if cache.get(cache_key):
+            return None
+
+        from accounts.models import Profile
+        Profile.objects.filter(user=user).update(last_seen=timezone.now())
+        cache.set(cache_key, 1, LAST_SEEN_THROTTLE_SECONDS)
+        return None

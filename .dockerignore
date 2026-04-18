@@ -1,6 +1,7 @@
 # Git
 .git
 .gitignore
+.gitattributes
 
 # Python
 __pycache__/
@@ -8,6 +9,8 @@ __pycache__/
 *$py.class
 *.so
 .Python
+.venv/
+.venv-*/
 venv/
 env/
 ENV/
@@ -21,21 +24,34 @@ db.sqlite3
 db.sqlite3-journal
 /media
 /staticfiles
+/static_root
 
 # Environment
 .env
 .env.*
+!.env.example
 
-# IDE
+# IDE / AI tools
 .vscode/
 .idea/
+.cursor/
+.cursorignore
+.claude/
+.agents/
+.kilo/
+.serena/
+.obsidian/
+.playwright-mcp/
 *.swp
+*.swo
 
-# Testing
+# Testing / coverage
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 .tox/
+coverage.xml
 
 # Documentation
 docs/
@@ -44,9 +60,43 @@ docs/
 
 # CI/CD
 .github/
+.pre-commit-config.yaml
 
-# Logs
+# Logs and backups
 logs/
-
-# Backups
 backups/
+*.bak
+*.backup
+*.dump
+*.sql
+*.sql.gz
+
+# Designer artifacts in repo root
+catalog_*.png
+catalog_*.jpg
+landing_reference.png
+qa-screenshots/
+*.docx
+*.pdf
+
+# Reports / one-off scripts
+_*.py
+_*.txt
+CLEANUP_*.md
+EXPLORATION_*.txt
+PROJECT_EXPLORATION_*.txt
+QA-REPORT.md
+REDESIGN_PROMPT.md
+STATIC_ASSETS_LIST.txt
+skills-lock.json
+
+# Local TLS certs (mounted at runtime)
+certs/
+*.pem
+*.key
+
+# Planning / design exports (not needed in image)
+.planning/
+LootLink/
+design-exports/
+design-pencil/

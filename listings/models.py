@@ -38,6 +38,9 @@ class Favorite(models.Model):
         verbose_name_plural = 'Избранное'
         unique_together = ['user', 'listing']
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+        ]
     
     def __str__(self):
         return f'{self.user.username} → {self.listing.title}'
@@ -285,17 +288,24 @@ class Listing(models.Model):
         """Проверяет, доступно ли объявление для покупки."""
         return self.status == 'active'
     
+    SEARCH_VECTOR_SOURCE_FIELDS = frozenset({'title', 'description'})
+
     def save(self, *args, **kwargs):
-        """Обновляем search_vector при сохранении."""
+        """Сохраняем и при необходимости пересчитываем search_vector."""
+        update_fields = kwargs.get('update_fields')
         super().save(*args, **kwargs)
-        
-        # PostgreSQL-only: SearchVector недоступен в SQLite.
+
+        # Пересчитываем вектор только если затронуты исходные поля.
+        # Точечные обновления статуса/цены не должны бить лишний UPDATE.
+        if update_fields is not None and not (set(update_fields) & self.SEARCH_VECTOR_SOURCE_FIELDS):
+            return
+
         db_alias = kwargs.get('using') or self._state.db or 'default'
         if self.pk and connections[db_alias].vendor == 'postgresql':
             from django.contrib.postgres.search import SearchVector
             Listing.objects.filter(pk=self.pk).update(
-                search_vector=SearchVector('title', weight='A', config='russian') + 
-                             SearchVector('description', weight='B', config='russian')
+                search_vector=SearchVector('title', weight='A', config='russian') +
+                              SearchVector('description', weight='B', config='russian')
             )
 
 
@@ -383,6 +393,11 @@ class Report(models.Model):
         verbose_name = 'Жалоба'
         verbose_name_plural = 'Жалобы'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['report_type', 'status']),
+            models.Index(fields=['reporter', '-created_at']),
+        ]
     
     def __str__(self):
         if self.report_type == 'listing':
