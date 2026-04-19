@@ -3,6 +3,7 @@
 """
 from django.shortcuts import render
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+from django.db import connection
 from django.db.models import Q, Count, Avg, Min, Max
 from django.core.paginator import Paginator
 from .models import Listing, Game, Category
@@ -29,18 +30,24 @@ def global_search(request):
         'seller', 'seller__profile', 'game', 'category'
     )
     
-    # Полнотекстовый поиск
+    # Полнотекстовый поиск — PostgreSQL FTS в prod, icontains как fallback для SQLite/dev
     if search_query:
-        search_vector = SearchVector('title', weight='A', config='russian') + \
-                       SearchVector('description', weight='B', config='russian')
-        search_q = SearchQuery(search_query, config='russian')
-        listings = listings.annotate(
-            rank=SearchRank(search_vector, search_q)
-        ).filter(
-            Q(search_vector=search_q) |
-            Q(title__icontains=search_query) |
-            Q(description__icontains=search_query)
-        ).order_by('-rank', '-created_at')
+        if connection.vendor == 'postgresql':
+            search_vector = SearchVector('title', weight='A', config='russian') + \
+                           SearchVector('description', weight='B', config='russian')
+            search_q = SearchQuery(search_query, config='russian')
+            listings = listings.annotate(
+                rank=SearchRank(search_vector, search_q)
+            ).filter(
+                Q(search_vector=search_q) |
+                Q(title__icontains=search_query) |
+                Q(description__icontains=search_query)
+            ).order_by('-rank', '-created_at')
+        else:
+            listings = listings.filter(
+                Q(title__icontains=search_query) |
+                Q(description__icontains=search_query)
+            ).order_by('-created_at')
     
     # Фильтр по игре
     if game_slug:
