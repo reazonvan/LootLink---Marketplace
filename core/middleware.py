@@ -4,8 +4,6 @@ Middleware для rate limiting и защиты от брутфорса.
 from django.core.cache import cache
 from django.http import HttpResponseForbidden
 from django.conf import settings
-from django.contrib import messages
-from django.shortcuts import redirect
 import time
 import logging
 
@@ -52,18 +50,22 @@ class SimpleRateLimitMiddleware:
         
         if should_check:
             if not self._check_rate_limit(request):
-                # Логируем подозрительную активность
+                # Логируем подозрительную активность.
+                # request.user может отсутствовать если AuthenticationMiddleware
+                # не выполнился (например, в unit-тестах с голым RequestFactory).
                 ip = self._get_client_ip(request)
-                user = request.user if request.user.is_authenticated else 'Anonymous'
+                request_user = getattr(request, 'user', None)
+                if request_user is not None and request_user.is_authenticated:
+                    user_repr = request_user
+                else:
+                    user_repr = 'Anonymous'
                 security_logger.warning(
-                    f'Rate limit exceeded: {request.path} | User: {user} | IP: {ip}'
+                    f'Rate limit exceeded: {request.path} | User: {user_repr} | IP: {ip}'
                 )
-                messages.warning(
-                    request,
+                return HttpResponseForbidden(
                     'Слишком много попыток. Пожалуйста, подождите несколько минут.'
                 )
-                return redirect(request.path)
-        
+
         response = self.get_response(request)
         return response
     
@@ -112,9 +114,12 @@ class SecurityHeadersMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         
-        # Добавляем заголовки безопасности ВСЕГДА
+        # Добавляем заголовки безопасности ВСЕГДА.
+        # X-XSS-Protection deprecated в современных браузерах, но оставлен
+        # для legacy-клиентов (IE 11, старый Safari) и security-сканеров.
         response['X-Content-Type-Options'] = 'nosniff'
         response['X-Frame-Options'] = 'DENY'
+        response['X-XSS-Protection'] = '1; mode=block'
         response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         response['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
         

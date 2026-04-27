@@ -71,8 +71,12 @@ class Conversation(models.Model):
         return self.messages.filter(is_read=False).exclude(sender=user).count()
     
     def get_last_message(self):
-        """Возвращает последнее сообщение в беседе."""
-        return self.messages.first()
+        """Возвращает последнее сообщение в беседе.
+
+        Message.Meta.ordering = ['created_at'] (старые первыми), поэтому
+        last() корректно возвращает самое свежее сообщение.
+        """
+        return self.messages.last()
 
 
 class Message(models.Model):

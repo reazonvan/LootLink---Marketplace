@@ -6,7 +6,15 @@ from django.core.exceptions import ValidationError
 from django.contrib.postgres.search import SearchVectorField
 from django.contrib.postgres.indexes import GinIndex
 from accounts.models import CustomUser
-from core.validators import ListingImageValidator
+from core.validators import (
+    ListingImageValidator,
+    validate_image_size,
+    validate_image_type,
+)
+
+# Re-export для обратной совместимости с тестами, импортирующими
+# эти функции напрямую из listings.models
+__all__ = ['validate_image_size', 'validate_image_type']
 
 # Import additional models
 from .models_history import ViewHistory

@@ -167,9 +167,9 @@ class TestLogoutView:
     """Тесты выхода."""
     
     def test_logout(self, authenticated_client):
-        """Выход из системы."""
-        response = authenticated_client.get(reverse('accounts:logout'))
-        
+        """Выход из системы (Django 5+ требует POST)."""
+        response = authenticated_client.post(reverse('accounts:logout'))
+
         assert response.status_code == 302
         assert '_auth_user_id' not in authenticated_client.session
 
@@ -223,22 +223,18 @@ class TestProfileEditView:
         assert response.status_code == 200
     
     def test_profile_edit_success(self, authenticated_client, verified_user):
-        """Успешное редактирование профиля."""
+        """Успешное редактирование профиля. ProfileUpdateForm: avatar, bio, phone."""
         data = {
             'username': verified_user.username,
             'email': verified_user.email,
-            'bio': 'New bio text',
-            'telegram': '@newtelegram',
-            'discord': 'newdiscord#1234',
+            'bio': 'Новый текст био для профиля.',
         }
         response = authenticated_client.post(reverse('accounts:profile_edit'), data)
-        
+
         assert response.status_code == 302
-        
+
         verified_user.profile.refresh_from_db()
-        assert verified_user.profile.bio == 'New bio text'
-        assert verified_user.profile.telegram == '@newtelegram'
-        assert verified_user.profile.discord == 'newdiscord#1234'
+        assert verified_user.profile.bio == 'Новый текст био для профиля.'
     
     def test_profile_phone_readonly_after_set(self, authenticated_client, verified_user):
         """Телефон нельзя изменить после установки."""
