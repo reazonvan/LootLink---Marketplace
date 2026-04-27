@@ -24,7 +24,7 @@ sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLD
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
-python_files = ["test_*.py", "*_test.py", "tests.py"]
+python_files = ["test_*.py", "*_test.py", "tests.py", "tests_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [

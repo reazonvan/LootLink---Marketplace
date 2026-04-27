@@ -143,7 +143,66 @@ class AvatarValidator(SecureImageValidator):
 @deconstructible
 class ListingImageValidator(SecureImageValidator):
     """Валидатор для изображений объявлений."""
-    
+
     def __init__(self):
         super().__init__(max_size_mb=5, allowed_extensions=['jpg', 'jpeg', 'png', 'webp'])
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Standalone функции-валидаторы
+# Удобны для точечных проверок в тестах и кастомных формах без создания
+# полного валидатора. Разделяют проверки размера и типа по отдельности.
+# ─────────────────────────────────────────────────────────────────────
+
+def validate_image_size(file, max_size_mb=5):
+    """
+    Проверяет, что размер файла не превышает max_size_mb.
+    Raises:
+        ValidationError: если файл больше лимита.
+    """
+    max_bytes = max_size_mb * 1024 * 1024
+    if file.size > max_bytes:
+        raise ValidationError(
+            f'Максимальный размер файла {max_size_mb} МБ. '
+            f'Ваш файл: {file.size / (1024 * 1024):.2f} МБ'
+        )
+
+
+def validate_image_type(file):
+    """
+    Проверяет, что файл — валидное изображение (не битое и не подделка).
+    Использует PIL для распознавания; python-magic как дополнительный уровень,
+    если установлен.
+
+    Raises:
+        ValidationError: если файл не является валидным изображением.
+    """
+    # Проверка через PIL: основа на которую можем положиться всегда.
+    try:
+        file.seek(0)
+        image = Image.open(file)
+        image.verify()
+        file.seek(0)
+    except Exception as e:
+        raise ValidationError(
+            f'Файл не является валидным изображением: {e}'
+        )
+
+    # Дополнительно: проверка MIME через python-magic если доступен.
+    if HAS_MAGIC:
+        try:
+            file.seek(0)
+            header = file.read(2048)
+            file.seek(0)
+            mime = magic.from_buffer(header, mime=True)
+            if mime not in {'image/jpeg', 'image/png', 'image/gif', 'image/webp'}:
+                raise ValidationError(
+                    f'Файл не является изображением допустимого формата. '
+                    f'Обнаружен тип: {mime}'
+                )
+        except ValidationError:
+            raise
+        except Exception:
+            # MIME-проверка — best-effort; основную уже сделал PIL.
+            pass
 
