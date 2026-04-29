@@ -27,6 +27,10 @@ def health_check(request):
             cursor.execute('SELECT 1')
             cursor.fetchone()
     except Exception:
+        # Любой сбой БД (OperationalError, InterfaceError, ConnectionError) —
+        # endpoint должен ответить 503 чтобы балансер вывел инстанс из ротации.
+        import logging
+        logging.getLogger(__name__).exception('Health check DB probe failed')
         return JsonResponse({'status': 'error'}, status=503)
 
     return JsonResponse({'status': 'ok'})

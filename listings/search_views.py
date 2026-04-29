@@ -3,9 +3,13 @@
 """
 from django.shortcuts import render
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+from django.core.cache import cache
 from django.db import connection
 from django.db.models import Q, Count, Avg, Min, Max
 from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.views.decorators.cache import cache_page
+from django.views.decorators.http import require_GET
 from .models import Listing, Game, Category
 from accounts.models import Profile
 from decimal import Decimal
@@ -172,6 +176,46 @@ def save_search(request):
     
     from django.shortcuts import redirect
     return redirect('listings:global_search')
+
+
+@require_GET
+def search_suggest(request):
+    """
+    Autocomplete API для строки поиска.
+
+    GET /api/search/suggest/?q=<query>
+    Returns JSON: {"games": [...], "listings": [...]}
+
+    Кэшируется на 60 секунд по нормализованному запросу.
+    Минимум 2 символа в запросе.
+    """
+    query = request.GET.get('q', '').strip()
+
+    if len(query) < 2:
+        return JsonResponse({'games': [], 'listings': []})
+
+    cache_key = f'search:suggest:{query.lower()}'
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return JsonResponse(cached)
+
+    games = list(
+        Game.objects.filter(is_active=True, name__icontains=query)
+        .values('name', 'slug')[:5]
+    )
+
+    listings = list(
+        Listing.objects.filter(status='active', title__icontains=query)
+        .select_related('game')
+        .values('pk', 'title', 'price', 'game__name')[:5]
+    )
+    # Decimal не сериализуется в JSON напрямую
+    for item in listings:
+        item['price'] = str(item['price'])
+
+    payload = {'games': games, 'listings': listings}
+    cache.set(cache_key, payload, 60)
+    return JsonResponse(payload)
 
 
 def quick_filters(request):

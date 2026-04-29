@@ -71,6 +71,7 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Перейти к содержимому</a>
     <div class="bg-orbs">
         <div class="orb orb1"></div>
         <div class="orb orb2"></div>
@@ -186,7 +187,7 @@
     {% endif %}
 
     <div class="container">
-        <main>
+        <main id="main-content" tabindex="-1">
             {% block content %}{% endblock %}
         </main>
     </div>
@@ -610,6 +611,8 @@
         }
     })();
     </script>
+    <script src="{% static 'js/search-autocomplete.js' %}?v=20260427" defer></script>
+    <script src="{% static 'js/image-gallery.js' %}?v=20260427" defer></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

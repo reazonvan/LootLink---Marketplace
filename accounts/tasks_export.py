@@ -104,7 +104,10 @@ def generate_data_export(self, export_request_id):
             export_request.error_message = str(exc)
             export_request.save()
         except Exception:
-            pass
+            logger.exception(
+                'Failed to mark export_request id=%s as failed',
+                getattr(export_request, 'pk', None),
+            )
 
         raise self.retry(exc=exc, countdown=60)
 

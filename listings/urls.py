@@ -27,6 +27,7 @@ urlpatterns = [
     path('search/saved/', search_views.saved_searches, name='saved_searches'),
     path('search/save/', search_views.save_search, name='save_search'),
     path('search/quick-filters/', search_views.quick_filters, name='quick_filters'),
+    path('api/search/suggest/', search_views.search_suggest, name='search_suggest'),
     
     # Trading: Price offers, reservations  
     path('listing/<int:listing_id>/make-offer/', views_trading.make_price_offer, name='make_price_offer'),
