@@ -108,6 +108,12 @@ def withdrawal_create(request):
                     locked_wallet.save(update_fields=['frozen_balance'])
                     withdrawal.save()
             except Exception:
+                # Финансовая транзакция — обязательно логируем для аудита.
+                import logging
+                logging.getLogger(__name__).exception(
+                    'Withdrawal creation failed for user_id=%s',
+                    request.user.pk,
+                )
                 messages.error(request, 'Ошибка при создании заявки. Попробуйте позже.')
                 return redirect('payments:withdrawal_create')
 

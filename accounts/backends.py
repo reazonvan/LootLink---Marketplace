@@ -80,5 +80,11 @@ class CaseInsensitiveModelBackend(ModelBackend):
                 }
             )
         except Exception:
-            pass
+            # Запись в аудит не должна ломать логин-флоу, но молчать
+            # тоже нельзя — security-логгер увидит инцидент.
+            security_logger.exception(
+                'Failed to write SecurityAuditLog for login_failed event '
+                '(username=%s, ip=%s)',
+                username, ip_address,
+            )
 
