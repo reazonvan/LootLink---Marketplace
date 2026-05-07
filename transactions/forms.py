@@ -30,7 +30,13 @@ class ReviewForm(forms.ModelForm):
         fields = ['rating', 'comment']
         widgets = {
             'rating': forms.RadioSelect(
-                choices=[(i, f'{i} ★') for i in range(1, 6)]
+                choices=[
+                    (1, '1 — плохо'),
+                    (2, '2 — слабо'),
+                    (3, '3 — нормально'),
+                    (4, '4 — хорошо'),
+                    (5, '5 — отлично'),
+                ]
             ),
             'comment': forms.Textarea(attrs={
                 'class': 'form-control',

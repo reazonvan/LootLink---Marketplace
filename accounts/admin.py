@@ -39,8 +39,7 @@ class CustomUserAdmin(UserAdmin):
         """Рейтинг"""
         if hasattr(obj, 'profile'):
             rating = obj.profile.rating
-            stars = '★' * int(rating)
-            return format_html(f'{stars} {rating:.1f}')
+            return format_html(f'{rating:.1f} / 5')
         return '-'
     rating_display.short_description = 'Рейтинг'
     
@@ -61,6 +60,7 @@ class ProfileAdmin(admin.ModelAdmin):
     list_filter = ['is_verified', 'is_moderator', 'rating']
     search_fields = ['user__username', 'phone']
     list_editable = ['is_verified', 'is_moderator']
+    # Profile.balance удалён в Phase 11 — финансы теперь только через Wallet
     readonly_fields = ['phone', 'total_sales', 'total_purchases', 'rating', 'created_at']
     
     def role_badge(self, obj):
@@ -81,7 +81,7 @@ class ProfileAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Основная информация', {
-            'fields': ('user', 'avatar', 'bio', 'balance')
+            'fields': ('user', 'avatar', 'bio')
         }),
         ('Контакты', {
             'fields': ('phone', 'telegram', 'discord')

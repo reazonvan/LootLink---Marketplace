@@ -25,6 +25,8 @@ django-celery-beat>=2.6.0
 # Auth / 2FA
 django-otp>=1.5.0
 qrcode>=7.4.2
+# Argon2id для хеширования паролей (соответствие диплому, OWASP-рекомендация)
+argon2-cffi>=23.1.0
 
 # Forms
 django-crispy-forms>=2.4

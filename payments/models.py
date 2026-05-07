@@ -44,7 +44,22 @@ class Wallet(models.Model):
     class Meta:
         verbose_name = 'Кошелек'
         verbose_name_plural = 'Кошельки'
-    
+        # БД-уровневые проверки целостности финансов.
+        # Защищают от багов в коде (отрицательный баланс, frozen > balance).
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(balance__gte=0),
+                name='wallet_balance_non_negative',
+                violation_error_message='Баланс не может быть отрицательным',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(frozen_balance__gte=0)
+                          & models.Q(frozen_balance__lte=models.F('balance')),
+                name='wallet_frozen_consistent',
+                violation_error_message='Frozen balance должен быть в [0, balance]',
+            ),
+        ]
+
     def __str__(self):
         return f'Кошелек {self.user.username} - {self.balance} ₽'
     
@@ -173,6 +188,8 @@ class Transaction(models.Model):
             models.Index(fields=['user', '-created_at']),
             models.Index(fields=['status', '-created_at']),
             models.Index(fields=['payment_id']),
+            # Фильтр истории по типу транзакции (deposit/withdrawal/sale/...)
+            models.Index(fields=['user', 'transaction_type', '-created_at'], name='tx_user_type_idx'),
         ]
     
     def __str__(self):
@@ -260,6 +277,12 @@ class Escrow(models.Model):
         verbose_name = 'Эскроу'
         verbose_name_plural = 'Эскроу'
         ordering = ['-created_at']
+        indexes = [
+            # Cron auto_release_escrow ищет funded-эскроу с истёкшим deadline
+            models.Index(fields=['status', 'release_deadline'], name='escrow_status_deadline_idx'),
+            models.Index(fields=['buyer', '-created_at'], name='escrow_buyer_idx'),
+            models.Index(fields=['seller', '-created_at'], name='escrow_seller_idx'),
+        ]
     
     def __str__(self):
         return f'Эскроу #{self.id} - {self.amount} ₽ ({self.get_status_display()})'
@@ -534,6 +557,11 @@ class Withdrawal(models.Model):
         verbose_name = 'Вывод средств'
         verbose_name_plural = 'Выводы средств'
         ordering = ['-created_at']
+        indexes = [
+            # Админ-очередь pending-заявок и история пользователя
+            models.Index(fields=['status', '-created_at'], name='withdrawal_status_idx'),
+            models.Index(fields=['user', '-created_at'], name='withdrawal_user_idx'),
+        ]
     
     def __str__(self):
         return f'Вывод {self.amount} ₽ - {self.user.username} ({self.get_status_display()})'

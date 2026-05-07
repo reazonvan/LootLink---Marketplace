@@ -7,8 +7,19 @@ from .models import Wallet, Transaction, Escrow, PromoCode, Withdrawal
 class WalletAdmin(admin.ModelAdmin):
     list_display = ['user', 'balance', 'frozen_balance', 'available_balance_display', 'updated_at']
     search_fields = ['user__username', 'user__email']
-    readonly_fields = ['created_at', 'updated_at']
+    # Финансовые поля только для чтения — изменение баланса должно идти ТОЛЬКО
+    # через Transaction/Escrow (атомарно, с audit log). Прямое редактирование
+    # из админки нарушает целостность финансовых данных.
+    readonly_fields = ['user', 'balance', 'frozen_balance', 'created_at', 'updated_at']
     list_filter = ['created_at']
+
+    def has_add_permission(self, request):
+        # Wallet создаётся сигналом при создании пользователя
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Удаление кошелька запрещено — только soft-disable через user.is_active
+        return False
     
     def available_balance_display(self, obj):
         available = obj.get_available_balance()

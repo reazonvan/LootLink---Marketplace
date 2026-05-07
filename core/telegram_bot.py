@@ -59,7 +59,7 @@ class TelegramNotificationService:
             return False
         
         text = f"""
-🔔 <b>Новое сообщение</b>
+<b>Новое сообщение</b>
 
 От: {message_from}
 Время: {timezone.now().strftime('%H:%M')}
@@ -75,7 +75,7 @@ class TelegramNotificationService:
             return False
         
         text = f"""
-💰 <b>Новый запрос на покупку!</b>
+<b>Новый запрос на покупку</b>
 
 Товар: {listing_title}
 От: {buyer_name}
@@ -93,7 +93,7 @@ class TelegramNotificationService:
         change = 'снижена' if new_price < old_price else 'повышена'
         
         text = f"""
-💵 <b>Цена {change}!</b>
+<b>Цена {change}</b>
 
 Товар: {listing_title}
 Было: {old_price} ₽

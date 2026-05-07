@@ -31,43 +31,37 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             if (data.success) {
-                // Обновляем состояние кнопки
-                const icon = favoriteBtn.querySelector('i');
+                // Обновляем состояние кнопки.
+                // Проект использует Lucide-иконки, не Bootstrap Icons —
+                // поэтому состояние "в избранном" выражается через
+                // data-favorited атрибут + CSS-класс active.
+                // CSS подсвечивает heart через fill: currentColor (см. lootlink.css).
                 const text = document.getElementById('favorite-text');
-                
+
                 if (data.is_favorited) {
-                    // Добавлено в избранное
-                    icon.classList.remove('bi-heart');
-                    icon.classList.add('bi-heart-fill');
-                    text.textContent = 'В избранном';
+                    favoriteBtn.classList.add('active');
                     favoriteBtn.dataset.isFavorited = 'true';
-                    
-                    // Показываем уведомление
+                    if (text) text.textContent = 'В избранном';
                     if (window.showToast) {
-                        showToast(data.message, 'success', 'heart-fill', 'bg-success');
+                        showToast(data.message, 'success');
                     }
                 } else {
-                    // Удалено из избранного
-                    icon.classList.remove('bi-heart-fill');
-                    icon.classList.add('bi-heart');
-                    text.textContent = 'В избранное';
+                    favoriteBtn.classList.remove('active');
                     favoriteBtn.dataset.isFavorited = 'false';
-                    
-                    // Показываем уведомление
+                    if (text) text.textContent = 'В избранное';
                     if (window.showToast) {
-                        showToast(data.message, 'info', 'heart', 'bg-info');
+                        showToast(data.message, 'info');
                     }
                 }
             } else {
-                // Ошибка
                 if (window.showToast) {
-                    showToast('Произошла ошибка. Попробуйте позже.', 'error', 'exclamation-triangle', 'bg-danger');
+                    showToast('Произошла ошибка. Попробуйте позже.', 'error');
                 }
             }
         })
         .catch(() => {
             if (window.showToast) {
-                showToast('Произошла ошибка соединения.', 'error', 'exclamation-triangle', 'bg-danger');
+                showToast('Произошла ошибка соединения.', 'error');
             }
         })
         .finally(() => {

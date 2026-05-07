@@ -88,7 +88,7 @@ class TestProfileModel:
         assert profile.rating == 0.00
         assert profile.total_sales == 0
         assert profile.total_purchases == 0
-        assert profile.balance == 0.00
+        # Profile.balance удалён в Phase 11 (см. payments.Wallet вместо него)
     
     def test_profile_str_representation(self, verified_user):
         """Строковое представление профиля."""

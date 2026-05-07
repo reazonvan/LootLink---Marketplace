@@ -11,7 +11,10 @@ from core import views as core_views
 from core.sitemaps import sitemaps
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # Стандартная Django-админка по пути из ADMIN_URL (см. settings.py).
+    # В prod задаётся через .env как непредсказуемая строка,
+    # чтобы боты не сканировали /admin/.
+    path(settings.ADMIN_URL, admin.site.urls),
     path('custom-admin/', include('admin_panel.urls')),  # Кастомная админ-панель
     # Favicon redirect (to avoid 404)
     path('favicon.ico', RedirectView.as_view(url=settings.STATIC_URL + 'favicon.svg', permanent=True)),

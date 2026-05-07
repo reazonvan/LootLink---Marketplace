@@ -31,7 +31,8 @@
                 <div style="flex:1;">
                     <div style="font-size:var(--text-sm);">
                         <span style="text-decoration:line-through;color:var(--text-tertiary);">{{ change.old_price }} ₽</span>
-                        → <span style="font-weight:var(--weight-semibold);">{{ change.new_price }} ₽</span>
+                        <i data-lucide="arrow-right" style="width:14px;height:14px;vertical-align:-2px;color:var(--text-tertiary);"></i>
+                        <span style="font-weight:var(--weight-semibold);">{{ change.new_price }} ₽</span>
                     </div>
                     <div style="font-size:var(--text-xs);color:var(--text-tertiary);">{{ change.changed_at|date:"d.m.Y H:i" }}</div>
                 </div>
