@@ -46,15 +46,31 @@ class Conversation(models.Model):
         verbose_name = 'Беседа'
         verbose_name_plural = 'Беседы'
         ordering = ['-updated_at']
-        # Уникальная пара участников для конкретного объявления
-        unique_together = ['participant1', 'participant2', 'listing']
-        # Constraint: participant1.id всегда должен быть меньше participant2.id
+        # Уникальная пара участников для конкретного объявления.
+        # unique_together не работает с NULL (когда listing удалён),
+        # поэтому два условных UniqueConstraint вместо одного.
         constraints = [
+            models.UniqueConstraint(
+                fields=['participant1', 'participant2', 'listing'],
+                condition=models.Q(listing__isnull=False),
+                name='unique_conversation_with_listing',
+            ),
+            models.UniqueConstraint(
+                fields=['participant1', 'participant2'],
+                condition=models.Q(listing__isnull=True),
+                name='unique_conversation_no_listing',
+            ),
+            # participant1.id всегда меньше participant2.id (сортировка пар)
             models.CheckConstraint(
                 condition=models.Q(participant1_id__lt=models.F('participant2_id')),
                 name='participant1_less_than_participant2',
                 violation_error_message='participant1 должен быть меньше participant2 (сортировка по ID)'
             ),
+        ]
+        indexes = [
+            # Список бесед пользователя (отсортирован по последнему сообщению)
+            models.Index(fields=['participant1', '-updated_at'], name='conv_p1_updated_idx'),
+            models.Index(fields=['participant2', '-updated_at'], name='conv_p2_updated_idx'),
         ]
     
     def __str__(self):
@@ -120,7 +136,13 @@ class Message(models.Model):
     class Meta:
         verbose_name = 'Сообщение'
         verbose_name_plural = 'Сообщения'
-        ordering = ['created_at']  # Исправлено: старые сообщения первыми
+        ordering = ['created_at']  # старые сообщения первыми
+        indexes = [
+            # Главный индекс: окно чата (все сообщения беседы в порядке)
+            models.Index(fields=['conversation', '-created_at'], name='msg_conv_created_idx'),
+            # Подсчёт непрочитанных от других в беседе (badge)
+            models.Index(fields=['conversation', 'is_read', 'sender'], name='msg_unread_idx'),
+        ]
     
     def __str__(self):
         return f'Сообщение от {self.sender.username} в {self.created_at}'

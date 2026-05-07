@@ -111,10 +111,14 @@ class TestSecurityHeadersMiddleware:
         
         assert 'X-Frame-Options' in response
         assert response['X-Frame-Options'] == 'DENY'
-        
-        assert 'X-XSS-Protection' in response
-        assert response['X-XSS-Protection'] == '1; mode=block'
-        
+
+        # X-XSS-Protection УДАЛЁН в Phase 10 — header deprecated в современных
+        # браузерах и может включать уязвимости в IE/старом Safari
+        # (https://owasp.org/www-project-secure-headers/#x-xss-protection).
+        # Защита от XSS теперь — через CSP (см. test_csp_header_production)
+        # и автоматический escape в шаблонах Django.
+        assert 'X-XSS-Protection' not in response
+
         assert 'Referrer-Policy' in response
         assert 'Permissions-Policy' in response
     

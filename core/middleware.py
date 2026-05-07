@@ -114,12 +114,13 @@ class SecurityHeadersMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         
-        # Добавляем заголовки безопасности ВСЕГДА.
-        # X-XSS-Protection deprecated в современных браузерах, но оставлен
-        # для legacy-клиентов (IE 11, старый Safari) и security-сканеров.
+        # Заголовки безопасности.
+        # X-XSS-Protection УДАЛЁН: deprecated в современных браузерах,
+        # фактически может включать уязвимости в IE/старом Safari
+        # (https://owasp.org/www-project-secure-headers/#x-xss-protection).
+        # Защита от XSS — через CSP ниже + escape в шаблонах.
         response['X-Content-Type-Options'] = 'nosniff'
         response['X-Frame-Options'] = 'DENY'
-        response['X-XSS-Protection'] = '1; mode=block'
         response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         response['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
         

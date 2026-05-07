@@ -6,6 +6,83 @@
 
 ---
 
+## [1.3.0] - 2026-05-08
+
+### Major Update — Phase 9-14: hardening, целостность данных, оптимизация
+
+### Безопасность (Phase 10)
+- **Argon2id** для хеширования паролей (соответствие нефункциональному
+  требованию диплома 1.3, рекомендация OWASP). Старые PBKDF2-хеши работают
+  через fallback. `requirements/base.txt` + `argon2-cffi>=23.1.0`.
+- **Кастомный путь админки** через `ADMIN_URL` env (защита от автоматических
+  сканеров). По умолчанию `admin/` для dev, в prod — непредсказуемая строка.
+- **`CSRF_COOKIE_HTTPONLY=True`** — защита от XSS-кражи CSRF-токена.
+  WebSocket-клиент берёт токен из `<meta name="csrf-token">` или header.
+- **`DATA_UPLOAD_MAX_NUMBER_FIELDS=1000`** — защита от DoS через хеш-коллизии.
+- **`USE_REDIS=False` в production выдаёт RuntimeWarning** — предотвращает
+  фиктивный rate-limit при многих воркерах Daphne.
+- **Удалён `X-XSS-Protection` header** (deprecated, может включать уязвимости
+  в IE/старом Safari). Защита от XSS — через CSP и escape в шаблонах.
+- **`Wallet.balance/frozen_balance` readonly в админке** — финансы только
+  через `Transaction`/`Escrow` (атомарно, с audit log).
+- **`Wallet.has_add_permission/has_delete_permission = False`** — кошелёк
+  создаётся только сигналом, удалить нельзя.
+
+### Целостность данных (Phase 11)
+- **Удалено мёртвое поле `Profile.balance`** — единый источник истины
+  для финансов теперь `payments.Wallet.balance` (через миграцию
+  `accounts.0020_remove_profile_balance`).
+- **БД-уровневые `CheckConstraint` на Wallet:**
+  `wallet_balance_non_negative` и `wallet_frozen_consistent`
+  (frozen в `[0, balance]`). Защита от багов в коде, нарушающих
+  целостность финансов.
+- **Условные `UniqueConstraint` для Conversation** вместо `unique_together` —
+  `unique_together` не работает с `NULL`, поэтому два constraint:
+  один с listing, один без.
+
+### Производительность БД (Phase 11)
+Добавлены композитные индексы под горячие запросы:
+- `chat.Message`: `(conversation, -created_at)`, `(conversation, is_read, sender)`
+  — ранее у Message не было ни одного индекса.
+- `chat.Conversation`: `(participant1, -updated_at)`, `(participant2, -updated_at)`
+  — список бесед пользователя.
+- `core.Notification`: `(user, is_read, -created_at)` — главный запрос badge.
+- `listings.Listing`: `(seller, status, -created_at)`, `(game, category, status)`
+  — каталог и профиль продавца.
+- `payments.Escrow`: `(status, release_deadline)`, `(buyer, -created_at)`,
+  `(seller, -created_at)` — auto_release_escrow и история.
+- `payments.Withdrawal`: `(status, -created_at)`, `(user, -created_at)`
+  — админ-очередь и история.
+- `payments.Transaction`: `(user, transaction_type, -created_at)`
+  — фильтр истории по типу.
+
+### Frontend (Phase 14)
+- **`alt`-теги** добавлены на все `<img>` в payments/transactions
+  (раньше 3 без alt — `escrow_detail.html`, `purchase_request_create.html`,
+  `purchase_request_detail.html`).
+- **`loading="lazy"`** на listing-thumbnails в тех же шаблонах.
+- **`favorites.js` icon-fix** — раньше переключал `bi-heart`/`bi-heart-fill`
+  (Bootstrap Icons) на Lucide-проекте, иконка не менялась.
+  Теперь через CSS-класс `.active` (см. `.favorite-btn-detail.active` в lootlink.css).
+
+### Чистка репозитория (Phase 9)
+- Удалены лишние виртуальные окружения (`.venv`, `.venv-codex`,
+  `.venv-dev`, `.venv-local`) — оставлен один `venv/`.
+- Удалены AI/IDE-артефакты: `.agents/`, `.kilo/`, `.serena/`, `.obsidian/`,
+  `.cursor/`, `.playwright-mcp/`, `LootLink/`, `__pycache__/` в корне.
+- Удалены кэши: `.coverage`, `htmlcov/`, `.pytest_cache/`.
+- Очищены логи (770 КБ): `errors.log`, `lootlink.log`, `security.log`.
+- Удалены распакованные ZIP-бинарники (Redis 12 МБ, GitHub MCP 7 МБ).
+- В `.gitignore` добавлены: `tools/` (целиком), `diploma_text.txt`.
+
+### Метрики
+- Тесты: **388 passed, 1 skipped** (без изменений после рефакторинга).
+- Coverage: **66%** (база для Phase 15).
+- Python LOC: 52 540 в 339 файлах (без venv/migrations).
+- Миграций добавлено: 5 (accounts, core, listings, chat, payments).
+
+---
+
 ## [1.2.0] - 2026-04-17
 
 ### Major Update — антифрод, модерация, production-стабилизация

@@ -86,15 +86,9 @@ class Profile(models.Model):
         verbose_name='Telegram уведомления'
     )
     
-    # Баланс
-    balance = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0.00,
-        validators=[MinValueValidator(0)],
-        verbose_name='Баланс'
-    )
-    
+    # Поле Profile.balance УДАЛЕНО (Phase 11). Единый источник истины
+    # для финансов — payments.Wallet.balance. См. core/context_processors.py.
+
     # Статистика
     rating = models.DecimalField(
         max_digits=3,

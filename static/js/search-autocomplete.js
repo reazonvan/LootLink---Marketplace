@@ -66,9 +66,10 @@
             return;
         }
         var html = '<div class="search-suggest__section">Недавние</div>';
+        var iconHistory = '<svg class="search-suggest__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>';
         recent.forEach(function (q) {
             html += '<a class="search-suggest__item" data-q="' + escapeHtml(q) + '">' +
-                '<span class="search-suggest__icon" aria-hidden="true">↻</span>' +
+                iconHistory +
                 '<span>' + escapeHtml(q) + '</span></a>';
         });
         panel.innerHTML = html;
@@ -77,11 +78,13 @@
 
     function renderResults(panel, data, query) {
         var html = '';
+        var iconGamepad = '<svg class="search-suggest__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="11" x2="10" y2="11"/><line x1="8" y1="9" x2="8" y2="13"/><line x1="15" y1="12" x2="15.01" y2="12"/><line x1="18" y1="10" x2="18.01" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258A4 4 0 0 0 17.32 5z"/></svg>';
+        var iconTag = '<svg class="search-suggest__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>';
         if (data.games && data.games.length) {
             html += '<div class="search-suggest__section">Игры</div>';
             data.games.forEach(function (g) {
                 html += '<a class="search-suggest__item" href="/game/' + encodeURIComponent(g.slug) + '/">' +
-                    '<span class="search-suggest__icon" aria-hidden="true">🎮</span>' +
+                    iconGamepad +
                     '<span>' + escapeHtml(g.name) + '</span></a>';
             });
         }
@@ -90,6 +93,7 @@
             data.listings.forEach(function (l) {
                 var meta = l.game__name ? ' · ' + escapeHtml(l.game__name) : '';
                 html += '<a class="search-suggest__item" href="/listing/' + l.pk + '/">' +
+                    iconTag +
                     '<span class="search-suggest__title">' + escapeHtml(l.title) + meta + '</span>' +
                     '<span class="search-suggest__price">' + escapeHtml(l.price) + ' ₽</span>' +
                     '</a>';

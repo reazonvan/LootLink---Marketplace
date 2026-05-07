@@ -87,7 +87,7 @@ class ProfileModelTest(TestCase):
         self.assertEqual(profile.total_sales, 0)
         self.assertEqual(profile.total_purchases, 0)
         self.assertFalse(profile.is_verified)
-        self.assertEqual(profile.balance, 0.00)
+        # Profile.balance удалён в Phase 11 (см. payments.Wallet вместо него)
     
     def test_profile_cannot_be_deleted(self):
         """Профиль нельзя удалить."""

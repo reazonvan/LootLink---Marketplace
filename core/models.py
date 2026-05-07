@@ -72,6 +72,8 @@ class Notification(models.Model):
         indexes = [
             models.Index(fields=['user', 'is_read']),
             models.Index(fields=['-created_at']),
+            # Композит под главный запрос badge: непрочитанные пользователя в порядке свежести
+            models.Index(fields=['user', 'is_read', '-created_at'], name='notif_user_unread_idx'),
         ]
     
     def __str__(self):

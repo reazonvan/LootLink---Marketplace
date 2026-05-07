@@ -286,6 +286,9 @@ class Listing(models.Model):
             models.Index(fields=['game', 'status']),
             models.Index(fields=['seller', 'status']),
             models.Index(fields=['-created_at', 'status']),
+            # Композитные индексы под горячие запросы каталога/профиля
+            models.Index(fields=['seller', 'status', '-created_at'], name='listing_seller_active_idx'),
+            models.Index(fields=['game', 'category', 'status'], name='listing_game_cat_idx'),
             GinIndex(fields=['search_vector']),  # Для full-text search
         ]
     

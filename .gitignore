@@ -10,6 +10,7 @@ CLAUDE.md
 .playwright-mcp/
 qa-screenshots/
 skills-lock.json
+.env.mcp
 
 # Временные артефакты аудитов/отчётов (корневые)
 CLEANUP_PLAN.md
@@ -136,6 +137,12 @@ logs/*.log
 *.zip
 *.rar
 *.7z
+
+# Local tools (Redis portable, MCP binaries, plink etc)
+tools/
+
+# Diploma extraction artifact
+diploma_text.txt
 
 # Design files (not needed in production)
 design-exports/

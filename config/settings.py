@@ -204,6 +204,10 @@ else:
         }
     }
 
+# Кастомный путь для стандартной Django-админки (защита от ботов).
+# В production задаётся через .env, в dev по умолчанию остаётся 'admin/'.
+ADMIN_URL = config('ADMIN_URL', default='admin/')
+
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
@@ -211,6 +215,18 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 AUTHENTICATION_BACKENDS = [
     'accounts.backends.CaseInsensitiveModelBackend',  # Кастомный backend для case-insensitive логина
     'django.contrib.auth.backends.ModelBackend',  # Fallback на стандартный
+]
+
+# Password hashers — Argon2id первым (быстрее и безопаснее PBKDF2),
+# fallback на старые алгоритмы для совместимости со старыми хешами в БД.
+# Argon2id — победитель Password Hashing Competition (PHC) 2015,
+# рекомендован OWASP. Соответствует требованию диплома 1.3.
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.ScryptPasswordHasher',
 ]
 
 # Password validation
@@ -335,7 +351,10 @@ if not DEBUG:
 
 # Session and Cookie security
 SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_HTTPONLY = False  # WebSocket нужен доступ к CSRF
+# CSRF cookie HttpOnly — защита от XSS-кражи. WebSocket-клиент использует
+# CSRF из мета-тега <meta name="csrf-token"> или X-CSRFToken header,
+# поэтому JS-доступ к самой cookie не нужен.
+CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_AGE = 1209600  # 2 недели
@@ -352,7 +371,17 @@ CSRF_COOKIE_DOMAIN = config(
 ) or None
 
 # Cache configuration
+# В production Redis обязателен (rate-limit, sessions, channels).
+# В dev — LocMemCache достаточно. См. .env / .env.example.
 USE_REDIS = config('USE_REDIS', default=False, cast=bool)
+if not DEBUG and not USE_REDIS:
+    import warnings
+    warnings.warn(
+        'USE_REDIS=False in production: rate-limit и channels работают локально '
+        '(per-worker), что некорректно при множественных Daphne workers. '
+        'Установите USE_REDIS=True в production .env',
+        RuntimeWarning,
+    )
 
 if USE_REDIS:
     # Redis для production
@@ -395,6 +424,9 @@ else:
 # File upload settings
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+# Защита от DoS через хеш-коллизии в формах (1000+ полей).
+# https://docs.djangoproject.com/en/5.2/ref/settings/#data-upload-max-number-fields
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 
 # Pagination settings
 PAGINATION_ITEMS_PER_PAGE = {
