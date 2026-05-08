@@ -4,10 +4,12 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.conf import settings
 from django.urls import reverse
-from .models import Wallet, Transaction, Escrow, PromoCode, Withdrawal
+
+from . import selectors, services
 from .forms import DepositForm, PromoCodeForm, WithdrawalForm
+from .models import Escrow, Transaction
+from .services import InsufficientFundsError
 from .yookassa_integration import yookassa_service
 import json
 import logging
@@ -22,60 +24,38 @@ def _get_client_ip(request):
 
 @login_required
 def wallet_dashboard(request):
-    """Дашборд кошелька пользователя"""
-    wallet, created = Wallet.objects.get_or_create(user=request.user)
-    
-    # Последние транзакции
-    transactions = Transaction.objects.filter(
-        user=request.user
-    ).select_related('purchase_request')[:20]
-    
-    # Активные эскроу
-    active_escrows = Escrow.objects.filter(
-        buyer=request.user,
-        status='funded'
-    ).select_related('seller', 'purchase_request__listing')
-    
-    # Ожидающие выводы
-    pending_withdrawals = Withdrawal.objects.filter(
-        user=request.user,
-        status='pending'
-    )
-    
+    """Дашборд кошелька пользователя."""
+    wallet = selectors.get_or_create_user_wallet(user=request.user)
     context = {
         'wallet': wallet,
-        'transactions': transactions,
-        'active_escrows': active_escrows,
-        'pending_withdrawals': pending_withdrawals,
+        'transactions': selectors.user_recent_transactions(user=request.user, limit=20),
+        'active_escrows': selectors.user_active_escrows(user=request.user),
+        'pending_withdrawals': selectors.user_pending_withdrawals(user=request.user),
     }
     return render(request, 'payments/wallet_dashboard.html', context)
 
 
 @login_required
 def deposit(request):
-    """Пополнение баланса"""
+    """Пополнение баланса."""
     if request.method == 'POST':
         form = DepositForm(request.POST)
         if form.is_valid():
             amount = form.cleaned_data['final_amount']
-            
-            # Создаем платеж через ЮKassa
             return_url = request.build_absolute_uri(reverse('payments:deposit_success'))
-            result = yookassa_service.create_payment(
+
+            result = services.create_deposit_payment(
                 user=request.user,
                 amount=amount,
-                description=f'Пополнение баланса на {amount} ₽',
-                return_url=return_url
+                return_url=return_url,
             )
-            
+
             if result.get('success'):
-                # Перенаправляем на страницу оплаты
                 return redirect(result['confirmation_url'])
-            else:
-                messages.error(request, f'Ошибка создания платежа: {result.get("error")}')
+            messages.error(request, f'Ошибка создания платежа: {result.get("error")}')
     else:
         form = DepositForm()
-    
+
     return render(request, 'payments/deposit.html', {'form': form})
 
 
@@ -88,44 +68,43 @@ def deposit_success(request):
 
 @login_required
 def withdrawal_create(request):
-    """Создание заявки на вывод средств"""
-    wallet, _ = Wallet.objects.get_or_create(user=request.user)
+    """Создание заявки на вывод средств."""
+    wallet = selectors.get_or_create_user_wallet(user=request.user)
 
     if request.method == 'POST':
         form = WithdrawalForm(user=request.user, data=request.POST)
         if form.is_valid():
-            from django.db import transaction as db_tx
             try:
-                with db_tx.atomic():
-                    withdrawal = form.save(commit=False)
-                    withdrawal.user = request.user
-                    # Замораживаем сумму вывода чтобы нельзя было вывести больше баланса
-                    locked_wallet = Wallet.objects.select_for_update().get(user=request.user)
-                    if locked_wallet.get_available_balance() < withdrawal.amount:
-                        messages.error(request, 'Недостаточно средств на балансе.')
-                        return redirect('payments:withdrawal_create')
-                    locked_wallet.frozen_balance += withdrawal.amount
-                    locked_wallet.save(update_fields=['frozen_balance'])
-                    withdrawal.save()
+                services.create_withdrawal(
+                    user=request.user,
+                    amount=form.cleaned_data['amount'],
+                    payment_method=form.cleaned_data['payment_method'],
+                    payment_details=form.cleaned_data['payment_details'],
+                )
+            except InsufficientFundsError:
+                messages.error(request, 'Недостаточно средств на балансе.')
+                return redirect('payments:withdrawal_create')
             except Exception:
                 # Финансовая транзакция — обязательно логируем для аудита.
-                import logging
-                logging.getLogger(__name__).exception(
+                logger.exception(
                     'Withdrawal creation failed for user_id=%s',
                     request.user.pk,
                 )
                 messages.error(request, 'Ошибка при создании заявки. Попробуйте позже.')
                 return redirect('payments:withdrawal_create')
 
-            messages.success(request, 'Заявка на вывод средств создана. Ожидайте обработки администратором.')
+            messages.success(
+                request,
+                'Заявка на вывод средств создана. Ожидайте обработки администратором.',
+            )
             return redirect('payments:wallet_dashboard')
     else:
         form = WithdrawalForm(user=request.user)
-    
+
     context = {
         'form': form,
         'wallet': wallet,
-        'available_balance': wallet.get_available_balance()
+        'available_balance': wallet.get_available_balance(),
     }
     return render(request, 'payments/withdrawal_create.html', context)
 
@@ -133,25 +112,24 @@ def withdrawal_create(request):
 @login_required
 @require_http_methods(['POST'])
 def apply_promo_code(request):
-    """Применить промокод (AJAX)"""
+    """Применить промокод (AJAX)."""
     form = PromoCodeForm(request.POST)
     if form.is_valid():
         promo_code = form.promo_code
-        
+
         # Сохраняем промокод в сессии
         request.session['promo_code'] = promo_code.code
-        
+
         return JsonResponse({
             'success': True,
             'message': f'Промокод применен! Скидка: {promo_code.discount_value}{"%" if promo_code.discount_type == "percent" else "₽"}',
             'discount_type': promo_code.discount_type,
             'discount_value': float(promo_code.discount_value)
         })
-    else:
-        return JsonResponse({
-            'success': False,
-            'errors': form.errors
-        }, status=400)
+    return JsonResponse({
+        'success': False,
+        'errors': form.errors,
+    }, status=400)
 
 
 @csrf_exempt
@@ -176,8 +154,7 @@ def yookassa_webhook(request):
 
         if success:
             return HttpResponse(status=200)
-        else:
-            return HttpResponse(status=400)
+        return HttpResponse(status=400)
 
     except json.JSONDecodeError:
         return HttpResponse(status=400)
@@ -188,22 +165,14 @@ def yookassa_webhook(request):
 
 @login_required
 def transaction_history(request):
-    """История транзакций"""
+    """История транзакций."""
     from django.core.paginator import Paginator
 
-    transactions = Transaction.objects.filter(
-        user=request.user
-    ).select_related('purchase_request__listing').order_by('-created_at')
-
-    # Фильтрация по типу
-    transaction_type = request.GET.get('type')
-    if transaction_type:
-        transactions = transactions.filter(transaction_type=transaction_type)
-
-    # Фильтрация по статусу
-    status = request.GET.get('status')
-    if status:
-        transactions = transactions.filter(status=status)
+    transactions = selectors.user_transactions(
+        user=request.user,
+        transaction_type=request.GET.get('type') or None,
+        status=request.GET.get('status') or None,
+    )
 
     paginator = Paginator(transactions, 20)
     page_obj = paginator.get_page(request.GET.get('page'))
@@ -219,13 +188,12 @@ def transaction_history(request):
 
 @login_required
 def escrow_detail(request, escrow_id):
-    """Детали эскроу"""
+    """Детали эскроу."""
     escrow = get_object_or_404(Escrow, id=escrow_id)
-    
+
     # Проверка прав доступа
     if request.user != escrow.buyer and request.user != escrow.seller:
         messages.error(request, 'У вас нет доступа к этому эскроу')
         return redirect('payments:wallet_dashboard')
-    
-    return render(request, 'payments/escrow_detail.html', {'escrow': escrow})
 
+    return render(request, 'payments/escrow_detail.html', {'escrow': escrow})
