@@ -1,108 +1,166 @@
 """
 Утилиты для отправки Web Push уведомлений.
+
+Phase 13: синхронный сетевой вызов webpush() вынесен в Celery-таск
+send_push_async, чтобы не блокировать request/response цикл и не валить
+view, если push-сервер браузера медленный или недоступен.
 """
 import json
 import logging
-from pywebpush import webpush, WebPushException
+
+from celery import shared_task
 from django.conf import settings
+from django.db import transaction
+from pywebpush import webpush, WebPushException
+
 from core.models_notifications import PushSubscription
 
 logger = logging.getLogger(__name__)
 
 
-def send_push_notification(user, title, body, url=None, icon=None):
+@shared_task(bind=True, max_retries=3, default_retry_delay=30)
+def send_push_async(self, subscription_id, payload_json):
     """
-    Отправка push уведомления пользователю.
+    Асинхронная отправка push-уведомления конкретной подписке.
 
     Args:
-        user: Пользователь
-        title: Заголовок уведомления
-        body: Текст уведомления
-        url: URL для перехода при клике (опционально)
-        icon: URL иконки (опционально)
+        subscription_id: ID PushSubscription.
+        payload_json: JSON-строка с payload (title/body/url/icon).
+
+    Особенности:
+        - 410 Gone от push-сервера => подписка деактивируется (битая).
+        - Прочие сетевые/HTTP-ошибки => retry с экспоненциальным backoff.
+        - VAPID-ключи проверяются однократно: если их нет, сразу выходим.
+    """
+    if not getattr(settings, 'VAPID_PRIVATE_KEY', ''):
+        logger.warning('VAPID_PRIVATE_KEY not configured — push skipped')
+        return
+
+    sub = PushSubscription.objects.filter(
+        id=subscription_id, is_active=True
+    ).first()
+    if not sub:
+        return
+
+    try:
+        webpush(
+            subscription_info=sub.subscription_info,
+            data=payload_json,
+            vapid_private_key=settings.VAPID_PRIVATE_KEY,
+            vapid_claims={
+                'sub': f'mailto:{settings.DEFAULT_FROM_EMAIL}'
+            },
+        )
+        logger.info(
+            f'Push sent to subscription #{sub.id} (user={sub.user_id})'
+        )
+    except WebPushException as e:
+        # 410 Gone => подписка протухла, деактивируем без retry.
+        if e.response is not None and e.response.status_code == 410:
+            sub.is_active = False
+            sub.save(update_fields=['is_active'])
+            logger.info(
+                f'Deactivated stale subscription #{sub.id} (410 Gone)'
+            )
+            return
+        logger.warning(
+            f'WebPushException for subscription #{sub.id}: {e}'
+        )
+        try:
+            raise self.retry(exc=e)
+        except self.MaxRetriesExceededError:
+            logger.error(
+                f'Max retries exceeded for push subscription #{sub.id}'
+            )
+    except Exception as e:
+        logger.exception(
+            f'Unexpected error sending push to subscription #{sub.id}: {e}'
+        )
+        try:
+            raise self.retry(exc=e)
+        except self.MaxRetriesExceededError:
+            logger.error(
+                f'Max retries exceeded (unexpected) for push subscription '
+                f'#{sub.id}'
+            )
+
+
+def send_push_notification(user, title, body, url=None, icon=None):
+    """
+    Постановка push-уведомлений в очередь Celery для всех активных
+    подписок пользователя.
+
+    Args:
+        user: Пользователь.
+        title: Заголовок.
+        body: Текст.
+        url: URL для перехода (опционально).
+        icon: URL иконки (опционально).
 
     Returns:
-        dict: Результат отправки {'sent': int, 'failed': int}
+        dict: {'queued': N, 'failed': 0} — сколько задач поставлено в очередь.
+              Реальная отправка произойдёт асинхронно в воркере.
     """
-    if not hasattr(settings, 'VAPID_PRIVATE_KEY') or not settings.VAPID_PRIVATE_KEY:
-        logger.error("VAPID keys not configured")
-        return {'sent': 0, 'failed': 0}
+    if not getattr(settings, 'VAPID_PRIVATE_KEY', ''):
+        logger.error('VAPID keys not configured')
+        return {'queued': 0, 'failed': 0, 'sent': 0}
 
-    subscriptions = PushSubscription.objects.filter(
-        user=user,
-        is_active=True
+    subscription_ids = list(
+        PushSubscription.objects.filter(
+            user=user, is_active=True
+        ).values_list('id', flat=True)
     )
 
-    if not subscriptions.exists():
-        logger.info(f"No active push subscriptions for user {user.username}")
-        return {'sent': 0, 'failed': 0}
+    if not subscription_ids:
+        logger.info(
+            f'No active push subscriptions for user {user.username}'
+        )
+        return {'queued': 0, 'failed': 0, 'sent': 0}
 
-    # Формируем payload
     payload = {
         'title': title,
         'body': body,
         'icon': icon or '/static/img/logo.png',
     }
-
     if url:
         payload['url'] = url
 
-    sent_count = 0
-    failed_count = 0
+    payload_json = json.dumps(payload)
 
-    for subscription in subscriptions:
-        try:
-            subscription_info = subscription.subscription_info
+    queued = 0
+    for sub_id in subscription_ids:
+        # Откладываем .delay() до коммита: если транзакция, в которой
+        # генерируется уведомление, откатится — задача не уйдёт в воркер.
+        transaction.on_commit(
+            lambda sid=sub_id: send_push_async.delay(sid, payload_json)
+        )
+        queued += 1
 
-            webpush(
-                subscription_info=subscription_info,
-                data=json.dumps(payload),
-                vapid_private_key=settings.VAPID_PRIVATE_KEY,
-                vapid_claims={
-                    'sub': f'mailto:{settings.DEFAULT_FROM_EMAIL}'
-                }
-            )
-
-            sent_count += 1
-            logger.info(f"Push notification sent to {user.username}")
-
-        except WebPushException as e:
-            logger.error(f"Failed to send push to {user.username}: {e}")
-            failed_count += 1
-
-            # Если подписка невалидна (410 Gone), деактивируем её
-            if e.response and e.response.status_code == 410:
-                subscription.is_active = False
-                subscription.save()
-                logger.info(f"Deactivated invalid subscription for {user.username}")
-
-        except Exception as e:
-            logger.error(f"Unexpected error sending push to {user.username}: {e}")
-            failed_count += 1
-
-    return {'sent': sent_count, 'failed': failed_count}
+    # Ключ 'sent' оставлен для обратной совместимости с прежними вызовами,
+    # которые читали результат.
+    return {'queued': queued, 'failed': 0, 'sent': queued}
 
 
 def send_push_to_multiple_users(users, title, body, url=None, icon=None):
     """
-    Отправка push уведомления нескольким пользователям.
+    Постановка push-уведомлений в очередь для нескольких пользователей.
 
     Args:
-        users: QuerySet или список пользователей
-        title: Заголовок уведомления
-        body: Текст уведомления
-        url: URL для перехода при клике (опционально)
-        icon: URL иконки (опционально)
+        users: QuerySet или список пользователей.
+        title: Заголовок.
+        body: Текст.
+        url: URL для перехода (опционально).
+        icon: URL иконки (опционально).
 
     Returns:
-        dict: Результат отправки {'sent': int, 'failed': int}
+        dict: {'queued': N, 'failed': 0}
     """
-    total_sent = 0
+    total_queued = 0
     total_failed = 0
 
     for user in users:
         result = send_push_notification(user, title, body, url, icon)
-        total_sent += result['sent']
-        total_failed += result['failed']
+        total_queued += result.get('queued', 0)
+        total_failed += result.get('failed', 0)
 
-    return {'sent': total_sent, 'failed': total_failed}
+    return {'queued': total_queued, 'failed': total_failed, 'sent': total_queued}

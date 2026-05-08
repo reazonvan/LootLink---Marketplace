@@ -291,20 +291,22 @@ def password_reset_request(request):
             
             email_sent = False
             sms_sent = False
-            
+
             # Отправляем email через EmailService (с HTML и лучшей обработкой ошибок)
             try:
                 from core.email_service import EmailService
                 email_sent = EmailService.send_password_reset_email(user, reset_code.code)
-                
+
                 if not email_sent:
-                    # Fallback на старый способ
-                    send_mail(
-                        subject,
-                        email_message,
-                        settings.DEFAULT_FROM_EMAIL,
-                        [email],
-                        fail_silently=False,
+                    # Fallback: ставим в Celery вместо блокирующей отправки.
+                    # Phase 13: было синхронным send_mail() — отнимало время
+                    # ответа и роняло view при недоступности SMTP.
+                    from core.tasks import send_email_async
+                    from django.db import transaction as db_transaction
+                    db_transaction.on_commit(
+                        lambda: send_email_async.delay(
+                            subject, email_message, email
+                        )
                     )
                     email_sent = True
             except Exception as e:
@@ -429,17 +431,18 @@ def resend_verification_email(request):
 """
     
     try:
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [request.user.email],
-            fail_silently=False
+        # Phase 13: ставим письмо в Celery — синхронный send_mail()
+        # блокировал ответ и мог упасть при медленном SMTP.
+        from core.tasks import send_email_async
+        from django.db import transaction as db_transaction
+        recipient = request.user.email
+        db_transaction.on_commit(
+            lambda: send_email_async.delay(subject, message, recipient)
         )
         messages.success(request, f'Письмо с подтверждением отправлено на {request.user.email}')
     except Exception as e:
         messages.error(request, f'Ошибка отправки письма: {e}')
-    
+
     return redirect('accounts:profile', username=request.user.username)
 
 
