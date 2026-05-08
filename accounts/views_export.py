@@ -43,9 +43,15 @@ def request_data_export(request):
         # Создаем новый запрос
         export_request = DataExportRequest.objects.create(user=request.user)
 
-        # Запускаем задачу Celery
+        # Запускаем задачу Celery.
+        # Phase 13: откладываем .delay() до коммита — иначе worker может
+        # не найти DataExportRequest, если транзакция ещё не закоммичена.
         from accounts.tasks_export import generate_data_export
-        generate_data_export.delay(export_request.id)
+        from django.db import transaction as db_transaction
+        export_id = export_request.id
+        db_transaction.on_commit(
+            lambda: generate_data_export.delay(export_id)
+        )
 
         messages.success(request, 'Запрос на экспорт данных создан. Вы получите email когда файл будет готов.')
         return redirect('accounts:data_export')

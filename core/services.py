@@ -5,6 +5,7 @@
 from typing import Optional
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db import transaction
 from django.utils.html import escape
 from .models import Notification
 
@@ -54,13 +55,18 @@ class NotificationService:
             try:
                 # Используем Celery для асинхронной отправки
                 from core.tasks import send_email_async
-                
+
                 # Формируем email
                 email_subject = f'{title} - LootLink'
                 email_body = NotificationService._format_email_body(user, message, link)
-                
-                # Отправляем асинхронно
-                send_email_async.delay(email_subject, email_body, user.email)
+
+                # Phase 13: откладываем .delay() до фактического коммита БД,
+                # иначе worker может попытаться отправить email о сущности,
+                # которая ещё не видна в реплике (или будет откатана).
+                user_email = user.email
+                transaction.on_commit(
+                    lambda: send_email_async.delay(email_subject, email_body, user_email)
+                )
             except Exception as e:
                 # Fallback на синхронную отправку если Celery недоступен
                 try:
@@ -75,7 +81,7 @@ class NotificationService:
                     import logging
                     logger = logging.getLogger(__name__)
                     logger.error(f'Ошибка отправки email уведомления: {email_error}')
-        
+
         return notification
     
     @staticmethod
