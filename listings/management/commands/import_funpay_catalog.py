@@ -203,6 +203,13 @@ class Command(BaseCommand):
                 self._clean()
             self._import(data)
 
+        # Сбрасываем кэш каталога — иначе пользователи увидят старое до 5 минут.
+        try:
+            from listings.signals import invalidate_catalog_cache
+            invalidate_catalog_cache()
+        except Exception:  # noqa: BLE001
+            pass
+
         self.stdout.write(self.style.SUCCESS("[OK] Импорт завершён"))
         self._summary()
 

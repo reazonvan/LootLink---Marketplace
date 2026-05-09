@@ -479,6 +479,11 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'payments.check_pending_withdrawals',
         'schedule': 86400.0,  # Раз в день
     },
+    # Прогрев кэша каталога (TTL контекста = 10 мин, перепрогрев каждые 4 мин)
+    'warm-catalog-cache': {
+        'task': 'listings.tasks.warm_catalog_cache',
+        'schedule': 240.0,
+    },
 }
 
 # ЮKassa settings
