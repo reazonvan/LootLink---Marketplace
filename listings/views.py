@@ -69,48 +69,54 @@ def landing_page(request):
 
 
 def games_catalog(request):
-    """Каталог: алфавитный список игр с категориями-ссылками (как FunPay)."""
-    from django.db.models import Count, Prefetch, Min
+    """Каталог: алфавитный список игр с категориями-ссылками.
+
+    Контекст кэшируется в Redis на 5 минут — ORM (770 игр + 3765 категорий
+    с annotate) стоит ~325 мс, шаблон ~670 мс. Сам каталог редко меняется
+    (правится через админку или management command), поэтому stale-окно
+    в 5 минут безопасно. Инвалидация — `cache.delete('games_catalog_ctx_v1')`.
+    """
     from collections import OrderedDict
 
-    # Категории с подсчётом активных лотов и минимальной ценой
-    categories_qs = Category.objects.filter(
-        is_active=True
-    ).annotate(
-        listings_count=Count('listings', filter=Q(listings__status='active')),
-        min_price=Min('listings__price', filter=Q(listings__status='active')),
-    ).order_by('order', 'name')
+    from django.core.cache import cache
+    from django.db.models import Count, Min, Prefetch
 
-    # Игры с prefetch категорий и общим числом лотов, сортировка по имени
-    games = list(Game.objects.filter(is_active=True).prefetch_related(
-        Prefetch('categories', queryset=categories_qs, to_attr='active_categories')
-    ).annotate(
-        listings_count=Count('listings', filter=Q(listings__status='active'))
-    ).order_by('name'))
+    CACHE_KEY = 'games_catalog_ctx_v1'
+    CACHE_TTL = 600  # 10 минут (Celery beat прогревает каждые 4 минуты)
 
-    total_listings = sum(g.listings_count or 0 for g in games)
-    total_categories = sum(len(g.active_categories) for g in games)
+    context = cache.get(CACHE_KEY)
+    if context is None:
+        categories_qs = Category.objects.filter(
+            is_active=True
+        ).annotate(
+            listings_count=Count('listings', filter=Q(listings__status='active')),
+            min_price=Min('listings__price', filter=Q(listings__status='active')),
+        ).order_by('order', 'name')
 
-    # Группировка по первой букве для алфавитного указателя
-    alphabet_groups = OrderedDict()
-    for game in games:
-        first_char = game.name[0].upper() if game.name else '#'
-        if first_char.isdigit():
-            first_char = '0-9'
-        if first_char not in alphabet_groups:
-            alphabet_groups[first_char] = []
-        alphabet_groups[first_char].append(game)
+        games = list(Game.objects.filter(is_active=True).prefetch_related(
+            Prefetch('categories', queryset=categories_qs, to_attr='active_categories')
+        ).annotate(
+            listings_count=Count('listings', filter=Q(listings__status='active'))
+        ).order_by('name'))
 
-    # Собираем список букв для навигации
-    alphabet_letters = list(alphabet_groups.keys())
+        total_listings = sum(g.listings_count or 0 for g in games)
+        total_categories = sum(len(g.active_categories) for g in games)
 
-    context = {
-        'games': games,
-        'total_listings': total_listings,
-        'total_categories': total_categories,
-        'alphabet_groups': alphabet_groups,
-        'alphabet_letters': alphabet_letters,
-    }
+        alphabet_groups = OrderedDict()
+        for game in games:
+            first_char = game.name[0].upper() if game.name else '#'
+            if first_char.isdigit():
+                first_char = '0-9'
+            alphabet_groups.setdefault(first_char, []).append(game)
+
+        context = {
+            'games': games,
+            'total_listings': total_listings,
+            'total_categories': total_categories,
+            'alphabet_groups': alphabet_groups,
+            'alphabet_letters': list(alphabet_groups.keys()),
+        }
+        cache.set(CACHE_KEY, context, CACHE_TTL)
 
     return render(request, 'listings/games_catalog.html', context)
 

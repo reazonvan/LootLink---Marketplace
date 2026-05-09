@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load cache %}
 
 {% block title %}Каталог игр — LootLink{% endblock %}
 
@@ -26,14 +27,17 @@
     <!-- Alphabet nav -->
     <nav class="cat-abc" id="catAbc" data-animate="fade-in" data-delay="100">
         <div class="cat-abc__track">
+            {% cache 300 catalog_alphabet_v1 %}
             {% for letter in alphabet_letters %}
             <a href="#letter-{{ letter }}" class="cat-abc__btn" data-letter="{{ letter }}">{{ letter }}</a>
             {% endfor %}
+            {% endcache %}
         </div>
     </nav>
 
     <!-- Games directory -->
     <div class="cat-dir" id="catGames">
+        {% cache 300 catalog_games_v1 %}
         {% for letter, group in alphabet_groups.items %}
         <section class="cat-section" id="letter-{{ letter }}">
             <div class="cat-section__head" data-animate="fade-in">
@@ -85,6 +89,7 @@
             <p class="empty-state__text">Игры и категории скоро появятся</p>
         </div>
         {% endfor %}
+        {% endcache %}
     </div>
 
     <!-- No results -->

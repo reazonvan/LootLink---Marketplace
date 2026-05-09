@@ -6,3 +6,7 @@ class ListingsConfig(AppConfig):
     name = 'listings'
     verbose_name = 'Объявления'
 
+    def ready(self) -> None:
+        # Регистрируем сигналы инвалидации кэша каталога.
+        from . import signals  # noqa: F401
+
