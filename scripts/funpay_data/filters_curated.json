@@ -1,0 +1,294 @@
+[
+  {
+    "category_funpay_id": "1350",
+    "category_hint": "Counter-Strike 2 / Аккаунты",
+    "filters": [
+      {
+        "name": "Звание",
+        "field_name": "rank",
+        "filter_type": "select",
+        "is_required": false,
+        "options": [
+          "Silver I", "Silver II", "Silver III", "Silver IV",
+          "Silver Elite", "Silver Elite Master",
+          "Gold Nova I", "Gold Nova II", "Gold Nova III", "Gold Nova Master",
+          "Master Guardian I", "Master Guardian II", "Master Guardian Elite",
+          "Distinguished Master Guardian",
+          "Legendary Eagle", "Legendary Eagle Master",
+          "Supreme Master First Class",
+          "Global Elite"
+        ]
+      },
+      {
+        "name": "Prime",
+        "field_name": "prime",
+        "filter_type": "checkbox",
+        "is_required": false
+      },
+      {
+        "name": "Premier рейтинг",
+        "field_name": "premier_rating",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "FACEIT уровень",
+        "field_name": "faceit_level",
+        "filter_type": "select",
+        "is_required": false,
+        "options": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+      },
+      {
+        "name": "Часов в игре",
+        "field_name": "hours_played",
+        "filter_type": "range",
+        "is_required": false
+      }
+    ]
+  },
+  {
+    "category_funpay_id": "83",
+    "category_hint": "Counter-Strike: GO / Аккаунты",
+    "filters": [
+      {
+        "name": "Звание",
+        "field_name": "rank",
+        "filter_type": "select",
+        "is_required": false,
+        "options": [
+          "Silver I", "Silver II", "Silver III", "Silver IV",
+          "Silver Elite", "Silver Elite Master",
+          "Gold Nova I", "Gold Nova II", "Gold Nova III", "Gold Nova Master",
+          "Master Guardian I", "Master Guardian II", "Master Guardian Elite",
+          "Distinguished Master Guardian",
+          "Legendary Eagle", "Legendary Eagle Master",
+          "Supreme Master First Class",
+          "Global Elite"
+        ]
+      },
+      {
+        "name": "Prime",
+        "field_name": "prime",
+        "filter_type": "checkbox",
+        "is_required": false
+      },
+      {
+        "name": "FACEIT уровень",
+        "field_name": "faceit_level",
+        "filter_type": "select",
+        "is_required": false,
+        "options": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+      },
+      {
+        "name": "Часов в игре",
+        "field_name": "hours_played",
+        "filter_type": "range",
+        "is_required": false
+      }
+    ]
+  },
+  {
+    "category_funpay_id": "436",
+    "category_hint": "Brawl Stars / Аккаунты",
+    "filters": [
+      {
+        "name": "Кубков",
+        "field_name": "trophies",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "Бойцов открыто",
+        "field_name": "brawlers_count",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "Мифические/Легендарные/Хрома",
+        "field_name": "rare_brawlers",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "Power League ранг",
+        "field_name": "power_league_rank",
+        "filter_type": "select",
+        "is_required": false,
+        "options": [
+          "Бронза", "Серебро", "Золото", "Алмаз", "Мифический", "Легендарный", "Мастер"
+        ]
+      },
+      {
+        "name": "Бойцов 11 уровня",
+        "field_name": "max_power_brawlers",
+        "filter_type": "range",
+        "is_required": false
+      }
+    ]
+  },
+  {
+    "category_funpay_id": "696",
+    "category_hint": "Genshin Impact / Аккаунты",
+    "filters": [
+      {
+        "name": "Adventure Rank (AR)",
+        "field_name": "adventure_rank",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "Регион",
+        "field_name": "region",
+        "filter_type": "select",
+        "is_required": false,
+        "options": ["Europe", "America", "Asia", "TW/HK/MO"]
+      },
+      {
+        "name": "5★ персонажи",
+        "field_name": "five_star_characters",
+        "filter_type": "multiselect",
+        "is_required": false,
+        "options": [
+          "Райдэн Сёгун", "Ху Тао", "Чжун Ли", "Сяо", "Эола", "Альбедо",
+          "Венти", "Гань Юй", "Кадзуха", "Аяка", "Ёимия", "Ёэлай",
+          "Ёэс", "Странник", "Нахида", "Тигнари", "Сайно", "Ал-Хайтам",
+          "Деилук", "Цици", "Кэ Цин", "Мона", "Дилюк",
+          "Аратаки Итто", "Сангономия Кокоми", "Юн Цзинь",
+          "Нилу", "Кандакия", "Дэхья", "Лини", "Линетта",
+          "Невилет", "Фурина", "Аэто", "Сетос", "Маверина", "Ширэн"
+        ]
+      },
+      {
+        "name": "Витая бездна (этаж)",
+        "field_name": "spiral_abyss_floor",
+        "filter_type": "select",
+        "is_required": false,
+        "options": ["8", "9", "10", "11", "12 (3★)", "12 (6★)", "12 (9★)", "12 (36★)"]
+      },
+      {
+        "name": "Кристаллов сотворения",
+        "field_name": "primogems",
+        "filter_type": "range",
+        "is_required": false
+      }
+    ]
+  },
+  {
+    "category_funpay_id": "401",
+    "category_hint": "Roblox / Аккаунты",
+    "filters": [
+      {
+        "name": "Возраст аккаунта (дней)",
+        "field_name": "account_age_days",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "Баланс Robux",
+        "field_name": "robux_balance",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "Premium",
+        "field_name": "premium",
+        "filter_type": "checkbox",
+        "is_required": false
+      },
+      {
+        "name": "Total Value (RAP)",
+        "field_name": "rap_value",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "Limiteds",
+        "field_name": "has_limiteds",
+        "filter_type": "checkbox",
+        "is_required": false
+      }
+    ]
+  },
+  {
+    "category_funpay_id": "468",
+    "category_hint": "Apex Legends / Аккаунты",
+    "filters": [
+      {
+        "name": "Ранг",
+        "field_name": "rank",
+        "filter_type": "select",
+        "is_required": false,
+        "options": [
+          "Бронза IV", "Бронза III", "Бронза II", "Бронза I",
+          "Серебро IV", "Серебро III", "Серебро II", "Серебро I",
+          "Золото IV", "Золото III", "Золото II", "Золото I",
+          "Платина IV", "Платина III", "Платина II", "Платина I",
+          "Алмаз IV", "Алмаз III", "Алмаз II", "Алмаз I",
+          "Мастер", "Хищник"
+        ]
+      },
+      {
+        "name": "Heirloom (фамильное оружие)",
+        "field_name": "heirlooms_count",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "Бейджи",
+        "field_name": "badges_count",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "Уровень аккаунта",
+        "field_name": "account_level",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "Платформа",
+        "field_name": "platform",
+        "filter_type": "select",
+        "is_required": false,
+        "options": ["PC (Steam)", "PC (Origin/EA)", "PlayStation", "Xbox", "Nintendo Switch"]
+      }
+    ]
+  },
+  {
+    "category_funpay_id": "87",
+    "category_hint": "GTA 5 Online / Аккаунты",
+    "filters": [
+      {
+        "name": "Деньги в игре",
+        "field_name": "in_game_money",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "Уровень (RP)",
+        "field_name": "level",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "Платформа",
+        "field_name": "platform",
+        "filter_type": "select",
+        "is_required": false,
+        "options": ["PC (Steam)", "PC (Epic Games)", "PC (Rockstar)", "PlayStation", "Xbox"]
+      },
+      {
+        "name": "K/D",
+        "field_name": "kd_ratio",
+        "filter_type": "range",
+        "is_required": false
+      },
+      {
+        "name": "GTA+ подписка",
+        "field_name": "gta_plus",
+        "filter_type": "checkbox",
+        "is_required": false
+      }
+    ]
+  }
+]
