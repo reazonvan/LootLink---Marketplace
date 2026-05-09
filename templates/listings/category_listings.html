@@ -71,7 +71,7 @@
                         <option value="">Все</option>
                         {% for option in filter.options.all %}
                         {% if option.is_active %}
-                        <option value="{{ option.value }}" {% if applied_filters|dictsort:"" %}{% for k,v in applied_filters.items %}{% if k == filter.field_name and v == option.value %}selected{% endif %}{% endfor %}{% endif %}>{{ option.get_display_name }}</option>
+                        <option value="{{ option.value }}" {% if applied_filters %}{% for k,v in applied_filters.items %}{% if k == filter.field_name and v == option.value %}selected{% endif %}{% endfor %}{% endif %}>{{ option.get_display_name }}</option>
                         {% endif %}
                         {% endfor %}
                     </select>
