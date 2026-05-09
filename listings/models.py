@@ -87,11 +87,19 @@ class Game(models.Model):
         verbose_name='Порядок сортировки',
         help_text='Меньше число = выше в списке'
     )
+    funpay_id = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+        db_index=True,
+        verbose_name='FunPay ID',
+        help_text='Идентификатор игры на funpay.com (для импорта/синхронизации)'
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата добавления'
     )
-    
+
     class Meta:
         verbose_name = 'Игра'
         verbose_name_plural = 'Игры'
@@ -158,11 +166,19 @@ class Category(models.Model):
         verbose_name='Порядок сортировки',
         help_text='Меньше число = выше в списке'
     )
+    funpay_id = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+        db_index=True,
+        verbose_name='FunPay ID',
+        help_text='Идентификатор категории на funpay.com (для импорта/синхронизации)'
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата создания'
     )
-    
+
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
