@@ -14,7 +14,7 @@ django-storages>=1.14.2
 # Performance and caching
 redis>=7.0.0
 django-redis>=6.0.0
-hiredis>=3.3.0
+hiredis>=3.3.1
 
 # Monitoring and error tracking
 sentry-sdk>=2.42.0
