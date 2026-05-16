@@ -6,6 +6,7 @@ Game/Category/Listing.
 (`catalog_alphabet_v1`, `catalog_games_v1`) живут 5 минут.
 Любая правка структурных данных — сбрасывает кэш сразу.
 """
+
 from __future__ import annotations
 
 from django.core.cache import cache
@@ -14,17 +15,19 @@ from django.dispatch import receiver
 
 from .models import Category, Game, Listing
 
-
-CATALOG_CACHE_KEYS = (
-    'games_catalog_ctx_v1',
-)
+CATALOG_CACHE_KEYS = ("games_catalog_ctx_v1",)
 
 # Префиксы фрагментов template-cache (`{% cache %}` префиксует ключи как
 # `template.cache.<name>.<args_hash>`). Без аргументов хэш одинаковый,
 # поэтому удаляем по полному ключу.
 TEMPLATE_FRAGMENT_KEYS = (
-    'template.cache.catalog_alphabet_v1.d41d8cd98f00b204e9800998ecf8427e',
-    'template.cache.catalog_games_v1.d41d8cd98f00b204e9800998ecf8427e',
+    # v1 ключи — оставлены на переходный период (старые поды могли успеть
+    # положить их перед деплоем). Истекут сами через 5 мин.
+    "template.cache.catalog_alphabet_v1.d41d8cd98f00b204e9800998ecf8427e",
+    "template.cache.catalog_games_v1.d41d8cd98f00b204e9800998ecf8427e",
+    # v2 — текущая версия (после удаления категорий из inline-render).
+    "template.cache.catalog_alphabet_v2.d41d8cd98f00b204e9800998ecf8427e",
+    "template.cache.catalog_games_v2.d41d8cd98f00b204e9800998ecf8427e",
 )
 
 
