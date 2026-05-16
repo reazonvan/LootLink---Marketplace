@@ -15,57 +15,65 @@ from .forms_reports import ReportForm
 import logging
 
 logger = logging.getLogger(__name__)
-security_logger = logging.getLogger('django.security')
+security_logger = logging.getLogger("django.security")
 
 
 def landing_page(request):
     """
     Главная страница (Landing Page).
-    
+
     ВАЖНО: Эта страница НЕ должна кэшироваться полностью, так как содержит
     персонализированный контент (информацию о пользователе в навигации).
     Кэшируется только статистика.
     """
     from django.db.models import Count
     from core.utils import get_platform_stats
-    
+
     # Последние объявления для отображения
-    latest_listings = Listing.objects.filter(status='active').select_related('game', 'seller')[:8]
-    
+    latest_listings = Listing.objects.filter(status="active").select_related("game", "seller")[:8]
+
     # Популярные игры с счетчиком объявлений
-    games_with_counts = Game.objects.filter(is_active=True).annotate(
-        listings_count=Count('listings', filter=Q(listings__status='active'))
-    ).order_by('-listings_count')[:6]
-    
+    games_with_counts = (
+        Game.objects.filter(is_active=True)
+        .annotate(listings_count=Count("listings", filter=Q(listings__status="active")))
+        .order_by("-listings_count")[:6]
+    )
+
     # Единая статистика платформы (кешируется в core.utils).
     stats = get_platform_stats()
-    
+
     # Реальные отзывы из базы данных (последние 3 с оценкой 4+)
     from transactions.models import Review
-    real_reviews = Review.objects.filter(
-        rating__gte=4  # Только хорошие отзывы
-    ).select_related('reviewer', 'purchase_request__listing').order_by('-created_at')[:3]
-    
+
+    real_reviews = (
+        Review.objects.filter(rating__gte=4)  # Только хорошие отзывы
+        .select_related("reviewer", "purchase_request__listing")
+        .order_by("-created_at")[:3]
+    )
+
     # Топ продавцов по рейтингу (только с реальными продажами)
     from accounts.models import Profile
-    top_sellers = Profile.objects.filter(
-        user__is_active=True,
-        rating__gt=0,  # Есть рейтинг
-        total_sales__gt=0  # Есть продажи
-    ).select_related('user').order_by('-rating', '-total_sales')[:3]
-    
+
+    top_sellers = (
+        Profile.objects.filter(
+            user__is_active=True, rating__gt=0, total_sales__gt=0  # Есть рейтинг  # Есть продажи
+        )
+        .select_related("user")
+        .order_by("-rating", "-total_sales")[:3]
+    )
+
     context = {
-        'latest_listings': latest_listings,
-        'games': games_with_counts,  # Теперь с счетчиками
-        'stats': stats,  # Передаем stats напрямую
-        'total_listings': stats['total_listings'],  # Для совместимости
-        'total_users': stats['active_users'],
-        'total_deals': stats['total_deals'],
-        'real_reviews': real_reviews,  # РЕАЛЬНЫЕ отзывы
-        'top_sellers': top_sellers,  # РЕАЛЬНЫЕ топ продавцы
+        "latest_listings": latest_listings,
+        "games": games_with_counts,  # Теперь с счетчиками
+        "stats": stats,  # Передаем stats напрямую
+        "total_listings": stats["total_listings"],  # Для совместимости
+        "total_users": stats["active_users"],
+        "total_deals": stats["total_deals"],
+        "real_reviews": real_reviews,  # РЕАЛЬНЫЕ отзывы
+        "top_sellers": top_sellers,  # РЕАЛЬНЫЕ топ продавцы
     }
 
-    return render(request, 'listings/landing_page.html', context)
+    return render(request, "listings/landing_page.html", context)
 
 
 def games_catalog(request):
@@ -81,44 +89,49 @@ def games_catalog(request):
     from django.core.cache import cache
     from django.db.models import Count, Min, Prefetch
 
-    CACHE_KEY = 'games_catalog_ctx_v1'
+    CACHE_KEY = "games_catalog_ctx_v1"
     CACHE_TTL = 600  # 10 минут (Celery beat прогревает каждые 4 минуты)
 
     context = cache.get(CACHE_KEY)
     if context is None:
-        categories_qs = Category.objects.filter(
-            is_active=True
-        ).annotate(
-            listings_count=Count('listings', filter=Q(listings__status='active')),
-            min_price=Min('listings__price', filter=Q(listings__status='active')),
-        ).order_by('order', 'name')
+        categories_qs = (
+            Category.objects.filter(is_active=True)
+            .annotate(
+                listings_count=Count("listings", filter=Q(listings__status="active")),
+                min_price=Min("listings__price", filter=Q(listings__status="active")),
+            )
+            .order_by("order", "name")
+        )
 
-        games = list(Game.objects.filter(is_active=True).prefetch_related(
-            Prefetch('categories', queryset=categories_qs, to_attr='active_categories')
-        ).annotate(
-            listings_count=Count('listings', filter=Q(listings__status='active'))
-        ).order_by('name'))
+        games = list(
+            Game.objects.filter(is_active=True)
+            .prefetch_related(
+                Prefetch("categories", queryset=categories_qs, to_attr="active_categories")
+            )
+            .annotate(listings_count=Count("listings", filter=Q(listings__status="active")))
+            .order_by("name")
+        )
 
         total_listings = sum(g.listings_count or 0 for g in games)
         total_categories = sum(len(g.active_categories) for g in games)
 
         alphabet_groups = OrderedDict()
         for game in games:
-            first_char = game.name[0].upper() if game.name else '#'
+            first_char = game.name[0].upper() if game.name else "#"
             if first_char.isdigit():
-                first_char = '0-9'
+                first_char = "0-9"
             alphabet_groups.setdefault(first_char, []).append(game)
 
         context = {
-            'games': games,
-            'total_listings': total_listings,
-            'total_categories': total_categories,
-            'alphabet_groups': alphabet_groups,
-            'alphabet_letters': list(alphabet_groups.keys()),
+            "games": games,
+            "total_listings": total_listings,
+            "total_categories": total_categories,
+            "alphabet_groups": alphabet_groups,
+            "alphabet_letters": list(alphabet_groups.keys()),
         }
         cache.set(CACHE_KEY, context, CACHE_TTL)
 
-    return render(request, 'listings/games_catalog.html', context)
+    return render(request, "listings/games_catalog.html", context)
 
 
 # Старая функция catalog() удалена - теперь используем games_catalog()
@@ -127,13 +140,11 @@ def games_catalog(request):
 @ensure_csrf_cookie
 def listing_detail(request, pk):
     """Детальная страница объявления с похожими предложениями."""
-    listing = get_object_or_404(
-        Listing.objects.select_related('game', 'seller__profile'),
-        pk=pk
-    )
+    listing = get_object_or_404(Listing.objects.select_related("game", "seller__profile"), pk=pk)
 
     # Записываем просмотр в историю
     from listings.models_history import ViewHistory
+
     if request.user.is_authenticated:
         ViewHistory.record_view(request.user, listing)
 
@@ -143,39 +154,35 @@ def listing_detail(request, pk):
     # Проверяем, есть ли активный запрос на покупку от текущего пользователя
     user_has_request = False
     is_favorited = False
-    
+
     if request.user.is_authenticated:
         from transactions.models import PurchaseRequest
+
         user_has_request = PurchaseRequest.objects.filter(
-            listing=listing,
-            buyer=request.user,
-            status__in=['pending', 'accepted']
+            listing=listing, buyer=request.user, status__in=["pending", "accepted"]
         ).exists()
-        
+
         # Проверяем, добавлено ли объявление в избранное
-        is_favorited = Favorite.objects.filter(
-            user=request.user,
-            listing=listing
-        ).exists()
-    
+        is_favorited = Favorite.objects.filter(user=request.user, listing=listing).exists()
+
     # Похожие объявления (та же игра, не текущее, активные)
     # Используем последние по дате вместо ORDER BY RANDOM() (full table scan)
-    similar_listings = Listing.objects.filter(
-        game=listing.game,
-        status='active'
-    ).exclude(pk=listing.pk)\
-     .select_related('seller', 'seller__profile')\
-     .order_by('-created_at')[:4]
-    
+    similar_listings = (
+        Listing.objects.filter(game=listing.game, status="active")
+        .exclude(pk=listing.pk)
+        .select_related("seller", "seller__profile")
+        .order_by("-created_at")[:4]
+    )
+
     context = {
-        'listing': listing,
-        'views_count': views_count,
-        'user_has_request': user_has_request,
-        'is_favorited': is_favorited,
-        'similar_listings': similar_listings,
+        "listing": listing,
+        "views_count": views_count,
+        "user_has_request": user_has_request,
+        "is_favorited": is_favorited,
+        "similar_listings": similar_listings,
     }
-    
-    return render(request, 'listings/listing_detail.html', context)
+
+    return render(request, "listings/listing_detail.html", context)
 
 
 @login_required
@@ -186,140 +193,147 @@ def listing_create(request):
         profile = request.user.profile
     except (AttributeError, ObjectDoesNotExist):
         from accounts.models import Profile
+
         profile = Profile.objects.create(user=request.user)
-    
+
     # Проверка email верификации (SOFT MODE - предупреждение, но не блокировка)
-    if hasattr(profile, 'is_verified') and not profile.is_verified:
+    if hasattr(profile, "is_verified") and not profile.is_verified:
         messages.warning(
             request,
-            'Рекомендуем подтвердить email для повышения доверия к вашим объявлениям. '
-            'Отправить письмо повторно',
-            extra_tags='resend_verification'
+            "Рекомендуем подтвердить email для повышения доверия к вашим объявлениям. "
+            "Отправить письмо повторно",
+            extra_tags="resend_verification",
         )
-    
+
     # Проверка лимита активных объявлений
-    active_listings_count = request.user.listings.filter(status='active').count()
+    active_listings_count = request.user.listings.filter(status="active").count()
     from django.conf import settings as django_settings
+
     max_listings = django_settings.MAX_ACTIVE_LISTINGS
 
     if active_listings_count >= max_listings:
         messages.error(
             request,
-            f'Достигнут максимальный лимит активных объявлений ({max_listings}). '
-            f'Удалите или завершите некоторые объявления перед созданием новых.'
+            f"Достигнут максимальный лимит активных объявлений ({max_listings}). "
+            f"Удалите или завершите некоторые объявления перед созданием новых.",
         )
-        return redirect('accounts:my_listings')
-    
-    if request.method == 'POST':
+        return redirect("accounts:my_listings")
+
+    if request.method == "POST":
         try:
             form = ListingCreateForm(request.POST, request.FILES)
             if form.is_valid():
                 listing = form.save(commit=False)
                 listing.seller = request.user
                 listing.save()
-                messages.success(request, 'Объявление успешно создано!')
-                return redirect('listings:listing_detail', pk=listing.pk)
+                messages.success(request, "Объявление успешно создано!")
+                return redirect("listings:listing_detail", pk=listing.pk)
             else:
-                messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
+                messages.error(request, "Пожалуйста, исправьте ошибки в форме.")
         except Exception as e:
             import logging
+
             logger = logging.getLogger(__name__)
-            logger.error(f'Ошибка при создании объявления: {e}')
-            messages.error(request, 'Произошла ошибка при создании объявления. Попробуйте еще раз.')
+            logger.error(f"Ошибка при создании объявления: {e}")
+            messages.error(request, "Произошла ошибка при создании объявления. Попробуйте еще раз.")
             form = ListingCreateForm()
     else:
         form = ListingCreateForm()
-    
+
     context = {
-        'form': form,
-        'active_listings_count': active_listings_count,
-        'max_listings': max_listings,
+        "form": form,
+        "active_listings_count": active_listings_count,
+        "max_listings": max_listings,
     }
-    
-    return render(request, 'listings/listing_create.html', context)
+
+    return render(request, "listings/listing_create.html", context)
 
 
 @login_required
 def listing_edit(request, pk):
     """Редактирование объявления."""
     listing = get_object_or_404(Listing, pk=pk, seller=request.user)
-    
-    if request.method == 'POST':
+
+    if request.method == "POST":
         form = ListingUpdateForm(request.POST, request.FILES, instance=listing)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Объявление успешно обновлено!')
-            return redirect('listings:listing_detail', pk=listing.pk)
+            messages.success(request, "Объявление успешно обновлено!")
+            return redirect("listings:listing_detail", pk=listing.pk)
     else:
         form = ListingUpdateForm(instance=listing)
-    
+
     context = {
-        'form': form,
-        'listing': listing,
+        "form": form,
+        "listing": listing,
     }
-    
-    return render(request, 'listings/listing_edit.html', context)
+
+    return render(request, "listings/listing_edit.html", context)
 
 
 @login_required
 def listing_delete(request, pk):
     """Удаление объявления с защитой транзакцией."""
     from django.db import transaction
-    
+
     listing = get_object_or_404(Listing, pk=pk, seller=request.user)
-    
+
     # Проверка: нельзя удалить объявление с активными запросами на покупку
     from transactions.models import PurchaseRequest
+
     active_requests = PurchaseRequest.objects.filter(
-        listing=listing,
-        status__in=['pending', 'accepted']
+        listing=listing, status__in=["pending", "accepted"]
     )
-    
+
     if active_requests.exists():
         messages.error(
-            request, 
-            'Нельзя удалить объявление с активными запросами на покупку. '
-            'Сначала завершите или отклоните все запросы.'
+            request,
+            "Нельзя удалить объявление с активными запросами на покупку. "
+            "Сначала завершите или отклоните все запросы.",
         )
-        return redirect('listings:listing_detail', pk=pk)
-    
-    if request.method == 'POST':
+        return redirect("listings:listing_detail", pk=pk)
+
+    if request.method == "POST":
         # Используем транзакцию для атомарного удаления
         with transaction.atomic():
             listing.delete()
-        messages.success(request, 'Объявление удалено.')
-        return redirect('accounts:my_listings')
-    
+        messages.success(request, "Объявление удалено.")
+        return redirect("accounts:my_listings")
+
     context = {
-        'listing': listing,
+        "listing": listing,
     }
-    
-    return render(request, 'listings/listing_delete.html', context)
+
+    return render(request, "listings/listing_delete.html", context)
 
 
 def category_listings(request, game_slug, category_slug):
     """Объявления конкретной категории игры с динамическими фильтрами."""
     from .models_filters import CategoryFilter, ListingFilterValue
     from django.db.models import Prefetch
-    
+
     game = get_object_or_404(Game, slug=game_slug, is_active=True)
     category = get_object_or_404(Category, slug=category_slug, game=game, is_active=True)
-    
+
     # Получаем активные фильтры для этой категории
-    category_filters = CategoryFilter.objects.filter(
-        category=category,
-        is_active=True
-    ).prefetch_related('options').order_by('order')
-    
-    # Получаем объявления этой категории
-    listings = Listing.objects.filter(
-        game=game,
-        category=category,
-        status='active'
-    ).select_related('seller', 'seller__profile').prefetch_related(
-        Prefetch('filter_values', queryset=ListingFilterValue.objects.select_related('category_filter'))
+    category_filters = (
+        CategoryFilter.objects.filter(category=category, is_active=True)
+        .prefetch_related("options")
+        .order_by("order")
     )
-    
+
+    # Получаем объявления этой категории
+    listings = (
+        Listing.objects.filter(game=game, category=category, status="active")
+        .select_related("seller", "seller__profile")
+        .prefetch_related(
+            Prefetch(
+                "filter_values",
+                queryset=ListingFilterValue.objects.select_related("category_filter"),
+            )
+        )
+    )
+
     # Применяем фильтры из GET параметров
     applied_filters = {}
     for category_filter in category_filters:
@@ -327,39 +341,38 @@ def category_listings(request, game_slug, category_slug):
         if filter_value:
             applied_filters[category_filter.field_name] = filter_value
             # Фильтруем объявления
-            if category_filter.filter_type in ['select', 'multiselect']:
+            if category_filter.filter_type in ["select", "multiselect"]:
                 listings = listings.filter(
                     filter_values__category_filter=category_filter,
-                    filter_values__value_text=filter_value
+                    filter_values__value_text=filter_value,
                 )
-            elif category_filter.filter_type == 'checkbox':
+            elif category_filter.filter_type == "checkbox":
                 listings = listings.filter(
-                    filter_values__category_filter=category_filter,
-                    filter_values__value_bool=True
+                    filter_values__category_filter=category_filter, filter_values__value_bool=True
                 )
-    
+
     # Сортировка
-    sort_by = request.GET.get('sort', '-created_at')
-    if sort_by in ['-created_at', 'created_at', 'price', '-price']:
+    sort_by = request.GET.get("sort", "-created_at")
+    if sort_by in ["-created_at", "created_at", "price", "-price"]:
         listings = listings.order_by(sort_by)
     else:
-        listings = listings.order_by('-created_at')
-    
+        listings = listings.order_by("-created_at")
+
     # Пагинация
     paginator = Paginator(listings, 20)
-    page_number = request.GET.get('page')
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
-        'game': game,
-        'category': category,
-        'page_obj': page_obj,
-        'category_filters': category_filters,
-        'applied_filters': applied_filters,
-        'sort_by': sort_by,
+        "game": game,
+        "category": category,
+        "page_obj": page_obj,
+        "category_filters": category_filters,
+        "applied_filters": applied_filters,
+        "sort_by": sort_by,
     }
-    
-    return render(request, 'listings/category_listings.html', context)
+
+    return render(request, "listings/category_listings.html", context)
 
 
 def game_listings(request, game_slug):
@@ -369,42 +382,72 @@ def game_listings(request, game_slug):
     game = get_object_or_404(Game, slug=game_slug, is_active=True)
 
     # Категории с подсчётом активных лотов
-    categories = list(game.categories.filter(is_active=True).annotate(
-        listings_count=Count('listings', filter=Q(listings__status='active'))
-    ).order_by('order', 'name'))
+    categories = list(
+        game.categories.filter(is_active=True)
+        .annotate(listings_count=Count("listings", filter=Q(listings__status="active")))
+        .order_by("order", "name")
+    )
 
     # Общее число лотов игры
     total_listings = sum(c.listings_count for c in categories)
 
     context = {
-        'game': game,
-        'categories': categories,
-        'total_listings': total_listings,
+        "game": game,
+        "categories": categories,
+        "total_listings": total_listings,
     }
 
-    return render(request, 'listings/game_listings.html', context)
+    return render(request, "listings/game_listings.html", context)
 
 
 @require_http_methods(["GET"])
 def get_categories_by_game(request):
-    """API endpoint для получения категорий по игре (для AJAX)"""
-    game_id = request.GET.get('game')
-    
-    if not game_id:
-        return JsonResponse({'error': 'game_id required'}, status=400)
-    
-    try:
-        categories = Category.objects.filter(
-            game_id=game_id,
-            is_active=True
-        ).order_by('order', 'name').values('id', 'name', 'icon')
+    """API endpoint для получения категорий по игре (для AJAX, legacy by id)."""
+    game_id = request.GET.get("game")
 
-        return JsonResponse({
-            'categories': list(categories)
-        })
+    if not game_id:
+        return JsonResponse({"error": "game_id required"}, status=400)
+
+    try:
+        categories = (
+            Category.objects.filter(game_id=game_id, is_active=True)
+            .order_by("order", "name")
+            .values("id", "name", "icon")
+        )
+
+        return JsonResponse({"categories": list(categories)})
     except Exception:
-        logger.exception('Error fetching categories for game %s', game_id)
-        return JsonResponse({'error': 'Ошибка загрузки категорий'}, status=500)
+        logger.exception("Error fetching categories for game %s", game_id)
+        return JsonResponse({"error": "Ошибка загрузки категорий"}, status=500)
+
+
+@require_http_methods(["GET"])
+def game_categories_api(request, game_slug):
+    """Возвращает категории игры (slug + listings_count) для аккордеона каталога.
+
+    Используется на странице `/catalog/` для lazy-load категорий по клику —
+    позволяет НЕ рендерить ~3.7к ссылок в HTML и срезать DOM с 14k до ~2k узлов.
+
+    Кэшируется в Redis на 5 минут (`game_cats:<slug>`). Инвалидация — через
+    timeout или ручной `cache.delete('game_cats:<slug>')` при изменении
+    категорий/листингов.
+    """
+    from django.core.cache import cache
+    from django.db.models import Count
+
+    cache_key = f"game_cats:{game_slug}"
+    data = cache.get(cache_key)
+    if data is None:
+        game = get_object_or_404(Game, slug=game_slug, is_active=True)
+        cats = list(
+            game.categories.filter(is_active=True)
+            .annotate(listings_count=Count("listings", filter=Q(listings__status="active")))
+            .order_by("order", "name")
+            .values("slug", "name", "listings_count")
+        )
+        data = {"categories": cats}
+        cache.set(cache_key, data, 300)  # 5 минут
+    return JsonResponse(data)
 
 
 @login_required
@@ -412,96 +455,94 @@ def get_categories_by_game(request):
 def toggle_favorite(request, pk):
     """Добавить/убрать из избранного (AJAX)."""
     listing = get_object_or_404(Listing, pk=pk)
-    
+
     favorite = Favorite.objects.filter(user=request.user, listing=listing).first()
-    
+
     if favorite:
         favorite.delete()
         is_favorited = False
-        message = 'Удалено из избранного'
+        message = "Удалено из избранного"
     else:
         Favorite.objects.create(user=request.user, listing=listing)
         is_favorited = True
-        message = 'Добавлено в избранное'
-    
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({
-            'success': True,
-            'is_favorited': is_favorited,
-            'message': message
-        })
-    
+        message = "Добавлено в избранное"
+
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse({"success": True, "is_favorited": is_favorited, "message": message})
+
     messages.success(request, message)
-    return redirect('listings:listing_detail', pk=pk)
+    return redirect("listings:listing_detail", pk=pk)
 
 
 @login_required
 def favorites_list(request):
     """Список избранных объявлений."""
     # Исправление N+1 Query Problem
-    favorites_listings = Listing.objects.filter(
-        favorited_by__user=request.user
-    ).select_related('game', 'seller__profile')
-    
+    favorites_listings = Listing.objects.filter(favorited_by__user=request.user).select_related(
+        "game", "seller__profile"
+    )
+
     # Пагинация
     paginator = Paginator(favorites_listings, 12)
-    page_number = request.GET.get('page')
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
-        'page_obj': page_obj,
+        "page_obj": page_obj,
     }
-    
-    return render(request, 'listings/favorites.html', context)
+
+    return render(request, "listings/favorites.html", context)
 
 
 @login_required
 def report_listing(request, pk):
     """Подать жалобу на объявление."""
     listing = get_object_or_404(Listing, pk=pk)
-    
+
     # Нельзя жаловаться на свое объявление
     if listing.seller == request.user:
-        messages.error(request, 'Вы не можете пожаловаться на свое объявление.')
+        messages.error(request, "Вы не можете пожаловаться на свое объявление.")
         # Логируем подозрительную активность
         security_logger.warning(
-            f'User attempted to report own listing: user={request.user.username} | listing_id={pk}'
+            f"User attempted to report own listing: user={request.user.username} | listing_id={pk}"
         )
-        return redirect('listings:listing_detail', pk=pk)
-    
+        return redirect("listings:listing_detail", pk=pk)
+
     # Проверяем, не подавал ли уже жалобу
     existing_report = Report.objects.filter(
-        reporter=request.user,
-        listing=listing,
-        report_type='listing'
+        reporter=request.user, listing=listing, report_type="listing"
     ).first()
-    
+
     if existing_report:
-        messages.info(request, f'Вы уже подали жалобу на это объявление. Статус: {existing_report.get_status_display()}')
-        return redirect('listings:listing_detail', pk=pk)
-    
-    if request.method == 'POST':
+        messages.info(
+            request,
+            f"Вы уже подали жалобу на это объявление. Статус: {existing_report.get_status_display()}",
+        )
+        return redirect("listings:listing_detail", pk=pk)
+
+    if request.method == "POST":
         form = ReportForm(request.POST)
         if form.is_valid():
             report = form.save(commit=False)
             report.reporter = request.user
             report.listing = listing
-            report.report_type = 'listing'
+            report.report_type = "listing"
             report.save()
-            
+
             # Отправляем email администраторам
             try:
                 # Используем build_absolute_uri вместо hardcoded URL
                 from django.urls import reverse
+
                 listing_url = request.build_absolute_uri(
-                    reverse('listings:listing_detail', kwargs={'pk': listing.pk})
+                    reverse("listings:listing_detail", kwargs={"pk": listing.pk})
                 )
                 report_admin_url = request.build_absolute_uri(
-                    reverse('admin:listings_report_change', args=[report.pk])
+                    reverse("admin:listings_report_change", args=[report.pk])
                 )
-                
+
                 mail_admins(
-                    subject=f'Новая жалоба на объявление: {listing.title}',
+                    subject=f"Новая жалоба на объявление: {listing.title}",
                     message=f"""
 Пользователь: {request.user.username}
 Объявление: {listing.title} (ID: {listing.pk})
@@ -514,68 +555,73 @@ def report_listing(request, pk):
 Ссылка на объявление: {listing_url}
 Ссылка на жалобу (админка): {report_admin_url}
                     """,
-                    fail_silently=True
+                    fail_silently=True,
                 )
             except Exception as e:
-                logger.error(f'Ошибка отправки email админам при жалобе на объявление: {e}')
-            
-            messages.success(request, 'Жалоба отправлена. Администрация рассмотрит её в ближайшее время.')
-            return redirect('listings:listing_detail', pk=pk)
+                logger.error(f"Ошибка отправки email админам при жалобе на объявление: {e}")
+
+            messages.success(
+                request, "Жалоба отправлена. Администрация рассмотрит её в ближайшее время."
+            )
+            return redirect("listings:listing_detail", pk=pk)
     else:
         form = ReportForm()
-    
+
     context = {
-        'form': form,
-        'listing': listing,
+        "form": form,
+        "listing": listing,
     }
-    
-    return render(request, 'listings/report_listing.html', context)
+
+    return render(request, "listings/report_listing.html", context)
 
 
 @login_required
 def report_user(request, username):
     """Подать жалобу на пользователя."""
     from accounts.models import CustomUser
+
     reported_user = get_object_or_404(CustomUser, username=username)
-    
+
     # Нельзя жаловаться на себя
     if reported_user == request.user:
-        messages.error(request, 'Вы не можете пожаловаться на себя.')
-        return redirect('accounts:profile', username=username)
-    
+        messages.error(request, "Вы не можете пожаловаться на себя.")
+        return redirect("accounts:profile", username=username)
+
     # Проверяем, не подавал ли уже жалобу
     existing_report = Report.objects.filter(
-        reporter=request.user,
-        reported_user=reported_user,
-        report_type='user'
+        reporter=request.user, reported_user=reported_user, report_type="user"
     ).first()
-    
+
     if existing_report:
-        messages.info(request, f'Вы уже подали жалобу на этого пользователя. Статус: {existing_report.get_status_display()}')
-        return redirect('accounts:profile', username=username)
-    
-    if request.method == 'POST':
+        messages.info(
+            request,
+            f"Вы уже подали жалобу на этого пользователя. Статус: {existing_report.get_status_display()}",
+        )
+        return redirect("accounts:profile", username=username)
+
+    if request.method == "POST":
         form = ReportForm(request.POST)
         if form.is_valid():
             report = form.save(commit=False)
             report.reporter = request.user
             report.reported_user = reported_user
-            report.report_type = 'user'
+            report.report_type = "user"
             report.save()
-            
+
             # Отправляем email администраторам
             try:
                 # Используем build_absolute_uri вместо hardcoded URL
                 from django.urls import reverse
+
                 profile_url = request.build_absolute_uri(
-                    reverse('accounts:profile', kwargs={'username': reported_user.username})
+                    reverse("accounts:profile", kwargs={"username": reported_user.username})
                 )
                 report_admin_url = request.build_absolute_uri(
-                    reverse('admin:listings_report_change', args=[report.pk])
+                    reverse("admin:listings_report_change", args=[report.pk])
                 )
-                
+
                 mail_admins(
-                    subject=f'Новая жалоба на пользователя: {reported_user.username}',
+                    subject=f"Новая жалоба на пользователя: {reported_user.username}",
                     message=f"""
 Жалобщик: {request.user.username}
 Пользователь: {reported_user.username}
@@ -587,20 +633,21 @@ def report_user(request, username):
 Ссылка на профиль: {profile_url}
 Ссылка на жалобу (админка): {report_admin_url}
                     """,
-                    fail_silently=True
+                    fail_silently=True,
                 )
             except Exception as e:
-                logger.error(f'Ошибка отправки email админам при жалобе на объявление: {e}')
-            
-            messages.success(request, 'Жалоба отправлена. Администрация рассмотрит её в ближайшее время.')
-            return redirect('accounts:profile', username=username)
+                logger.error(f"Ошибка отправки email админам при жалобе на объявление: {e}")
+
+            messages.success(
+                request, "Жалоба отправлена. Администрация рассмотрит её в ближайшее время."
+            )
+            return redirect("accounts:profile", username=username)
     else:
         form = ReportForm()
-    
-    context = {
-        'form': form,
-        'reported_user': reported_user,
-    }
-    
-    return render(request, 'listings/report_user.html', context)
 
+    context = {
+        "form": form,
+        "reported_user": reported_user,
+    }
+
+    return render(request, "listings/report_user.html", context)
