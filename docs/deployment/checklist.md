@@ -146,7 +146,7 @@ docker-compose restart web
 - No paid advantages or premium features
 - All badges are merit-based
 - No emojis in user-facing content
-- Design is unique, not generic AI patterns
+- Дизайн уникальный, без шаблонных решений
 
 ## Support
 

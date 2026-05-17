@@ -59,7 +59,7 @@
 
 ---
 
-## 🐛 Если всё ещё не работает
+## Если всё ещё не работает
 
 ### Проблема: "Python was not found"
 
@@ -141,7 +141,7 @@ python manage.py runserver
 
 ---
 
-## 🎯 Быстрые команды для Windows
+## Быстрые команды для Windows
 
 ### Активация venv
 ```powershell
@@ -181,7 +181,7 @@ python manage.py collectstatic --noinput
 
 ---
 
-## 🔍 Отладка в VS Code (Windows)
+## Отладка в VS Code (Windows)
 
 ### 1. Поставить breakpoint
 - Открой файл (например, `listings/views.py`)
@@ -201,7 +201,7 @@ python manage.py collectstatic --noinput
 
 ---
 
-## 📦 Установка зависимостей (Windows)
+## Установка зависимостей (Windows)
 
 ### Если нужно переустановить всё:
 
@@ -233,7 +233,7 @@ python manage.py runserver
 
 ---
 
-## 🚀 Альтернатива: Использовать Docker
+## Альтернатива: Использовать Docker
 
 Если проблемы с Python на Windows, можно использовать Docker:
 
@@ -253,7 +253,7 @@ docker-compose down
 
 ---
 
-## 💡 Советы для Windows
+## Советы для Windows
 
 ### 1. Используй PowerShell 7
 - Лучше чем старый PowerShell
@@ -275,7 +275,7 @@ docker-compose down
 
 ---
 
-## 📞 Что делать если ничего не помогло
+## Что делать если ничего не помогло
 
 1. **Проверь версию Python:**
    ```powershell

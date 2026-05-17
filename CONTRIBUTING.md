@@ -293,13 +293,14 @@ git push origin feature/your-feature-name
 
 ### Code Review
 
-Ваш PR будет проверен на:
-- Качество кода
-- Соответствие стандартам
-- Тесты
-- Документацию
-- Безопасность
-- Производительность
+На ревью смотрят:
+
+- `pytest -m "not slow"` проходит локально и в CI;
+- `pre-commit run --all-files` не ругается (black, isort, flake8);
+- есть миграции на все изменения моделей (без `--fake`);
+- денежные операции — в `services.py` в `transaction.atomic` с `select_for_update`;
+- нет новых сырых SQL-запросов и hardcoded-секретов;
+- UI следует существующему дизайн-стилю проекта (`static/css/lootlink.css`).
 
 ---
 
@@ -354,7 +355,3 @@ GitHub Private Vulnerability Reporting (вкладка Security → Report a vul
 ## License
 
 См. файл [LICENSE](LICENSE) для деталей.
-
----
-
-**Спасибо за ваш вклад в LootLink!**
