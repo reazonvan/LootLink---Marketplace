@@ -1,692 +1,313 @@
 # Архитектура LootLink
 
-Полное описание архитектуры проекта LootLink.
+Описание серверной и клиентской части проекта, без маркетинговых обёрток.
+Цель документа — дать новому разработчику представление о том, как устроен
+код, какие у приложений границы ответственности и где искать бизнес-логику.
 
----
-
-## Общая архитектура
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         Frontend                             │
-│  HTML Templates + Bootstrap 5 + Vanilla JavaScript           │
-└────────────────────┬────────────────────────────────────────┘
-                     │ HTTP/HTTPS
-┌────────────────────▼────────────────────────────────────────┐
-│                         Nginx                                │
-│  - SSL Termination                                           │
-│  - Static/Media serving                                      │
-│  - Reverse Proxy                                             │
-│  - Gzip Compression                                          │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-┌────────────────────▼────────────────────────────────────────┐
-│                      Gunicorn                                │
-│  - WSGI Server                                               │
-│  - Process Management                                        │
-│  - Load Balancing (workers)                                  │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-┌────────────────────▼────────────────────────────────────────┐
-│                    Django 4.2                                │
-│                                                              │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │ Applications:                                        │  │
-│  │  - accounts   (Пользователи, профили)              │  │
-│  │  - listings   (Объявления, игры)                   │  │
-│  │  - transactions (Покупки, отзывы)                  │  │
-│  │  - chat       (Сообщения, беседы)                  │  │
-│  │  - core       (Уведомления, утилиты)               │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                                                              │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │ Middleware:                                          │  │
-│  │  - SecurityHeadersMiddleware (CSP, HSTS)            │  │
-│  │  - SimpleRateLimitMiddleware (DDoS защита)          │  │
-│  │  - CSRF Protection                                   │  │
-│  └──────────────────────────────────────────────────────┘  │
-└──────────────┬────────────┬────────────────────────────────┘
-               │            │
-        ┌──────▼──────┐  ┌─▼────────┐
-        │ PostgreSQL  │  │  Redis   │
-        │    15+      │  │   7      │
-        │             │  │          │
-        │ - Full-Text │  │ - Cache  │
-        │ - Indexes   │  │ - Sessions│
-        │ - Relations │  │ - Rate   │
-        └─────────────┘  │   Limit  │
-                         └──────────┘
-```
-
----
-
-## 📦 Структура приложений Django
-
-### 1. **accounts** - Управление пользователями
-
-**Модели:**
-- `CustomUser` - Кастомная модель пользователя
-  - `username` (unique)
-  - `email` (unique)
-  - Переопределен delete() - удаление запрещено
-
-- `Profile` - Профиль пользователя
-  - `avatar` - Аватар (с валидацией)
-  - `bio`, `phone` - Контактная информация
-  - `rating` (0-5) - Рейтинг продавца
-  - `total_sales`, `total_purchases` - Статистика
-  - `is_verified` - Верификация
-  - Автоматический расчет рейтинга из отзывов
-  - **Общение только через встроенный чат** (соцсети удалены)
-
-- `PasswordResetCode` - Коды для сброса пароля
-  - 6-значный код
-  - TTL 15 минут
-  - Одноразовый
-
-**Views:**
-- `register()` - Регистрация
-- `user_login()` - Вход
-- `profile()` - Просмотр профиля
-- `profile_edit()` - Редактирование
-- `my_listings()`, `my_purchases()`, `my_sales()` - Личные разделы
-- `password_reset_request()` - Сброс пароля
-
-**Безопасность:**
-- CSRF защита
-- Rate limiting (5 попыток входа за 5 минут)
-- Валидация email
-- Хеширование паролей (PBKDF2)
-
----
-
-### 2. **listings** - Объявления и игры
-
-**Модели:**
-- `Game` - Игра
-  - `name`, `slug`, `description`
-  - `icon` - Иконка игры
-  - `is_active` - Активность
-
-- `Listing` - Объявление
-  - `title`, `description`, `price`
-  - `image` - Фото (валидация 5MB, JPEG/PNG/GIF/WebP)
-  - `status` - active/reserved/sold/cancelled
-  - `search_vector` - PostgreSQL Full-Text Search
-  - GIN индекс для быстрого поиска
-
-- `Favorite` - Избранное
-  - unique_together для user + listing
-
-- `Report` - Жалобы
-  - На объявления или пользователей
-  - Статусы: pending/reviewed/resolved/rejected
-
-**Views:**
-- `catalog()` - Каталог с фильтрами и поиском
-- `listing_detail()` - Детали объявления
-- `listing_create()`, `listing_edit()`, `listing_delete()` - CRUD
-- `toggle_favorite()` - AJAX добавление в избранное
-- `report_listing()`, `report_user()` - Жалобы
-
-**Производительность:**
-- `select_related()` для ForeignKey
-- `prefetch_related()` для ManyToMany
-- PostgreSQL Full-Text Search с русской морфологией
-- Кеширование статистики (5 минут)
-- Пагинация (12 объявлений на страницу)
-
----
-
-### 3. **transactions** - Сделки и отзывы
-
-**Модели:**
-- `PurchaseRequest` - Запрос на покупку
-  - Статусы: pending → accepted → completed
-  - `unique_together` для buyer + listing (один запрос от покупателя)
-  - Атомарное обновление статистики через F()
-
-- `Review` - Отзыв
-  - Рейтинг 1-5 звезд
-  - `unique_together` для purchase_request + reviewer
-  - Автообновление рейтинга пользователя
-
-**Business Logic:**
+## Общая схема
 
 ```
-1. Покупатель создает PurchaseRequest (status=pending)
-2. Продавец принимает → status=accepted, listing.status=reserved
-3. Продавец завершает → status=completed, listing.status=sold
-4. Обновляется статистика: total_sales++, total_purchases++
-5. Покупатель и продавец могут оставить Review
-6. Рейтинг пересчитывается автоматически
+Клиент (браузер)
+    │ HTTPS
+    ▼
+Caddy            (terminate TLS, gzip, reverse proxy, auto-cert)
+    │
+    ├── HTTP   ──► Gunicorn ──► Django (WSGI)
+    └── WS     ──► Daphne   ──► Django (ASGI, Channels)
+                       │
+                       ├── PostgreSQL 15 (основная БД, FTS, GIN-индексы)
+                       └── Redis 7        (cache, sessions, Channels layer,
+                                          Celery broker и result backend)
+
+Celery worker и Celery beat подключены к тому же Redis и БД
+(идемпотентные задачи, retry с exponential backoff).
 ```
 
-**Views:**
-- `purchase_request_create()` - Создание запроса
-- `purchase_request_accept()` - Принятие (только продавец)
-- `purchase_request_reject()` - Отклонение (только продавец)
-- `purchase_request_complete()` - Завершение (только продавец)
-- `review_create()` - Создание отзыва
+## Стек
 
----
+- Python 3.13, Django 5.2, DRF, Django Channels, Celery 5.x.
+- ASGI: Daphne. WSGI: Gunicorn. Прокси: Caddy.
+- БД: PostgreSQL 15 (prod), SQLite (dev по умолчанию через `DB_ENGINE=sqlite`).
+- Redis 7 в четырёх ролях: cache, sessions, Celery broker, Channels layer.
+- Frontend: Django templates, custom CSS (`static/css/lootlink.css`),
+  vanilla JS ES6+, иконки Lucide. React не используется.
 
-### 4. **chat** - Система сообщений
+## Метрики кода (на момент 1.3.0)
 
-**Модели:**
-- `Conversation` - Беседа
-  - `participant1`, `participant2` - Участники
-  - `listing` - Связанное объявление (optional)
-  - `unique_together` для предотвращения дубликатов
-  - Автообновление `updated_at` при новом сообщении
+- 168 Python-файлов, ~26 400 строк (без `venv` и `migrations`).
+- 88 моделей, 53 миграции, ~151 endpoint, 74 HTML-шаблона.
+- 513 тестов в pytest, ~75% покрытия.
 
-- `Message` - Сообщение
-  - `content` (max 5000 символов)
-  - `is_read` - Статус прочтения
-  - Ordering по `created_at` (старые первыми)
+## Структура приложений
 
-**Real-time Updates:**
-```javascript
-// JavaScript polling каждые 3 секунды
-setInterval(() => {
-    fetch(`/chat/api/messages/${conversationId}/?after=${lastMessageId}`)
-        .then(response => response.json())
-        .then(data => {
-            // Добавить новые сообщения с escapeHtml()
-        });
-}, 3000);
-```
+В каждом app слои разнесены по принципу HackSoft styleguide:
 
-**Уведомления:**
-- Email при новом сообщении (только получателю!)
-- Создание Notification в БД
-- Auto-mark as read при открытии беседы
+- `views.py` — тонкий HTTP-слой: парсинг параметров, вызов сервиса, redirect,
+  `messages.add_message`. Никакой бизнес-логики и сырых ORM-запросов.
+- `services.py` — бизнес-логика и операции, меняющие состояние.
+  Денежные операции — атомарно через `transaction.atomic` и
+  `select_for_update()`. Внешние вызовы (email, Telegram, push) запускаются
+  через `transaction.on_commit`.
+- `selectors.py` — функции чтения. Здесь живут `select_related`,
+  `prefetch_related`, аннотации, фильтры по правам.
+- `models.py` + `signals.py` — данные, индексы, ограничения, сигналы.
+- `tasks.py` — Celery: идемпотентные, с `bind=True` и `self.retry`.
 
----
+### accounts
 
-### 5. **core** - Ядро системы
+Пользователи, профили, верификация, 2FA, экспорт по 152-ФЗ, security audit.
 
-**Модели:**
-- `Notification` - Уведомления
-  - Типы: new_message, purchase_request, request_accepted, etc.
-  - `is_read`, `read_at` - Статус
-  - Индексы для быстрого подсчета непрочитанных
+Ключевые модели:
 
-**Utilities:**
-- `email_utils.py` - Отправка email уведомлений
-- `context_processors.py` - Глобальные данные (количество уведомлений)
-- `middleware.py`:
-  - `SimpleRateLimitMiddleware` - Защита от брутфорса
-  - `SecurityHeadersMiddleware` - CSP, HSTS, XSS защита
+- `CustomUser` — переопределённый `AbstractUser`, удаление запрещено
+  (мягкая деактивация через `is_active=False`).
+- `Profile` — аватар, био, рейтинг, счётчики сделок, флаги верификации.
+- `TOTPDevice` — 2FA через приложение-аутентификатор.
+- `LoginAttempt`, `SecurityEvent` — журнал входов и подозрительной активности.
 
----
+Безопасность: пароли хешируются Argon2id (`argon2-cffi`), с fallback на
+PBKDF2 для старых учёток. Rate limit на `/accounts/login/` и
+`/accounts/register/` — через `core.middleware`.
 
-## Безопасность
+### listings
 
-### 1. CSRF Protection
-```python
-# Все POST формы защищены
-{% csrf_token %}
+Каталог объявлений и игр, поиск, избранное, жалобы.
 
-# AJAX запросы включают CSRF токен
-headers: {'X-CSRFToken': getCookie('csrftoken')}
-```
+- `Game` — справочник игр с `slug` для URL.
+- `Listing` — объявление с `status` (`active`/`reserved`/`sold`/`cancelled`),
+  изображением (валидация размера и MIME), полем `search_vector` для
+  PostgreSQL FTS и GIN-индексом по нему.
+- `Favorite`, `Report` — избранное и жалобы соответственно.
 
-### 2. XSS Protection
-```javascript
-// Все пользовательские данные экранируются
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-```
+Поиск — `SearchQuery(..., config='russian')` с `SearchRank`. На SQLite в dev
+работает упрощённый `icontains`-fallback. Каталог использует
+`select_related('seller', 'game')` и `prefetch_related('images')`,
+кэширование счётчиков на 5 минут.
 
-### 3. SQL Injection Protection
-```python
-# Django ORM автоматически параметризует запросы
-Listing.objects.filter(title__icontains=search)  # Safe
-```
+### chat
 
-### 4. Rate Limiting
-```python
-RATE_LIMITS = {
-    '/accounts/login/': (5, 300),        # 5 попыток за 5 минут
-    '/accounts/register/': (3, 600),      # 3 попытки за 10 минут
-    '/listing/create/': (10, 3600),       # 10 объявлений в час
-}
-```
+WebSocket-чат через Django Channels с Redis-layer.
 
-### 5. Content Security Policy
-```
-Content-Security-Policy:
-  default-src 'self';
-  script-src 'self' https://cdn.jsdelivr.net;
-  style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
-  img-src 'self' data: https:;
-```
+- `Conversation` — две стороны и опциональная привязка к объявлению.
+  `unique_together` написан как два условных `UniqueConstraint` (с listing
+  и без), потому что `unique_together` не работает с NULL.
+- `Message` — содержимое до 5000 символов, `is_read`, `created_at`.
+  Композитные индексы: `(conversation, -created_at)` и
+  `(conversation, is_read, sender)`.
 
-### 6. File Upload Validation
-```python
-# Валидация на сервере
-- Размер: max 5MB
-- Тип: JPEG, PNG, GIF, WebP
-- imghdr проверка (не только content-type)
-```
+Подключение клиента — `chat/consumers.py`. Аутентификация через сессионный
+cookie. CSRF-токен передаётся через `<meta name="csrf-token">` или header,
+потому что `CSRF_COOKIE_HTTPONLY=True`.
 
----
+### transactions
+
+Запросы на покупку, отзывы, диспуты.
+
+- `PurchaseRequest` — конечный автомат: `pending → accepted → completed`
+  (или `rejected`/`cancelled`). `unique_together = (listing, buyer)`.
+- `Review` — оценка 1–5, `unique_together = (purchase_request, reviewer)`,
+  пересчёт `Profile.rating` через сигнал.
+- `Dispute` — открывается, если стороны не пришли к завершению.
+
+Жизненный цикл сделки контролируется `transactions/services.py`. Любое
+изменение `Listing.status` идёт через сервис, а не из view.
+
+### payments
+
+Кошелёк, эскроу, выводы, интеграция с ЮKassa.
+
+- `Wallet` — баланс пользователя. На уровне БД действуют `CheckConstraint`:
+  `wallet_balance_non_negative` и `wallet_frozen_consistent`
+  (`frozen_balance ∈ [0, balance]`). В админке поля `balance` и
+  `frozen_balance` readonly, ручное изменение запрещено.
+- `Transaction` — атомарные операции пополнения, заморозки, списания.
+- `Escrow` — депонирование. Меняется только через сервис с
+  `select_for_update`. Авто-релиз по дедлайну делает Celery beat.
+- `Withdrawal` — заявки на вывод; обрабатывает админ-очередь.
+
+### api
+
+REST API на DRF. Session-based auth + CSRF. Throttling через
+`UserRateThrottle` и `AnonRateThrottle`. Сериализаторы тонкие, основная
+логика — в `services.py` соответствующих app.
+
+### admin_panel
+
+Кастомная админка для модерации, отдельная от `/admin/`. Дашборд с
+очередями (объявления, жалобы, диспуты, выводы), фильтры, массовые действия.
+
+### core
+
+Уведомления, middleware, audit log по 152-ФЗ, telegram-bot, email-утилиты.
+
+- `Notification` — типизированные уведомления, индекс
+  `(user, is_read, -created_at)` для запроса бейджа.
+- `AuditLog` — записи аудита. Удалять записи нельзя.
+- `BruteForceProtectionMiddleware`, `SecurityHeadersMiddleware`,
+  `RateLimitMiddleware` — глобальные защиты.
+
+### config
+
+`settings.py`, `urls.py`, `asgi.py`, `wsgi.py`, `celery.py`.
+ASGI-приложение оборачивает Channels-router.
 
 ## База данных
 
-### Schema Diagram
+### Связи (упрощённо)
 
 ```
-CustomUser ──1:1─→ Profile
-    │                 │
-    │                 └─→ Reviews received
-    │
-    ├──1:N─→ Listings ──1:N─→ PurchaseRequests ──1:N─→ Reviews
-    │           │                   │
-    │           └──1:N─→ Favorites  │
-    │                               │
-    ├──1:N─→ Conversations ──1:N─→ Messages
-    │
-    └──1:N─→ Notifications
+CustomUser ─1:1─ Profile
+   │
+   ├─1:N─ Listing ─1:N─ PurchaseRequest ─1:N─ Review
+   │         └─1:N─ Favorite
+   │
+   ├─1:N─ Conversation ─1:N─ Message
+   ├─1:1─ Wallet ─1:N─ Transaction
+   ├─1:N─ Escrow (как buyer и как seller)
+   ├─1:N─ Withdrawal
+   └─1:N─ Notification
 ```
 
-### Индексы (24+)
+### Композитные индексы под горячие запросы
 
-**accounts:**
-- `user` (ForeignKey, auto)
-- `rating` (для сортировки)
-- `is_verified, rating` (композитный)
+- `Message`: `(conversation, -created_at)`, `(conversation, is_read, sender)`.
+- `Conversation`: `(participant1, -updated_at)`, `(participant2, -updated_at)`.
+- `Notification`: `(user, is_read, -created_at)`.
+- `Listing`: `(seller, status, -created_at)`, `(game, category, status)`,
+  GIN по `search_vector`.
+- `Escrow`: `(status, release_deadline)`, `(buyer, -created_at)`,
+  `(seller, -created_at)`.
+- `Withdrawal`: `(status, -created_at)`, `(user, -created_at)`.
+- `Transaction`: `(user, transaction_type, -created_at)`.
 
-**listings:**
-- `game, status` (каталог по игре)
-- `seller, status` (мои объявления)
-- `created_at, status` (сортировка по дате)
-- `search_vector` (GIN для full-text)
-- `status, price` (сортировка по цене)
-
-**transactions:**
-- `buyer, status, created_at` (мои покупки)
-- `seller, status, created_at` (мои продажи)
-- `listing, status` (запросы по объявлению)
-
-**chat:**
-- `participant1, updated_at` (беседы пользователя)
-- `conversation, is_read` (непрочитанные)
-
-**core:**
-- `user, is_read` (непрочитанные уведомления)
-- `created_at` (сортировка)
-
-### Constraints
-
-```python
-# Unique Together
-- Profile: не нужен (OneToOne с User)
-- Conversation: [participant1, participant2, listing]
-- PurchaseRequest: [listing, buyer]
-- Review: [purchase_request, reviewer]
-- Favorite: [user, listing]
-
-# Check Constraints (можно добавить)
-- price >= 0
-- rating between 0 and 5
-- description length >= 10
-```
-
----
-
-## 🔄 Data Flow
-
-### Пример: Создание запроса на покупку
+### Ограничения целостности
 
 ```
-1. User нажимает "Купить" на странице объявления
-   ↓
-2. listings/listing_detail.html
-   ↓
-3. POST /transactions/purchase-request/<listing_id>/create/
-   ↓
-4. transactions/views.py::purchase_request_create()
-   ├─ Валидация (не свое объявление, доступно)
-   ├─ Проверка существующего запроса
-   └─ Создание PurchaseRequest
-       ├─ status = 'pending'
-       ├─ buyer = request.user
-       └─ seller = listing.seller
-   ↓
-5. Signal / Email
-   ├─ create_notification(seller, ...)
-   └─ send_mail(seller.email, ...)
-   ↓
-6. Redirect → /transactions/purchase-request/<id>/
+Wallet:           balance >= 0
+                  frozen_balance >= 0
+                  frozen_balance <= balance
+Conversation:     UniqueConstraint(p1, p2, listing) WHERE listing IS NOT NULL
+                  UniqueConstraint(p1, p2)          WHERE listing IS NULL
+PurchaseRequest:  UniqueConstraint(listing, buyer)
+Review:           UniqueConstraint(purchase_request, reviewer)
+Favorite:         UniqueConstraint(user, listing)
 ```
 
----
-
-## Frontend Architecture
-
-### Templates Hierarchy
+## Поток сделки
 
 ```
-base.html (Layout)
-  ├─ listings/
-  │   ├─ landing_page.html (Главная)
-  │   ├─ catalog.html (Каталог)
-  │   ├─ listing_detail.html
-  │   └─ listing_create.html
-  │
-  ├─ accounts/
-  │   ├─ register.html
-  │   ├─ login.html
-  │   ├─ profile.html
-  │   └─ profile_edit.html
-  │
-  ├─ chat/
-  │   ├─ conversations_list.html
-  │   └─ conversation_detail.html
-  │
-  ├─ transactions/
-  │   ├─ purchase_request_detail.html
-  │   └─ review_create.html
-  │
-  └─ core/
-      └─ notifications_list.html
+1. Покупатель открывает Listing и нажимает «Купить».
+2. POST /transactions/purchase-request/<listing_id>/create/
+   ↓ transactions.views.purchase_request_create
+   ↓ transactions.services.create_purchase_request
+3. Сервис в одной транзакции:
+     - проверяет права и доступность listing
+     - создаёт PurchaseRequest(status=pending)
+     - блокирует средства покупателя в Wallet (frozen_balance)
+     - создаёт Escrow со статусом pending
+4. on_commit: уведомление продавца (Notification + email + telegram).
+5. Продавец принимает → status=accepted, listing.status=reserved.
+6. Передача предмета и подтверждение покупателя:
+     status=completed, listing.status=sold
+     Escrow.release: средства уходят продавцу, frozen_balance снимается.
+7. Стороны оставляют Review, Profile.rating пересчитывается сигналом.
 ```
 
-### JavaScript Modules
+## Безопасность
+
+- CSRF: `{% csrf_token %}` на всех POST. AJAX берёт токен из
+  `<meta name="csrf-token">`. Cookie `httponly`.
+- XSS: автоэкранирование шаблонов; пользовательский ввод в JS пропускается
+  через `escapeHtml`. Inline-обработчики в шаблонах не используются.
+- SQL: только ORM. Сырых запросов в репозитории нет.
+- Rate limit: `accounts:login` 5/5 мин, `accounts:register` 3/10 мин,
+  `listings:listing_create` 10/час.
+- CSP, HSTS, `Referrer-Policy`, `X-Content-Type-Options` настроены в
+  `core.middleware.SecurityHeadersMiddleware`.
+- Загрузка файлов: размер до 5 МБ, проверка MIME через `imghdr`,
+  расширение whitelist (`jpeg`, `png`, `webp`, `gif`).
+- 152-ФЗ: согласие на обработку, экспорт данных в ZIP, журнал доступа
+  к ПДн в `core.AuditLog`.
+
+## Производительность
+
+- Везде, где это уместно, `select_related` для FK и `prefetch_related`
+  для обратных и M2M связей.
+- Пагинация — Django `Paginator`, по умолчанию 12 элементов на страницу.
+- Кэш в Redis с явными TTL: статистика главной — 5 минут, список игр —
+  1 час, счётчик уведомлений на пользователя — 1 минута.
+- PostgreSQL FTS с русским словарём для каталога. На SQLite — `icontains`.
+- Тяжёлые операции (email, миниатюры, рассылка push, очистка истории)
+  делегированы Celery.
+
+## Шаблоны и фронтенд
 
 ```
-static/js/
-  ├─ chat-improvements.js     (Real-time чат)
-  ├─ phone-formatter.js       (Форматирование телефона)
-  └─ file-upload-fix.js       (Превью загрузки файлов)
+templates/
+├── base.html                   общий layout
+├── 404.html, 500.html
+├── accounts/                   регистрация, логин, профиль, 2FA, KYC
+├── chat/                       список диалогов и чат
+├── core/                       уведомления, FAQ, модерация
+├── emails/                     текстовые email-шаблоны
+├── listings/                   landing, каталог, детальная, создание
+├── pages/                      about, faq, rules
+├── payments/                   кошелёк, эскроу, выводы
+└── transactions/               запросы на покупку, отзывы, диспуты
 ```
 
-### CSS Architecture
-
-```css
-:root {
-    /* CSS Variables */
-    --primary: #2563eb;
-    --success: #059669;
-    --danger: #dc2626;
-}
-
-/* Components */
-- Buttons (.btn-primary, .btn-success)
-- Cards (.card, .listing-item)
-- Forms (.form-control, .form-select)
-- Badges (.status-active, .status-sold)
-- Chat (.message-bubble, .chat-container)
-```
-
----
-
-## 🔌 API Endpoints
-
-### Chat API
-
-```
-GET  /chat/api/messages/<conversation_id>/?after=<last_id>
-  → Получить новые сообщения
-  Response: {
-      "messages": [
-          {"id": 123, "content": "...", "sender": "...", "created_at": "..."}
-      ],
-      "count": 1
-  }
-```
-
-### Notifications API
-
-```
-GET  /notifications/unread-count/
-  → Количество непрочитанных
-  Response: {"count": 5}
-
-POST /notifications/<id>/read/
-  → Отметить как прочитанное
-  Response: {"success": true}
-
-POST /notifications/mark-all-read/
-  → Отметить все как прочитанные
-  Response: {"success": true}
-```
-
-### Favorites API
-
-```
-POST /listing/<id>/favorite/
-  → Добавить/убрать из избранного (toggle)
-  Response: {
-      "success": true,
-      "is_favorited": true,
-      "message": "Добавлено в избранное"
-  }
-```
-
----
-
-## Performance Optimizations
-
-### 1. Database Queries
-
-**N+1 Problem Solution:**
-```python
-# BAD
-listings = Listing.objects.all()
-for listing in listings:
-    print(listing.seller.username)  # N+1 запросов!
-
-# GOOD
-listings = Listing.objects.select_related('seller').all()
-for listing in listings:
-    print(listing.seller.username)  # 1 запрос
-```
-
-**Prefetch Related:**
-```python
-# Для ManyToMany и обратных ForeignKey
-conversations = Conversation.objects.prefetch_related(
-    'messages',
-    'messages__sender'
-)
-```
-
-### 2. Caching Strategy
-
-```python
-# Homepage stats - 5 минут
-cache.set('homepage_stats', stats, 300)
-
-# Список игр - 1 час
-cache.set('active_games', games, 3600)
-
-# Количество уведомлений - 1 минута
-cache.set(f'unread_notif_{user.id}', count, 60)
-```
-
-### 3. Pagination
-
-```python
-# Всегда используем пагинацию для больших списков
-paginator = Paginator(queryset, 12)
-page_obj = paginator.get_page(page_number)
-```
-
-### 4. Full-Text Search
-
-```python
-# PostgreSQL с русской морфологией
-from django.contrib.postgres.search import SearchQuery, SearchRank
-
-search_query = SearchQuery(search_term, config='russian')
-listings = Listing.objects.annotate(
-    rank=SearchRank('search_vector', search_query)
-).filter(
-    search_vector=search_query
-).order_by('-rank')
-```
-
----
-
-## 🔧 Configuration Files
-
-### settings.py
-
-**Development:**
-```python
-DEBUG = True
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-CACHES = {'default': {'BACKEND': 'locmem.LocMemCache'}}
-EMAIL_BACKEND = 'console.EmailBackend'
-```
-
-**Production:**
-```python
-DEBUG = False
-ALLOWED_HOSTS = ['lootlink.ru']
-CACHES = {'default': {'BACKEND': 'django_redis.cache.RedisCache'}}
-EMAIL_BACKEND = 'smtp.EmailBackend'
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-```
-
----
-
-## 🧪 Testing Strategy
-
-### Test Coverage
-
-```
-accounts/tests.py       - 9 тестов (модели, views, forms)
-listings/tests.py       - 8 тестов (модели, views)
-transactions/tests.py   - 7 тестов (бизнес-логика)
-chat/tests.py          - 15 тестов (сообщения, беседы)
-core/tests.py          - 13 тестов (уведомления)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ВСЕГО                  - 52+ теста (coverage 65%+)
-```
-
-### Types of Tests
-
-1. **Model Tests** - Проверка бизнес-логики моделей
-2. **View Tests** - HTTP запросы и ответы
-3. **Form Tests** - Валидация форм
-4. **Integration Tests** - Полный user flow
-5. **Security Tests** - CSRF, XSS, permissions
-
----
-
-## 📦 Deployment
-
-### Docker Containers
-
-```yaml
-services:
-  db:         # PostgreSQL 15
-  web:        # Django + Gunicorn
-  redis:      # Redis 7 (cache)
-  nginx:      # Nginx (reverse proxy)
-```
-
-### Scaling Strategy
-
-**Horizontal Scaling:**
-```yaml
-# docker-compose.yml
-web:
-  deploy:
-    replicas: 4  # 4 инстанса Django
-    
-  # Nginx автоматически балансирует
-```
-
-**Database:**
-```
-PostgreSQL Master-Slave Replication
-  Master (write) → Slave (read)
-```
-
-**Cache:**
-```
-Redis Cluster или Redis Sentinel
-для high availability
-```
-
----
-
-## 📈 Monitoring
-
-### Sentry Integration
-
-```python
-# settings.py
-sentry_sdk.init(
-    dsn="https://...",
-    integrations=[DjangoIntegration()],
-    traces_sample_rate=1.0,
-)
-```
-
-### Logging
-
-```
-logs/
-  ├─ lootlink.log    (INFO+)
-  ├─ errors.log      (ERROR+)
-  └─ security.log    (WARNING+ для django.security)
-```
-
-### Metrics to Monitor
-
-- **Response time** (p50, p95, p99)
-- **Error rate** (4xx, 5xx)
-- **Database connections** (active, idle)
-- **Cache hit rate** (Redis)
-- **Queue length** (если используется Celery)
-
----
-
-## 🔮 Future Improvements
-
-### Phase 1: Payments
-- Интеграция ЮKassa/Stripe
-- Escrow система
-- Wallet для пользователей
-
-### Phase 2: Real-time
-- WebSockets (Django Channels)
-- Online статус пользователей
-- Typing indicators в чате
-
-### Phase 3: Advanced Features
-- Machine Learning для рекомендаций
-- Fraud detection
-- Price prediction
-- Automatic moderation
-
-### Phase 4: Mobile
-- REST API
-- React Native app
-- Push notifications
-
----
-
-## 📞 Architecture Decisions
-
-Все важные архитектурные решения документированы в `docs/architecture/ADR/`
-
-Пример ADR (Architecture Decision Record):
-- ADR-001: Почему PostgreSQL, а не MongoDB
-- ADR-002: Почему не использу использованы Django Channels
-- ADR-003: Polling vs WebSockets для чата
-
----
-
-**Версия документа:** 1.0  
-**Последнее обновление:** 27 октября 2025
+CSS — один файл `static/css/lootlink.css`, mobile-first, design tokens
+через CSS-переменные в `:root`. Тёмная и светлая темы переключаются через
+`data-theme` на `<html>`.
+
+JS — модули в `static/js/`, без сборщика. Загружаются с `defer`. Прогрессив
+енхансмент: страница работает без JS, скрипты добавляют интерактивность
+(чат-консьюмер, автокомплит поиска, галерея, кропер аватара, push).
+
+## Конфигурация окружения
+
+`config/settings.py` читает значения из `.env` через `django-environ`.
+Ключевые переменные:
+
+- `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`.
+- `DB_ENGINE` (`postgres` или `sqlite`), `DB_NAME`, `DB_USER`, `DB_PASSWORD`,
+  `DB_HOST`, `DB_PORT`.
+- `REDIS_URL`, `USE_REDIS`. В production `USE_REDIS=False` выдаёт
+  `RuntimeWarning` — это намеренно, иначе rate limit становится фиктивным.
+- `ADMIN_URL` — путь к стандартной Django-админке. В prod подменяется на
+  непредсказуемую строку, чтобы автосканеры не находили `/admin/`.
+- `SENTRY_DSN`, `YOOKASSA_*`, `TELEGRAM_BOT_TOKEN`, `VAPID_*`.
+
+## Деплой
+
+Прод — Docker compose с сервисами:
+
+- `web` — Daphne (ASGI) + Gunicorn (WSGI) за единым Caddy.
+- `db` — PostgreSQL 15.
+- `redis` — Redis 7.
+- `worker` — Celery worker.
+- `beat` — Celery beat.
+- `caddy` — reverse proxy с auto-TLS.
+
+Скрипт `scripts/deploy_with_smoke.sh` делает выкат и триггерит smoke-тесты
+через `repository_dispatch` на GitHub Actions.
+
+## Логирование и мониторинг
+
+- Sentry с request-id трассировкой и Django-интеграцией.
+- Логи Django пишутся в `logs/`: `lootlink.log` (INFO+), `errors.log`
+  (ERROR+), `security.log` (WARNING+ из `django.security`).
+- Метрики, за которыми смотрим: время отклика (p50/p95/p99), доля 5xx,
+  длина очереди Celery, hit rate Redis, число активных WebSocket-соединений.
+
+## Архитектурные решения
+
+ADR (Architecture Decision Records) хранятся в `.planning/adr/` по мере
+накопления. Существующие решения, зафиксированные неформально:
+
+- PostgreSQL вместо MongoDB — нужны транзакции и строгие constraint.
+- Channels вместо отдельного WS-сервера — единый код-база и сессии.
+- Custom CSS вместо Tailwind/Bootstrap — уникальная типографика и темизация
+  без класс-инфляции в шаблонах.
+- Без React SPA — Django templates с прогрессивным enhancement дешевле
+  поддерживать и индексируются поисковиками без SSR.

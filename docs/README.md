@@ -31,9 +31,8 @@
 
 ## Архитектура
 
-- **[Архитектура проекта](ARCHITECTURE.md)** - полное описание архитектуры
-- **[Возможности](FEATURES.md)** - список всех функций
-- **[API документация](API_DOCUMENTATION.md)** - REST API endpoints
+- **[Архитектура проекта](ARCHITECTURE.md)** — стек, слои, связи между app
+- **[API документация](API_DOCUMENTATION.md)** — REST endpoints
 
 ---
 
@@ -43,22 +42,10 @@
 
 ---
 
-## Дизайн
-
-- **[Рабочий процесс дизайна](design/workflow.md)** - работа с дизайном
-
----
-
 ## Решение проблем
 
-- **[Проблемы с venv](troubleshooting/venv.md)** - исправление виртуального окружения
-- **[Проблемы Windows](troubleshooting/windows.md)** - специфичные для Windows
-
----
-
-## Справочники
-
-- **[Быстрый справочник](reference/quick-reference.md)** - команды и шпаргалки
+- **[Проблемы с venv](troubleshooting/venv.md)** — исправление виртуального окружения
+- **[Проблемы Windows](troubleshooting/windows.md)** — специфичные для Windows
 
 ---
 
@@ -66,11 +53,9 @@
 
 ```
 docs/
-├── setup/              # Установка и настройка компонентов
-├── deployment/         # Развертывание и бэкапы
-├── troubleshooting/    # Решение проблем
-├── design/             # Дизайн и UI/UX
-└── reference/          # Справочники и шпаргалки
+├── setup/              # установка и настройка компонентов
+├── deployment/         # развертывание и бэкапы
+└── troubleshooting/    # решение проблем
 ```
 
 ---

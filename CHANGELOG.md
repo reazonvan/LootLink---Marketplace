@@ -8,9 +8,9 @@
 
 ## [1.3.0] - 2026-05-08
 
-### Major Update — Phase 9-14: hardening, целостность данных, оптимизация
+### Безопасность, целостность данных, индексы
 
-### Безопасность (Phase 10)
+### Безопасность
 - **Argon2id** для хеширования паролей (соответствие нефункциональному
   требованию диплома 1.3, рекомендация OWASP). Старые PBKDF2-хеши работают
   через fallback. `requirements/base.txt` + `argon2-cffi>=23.1.0`.
@@ -28,7 +28,7 @@
 - **`Wallet.has_add_permission/has_delete_permission = False`** — кошелёк
   создаётся только сигналом, удалить нельзя.
 
-### Целостность данных (Phase 11)
+### Целостность данных
 - **Удалено мёртвое поле `Profile.balance`** — единый источник истины
   для финансов теперь `payments.Wallet.balance` (через миграцию
   `accounts.0020_remove_profile_balance`).
@@ -40,7 +40,7 @@
   `unique_together` не работает с `NULL`, поэтому два constraint:
   один с listing, один без.
 
-### Производительность БД (Phase 11)
+### Производительность БД
 Добавлены композитные индексы под горячие запросы:
 - `chat.Message`: `(conversation, -created_at)`, `(conversation, is_read, sender)`
   — ранее у Message не было ни одного индекса.
@@ -56,7 +56,7 @@
 - `payments.Transaction`: `(user, transaction_type, -created_at)`
   — фильтр истории по типу.
 
-### Frontend (Phase 14)
+### Интерфейс
 - **`alt`-теги** добавлены на все `<img>` в payments/transactions
   (раньше 3 без alt — `escrow_detail.html`, `purchase_request_create.html`,
   `purchase_request_detail.html`).
@@ -65,11 +65,11 @@
   (Bootstrap Icons) на Lucide-проекте, иконка не менялась.
   Теперь через CSS-класс `.active` (см. `.favorite-btn-detail.active` в lootlink.css).
 
-### Чистка репозитория (Phase 9)
+### Чистка репозитория
 - Удалены лишние виртуальные окружения (`.venv`, `.venv-codex`,
   `.venv-dev`, `.venv-local`) — оставлен один `venv/`.
-- Удалены AI/IDE-артефакты: `.agents/`, `.kilo/`, `.serena/`, `.obsidian/`,
-  `.cursor/`, `.playwright-mcp/`, `LootLink/`, `__pycache__/` в корне.
+- Удалены лишние локальные конфиги редакторов и временные `__pycache__/`
+  в корне репозитория.
 - Удалены кэши: `.coverage`, `htmlcov/`, `.pytest_cache/`.
 - Очищены логи (770 КБ): `errors.log`, `lootlink.log`, `security.log`.
 - Удалены распакованные ZIP-бинарники (Redis 12 МБ, GitHub MCP 7 МБ).
@@ -85,7 +85,7 @@
 
 ## [1.2.0] - 2026-04-17
 
-### Major Update — антифрод, модерация, production-стабилизация
+### Антифрод, модерация, стабилизация production
 
 ### Добавлено
 - **Антифрод и диспуты** — система обнаружения подозрительных сделок, логи входов,
@@ -148,7 +148,7 @@
 
 ## [1.1.0] - 2025-10-27
 
-### Major Update - Production Ready + Full Analysis Implementation
+### Переход в production-режим
 
 ### Добавлено
 - **PostgreSQL Full-Text Search** - полнотекстовый поиск с русской морфологией и ранжированием
@@ -180,13 +180,13 @@
 - **Database Indexes**: 24+ составных индексов для всех критичных запросов
 - **Query Optimization**: select_related/prefetch_related во всех views
 
-### Тестирование (Coverage 65%+)
-- **chat/tests.py**: 15 тестов (Conversation, Message, Views, Security)
-- **core/tests.py**: 13 тестов (Notification, Context processors, API)
-- **accounts/tests.py**: 9 тестов (User, Profile, Password reset)
-- **listings/tests.py**: 8 тестов (Game, Listing, Favorites)
-- **transactions/tests.py**: 7 тестов (PurchaseRequest, Review)
-- **TOTAL**: 52+ тестов
+### Тестирование (покрытие ~65%)
+- `chat/tests.py`: 15 тестов (Conversation, Message, views, security)
+- `core/tests.py`: 13 тестов (Notification, context processors, API)
+- `accounts/tests.py`: 9 тестов (User, Profile, password reset)
+- `listings/tests.py`: 8 тестов (Game, Listing, Favorites)
+- `transactions/tests.py`: 7 тестов (PurchaseRequest, Review)
+- всего около 52 тестов
 
 ### DevOps
 - **GitHub Actions**: 3 workflows (test, lint, security)
@@ -216,7 +216,7 @@
 
 ## [1.0.0] - 2025-10-20
 
-### Первый релиз LootLink
+### Первый публичный релиз
 
 ### Добавлено
 - Регистрация и авторизация пользователей

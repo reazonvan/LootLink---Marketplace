@@ -1,4 +1,4 @@
-# 🔧 Исправлено: Конфигурация для Windows
+# Исправлено: Конфигурация для Windows
 
 ## Дата: 2026-03-06
 
@@ -65,7 +65,7 @@ Python was not found; run without arguments to install from the Microsoft Store
 
 ---
 
-## 🎯 Что делать сейчас (2 минуты)
+## Что делать сейчас (2 минуты)
 
 ### Шаг 1: Выбрать Python интерпретатор
 1. Нажми `Ctrl+Shift+P`
@@ -84,7 +84,7 @@ Python was not found; run without arguments to install from the Microsoft Store
 
 ---
 
-## 🐛 Если всё ещё не работает
+## Если всё ещё не работает
 
 ### Вариант 1: Через терминал
 ```powershell
@@ -135,7 +135,7 @@ python manage.py check
 
 ---
 
-## 📋 Все исправленные файлы
+## Все исправленные файлы
 
 1. `.vscode/tasks.json` - использует Python из VS Code
 2. `.vscode/settings.json` - Windows пути
@@ -144,7 +144,7 @@ python manage.py check
 
 ---
 
-## 🚀 Следующие шаги
+## Следующие шаги
 
 После того как всё заработает:
 
@@ -165,7 +165,7 @@ python manage.py check
 
 ---
 
-## 💡 Полезные команды для Windows
+## Полезные команды для Windows
 
 ```powershell
 # Активация venv
@@ -190,7 +190,7 @@ python manage.py check
 
 ---
 
-## 📞 Если нужна помощь
+## Если нужна помощь
 
 1. Проверь `WINDOWS_SETUP.md` - там подробный troubleshooting
 2. Проверь что Python 3.11+ установлен: `python --version`

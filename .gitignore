@@ -5,12 +5,8 @@ LootLink/
 # Local venv
 .venv-local/
 
-# AI-ассистенты и прочие локальные инструменты
-CLAUDE.md
-.playwright-mcp/
+# Локальные конфигурации редакторов и временные артефакты
 qa-screenshots/
-skills-lock.json
-.env.mcp
 
 # Временные артефакты аудитов/отчётов (корневые)
 CLEANUP_PLAN.md

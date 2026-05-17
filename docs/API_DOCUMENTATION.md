@@ -1,4 +1,4 @@
-# 📚 API Документация LootLink
+# API Документация LootLink
 
 ## Обзор
 
