@@ -1,14 +1,16 @@
 """
 Middleware для rate limiting и защиты от брутфорса.
 """
+
+import logging
+import time
+
+from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponseForbidden
-from django.conf import settings
-import time
-import logging
 
 # Логгер для безопасности
-security_logger = logging.getLogger('django.security')
+security_logger = logging.getLogger("django.security")
 
 
 class SimpleRateLimitMiddleware:
@@ -16,90 +18,91 @@ class SimpleRateLimitMiddleware:
     Простое middleware для ограничения количества запросов.
     Защита от брутфорса на критичных эндпоинтах.
     """
-    
+
     # Настройки rate limiting
     RATE_LIMITS = {
         # Аутентификация
-        '/accounts/login/': (5, 300),  # 5 попыток за 5 минут
-        '/accounts/register/': (3, 600),  # 3 попытки за 10 минут
-        '/accounts/password-reset/': (3, 600),  # 3 попытки за 10 минут
-
+        "/accounts/login/": (5, 300),  # 5 попыток за 5 минут
+        "/accounts/register/": (3, 600),  # 3 попытки за 10 минут
+        "/accounts/password-reset/": (3, 600),  # 3 попытки за 10 минут
         # Создание контента
-        '/listing/create/': (10, 3600),  # 10 объявлений в час
-        '/transactions/purchase-request/': (20, 3600),  # 20 запросов в час
-
+        "/listing/create/": (10, 3600),  # 10 объявлений в час
+        "/transactions/purchase-request/": (20, 3600),  # 20 запросов в час
         # Сообщения и уведомления
-        '/chat/conversation/': (50, 60),  # 50 сообщений в минуту
-        '/notifications/mark-read/': (100, 60),  # 100 запросов в минуту
-        '/notifications/mark-all-read/': (5, 60),  # 5 запросов в минуту
+        "/chat/conversation/": (50, 60),  # 50 сообщений в минуту
+        "/notifications/mark-read/": (100, 60),  # 100 запросов в минуту
+        "/notifications/mark-all-read/": (5, 60),  # 5 запросов в минуту
     }
-    
+
     def __init__(self, get_response):
         self.get_response = get_response
-    
+
     def __call__(self, request):
         # Проверяем POST запросы и определенные пути на rate limiting
         should_check = False
-        
+
         # Проверяем POST запросы на защищенные эндпоинты
-        if request.method == 'POST':
+        if request.method == "POST":
             for path in self.RATE_LIMITS:
                 if request.path.startswith(path):
                     should_check = True
                     break
-        
+
         if should_check:
             if not self._check_rate_limit(request):
                 # Логируем подозрительную активность.
                 # request.user может отсутствовать если AuthenticationMiddleware
                 # не выполнился (например, в unit-тестах с голым RequestFactory).
                 ip = self._get_client_ip(request)
-                request_user = getattr(request, 'user', None)
+                request_user = getattr(request, "user", None)
                 if request_user is not None and request_user.is_authenticated:
                     user_repr = request_user
                 else:
-                    user_repr = 'Anonymous'
+                    user_repr = "Anonymous"
                 security_logger.warning(
-                    f'Rate limit exceeded: {request.path} | User: {user_repr} | IP: {ip}'
+                    f"Rate limit exceeded: {request.path} | User: {user_repr} | IP: {ip}"
                 )
                 return HttpResponseForbidden(
-                    'Слишком много попыток. Пожалуйста, подождите несколько минут.'
+                    "Слишком много попыток. Пожалуйста, подождите несколько минут."
                 )
 
         response = self.get_response(request)
         return response
-    
+
     def _check_rate_limit(self, request):
-        """Проверка лимита запросов."""
-        # Получаем IP адрес
+        """Атомарная проверка лимита запросов через cache.incr.
+
+        cache.incr — атомарная операция в Redis, что закрывает race condition
+        (несколько параллельных запросов больше не могут все пройти лимит).
+        """
         ip = self._get_client_ip(request)
-        
-        # Получаем настройки для данного пути
-        max_attempts, time_window = self.RATE_LIMITS.get(request.path, (10, 60))
-        
-        # Ключ для кеша
-        cache_key = f'rate_limit:{request.path}:{ip}'
-        
-        # Получаем текущее количество попыток
-        attempts = cache.get(cache_key, [])
-        now = time.time()
-        
-        # Удаляем старые попытки (за пределами временного окна)
-        attempts = [t for t in attempts if now - t < time_window]
-        
-        # Проверяем лимит
-        if len(attempts) >= max_attempts:
-            return False
-        
-        # Добавляем новую попытку
-        attempts.append(now)
-        cache.set(cache_key, attempts, time_window)
-        
-        return True
-    
+
+        # Точное соответствие пути → точный лимит. Иначе — startswith.
+        if request.path in self.RATE_LIMITS:
+            max_attempts, time_window = self.RATE_LIMITS[request.path]
+        else:
+            for prefix, limits in self.RATE_LIMITS.items():
+                if request.path.startswith(prefix):
+                    max_attempts, time_window = limits
+                    break
+            else:
+                max_attempts, time_window = (10, 60)
+
+        # Используем разные buckets per time-window для fixed-window лимита.
+        cache_key = f"rate_limit:{request.path}:{ip}"
+
+        try:
+            current = cache.incr(cache_key)
+        except ValueError:
+            cache.set(cache_key, 1, time_window)
+            current = 1
+
+        return current <= max_attempts
+
     @staticmethod
     def _get_client_ip(request):
         from core.utils import get_client_ip
+
         return get_client_ip(request)
 
 
@@ -107,28 +110,28 @@ class SecurityHeadersMiddleware:
     """
     Middleware для добавления заголовков безопасности.
     """
-    
+
     def __init__(self, get_response):
         self.get_response = get_response
-    
+
     def __call__(self, request):
         response = self.get_response(request)
-        
+
         # Заголовки безопасности.
         # X-XSS-Protection УДАЛЁН: deprecated в современных браузерах,
         # фактически может включать уязвимости в IE/старом Safari
         # (https://owasp.org/www-project-secure-headers/#x-xss-protection).
         # Защита от XSS — через CSP ниже + escape в шаблонах.
-        response['X-Content-Type-Options'] = 'nosniff'
-        response['X-Frame-Options'] = 'DENY'
-        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-        response['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
-        
+        response["X-Content-Type-Options"] = "nosniff"
+        response["X-Frame-Options"] = "DENY"
+        response["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+
         # Content Security Policy
         # В production - строже, в development - разрешаем eval для отладки
         if not settings.DEBUG:
             # Production CSP - разрешаем Bootstrap, CDN и Google Fonts
-            response['Content-Security-Policy'] = (
+            response["Content-Security-Policy"] = (
                 "default-src 'self'; "
                 "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
                 "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; "
@@ -141,7 +144,7 @@ class SecurityHeadersMiddleware:
             )
         else:
             # Development CSP - более мягкий для удобства разработки
-            response['Content-Security-Policy'] = (
+            response["Content-Security-Policy"] = (
                 "default-src 'self'; "
                 "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; "
                 "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; "
@@ -152,6 +155,5 @@ class SecurityHeadersMiddleware:
                 "base-uri 'self'; "
                 "form-action 'self';"
             )
-        
-        return response
 
+        return response

@@ -1,79 +1,92 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
+
 from accounts.models import CustomUser
 from listings.models import Listing
-from .models import Conversation, Message
+
 from .forms import MessageForm
+from .models import Conversation, Message
 
 
 @login_required
 def conversations_list(request):
-    """Список всех бесед пользователя с оптимизацией N+1 запросов."""
-    from django.db.models import Prefetch, Count, Q as QueryQ
-    
-    # Оптимизация: загружаем последнее сообщение и подсчитываем непрочитанные за 1 запрос
-    conversations = Conversation.objects.filter(
-        Q(participant1=request.user) | Q(participant2=request.user)
-    ).select_related(
-        'participant1', 'participant1__profile',
-        'participant2', 'participant2__profile',
-        'listing', 'listing__game'
-    ).prefetch_related(
-        # Prefetch последнего сообщения (самое новое)
-        Prefetch(
-            'messages',
-            queryset=Message.objects.select_related('sender').order_by('-created_at')[:1],
-            to_attr='latest_messages'
-        ),
-        # Prefetch всех сообщений для подсчета непрочитанных
-        Prefetch(
-            'messages',
-            queryset=Message.objects.filter(~QueryQ(sender=request.user), is_read=False),
-            to_attr='unread_messages'
+    """Список всех бесед пользователя с annotate(Count) вместо prefetch-list.
+
+    P2-4: было `len(conversation.unread_messages)` — выгружало ВСЕ unread
+    сообщения в память. Теперь — Count annotation одним запросом.
+    """
+    from django.db.models import Count, Prefetch
+    from django.db.models import Q as QueryQ
+
+    conversations = (
+        Conversation.objects.filter(Q(participant1=request.user) | Q(participant2=request.user))
+        .select_related(
+            "participant1",
+            "participant1__profile",
+            "participant2",
+            "participant2__profile",
+            "listing",
+            "listing__game",
         )
-    ).order_by('-updated_at')
-    
-    # Теперь добавляем вычисляемые поля без дополнительных запросов
+        .prefetch_related(
+            Prefetch(
+                "messages",
+                queryset=Message.objects.select_related("sender").order_by("-created_at")[:1],
+                to_attr="latest_messages",
+            )
+        )
+        .annotate(
+            unread_count=Count(
+                "messages",
+                filter=QueryQ(messages__is_read=False) & ~QueryQ(messages__sender=request.user),
+            )
+        )
+        .order_by("-updated_at")
+    )
+
     for conversation in conversations:
-        # Количество непрочитанных уже загружено через prefetch
-        conversation.unread_count = len(conversation.unread_messages)
-        # Другой участник
         conversation.other_user = conversation.get_other_participant(request.user)
-        # Последнее сообщение уже загружено через prefetch
-        conversation.last_message = conversation.latest_messages[0] if conversation.latest_messages else None
-    
-    context = {
-        'conversations': conversations,
-    }
-    
-    return render(request, 'chat/conversations_list.html', context)
+        conversation.last_message = (
+            conversation.latest_messages[0] if conversation.latest_messages else None
+        )
+
+    context = {"conversations": conversations}
+    return render(request, "chat/conversations_list.html", context)
 
 
 @login_required
 def conversation_detail(request, pk):
-    """Детальный просмотр беседы с возможностью отправки сообщений."""
+    """Детальный просмотр беседы с возможностью отправки сообщений.
+
+    P1-21: загружаем только последние MESSAGES_PAGE_SIZE сообщений.
+    Старые подтягиваются через AJAX endpoint (get_new_messages с параметром
+    before_id, можно реализовать симметрично).
+    """
+    MESSAGES_PAGE_SIZE = 100
+
     conversation = get_object_or_404(Conversation, pk=pk)
-    
-    # Проверяем, является ли пользователь участником беседы
+
     if request.user not in [conversation.participant1, conversation.participant2]:
-        messages.error(request, 'У вас нет доступа к этой беседе.')
-        return redirect('chat:conversations_list')
-    
-    # Отмечаем все сообщения как прочитанные
-    Message.objects.filter(
-        conversation=conversation,
-        is_read=False
-    ).exclude(sender=request.user).update(is_read=True)
-    
-    # Получаем сообщения
-    messages_list = conversation.messages.select_related('sender').order_by('created_at')
-    
+        messages.error(request, "У вас нет доступа к этой беседе.")
+        return redirect("chat:conversations_list")
+
+    # Отмечаем как прочитанные одним запросом
+    Message.objects.filter(conversation=conversation, is_read=False).exclude(
+        sender=request.user
+    ).update(is_read=True)
+
+    # Загружаем последние N сообщений. desc → reverse в шаблоне.
+    messages_qs = conversation.messages.select_related("sender", "sender__profile").order_by(
+        "-created_at"
+    )[:MESSAGES_PAGE_SIZE]
+    messages_list = list(reversed(list(messages_qs)))
+
     # Обработка отправки сообщения
-    if request.method == 'POST':
+    if request.method == "POST":
         form = MessageForm(request.POST, request.FILES)
         if form.is_valid():
             message = form.save(commit=False)
@@ -83,56 +96,60 @@ def conversation_detail(request, pk):
 
             # Обновляем last_seen отправителя сразу
             from django.utils import timezone
+
             from accounts.models import Profile
+
             Profile.objects.filter(user=request.user).update(last_seen=timezone.now())
 
             # Если AJAX запрос, возвращаем JSON
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 image_url = message.image.url if message.image else None
-                return JsonResponse({
-                    'success': True,
-                    'message': {
-                        'id': message.id,
-                        'content': message.content,
-                        'sender_id': message.sender.id,
-                        'sender_username': message.sender.username,
-                        'created_at': message.created_at.isoformat(),
-                        'is_read': False,
-                        'image_url': image_url,
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "message": {
+                            "id": message.id,
+                            "content": message.content,
+                            "sender_id": message.sender.id,
+                            "sender_username": message.sender.username,
+                            "created_at": message.created_at.isoformat(),
+                            "is_read": False,
+                            "image_url": image_url,
+                        },
                     }
-                })
+                )
 
-            return redirect('chat:conversation_detail', pk=pk)
+            return redirect("chat:conversation_detail", pk=pk)
     else:
         form = MessageForm()
-    
+
     other_user = conversation.get_other_participant(request.user)
-    
+
     context = {
-        'conversation': conversation,
-        'chat_messages': messages_list,
-        'form': form,
-        'other_user': other_user,
+        "conversation": conversation,
+        "chat_messages": messages_list,
+        "form": form,
+        "other_user": other_user,
     }
-    
-    return render(request, 'chat/conversation_detail.html', context)
+
+    return render(request, "chat/conversation_detail.html", context)
 
 
 @login_required
 def conversation_start(request, listing_pk):
     """Начать беседу по объявлению с защитой от дублирования."""
-    from django.db import transaction, IntegrityError
-    
+    from django.db import IntegrityError, transaction
+
     listing = get_object_or_404(Listing, pk=listing_pk)
-    
+
     # Нельзя начать беседу с самим собой
     if listing.seller == request.user:
-        messages.error(request, 'Вы не можете начать беседу по своему объявлению.')
-        return redirect('listings:listing_detail', pk=listing_pk)
-    
+        messages.error(request, "Вы не можете начать беседу по своему объявлению.")
+        return redirect("listings:listing_detail", pk=listing_pk)
+
     # Используем правильную сортировку участников для консистентности
     participant1, participant2 = sorted([request.user, listing.seller], key=lambda u: u.pk)
-    
+
     # Используем get_or_create с транзакцией для атомарности
     try:
         with transaction.atomic():
@@ -141,21 +158,21 @@ def conversation_start(request, listing_pk):
                 participant2=participant2,
                 listing=listing,
                 defaults={
-                    'participant1': participant1,
-                    'participant2': participant2,
-                    'listing': listing
-                }
+                    "participant1": participant1,
+                    "participant2": participant2,
+                    "listing": listing,
+                },
             )
-            
+
             # Беседа создана — контекст товара показывается как карточка в чате
     except IntegrityError:
         # На случай если все равно создался дубликат (крайне редко)
         conversation = Conversation.objects.filter(
-            Q(participant1=participant1, participant2=participant2, listing=listing) |
-            Q(participant1=participant2, participant2=participant1, listing=listing)
+            Q(participant1=participant1, participant2=participant2, listing=listing)
+            | Q(participant1=participant2, participant2=participant1, listing=listing)
         ).first()
-    
-    return redirect('chat:conversation_detail', pk=conversation.pk)
+
+    return redirect("chat:conversation_detail", pk=conversation.pk)
 
 
 @login_required
@@ -163,47 +180,48 @@ def conversation_start(request, listing_pk):
 def get_new_messages(request, conversation_pk):
     """API endpoint для получения новых сообщений (AJAX)."""
     from django.core.cache import cache
-    
+
     # Rate limiting: 200 запросов в минуту на пользователя (для polling каждые 3 секунды)
-    cache_key = f'chat_poll_rate_{request.user.id}_{conversation_pk}'
+    cache_key = f"chat_poll_rate_{request.user.id}_{conversation_pk}"
     requests_count = cache.get(cache_key, 0)
-    
+
     if requests_count >= 200:
-        return JsonResponse({
-            'error': 'Слишком много запросов. Подождите минуту.',
-            'messages': []
-        }, status=429)
-    
+        return JsonResponse(
+            {"error": "Слишком много запросов. Подождите минуту.", "messages": []}, status=429
+        )
+
     cache.set(cache_key, requests_count + 1, 60)
-    
+
     conversation = get_object_or_404(Conversation, pk=conversation_pk)
-    
+
     # Проверяем доступ
     if request.user not in [conversation.participant1, conversation.participant2]:
-        return JsonResponse({'error': 'Доступ запрещён'}, status=403)
-    
-    # Получаем ID последнего сообщения
-    after_id = request.GET.get('after', 0)
-    
-    # Загружаем новые сообщения с оптимизацией
-    new_messages = conversation.messages.filter(
-        id__gt=after_id
-    ).select_related('sender').order_by('created_at')[:100]
+        return JsonResponse({"error": "Доступ запрещён"}, status=403)
+
+    # P3-12: cast after в int — иначе ORM может ругнуться на «'after'» строку.
+    try:
+        after_id = int(request.GET.get("after", 0))
+    except (TypeError, ValueError):
+        after_id = 0
+
+    new_messages = (
+        conversation.messages.filter(id__gt=after_id)
+        .select_related("sender")
+        .order_by("created_at")[:100]
+    )
 
     messages_data = []
     for message in new_messages:
-        messages_data.append({
-            'id': message.id,
-            'content': message.content,
-            'sender_id': message.sender.id,
-            'sender_username': message.sender.username,
-            'created_at': message.created_at.isoformat(),
-            'is_read': message.is_read,
-            'image_url': message.image.url if message.image else None,
-        })
-    
-    return JsonResponse({
-        'messages': messages_data,
-        'count': len(messages_data)
-    })
+        messages_data.append(
+            {
+                "id": message.id,
+                "content": message.content,
+                "sender_id": message.sender.id,
+                "sender_username": message.sender.username,
+                "created_at": message.created_at.isoformat(),
+                "is_read": message.is_read,
+                "image_url": message.image.url if message.image else None,
+            }
+        )
 
+    return JsonResponse({"messages": messages_data, "count": len(messages_data)})

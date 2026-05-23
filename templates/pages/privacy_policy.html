@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Политика конфиденциальности - LootLink{% endblock %}
+{% block content %}
+<div style="padding:var(--space-6) 0 var(--space-12);">
+  <div style="max-width:720px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:var(--space-8);">
+      <span class="section-label">152-ФЗ</span>
+      <h1 style="font-size:var(--text-3xl);">Политика конфиденциальности</h1>
+      <p style="color:var(--text-tertiary);font-size:var(--text-sm);margin-top:var(--space-2);">Последнее обновление: 19 мая 2026 г.</p>
+    </div>
+
+    <div class="card-glass" style="margin-bottom:var(--space-5);">
+      <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+        <i data-lucide="shield" style="width:18px;height:18px;color:var(--accent-primary);"></i> 1. Общие положения
+      </h3>
+      <p style="font-size:var(--text-sm);color:var(--text-secondary);line-height:var(--leading-relaxed);">
+        Настоящая Политика определяет порядок обработки и защиты персональных данных
+        пользователей платформы LootLink в соответствии с Федеральным законом от 27.07.2006
+        № 152-ФЗ «О персональных данных».
+      </p>
+    </div>
+
+    <div class="card-glass" style="margin-bottom:var(--space-5);">
+      <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+        <i data-lucide="database" style="width:18px;height:18px;color:var(--accent-primary);"></i> 2. Какие данные мы собираем
+      </h3>
+      <ul style="padding-left:var(--space-5);display:flex;flex-direction:column;gap:var(--space-2);">
+        <li style="font-size:var(--text-sm);color:var(--text-secondary);">Имя пользователя, адрес электронной почты, номер телефона</li>
+        <li style="font-size:var(--text-sm);color:var(--text-secondary);">IP-адрес, данные об устройстве и браузере</li>
+        <li style="font-size:var(--text-sm);color:var(--text-secondary);">Информация о транзакциях и операциях с кошельком</li>
+        <li style="font-size:var(--text-sm);color:var(--text-secondary);">Содержимое переписок в чате платформы</li>
+      </ul>
+    </div>
+
+    <div class="card-glass" style="margin-bottom:var(--space-5);">
+      <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+        <i data-lucide="target" style="width:18px;height:18px;color:var(--accent-primary);"></i> 3. Цели обработки
+      </h3>
+      <ul style="padding-left:var(--space-5);display:flex;flex-direction:column;gap:var(--space-2);">
+        <li style="font-size:var(--text-sm);color:var(--text-secondary);">Регистрация и идентификация пользователей</li>
+        <li style="font-size:var(--text-sm);color:var(--text-secondary);">Проведение сделок через систему эскроу</li>
+        <li style="font-size:var(--text-sm);color:var(--text-secondary);">Предотвращение мошенничества и обеспечение безопасности</li>
+        <li style="font-size:var(--text-sm);color:var(--text-secondary);">Связь с пользователем по вопросам работы платформы</li>
+      </ul>
+    </div>
+
+    <div class="card-glass" style="margin-bottom:var(--space-5);">
+      <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+        <i data-lucide="lock" style="width:18px;height:18px;color:var(--accent-primary);"></i> 4. Защита данных
+      </h3>
+      <p style="font-size:var(--text-sm);color:var(--text-secondary);line-height:var(--leading-relaxed);">
+        Мы применяем технические и организационные меры для защиты персональных данных:
+        шифрование паролей (Argon2id), двухфакторная аутентификация (TOTP),
+        защита от брутфорса, аудит действий, HTTPS.
+      </p>
+    </div>
+
+    <div class="card-glass" style="margin-bottom:var(--space-5);">
+      <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+        <i data-lucide="user-check" style="width:18px;height:18px;color:var(--accent-primary);"></i> 5. Права пользователя
+      </h3>
+      <ul style="padding-left:var(--space-5);display:flex;flex-direction:column;gap:var(--space-2);">
+        <li style="font-size:var(--text-sm);color:var(--text-secondary);">Получить информацию об обработке своих данных</li>
+        <li style="font-size:var(--text-sm);color:var(--text-secondary);">Потребовать уточнения, блокирования или уничтожения данных</li>
+        <li style="font-size:var(--text-sm);color:var(--text-secondary);">Отозвать согласие на обработку персональных данных</li>
+        <li style="font-size:var(--text-sm);color:var(--text-secondary);">Запросить экспорт своих данных</li>
+      </ul>
+    </div>
+
+    <div class="card-glass">
+      <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2);">
+        <i data-lucide="mail" style="width:18px;height:18px;color:var(--accent-primary);"></i> 6. Контакты
+      </h3>
+      <p style="font-size:var(--text-sm);color:var(--text-secondary);line-height:var(--leading-relaxed);">
+        По вопросам обработки персональных данных обращайтесь через раздел
+        поддержки на платформе или на электронную почту, указанную в
+        <a href="{% url 'requisites' %}">реквизитах</a>.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>lucide.createIcons();</script>
+{% endblock %}

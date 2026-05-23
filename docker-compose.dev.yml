@@ -12,5 +12,6 @@ services:
     env_file:
       - .env
     environment:
+      DJANGO_SETTINGS_MODULE: config.settings.development
       DB_ENGINE: sqlite
       DEBUG: "True"

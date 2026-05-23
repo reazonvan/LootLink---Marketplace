@@ -44,7 +44,16 @@
             {% if purchase_request.status == 'accepted' and user == purchase_request.listing.seller %}
             <div class="card-glass" style="margin-bottom:var(--space-5);">
                 <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-3);">Действия</h3>
-                <a href="{% url 'transactions:purchase_request_complete' purchase_request.pk %}" class="btn btn-primary"><i data-lucide="check-circle"></i> Завершить сделку</a>
+                <p style="font-size:var(--text-xs);color:var(--text-secondary);margin-bottom:var(--space-3);">Свяжитесь с покупателем и передайте товар. Деньги уйдут к вам после подтверждения получения покупателем.</p>
+                <a href="{% url 'transactions:purchase_request_complete' purchase_request.pk %}" class="btn btn-secondary"><i data-lucide="check-circle"></i> Отметить сделку завершённой</a>
+            </div>
+            {% endif %}
+
+            {% if purchase_request.status == 'accepted' and user == purchase_request.buyer %}
+            <div class="card-glass" style="margin-bottom:var(--space-5);">
+                <h3 style="font-size:var(--text-base);font-weight:var(--weight-semibold);margin-bottom:var(--space-3);">Действия</h3>
+                <p style="font-size:var(--text-xs);color:var(--text-secondary);margin-bottom:var(--space-3);">Средства заморожены в эскроу. После получения товара подтвердите получение — деньги уйдут продавцу.</p>
+                <a href="{% url 'transactions:purchase_request_confirm_received' purchase_request.pk %}" class="btn btn-success"><i data-lucide="package-check"></i> Подтвердить получение</a>
             </div>
             {% endif %}
 
@@ -54,13 +63,21 @@
             </div>
             {% endif %}
 
+            {# Чат с контрагентом (быстрая навигация) #}
+            {% if purchase_request.status != 'rejected' and purchase_request.status != 'cancelled' %}
+            <div class="card-glass" style="margin-bottom:var(--space-5);">
+                <a href="{% url 'chat:conversation_start' purchase_request.listing.pk %}" class="btn btn-ghost" style="width:100%;justify-content:center;"><i data-lucide="message-circle"></i> Открыть чат</a>
+            </div>
+            {% endif %}
+
             {% if purchase_request.status == 'completed' and can_leave_review %}
             <div class="card-glass" style="margin-bottom:var(--space-5);">
                 <a href="{% url 'transactions:review_create' purchase_request.pk %}" class="btn btn-primary"><i data-lucide="star"></i> Оставить отзыв</a>
             </div>
             {% endif %}
 
-            {% if purchase_request.status != 'completed' and purchase_request.status != 'cancelled' and purchase_request.status != 'rejected' %}
+            {# Спор доступен только когда эскроу funded — есть что оспаривать #}
+            {% if purchase_request.status == 'accepted' and purchase_request.escrow and purchase_request.escrow.status == 'funded' %}
             <div style="text-align:center;">
                 <a href="{% url 'transactions:dispute_create' purchase_request.pk %}" style="font-size:var(--text-xs);color:var(--text-tertiary);">
                     <i data-lucide="flag" style="width:12px;height:12px;display:inline;vertical-align:middle;"></i> Открыть спор
@@ -92,6 +109,8 @@
                     <div><i data-lucide="circle" style="width:8px;height:8px;display:inline;vertical-align:middle;fill:var(--accent-primary);color:var(--accent-primary);"></i> Создано {{ purchase_request.created_at|date:"d.m.Y H:i" }}</div>
                     {% if purchase_request.accepted_at %}<div><i data-lucide="circle" style="width:8px;height:8px;display:inline;vertical-align:middle;fill:var(--color-success);color:var(--color-success);"></i> Принято {{ purchase_request.accepted_at|date:"d.m.Y H:i" }}</div>{% endif %}
                     {% if purchase_request.completed_at %}<div><i data-lucide="circle" style="width:8px;height:8px;display:inline;vertical-align:middle;fill:var(--color-success);color:var(--color-success);"></i> Завершено {{ purchase_request.completed_at|date:"d.m.Y H:i" }}</div>{% endif %}
+                    {% if purchase_request.rejected_at %}<div><i data-lucide="circle" style="width:8px;height:8px;display:inline;vertical-align:middle;fill:var(--color-danger);color:var(--color-danger);"></i> Отклонено {{ purchase_request.rejected_at|date:"d.m.Y H:i" }}</div>{% endif %}
+                    {% if purchase_request.cancelled_at %}<div><i data-lucide="circle" style="width:8px;height:8px;display:inline;vertical-align:middle;fill:var(--color-danger);color:var(--color-danger);"></i> Отменено {{ purchase_request.cancelled_at|date:"d.m.Y H:i" }}</div>{% endif %}
                 </div>
             </div>
         </div>
@@ -101,8 +120,8 @@
 <style>
 @media (max-width: 768px) { .tx-layout { grid-template-columns: 1fr !important; } }
 </style>
+{% endblock %}
 
 {% block extra_js %}
 <script>lucide.createIcons();</script>
-{% endblock %}
 {% endblock %}

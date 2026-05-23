@@ -2,13 +2,13 @@ name: LootLink CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 env:
-  PYTHON_VERSION: '3.11'
-  POSTGRES_VERSION: '15'
+  PYTHON_VERSION: "3.11"
+  POSTGRES_VERSION: "15"
 
 jobs:
   lint:
@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -43,7 +43,7 @@ jobs:
       - name: Run Django Check
         run: python manage.py check
         env:
-          DJANGO_SETTINGS_MODULE: config.settings
+          DJANGO_SETTINGS_MODULE: config.settings.development
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: False
           DB_NAME: lootlink_test
@@ -87,7 +87,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -97,7 +97,7 @@ jobs:
       - name: Run migrations
         run: python manage.py migrate
         env:
-          DJANGO_SETTINGS_MODULE: config.settings
+          DJANGO_SETTINGS_MODULE: config.settings.development
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: True
           DB_NAME: lootlink_test
@@ -110,9 +110,9 @@ jobs:
       - name: Run tests with coverage
         run: pytest --cov=. --cov-report=xml --cov-report=html
         env:
-          DJANGO_SETTINGS_MODULE: config.settings
+          DJANGO_SETTINGS_MODULE: config.settings.test
           SECRET_KEY: test-secret-key-for-ci
-          DEBUG: True
+          DEBUG: False
           DB_NAME: lootlink_test
           DB_USER: postgres
           DB_PASSWORD: postgres
@@ -142,7 +142,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+          cache: "pip"
 
       - name: Install tools
         run: |

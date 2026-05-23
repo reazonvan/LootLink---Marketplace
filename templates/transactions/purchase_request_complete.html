@@ -13,7 +13,7 @@
                 <div style="font-size:var(--text-base);font-weight:var(--weight-semibold);">{{ purchase_request.listing.title }}</div>
                 <div style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:2px;">Покупатель: {{ purchase_request.buyer.username }} · {{ purchase_request.listing.price }} ₽</div>
             </div>
-            <div class="alert alert-success" style="text-align:left;margin-bottom:var(--space-5);"><i data-lucide="info"></i> После завершения средства будут переведены на ваш баланс.</div>
+            <div class="alert alert-success" style="text-align:left;margin-bottom:var(--space-5);"><i data-lucide="info"></i> Если эскроу профинансирован — средства будут переведены на ваш баланс после подтверждения.</div>
             <form method="post">
                 {% csrf_token %}
                 <div style="display:flex;gap:var(--space-3);justify-content:center;">
@@ -24,5 +24,5 @@
         </div>
     </div>
 </div>
-{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}
 {% endblock %}
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}

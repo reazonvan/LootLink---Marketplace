@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Подтвердить получение — LootLink{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <div style="max-width:520px;width:100%;">
+        <div class="card-glass" style="text-align:center;">
+            <div style="width:64px;height:64px;border-radius:50%;background:var(--color-success-light);display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-5);">
+                <i data-lucide="package-check" style="width:28px;height:28px;color:var(--color-success);"></i>
+            </div>
+            <h2 style="font-size:var(--text-xl);font-weight:var(--weight-extrabold);margin-bottom:var(--space-2);">Подтвердить получение?</h2>
+            <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-5);">Подтвердите, что получили товар. После этого средства будут переведены продавцу.</p>
+            <div style="background:var(--gray-50);border-radius:var(--radius-md);padding:var(--space-4);margin-bottom:var(--space-4);text-align:left;">
+                <div style="font-size:var(--text-base);font-weight:var(--weight-semibold);">{{ purchase_request.listing.title }}</div>
+                <div style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:2px;">Продавец: {{ purchase_request.seller.username }} · {{ purchase_request.listing.price }} ₽</div>
+            </div>
+            <div class="alert alert-info" style="text-align:left;margin-bottom:var(--space-5);">
+                <i data-lucide="shield-alert"></i>
+                Подтверждайте только если действительно получили товар.
+                Если возникли проблемы — откройте спор, средства останутся заморожены до решения модератора.
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div style="display:flex;gap:var(--space-3);justify-content:center;flex-wrap:wrap;">
+                    <a href="{% url 'transactions:purchase_request_detail' purchase_request.pk %}" class="btn btn-ghost">Назад</a>
+                    <button type="submit" class="btn btn-success"><i data-lucide="check-circle"></i> Подтвердить получение</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}

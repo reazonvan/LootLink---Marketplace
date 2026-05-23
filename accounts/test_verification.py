@@ -1,14 +1,24 @@
 """
 Тесты для системы верификации (Email, SMS, Документы).
 """
-from django.test import TestCase, Client
+
+import io
+from datetime import timedelta
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
-from django.core.files.uploadedfile import SimpleUploadedFile
-from datetime import timedelta
-from accounts.models import CustomUser, Profile, EmailVerification, PhoneVerification, DocumentVerification
-import io
+
 from PIL import Image
+
+from accounts.models import (
+    CustomUser,
+    DocumentVerification,
+    EmailVerification,
+    PhoneVerification,
+    Profile,
+)
 
 
 class EmailVerificationTestCase(TestCase):
@@ -17,22 +27,23 @@ class EmailVerificationTestCase(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = CustomUser.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
+            username="testuser", email="test@example.com", password="testpass123"
         )
 
     def test_email_verification_created_on_registration(self):
         """Email верификация создается через CustomUserCreationForm при регистрации"""
         from accounts.forms import CustomUserCreationForm
 
-        form = CustomUserCreationForm(data={
-            'username': 'newuser',
-            'email': 'newuser@example.com',
-            'phone': '+79990000001',
-            'password1': 'ComplexP@ss1234',
-            'password2': 'ComplexP@ss1234',
-        })
+        form = CustomUserCreationForm(
+            data={
+                "username": "newuser",
+                "email": "newuser@example.com",
+                "phone": "+79990000001",
+                "password1": "ComplexP@ss1234",
+                "password2": "ComplexP@ss1234",
+                "consent": True,
+            }
+        )
         self.assertTrue(form.is_valid(), form.errors)
         user = form.save()
 
@@ -46,7 +57,7 @@ class EmailVerificationTestCase(TestCase):
         verification = EmailVerification.create_for_user(self.user)
 
         response = self.client.get(
-            reverse('accounts:verify_email', kwargs={'token': verification.token})
+            reverse("accounts:verify_email", kwargs={"token": verification.token})
         )
 
         verification.refresh_from_db()
@@ -56,16 +67,16 @@ class EmailVerificationTestCase(TestCase):
     def test_verify_email_with_invalid_token(self):
         """Верификация email с невалидным токеном"""
         response = self.client.get(
-            reverse('accounts:verify_email', kwargs={'token': 'invalid-token-123'})
+            reverse("accounts:verify_email", kwargs={"token": "invalid-token-123"})
         )
 
         self.assertEqual(response.status_code, 302)  # Redirect
 
     def test_resend_verification_email(self):
         """Повторная отправка письма верификации"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username="testuser", password="testpass123")
 
-        response = self.client.post(reverse('accounts:resend_verification_email'))
+        response = self.client.post(reverse("accounts:resend_verification_email"))
 
         self.assertEqual(response.status_code, 302)  # Redirect
 
@@ -76,11 +87,9 @@ class PhoneVerificationTestCase(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = CustomUser.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
+            username="testuser", email="test@example.com", password="testpass123"
         )
-        self.user.profile.phone = '+79991234567'
+        self.user.profile.phone = "+79991234567"
         self.user.profile.save()
 
     def test_create_phone_verification(self):
@@ -110,7 +119,7 @@ class PhoneVerificationTestCase(TestCase):
         """Верификация с неправильным кодом"""
         verification = PhoneVerification.create_for_user(self.user, self.user.profile.phone)
 
-        success, message = verification.verify('000000')
+        success, message = verification.verify("000000")
 
         self.assertFalse(success)
         self.assertFalse(verification.is_verified)
@@ -122,13 +131,13 @@ class PhoneVerificationTestCase(TestCase):
 
         # 5 неудачных попыток
         for i in range(5):
-            success, message = verification.verify('000000')
+            success, message = verification.verify("000000")
             self.assertFalse(success)
 
         # 6-я попытка должна быть отклонена
         success, message = verification.verify(verification.code)
         self.assertFalse(success)
-        self.assertIn('Превышено количество попыток', message)
+        self.assertIn("Превышено количество попыток", message)
 
     def test_verify_expired_code(self):
         """Верификация истекшего кода"""
@@ -141,13 +150,13 @@ class PhoneVerificationTestCase(TestCase):
         success, message = verification.verify(verification.code)
 
         self.assertFalse(success)
-        self.assertIn('истек', message.lower())
+        self.assertIn("истек", message.lower())
 
     def test_phone_verification_request_view(self):
         """Тест view запроса SMS кода"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username="testuser", password="testpass123")
 
-        response = self.client.post(reverse('accounts:phone_verification_request'))
+        response = self.client.post(reverse("accounts:phone_verification_request"))
 
         # Проверяем что верификация создана
         verification = PhoneVerification.objects.filter(user=self.user).first()
@@ -155,13 +164,12 @@ class PhoneVerificationTestCase(TestCase):
 
     def test_phone_verification_confirm_view(self):
         """Тест view подтверждения SMS кода"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username="testuser", password="testpass123")
 
         verification = PhoneVerification.create_for_user(self.user, self.user.profile.phone)
 
         response = self.client.post(
-            reverse('accounts:phone_verification_confirm'),
-            {'code': verification.code}
+            reverse("accounts:phone_verification_confirm"), {"code": verification.code}
         )
 
         verification.refresh_from_db()
@@ -174,63 +182,52 @@ class DocumentVerificationTestCase(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = CustomUser.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
+            username="testuser", email="test@example.com", password="testpass123"
         )
         self.admin = CustomUser.objects.create_user(
-            username='admin',
-            email='admin@example.com',
-            password='adminpass123',
-            is_staff=True
+            username="admin", email="admin@example.com", password="adminpass123", is_staff=True
         )
 
     def create_test_image(self):
         """Создает тестовое изображение"""
         file = io.BytesIO()
-        image = Image.new('RGB', (100, 100), color='red')
-        image.save(file, 'jpeg')
+        image = Image.new("RGB", (100, 100), color="red")
+        image.save(file, "jpeg")
         file.seek(0)
-        return SimpleUploadedFile('test.jpg', file.read(), content_type='image/jpeg')
+        return SimpleUploadedFile("test.jpg", file.read(), content_type="image/jpeg")
 
     def test_create_document_verification(self):
         """Создание верификации документа"""
         doc = DocumentVerification.objects.create(
-            user=self.user,
-            document_type='passport',
-            document_file=self.create_test_image()
+            user=self.user, document_type="passport", document_file=self.create_test_image()
         )
 
-        self.assertEqual(doc.status, 'pending')
+        self.assertEqual(doc.status, "pending")
         self.assertIsNone(doc.reviewed_by)
         self.assertIsNone(doc.reviewed_at)
 
     def test_approve_document(self):
         """Одобрение документа"""
         doc = DocumentVerification.objects.create(
-            user=self.user,
-            document_type='passport',
-            document_file=self.create_test_image()
+            user=self.user, document_type="passport", document_file=self.create_test_image()
         )
 
-        doc.approve(self.admin, 'Документ одобрен')
+        doc.approve(self.admin, "Документ одобрен")
 
-        self.assertEqual(doc.status, 'approved')
+        self.assertEqual(doc.status, "approved")
         self.assertEqual(doc.reviewed_by, self.admin)
         self.assertIsNotNone(doc.reviewed_at)
-        self.assertEqual(doc.admin_comment, 'Документ одобрен')
+        self.assertEqual(doc.admin_comment, "Документ одобрен")
 
     def test_reject_document(self):
         """Отклонение документа"""
         doc = DocumentVerification.objects.create(
-            user=self.user,
-            document_type='passport',
-            document_file=self.create_test_image()
+            user=self.user, document_type="passport", document_file=self.create_test_image()
         )
 
-        doc.reject(self.admin, 'Документ нечитаемый')
+        doc.reject(self.admin, "Документ нечитаемый")
 
-        self.assertEqual(doc.status, 'rejected')
+        self.assertEqual(doc.status, "rejected")
         self.assertEqual(doc.reviewed_by, self.admin)
         self.assertIsNotNone(doc.reviewed_at)
 
@@ -238,9 +235,7 @@ class DocumentVerificationTestCase(TestCase):
         """Пользователь верифицируется после одобрения всех документов"""
         # Создаем паспорт
         passport = DocumentVerification.objects.create(
-            user=self.user,
-            document_type='passport',
-            document_file=self.create_test_image()
+            user=self.user, document_type="passport", document_file=self.create_test_image()
         )
         passport.approve(self.admin)
 
@@ -250,9 +245,7 @@ class DocumentVerificationTestCase(TestCase):
 
         # Создаем селфи
         selfie = DocumentVerification.objects.create(
-            user=self.user,
-            document_type='selfie',
-            document_file=self.create_test_image()
+            user=self.user, document_type="selfie", document_file=self.create_test_image()
         )
         selfie.approve(self.admin)
 
@@ -263,36 +256,31 @@ class DocumentVerificationTestCase(TestCase):
 
     def test_document_upload_view(self):
         """Тест view загрузки документа"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username="testuser", password="testpass123")
 
         response = self.client.post(
-            reverse('accounts:document_verification_upload'),
-            {
-                'document_type': 'passport',
-                'document_file': self.create_test_image()
-            }
+            reverse("accounts:document_verification_upload"),
+            {"document_type": "passport", "document_file": self.create_test_image()},
         )
 
         # Проверяем что документ создан
         doc = DocumentVerification.objects.filter(user=self.user).first()
         self.assertIsNotNone(doc)
-        self.assertEqual(doc.document_type, 'passport')
+        self.assertEqual(doc.document_type, "passport")
 
     def test_document_status_view(self):
         """Тест view статуса документов"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username="testuser", password="testpass123")
 
         # Создаем документ
         DocumentVerification.objects.create(
-            user=self.user,
-            document_type='passport',
-            document_file=self.create_test_image()
+            user=self.user, document_type="passport", document_file=self.create_test_image()
         )
 
-        response = self.client.get(reverse('accounts:document_verification_status'))
+        response = self.client.get(reverse("accounts:document_verification_status"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Паспорт')
+        self.assertContains(response, "Паспорт")
 
 
 class VerificationIntegrationTestCase(TestCase):
@@ -301,11 +289,9 @@ class VerificationIntegrationTestCase(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = CustomUser.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
+            username="testuser", email="test@example.com", password="testpass123"
         )
-        self.user.profile.phone = '+79991234567'
+        self.user.profile.phone = "+79991234567"
         self.user.profile.save()
 
     def test_full_verification_flow(self):
@@ -315,46 +301,36 @@ class VerificationIntegrationTestCase(TestCase):
         email_verification.verify()
 
         # 2. SMS верификация
-        phone_verification = PhoneVerification.create_for_user(
-            self.user,
-            self.user.profile.phone
-        )
+        phone_verification = PhoneVerification.create_for_user(self.user, self.user.profile.phone)
         success, _ = phone_verification.verify(phone_verification.code)
         self.assertTrue(success)
 
         # 3. Документы (паспорт + селфи)
         admin = CustomUser.objects.create_user(
-            username='admin',
-            email='admin@example.com',
-            password='adminpass123',
-            is_staff=True
+            username="admin", email="admin@example.com", password="adminpass123", is_staff=True
         )
 
         # Создаем тестовое изображение
         file = io.BytesIO()
-        image = Image.new('RGB', (100, 100), color='red')
-        image.save(file, 'jpeg')
+        image = Image.new("RGB", (100, 100), color="red")
+        image.save(file, "jpeg")
         file.seek(0)
-        test_image = SimpleUploadedFile('test.jpg', file.read(), content_type='image/jpeg')
+        test_image = SimpleUploadedFile("test.jpg", file.read(), content_type="image/jpeg")
 
         passport = DocumentVerification.objects.create(
-            user=self.user,
-            document_type='passport',
-            document_file=test_image
+            user=self.user, document_type="passport", document_file=test_image
         )
         passport.approve(admin)
 
         # Создаем второе изображение для селфи
         file2 = io.BytesIO()
-        image2 = Image.new('RGB', (100, 100), color='blue')
-        image2.save(file2, 'jpeg')
+        image2 = Image.new("RGB", (100, 100), color="blue")
+        image2.save(file2, "jpeg")
         file2.seek(0)
-        test_image2 = SimpleUploadedFile('test2.jpg', file2.read(), content_type='image/jpeg')
+        test_image2 = SimpleUploadedFile("test2.jpg", file2.read(), content_type="image/jpeg")
 
         selfie = DocumentVerification.objects.create(
-            user=self.user,
-            document_type='selfie',
-            document_file=test_image2
+            user=self.user, document_type="selfie", document_file=test_image2
         )
         selfie.approve(admin)
 
@@ -366,9 +342,5 @@ class VerificationIntegrationTestCase(TestCase):
         self.assertTrue(email_verification.is_verified)
         self.assertTrue(phone_verification.is_verified)
         self.assertEqual(
-            DocumentVerification.objects.filter(
-                user=self.user,
-                status='approved'
-            ).count(),
-            2
+            DocumentVerification.objects.filter(user=self.user, status="approved").count(), 2
         )

@@ -1,16 +1,19 @@
 """
 Comprehensive тесты для форм приложения accounts.
 """
-import pytest
-from accounts.forms import (
-    CustomUserCreationForm,
-    CustomAuthenticationForm,
-    ProfileUpdateForm,
-    PasswordResetRequestForm,
-    PasswordResetConfirmForm
-)
+
 from django.contrib.auth import get_user_model
-from accounts.models import Profile, PasswordResetCode
+
+import pytest
+
+from accounts.forms import (
+    CustomAuthenticationForm,
+    CustomUserCreationForm,
+    PasswordResetConfirmForm,
+    PasswordResetRequestForm,
+    ProfileUpdateForm,
+)
+from accounts.models import PasswordResetCode, Profile
 
 CustomUser = get_user_model()
 
@@ -18,197 +21,208 @@ CustomUser = get_user_model()
 @pytest.mark.django_db
 class TestCustomUserCreationForm:
     """Тесты формы регистрации."""
-    
+
     def test_valid_form(self):
         """Валидная форма."""
         data = {
-            'username': 'testuser',
-            'email': 'test@example.com',
-            'phone': '+7 (999) 123-45-67',
-            'password1': 'complexP@ss123',
-            'password2': 'complexP@ss123',
+            "username": "testuser",
+            "email": "test@example.com",
+            "phone": "+7 (999) 123-45-67",
+            "password1": "complexP@ss123",
+            "password2": "complexP@ss123",
+            "consent": True,
         }
         form = CustomUserCreationForm(data=data)
         assert form.is_valid()
-    
+
     def test_duplicate_email(self, verified_user):
         """Дубликат email."""
         data = {
-            'username': 'anotheruser',
-            'email': verified_user.email,
-            'phone': '+7 (999) 123-45-68',
-            'password1': 'complexP@ss123',
-            'password2': 'complexP@ss123',
+            "username": "anotheruser",
+            "email": verified_user.email,
+            "phone": "+7 (999) 123-45-68",
+            "password1": "complexP@ss123",
+            "password2": "complexP@ss123",
         }
         form = CustomUserCreationForm(data=data)
         assert not form.is_valid()
-        assert 'email' in form.errors
-    
+        assert "email" in form.errors
+
     def test_duplicate_phone(self, verified_user):
         """Дубликат телефона."""
-        verified_user.profile.phone = '+7 (999) 123-45-67'
+        verified_user.profile.phone = "+7 (999) 123-45-67"
         verified_user.profile.save()
-        
+
         data = {
-            'username': 'anotheruser',
-            'email': 'another@example.com',
-            'phone': '+7 (999) 123-45-67',
-            'password1': 'complexP@ss123',
-            'password2': 'complexP@ss123',
+            "username": "anotheruser",
+            "email": "another@example.com",
+            "phone": "+7 (999) 123-45-67",
+            "password1": "complexP@ss123",
+            "password2": "complexP@ss123",
         }
         form = CustomUserCreationForm(data=data)
         assert not form.is_valid()
-        assert 'phone' in form.errors
-    
+        assert "phone" in form.errors
+
     def test_invalid_phone_format(self):
         """Невалидный формат телефона."""
         data = {
-            'username': 'testuser',
-            'email': 'test@example.com',
-            'phone': '123',  # Слишком короткий
-            'password1': 'complexP@ss123',
-            'password2': 'complexP@ss123',
+            "username": "testuser",
+            "email": "test@example.com",
+            "phone": "123",  # Слишком короткий
+            "password1": "complexP@ss123",
+            "password2": "complexP@ss123",
         }
         form = CustomUserCreationForm(data=data)
         assert not form.is_valid()
-        assert 'phone' in form.errors
-    
+        assert "phone" in form.errors
+
     def test_password_mismatch(self):
         """Пароли не совпадают."""
         data = {
-            'username': 'testuser',
-            'email': 'test@example.com',
-            'phone': '+7 (999) 123-45-67',
-            'password1': 'complexP@ss123',
-            'password2': 'differentP@ss123',
+            "username": "testuser",
+            "email": "test@example.com",
+            "phone": "+7 (999) 123-45-67",
+            "password1": "complexP@ss123",
+            "password2": "differentP@ss123",
         }
         form = CustomUserCreationForm(data=data)
         assert not form.is_valid()
-    
+
     def test_form_save_creates_profile(self):
         """Сохранение формы создает профиль."""
         data = {
-            'username': 'testuser',
-            'email': 'test@example.com',
-            'phone': '+7 (999) 123-45-67',
-            'password1': 'complexP@ss123',
-            'password2': 'complexP@ss123',
+            "username": "testuser",
+            "email": "test@example.com",
+            "phone": "+7 (999) 123-45-67",
+            "password1": "complexP@ss123",
+            "password2": "complexP@ss123",
+            "consent": True,
         }
         form = CustomUserCreationForm(data=data)
         assert form.is_valid()
-        
+
         user = form.save()
-        assert user.profile.phone == '+7 (999) 123-45-67'
+        assert user.profile.phone == "+7 (999) 123-45-67"
 
 
 @pytest.mark.django_db
 class TestProfileUpdateForm:
     """Тесты формы обновления профиля."""
-    
+
     def test_valid_form(self, verified_user):
         """Валидная форма."""
         data = {
-            'bio': 'New bio',
-            'telegram': '@telegram',
-            'discord': 'discord#1234',
+            "bio": "New bio",
+            "telegram": "@telegram",
+            "discord": "discord#1234",
         }
         form = ProfileUpdateForm(data=data, instance=verified_user.profile)
         assert form.is_valid()
-    
+
     def test_phone_readonly_when_set(self, verified_user):
         """Телефон readonly когда уже установлен."""
-        verified_user.profile.phone = '+7 (999) 123-45-67'
+        verified_user.profile.phone = "+7 (999) 123-45-67"
         verified_user.profile.save()
-        
+
         form = ProfileUpdateForm(instance=verified_user.profile)
-        assert form.fields['phone'].disabled
-    
+        assert form.fields["phone"].disabled
+
     def test_phone_editable_when_empty(self, verified_user):
         """Телефон можно установить если еще не установлен."""
         verified_user.profile.phone = None
         verified_user.profile.save()
-        
+
         form = ProfileUpdateForm(instance=verified_user.profile)
-        assert not form.fields['phone'].disabled
+        assert not form.fields["phone"].disabled
 
 
 @pytest.mark.django_db
 class TestPasswordResetRequestForm:
     """Тесты формы запроса сброса пароля."""
-    
+
     def test_valid_email(self, verified_user):
         """Валидный email."""
-        data = {'email': verified_user.email}
+        data = {"email": verified_user.email}
         form = PasswordResetRequestForm(data=data)
         assert form.is_valid()
-    
-    def test_invalid_email(self):
-        """Несуществующий email."""
-        data = {'email': 'nonexistent@example.com'}
+
+    def test_invalid_email_format(self):
+        """Невалидный формат email отклоняется на уровне формы."""
+        data = {"email": "not-an-email"}
         form = PasswordResetRequestForm(data=data)
         assert not form.is_valid()
-        assert 'email' in form.errors
+        assert "email" in form.errors
+
+    def test_nonexistent_email_passes_form(self):
+        """Несуществующий email проходит форму (anti-enumeration P0-18).
+
+        Раскрытие существования аккаунта через ошибку формы — утечка.
+        Логика "отправлять или нет" — в view, для всех ответ одинаков.
+        """
+        data = {"email": "nonexistent@example.com"}
+        form = PasswordResetRequestForm(data=data)
+        assert form.is_valid()
 
 
 @pytest.mark.django_db
 class TestPasswordResetConfirmForm:
     """Тесты формы подтверждения сброса пароля."""
-    
+
     def test_valid_code(self, verified_user):
         """Валидный код."""
         reset_code = PasswordResetCode.create_code(verified_user)
-        
+
         data = {
-            'code': reset_code.code,
-            'new_password1': 'newP@ss123',
-            'new_password2': 'newP@ss123',
+            "code": reset_code.code,
+            "new_password1": "newP@ss123",
+            "new_password2": "newP@ss123",
         }
         form = PasswordResetConfirmForm(data=data, user=verified_user)
         assert form.is_valid()
-    
+
     def test_invalid_code(self, verified_user):
         """Невалидный код."""
         data = {
-            'code': '000000',
-            'new_password1': 'newP@ss123',
-            'new_password2': 'newP@ss123',
+            "code": "000000",
+            "new_password1": "newP@ss123",
+            "new_password2": "newP@ss123",
         }
         form = PasswordResetConfirmForm(data=data, user=verified_user)
         assert not form.is_valid()
-        assert 'code' in form.errors
-    
+        assert "code" in form.errors
+
     def test_password_mismatch(self, verified_user):
         """Пароли не совпадают."""
         reset_code = PasswordResetCode.create_code(verified_user)
-        
+
         data = {
-            'code': reset_code.code,
-            'new_password1': 'newP@ss123',
-            'new_password2': 'differentP@ss123',
+            "code": reset_code.code,
+            "new_password1": "newP@ss123",
+            "new_password2": "differentP@ss123",
         }
         form = PasswordResetConfirmForm(data=data, user=verified_user)
         assert not form.is_valid()
-    
+
     def test_save_changes_password(self, verified_user):
         """Сохранение меняет пароль."""
         reset_code = PasswordResetCode.create_code(verified_user)
         old_password = verified_user.password
-        
+
         data = {
-            'code': reset_code.code,
-            'new_password1': 'newP@ss123',
-            'new_password2': 'newP@ss123',
+            "code": reset_code.code,
+            "new_password1": "newP@ss123",
+            "new_password2": "newP@ss123",
         }
         form = PasswordResetConfirmForm(data=data, user=verified_user)
         assert form.is_valid()
-        
+
         form.save()
-        
+
         verified_user.refresh_from_db()
         assert verified_user.password != old_password
-        assert verified_user.check_password('newP@ss123')
-        
+        assert verified_user.check_password("newP@ss123")
+
         # Код должен быть помечен как использованный
         reset_code.refresh_from_db()
         assert reset_code.is_used
-
