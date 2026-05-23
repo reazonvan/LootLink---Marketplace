@@ -35,6 +35,11 @@ crispy-bootstrap5>=2024.2
 # File validation
 python-magic>=0.4.27
 
+# Encryption (P0-4: шифрование Withdrawal.payment_details через Fernet)
+# Приходит как транзитивная зависимость pywebpush, но фиксируем явно
+# чтобы перестав использовать webpush не потерять шифрование.
+cryptography>=42.0.0
+
 # Utils
 Pillow>=11.3.0
 pywebpush==1.14.0

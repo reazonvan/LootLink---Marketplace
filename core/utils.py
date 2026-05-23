@@ -1,30 +1,32 @@
 """
 Утилиты для core приложения.
 """
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.core.cache import cache
-from django.db.models import QuerySet
+
 from typing import Optional
+
+from django.core.cache import cache
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db.models import QuerySet
 
 
 def paginate_queryset(queryset: QuerySet, request, per_page: int = 20):
     """
     Универсальная функция пагинации.
-    
+
     Args:
         queryset: Django QuerySet для пагинации
         request: HTTP request объект
         per_page: Количество элементов на странице
-    
+
     Returns:
         Page object с пагинированными данными
-    
+
     Example:
         page_obj = paginate_queryset(listings, request, per_page=12)
     """
     paginator = Paginator(queryset, per_page)
-    page_number = request.GET.get('page', 1)
-    
+    page_number = request.GET.get("page", 1)
+
     try:
         page_obj = paginator.page(page_number)
     except PageNotAnInteger:
@@ -33,22 +35,22 @@ def paginate_queryset(queryset: QuerySet, request, per_page: int = 20):
     except EmptyPage:
         # Если страница вне диапазона, вернуть последнюю
         page_obj = paginator.page(paginator.num_pages)
-    
+
     return page_obj
 
 
 def get_cached_or_set(cache_key: str, callable_func, timeout: int = 300):
     """
     Получить данные из кеша или вычислить и закешировать.
-    
+
     Args:
         cache_key: Ключ для кеша
         callable_func: Функция для вычисления значения
         timeout: Время жизни в кеше (секунды)
-    
+
     Returns:
         Закешированное или свежевычисленное значение
-    
+
     Example:
         stats = get_cached_or_set(
             'homepage_stats',
@@ -57,11 +59,11 @@ def get_cached_or_set(cache_key: str, callable_func, timeout: int = 300):
         )
     """
     result = cache.get(cache_key)
-    
+
     if result is None:
         result = callable_func()
         cache.set(cache_key, result, timeout)
-    
+
     return result
 
 
@@ -79,7 +81,7 @@ def get_platform_stats(timeout: int = 300) -> dict:
 
     Используется на публичных страницах, чтобы избежать расхождений в счетчиках.
     """
-    cache_key = 'platform_stats_v1'
+    cache_key = "platform_stats_v1"
     stats = cache.get(cache_key)
 
     if stats is not None:
@@ -91,10 +93,10 @@ def get_platform_stats(timeout: int = 300) -> dict:
     from transactions.models import PurchaseRequest
 
     stats = {
-        'total_users': CustomUser.objects.count(),
-        'active_users': CustomUser.objects.filter(is_active=True).count(),
-        'total_listings': Listing.objects.filter(status='active').count(),
-        'total_deals': PurchaseRequest.objects.filter(status='completed').count(),
+        "total_users": CustomUser.objects.count(),
+        "active_users": CustomUser.objects.filter(is_active=True).count(),
+        "total_listings": Listing.objects.filter(status="active").count(),
+        "total_deals": PurchaseRequest.objects.filter(status="completed").count(),
     }
     cache.set(cache_key, stats, timeout)
     return stats
@@ -103,20 +105,20 @@ def get_platform_stats(timeout: int = 300) -> dict:
 def invalidate_cache_pattern(pattern: str):
     """
     Инвалидировать все ключи кеша по паттерну.
-    
+
     Args:
         pattern: Паттерн для поиска ключей (например, 'user_profile_*')
-    
+
     Example:
         invalidate_cache_pattern('user_profile_*')
     """
     try:
         # Работает только с django-redis
         from django_redis import get_redis_connection
-        
+
         redis_conn = get_redis_connection("default")
         keys = redis_conn.keys(f"lootlink:*:{pattern}")
-        
+
         if keys:
             redis_conn.delete(*keys)
             return len(keys)
@@ -127,107 +129,136 @@ def invalidate_cache_pattern(pattern: str):
         return 0
 
 
+def _ip_in_trusted(remote_addr: str) -> bool:
+    """Проверка, что REMOTE_ADDR — один из доверенных прокси.
+
+    Поддерживает голые IP и CIDR из settings.TRUSTED_PROXIES.
+    """
+    import ipaddress
+
+    from django.conf import settings
+
+    trusted = getattr(settings, "TRUSTED_PROXIES", []) or []
+    if not trusted:
+        # Совместимость со старым поведением: если список пуст, доверяем XFF.
+        # Для prod ОБЯЗАТЕЛЬНО задать TRUSTED_PROXIES.
+        return True
+    if not remote_addr:
+        return False
+    try:
+        ip = ipaddress.ip_address(remote_addr)
+    except ValueError:
+        return False
+    for entry in trusted:
+        try:
+            if "/" in entry:
+                if ip in ipaddress.ip_network(entry, strict=False):
+                    return True
+            else:
+                if ip == ipaddress.ip_address(entry):
+                    return True
+        except ValueError:
+            continue
+    return False
+
+
 def get_client_ip(request) -> str:
+    """Получить настоящий IP клиента с защитой от XFF-спуфинга.
+
+    Если REMOTE_ADDR — доверенный proxy (settings.TRUSTED_PROXIES), берём
+    левый IP из X-Forwarded-For. Иначе используем REMOTE_ADDR (XFF от
+    недоверенного источника игнорируем).
+
+    Это закрывает обход rate-limit и брутфорс-защиты через подделку XFF.
     """
-    Получить IP адрес клиента из request.
-    
-    Args:
-        request: HTTP request объект
-    
-    Returns:
-        IP адрес клиента
-    """
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    
-    if x_forwarded_for:
-        # Берем первый IP из списка (клиентский IP)
-        ip = x_forwarded_for.split(',')[0].strip()
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    
-    return ip
+    remote_addr = request.META.get("REMOTE_ADDR") or ""
+
+    if _ip_in_trusted(remote_addr):
+        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+        if x_forwarded_for:
+            # Левый IP — клиент. Доверяем потому, что REMOTE_ADDR — наш proxy.
+            return x_forwarded_for.split(",")[0].strip()
+
+    return remote_addr
 
 
 def clean_phone_number(phone: str) -> str:
     """
     Очистить и нормализовать номер телефона.
-    
+
     Args:
         phone: Номер телефона в любом формате
-    
+
     Returns:
         Номер в формате +7 (999) 123-45-67
-    
+
     Example:
         clean_phone_number("89991234567")  # → "+7 (999) 123-45-67"
         clean_phone_number("+7 999 123 45 67")  # → "+7 (999) 123-45-67"
     """
     import re
-    
+
     # Удаляем все нецифровые символы
-    digits = re.sub(r'\D', '', phone)
-    
+    digits = re.sub(r"\D", "", phone)
+
     # Нормализуем формат
-    if len(digits) == 11 and digits.startswith('8'):
+    if len(digits) == 11 and digits.startswith("8"):
         # 8 (xxx) xxx-xx-xx → +7 (xxx) xxx-xx-xx
-        digits = '7' + digits[1:]
-    
-    if len(digits) == 11 and digits.startswith('7'):
+        digits = "7" + digits[1:]
+
+    if len(digits) == 11 and digits.startswith("7"):
         return f"+7 ({digits[1:4]}) {digits[4:7]}-{digits[7:9]}-{digits[9:11]}"
     elif len(digits) == 10:
         return f"+7 ({digits[0:3]}) {digits[3:6]}-{digits[6:8]}-{digits[8:10]}"
-    
+
     return phone  # Вернуть как есть если не удалось распознать
 
 
-def truncate_text(text: str, max_length: int = 100, suffix: str = '...') -> str:
+def truncate_text(text: str, max_length: int = 100, suffix: str = "...") -> str:
     """
     Обрезать текст до максимальной длины.
-    
+
     Args:
         text: Исходный текст
         max_length: Максимальная длина
         suffix: Добавить в конец если обрезано
-    
+
     Returns:
         Обрезанный текст
     """
     if len(text) <= max_length:
         return text
-    
-    return text[:max_length - len(suffix)] + suffix
+
+    return text[: max_length - len(suffix)] + suffix
 
 
-def format_price(price: float, currency: str = '₽') -> str:
+def format_price(price, currency: str = "₽") -> str:
+    """Форматировать цену с разделителями тысяч.
+
+    Принимает Decimal/int/float — деньги не float-ить в коде, но для
+    представления преобразование безопасно (только форматирование).
     """
-    Форматировать цену с разделителями тысяч.
-    
-    Args:
-        price: Цена
-        currency: Символ валюты
-    
-    Returns:
-        Отформатированная строка
-    
-    Example:
-        format_price(1500.50)  # → "1 500.50 ₽"
-    """
-    return f"{price:,.2f} {currency}".replace(',', ' ')
+    from decimal import Decimal
+
+    try:
+        value = Decimal(str(price))
+    except Exception:
+        return f"0.00 {currency}"
+    return f"{value:,.2f} {currency}".replace(",", " ")
 
 
 def validate_file_extension(filename: str, allowed_extensions: list) -> bool:
     """
     Проверить расширение файла.
-    
+
     Args:
         filename: Имя файла
         allowed_extensions: Список разрешенных расширений ['jpg', 'png']
-    
+
     Returns:
         True если расширение разрешено
     """
     import os
-    
+
     ext = os.path.splitext(filename)[1][1:].lower()
     return ext in [e.lower() for e in allowed_extensions]
-

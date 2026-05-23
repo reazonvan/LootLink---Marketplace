@@ -5,6 +5,11 @@ LootLink/
 # Local venv
 .venv-local/
 
+# Приватный storage (KYC, dispute evidence) — не должен попадать в git
+/media_private
+db.test.sqlite3
+.planning_audit_commits.txt
+
 # Локальные конфигурации редакторов и временные артефакты
 qa-screenshots/
 

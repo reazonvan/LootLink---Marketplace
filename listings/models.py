@@ -1,20 +1,16 @@
-from django.db import models
-from django.db import connections
-from django.utils.text import slugify
-from django.core.validators import MinValueValidator
-from django.core.exceptions import ValidationError
-from django.contrib.postgres.search import SearchVectorField
 from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVectorField
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
+from django.db import connections, models
+from django.utils.text import slugify
+
 from accounts.models import CustomUser
-from core.validators import (
-    ListingImageValidator,
-    validate_image_size,
-    validate_image_type,
-)
+from core.validators import ListingImageValidator, validate_image_size, validate_image_type
 
 # Re-export для обратной совместимости с тестами, импортирующими
 # эти функции напрямую из listings.models
-__all__ = ['validate_image_size', 'validate_image_type']
+__all__ = ["validate_image_size", "validate_image_type"]
 
 # Import additional models
 from .models_history import ViewHistory
@@ -24,103 +20,72 @@ class Favorite(models.Model):
     """
     Избранные объявления пользователя.
     """
+
     user = models.ForeignKey(
-        CustomUser,
-        on_delete=models.CASCADE,
-        related_name='favorites',
-        verbose_name='Пользователь'
+        CustomUser, on_delete=models.CASCADE, related_name="favorites", verbose_name="Пользователь"
     )
     listing = models.ForeignKey(
-        'Listing',
-        on_delete=models.CASCADE,
-        related_name='favorited_by',
-        verbose_name='Объявление'
+        "Listing", on_delete=models.CASCADE, related_name="favorited_by", verbose_name="Объявление"
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата добавления'
-    )
-    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата добавления")
+
     class Meta:
-        verbose_name = 'Избранное'
-        verbose_name_plural = 'Избранное'
-        unique_together = ['user', 'listing']
-        ordering = ['-created_at']
+        verbose_name = "Избранное"
+        verbose_name_plural = "Избранное"
+        unique_together = ["user", "listing"]
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=["user", "-created_at"]),
         ]
-    
+
     def __str__(self):
-        return f'{self.user.username} → {self.listing.title}'
+        return f"{self.user.username} → {self.listing.title}"
 
 
 class Game(models.Model):
     """
     Модель игры для категоризации объявлений.
     """
-    name = models.CharField(
-        max_length=200,
-        unique=True,
-        verbose_name='Название игры'
-    )
-    slug = models.SlugField(
-        max_length=200,
-        unique=True,
-        verbose_name='URL-имя'
-    )
-    description = models.TextField(
-        blank=True,
-        verbose_name='Описание'
-    )
-    icon = models.ImageField(
-        upload_to='games/',
-        blank=True,
-        null=True,
-        verbose_name='Иконка'
-    )
-    is_active = models.BooleanField(
-        default=True,
-        verbose_name='Активна'
-    )
+
+    name = models.CharField(max_length=200, unique=True, verbose_name="Название игры")
+    slug = models.SlugField(max_length=200, unique=True, verbose_name="URL-имя")
+    description = models.TextField(blank=True, verbose_name="Описание")
+    icon = models.ImageField(upload_to="games/", blank=True, null=True, verbose_name="Иконка")
+    is_active = models.BooleanField(default=True, verbose_name="Активна")
     order = models.PositiveIntegerField(
-        default=0,
-        verbose_name='Порядок сортировки',
-        help_text='Меньше число = выше в списке'
+        default=0, verbose_name="Порядок сортировки", help_text="Меньше число = выше в списке"
     )
     funpay_id = models.CharField(
         max_length=20,
         blank=True,
-        default='',
+        default="",
         db_index=True,
-        verbose_name='FunPay ID',
-        help_text='Идентификатор игры на funpay.com (для импорта/синхронизации)'
+        verbose_name="FunPay ID",
+        help_text="Идентификатор игры на funpay.com (для импорта/синхронизации)",
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата добавления'
-    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата добавления")
 
     class Meta:
-        verbose_name = 'Игра'
-        verbose_name_plural = 'Игры'
-        ordering = ['order', 'name']
-    
+        verbose_name = "Игра"
+        verbose_name_plural = "Игры"
+        ordering = ["order", "name"]
+
     def __str__(self):
         return self.name
-    
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-    
+
     def delete(self, *args, **kwargs):
         """Запрещает удаление игры с активными объявлениями."""
-        active_listings_count = self.listings.filter(status='active').count()
+        active_listings_count = self.listings.filter(status="active").count()
         if active_listings_count > 0:
             raise Exception(
-                f'Нельзя удалить игру с активными объявлениями! '
-                f'Найдено {active_listings_count} активных объявлений. '
-                f'Сначала завершите или удалите все объявления этой игры.'
+                f"Нельзя удалить игру с активными объявлениями! "
+                f"Найдено {active_listings_count} активных объявлений. "
+                f"Сначала завершите или удалите все объявления этой игры."
             )
         super().delete(*args, **kwargs)
 
@@ -131,89 +96,97 @@ class Category(models.Model):
     Например: Brawl Stars → Аккаунты, Гемы, Brawl Pass
               Steam → Пополнение, Ключи, Подарки
     """
+
     game = models.ForeignKey(
-        Game,
-        on_delete=models.CASCADE,
-        related_name='categories',
-        verbose_name='Игра'
+        Game, on_delete=models.CASCADE, related_name="categories", verbose_name="Игра"
     )
-    name = models.CharField(
-        max_length=100,
-        verbose_name='Название категории'
-    )
-    slug = models.SlugField(
-        max_length=120,
-        blank=True,
-        verbose_name='URL slug'
-    )
-    description = models.TextField(
-        blank=True,
-        verbose_name='Описание категории'
-    )
+    name = models.CharField(max_length=100, verbose_name="Название категории")
+    slug = models.SlugField(max_length=120, blank=True, verbose_name="URL slug")
+    description = models.TextField(blank=True, verbose_name="Описание категории")
     icon = models.CharField(
         max_length=50,
         blank=True,
-        default='bi-tag',
-        verbose_name='Иконка Bootstrap Icons',
-        help_text='Например: bi-gem, bi-cart, bi-trophy, bi-star'
+        default="bi-tag",
+        verbose_name="Иконка Bootstrap Icons",
+        help_text="Например: bi-gem, bi-cart, bi-trophy, bi-star",
     )
-    is_active = models.BooleanField(
-        default=True,
-        verbose_name='Активна'
-    )
+    is_active = models.BooleanField(default=True, verbose_name="Активна")
     order = models.PositiveIntegerField(
-        default=0,
-        verbose_name='Порядок сортировки',
-        help_text='Меньше число = выше в списке'
+        default=0, verbose_name="Порядок сортировки", help_text="Меньше число = выше в списке"
     )
     funpay_id = models.CharField(
         max_length=20,
         blank=True,
-        default='',
+        default="",
         db_index=True,
-        verbose_name='FunPay ID',
-        help_text='Идентификатор категории на funpay.com (для импорта/синхронизации)'
+        verbose_name="FunPay ID",
+        help_text="Идентификатор категории на funpay.com (для импорта/синхронизации)",
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата создания'
-    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
 
     class Meta:
-        verbose_name = 'Категория'
-        verbose_name_plural = 'Категории'
-        ordering = ['game', 'order', 'name']
-        unique_together = [['game', 'name']]
+        verbose_name = "Категория"
+        verbose_name_plural = "Категории"
+        ordering = ["game", "order", "name"]
+        unique_together = [["game", "name"]]
         indexes = [
-            models.Index(fields=['game', 'is_active']),
-            models.Index(fields=['game', 'order']),
+            models.Index(fields=["game", "is_active"]),
+            models.Index(fields=["game", "order"]),
         ]
-    
+
     def __str__(self):
-        return f'{self.game.name} → {self.name}'
-    
+        return f"{self.game.name} → {self.name}"
+
     def save(self, *args, **kwargs):
         if not self.slug:
             # Простая транслитерация для русских букв
             translit_dict = {
-                'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
-                'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
-                'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
-                'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
-                'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+                "а": "a",
+                "б": "b",
+                "в": "v",
+                "г": "g",
+                "д": "d",
+                "е": "e",
+                "ё": "yo",
+                "ж": "zh",
+                "з": "z",
+                "и": "i",
+                "й": "y",
+                "к": "k",
+                "л": "l",
+                "м": "m",
+                "н": "n",
+                "о": "o",
+                "п": "p",
+                "р": "r",
+                "с": "s",
+                "т": "t",
+                "у": "u",
+                "ф": "f",
+                "х": "h",
+                "ц": "ts",
+                "ч": "ch",
+                "ш": "sh",
+                "щ": "sch",
+                "ъ": "",
+                "ы": "y",
+                "ь": "",
+                "э": "e",
+                "ю": "yu",
+                "я": "ya",
             }
             name_lower = self.name.lower()
-            transliterated = ''.join(translit_dict.get(c, c) for c in name_lower)
+            transliterated = "".join(translit_dict.get(c, c) for c in name_lower)
             self.slug = slugify(transliterated)
         super().save(*args, **kwargs)
-    
+
     def delete(self, *args, **kwargs):
         # Проверка на наличие активных объявлений
-        active_listings = self.listings.filter(status='active')
+        active_listings = self.listings.filter(status="active")
         if active_listings.exists():
             raise Exception(
-                f'Невозможно удалить категорию с активными объявлениями! '
-                f'Найдено {active_listings.count()} активных объявлений.'
+                f"Невозможно удалить категорию с активными объявлениями! "
+                f"Найдено {active_listings.count()} активных объявлений."
             )
         super().delete(*args, **kwargs)
 
@@ -222,117 +195,110 @@ class Listing(models.Model):
     """
     Модель объявления о продаже внутриигрового предмета.
     """
+
     STATUS_CHOICES = [
-        ('active', 'Активно'),
-        ('reserved', 'Зарезервировано'),
-        ('sold', 'Продано'),
-        ('cancelled', 'Отменено'),
+        ("active", "Активно"),
+        ("reserved", "Зарезервировано"),
+        ("sold", "Продано"),
+        ("cancelled", "Отменено"),
     ]
-    
+
     seller = models.ForeignKey(
         CustomUser,
-        on_delete=models.CASCADE,
-        related_name='listings',
-        verbose_name='Продавец'
+        on_delete=models.PROTECT,
+        related_name="listings",
+        verbose_name="Продавец",
+        help_text="PROTECT: история продаж не должна теряться при анонимизации пользователя.",
     )
     game = models.ForeignKey(
-        Game,
-        on_delete=models.CASCADE,
-        related_name='listings',
-        verbose_name='Игра'
+        Game, on_delete=models.PROTECT, related_name="listings", verbose_name="Игра"
     )
     category = models.ForeignKey(
         Category,
         on_delete=models.PROTECT,
-        related_name='listings',
+        related_name="listings",
         null=True,
         blank=True,
-        verbose_name='Категория',
-        help_text='Категория товара (необязательно)'
+        verbose_name="Категория",
+        help_text="Категория товара (необязательно)",
     )
-    title = models.CharField(
-        max_length=200,
-        verbose_name='Название'
-    )
+    title = models.CharField(max_length=200, verbose_name="Название")
     description = models.TextField(
-        max_length=5000,
-        verbose_name='Описание',
-        help_text='Максимум 5000 символов'
+        max_length=5000, verbose_name="Описание", help_text="Максимум 5000 символов"
     )
     price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(0)],
-        verbose_name='Цена'
+        max_digits=10, decimal_places=2, validators=[MinValueValidator(0)], verbose_name="Цена"
     )
     image = models.ImageField(
-        upload_to='listings/',
+        upload_to="listings/",
         blank=True,
         null=True,
         validators=[ListingImageValidator()],
-        verbose_name='Изображение',
-        help_text='Макс. 5 МБ. Форматы: JPG, PNG, WebP'
+        verbose_name="Изображение",
+        help_text="Макс. 5 МБ. Форматы: JPG, PNG, WebP",
     )
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='active',
+        default="active",
         db_index=True,  # Добавлено для производительности
-        verbose_name='Статус'
+        verbose_name="Статус",
     )
-    
+
     created_at = models.DateTimeField(
         auto_now_add=True,
         db_index=True,  # Добавлено для производительности
-        verbose_name='Дата создания'
+        verbose_name="Дата создания",
     )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name='Дата обновления'
-    )
-    
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+
     # Full-text search vector
     search_vector = SearchVectorField(null=True, editable=False)
-    
+
     class Meta:
-        verbose_name = 'Объявление'
-        verbose_name_plural = 'Объявления'
-        ordering = ['-created_at']
+        verbose_name = "Объявление"
+        verbose_name_plural = "Объявления"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['game', 'status']),
-            models.Index(fields=['seller', 'status']),
-            models.Index(fields=['-created_at', 'status']),
+            models.Index(fields=["game", "status"]),
+            models.Index(fields=["seller", "status"]),
+            models.Index(fields=["-created_at", "status"]),
             # Композитные индексы под горячие запросы каталога/профиля
-            models.Index(fields=['seller', 'status', '-created_at'], name='listing_seller_active_idx'),
-            models.Index(fields=['game', 'category', 'status'], name='listing_game_cat_idx'),
-            GinIndex(fields=['search_vector']),  # Для full-text search
+            models.Index(
+                fields=["seller", "status", "-created_at"], name="listing_seller_active_idx"
+            ),
+            models.Index(fields=["game", "category", "status"], name="listing_game_cat_idx"),
+            GinIndex(fields=["search_vector"]),  # Для full-text search
         ]
-    
+
     def __str__(self):
-        return f'{self.title} - {self.game.name}'
-    
+        return f"{self.title} - {self.game.name}"
+
     def is_available(self):
         """Проверяет, доступно ли объявление для покупки."""
-        return self.status == 'active'
-    
-    SEARCH_VECTOR_SOURCE_FIELDS = frozenset({'title', 'description'})
+        return self.status == "active"
+
+    SEARCH_VECTOR_SOURCE_FIELDS = frozenset({"title", "description"})
 
     def save(self, *args, **kwargs):
         """Сохраняем и при необходимости пересчитываем search_vector."""
-        update_fields = kwargs.get('update_fields')
+        update_fields = kwargs.get("update_fields")
         super().save(*args, **kwargs)
 
         # Пересчитываем вектор только если затронуты исходные поля.
         # Точечные обновления статуса/цены не должны бить лишний UPDATE.
-        if update_fields is not None and not (set(update_fields) & self.SEARCH_VECTOR_SOURCE_FIELDS):
+        if update_fields is not None and not (
+            set(update_fields) & self.SEARCH_VECTOR_SOURCE_FIELDS
+        ):
             return
 
-        db_alias = kwargs.get('using') or self._state.db or 'default'
-        if self.pk and connections[db_alias].vendor == 'postgresql':
+        db_alias = kwargs.get("using") or self._state.db or "default"
+        if self.pk and connections[db_alias].vendor == "postgresql":
             from django.contrib.postgres.search import SearchVector
+
             Listing.objects.filter(pk=self.pk).update(
-                search_vector=SearchVector('title', weight='A', config='russian') +
-                              SearchVector('description', weight='B', config='russian')
+                search_vector=SearchVector("title", weight="A", config="russian")
+                + SearchVector("description", weight="B", config="russian")
             )
 
 
@@ -340,94 +306,73 @@ class Report(models.Model):
     """
     Жалобы на объявления или пользователей.
     """
+
     REPORT_TYPE_CHOICES = [
-        ('listing', 'На объявление'),
-        ('user', 'На пользователя'),
+        ("listing", "На объявление"),
+        ("user", "На пользователя"),
     ]
-    
+
     REASON_CHOICES = [
-        ('spam', 'Спам'),
-        ('fraud', 'Мошенничество'),
-        ('inappropriate', 'Неприемлемый контент'),
-        ('fake', 'Подделка'),
-        ('other', 'Другое'),
+        ("spam", "Спам"),
+        ("fraud", "Мошенничество"),
+        ("inappropriate", "Неприемлемый контент"),
+        ("fake", "Подделка"),
+        ("other", "Другое"),
     ]
-    
+
     STATUS_CHOICES = [
-        ('pending', 'Ожидает рассмотрения'),
-        ('reviewed', 'Рассмотрена'),
-        ('resolved', 'Решена'),
-        ('rejected', 'Отклонена'),
+        ("pending", "Ожидает рассмотрения"),
+        ("reviewed", "Рассмотрена"),
+        ("resolved", "Решена"),
+        ("rejected", "Отклонена"),
     ]
-    
+
     reporter = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='reports_made',
-        verbose_name='Автор жалобы'
+        related_name="reports_made",
+        verbose_name="Автор жалобы",
     )
     report_type = models.CharField(
-        max_length=20,
-        choices=REPORT_TYPE_CHOICES,
-        verbose_name='Тип жалобы'
+        max_length=20, choices=REPORT_TYPE_CHOICES, verbose_name="Тип жалобы"
     )
     listing = models.ForeignKey(
-        'Listing',
+        "Listing",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='reports',
-        verbose_name='Объявление'
+        related_name="reports",
+        verbose_name="Объявление",
     )
     reported_user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='reports_received',
-        verbose_name='Пользователь'
+        related_name="reports_received",
+        verbose_name="Пользователь",
     )
-    reason = models.CharField(
-        max_length=20,
-        choices=REASON_CHOICES,
-        verbose_name='Причина'
-    )
-    description = models.TextField(
-        verbose_name='Описание'
-    )
+    reason = models.CharField(max_length=20, choices=REASON_CHOICES, verbose_name="Причина")
+    description = models.TextField(verbose_name="Описание")
     status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='pending',
-        verbose_name='Статус'
+        max_length=20, choices=STATUS_CHOICES, default="pending", verbose_name="Статус"
     )
-    admin_comment = models.TextField(
-        blank=True,
-        verbose_name='Комментарий администратора'
-    )
-    
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата создания'
-    )
-    resolved_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name='Дата решения'
-    )
-    
+    admin_comment = models.TextField(blank=True, verbose_name="Комментарий администратора")
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    resolved_at = models.DateTimeField(null=True, blank=True, verbose_name="Дата решения")
+
     class Meta:
-        verbose_name = 'Жалоба'
-        verbose_name_plural = 'Жалобы'
-        ordering = ['-created_at']
+        verbose_name = "Жалоба"
+        verbose_name_plural = "Жалобы"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['status', '-created_at']),
-            models.Index(fields=['report_type', 'status']),
-            models.Index(fields=['reporter', '-created_at']),
+            models.Index(fields=["status", "-created_at"]),
+            models.Index(fields=["report_type", "status"]),
+            models.Index(fields=["reporter", "-created_at"]),
         ]
-    
+
     def __str__(self):
-        if self.report_type == 'listing':
+        if self.report_type == "listing":
             return f'Жалоба на объявление: {self.listing.title if self.listing else "удалено"}'
         return f'Жалоба на пользователя: {self.reported_user.username if self.reported_user else "удален"}'
-

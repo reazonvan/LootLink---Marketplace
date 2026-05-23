@@ -5,12 +5,14 @@ Phase 13: синхронный bot.send_message() вынесен в Celery-та�
 send_telegram_async, чтобы сетевой вызов к Telegram API не блокировал
 view/обработчики и не валил запрос при сбое API.
 """
+
 import logging
 
-from celery import shared_task
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+
+from celery import shared_task
 from telegram import Bot
 from telegram.error import TelegramError
 
@@ -22,18 +24,18 @@ def _get_bot():
     Лениво создаёт инстанс Bot — только когда токен задан и нужна
     реальная отправка. Если токена нет — None, и таск тихо выходит.
     """
-    token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
+    token = getattr(settings, "TELEGRAM_BOT_TOKEN", "")
     if not token:
         return None
     try:
         return Bot(token=token)
     except Exception as e:
-        logger.error(f'Ошибка инициализации Telegram бота: {e}')
+        logger.error(f"Ошибка инициализации Telegram бота: {e}")
         return None
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=30)
-def send_telegram_async(self, chat_id, text, parse_mode='HTML'):
+def send_telegram_async(self, chat_id, text, parse_mode="HTML"):
     """
     Асинхронная отправка Telegram-сообщения.
 
@@ -61,31 +63,25 @@ def send_telegram_async(self, chat_id, text, parse_mode='HTML'):
             text=text,
             parse_mode=parse_mode,
         )
-        logger.info(f'Telegram message sent to {chat_id}')
+        logger.info(f"Telegram message sent to {chat_id}")
     except TelegramError as e:
-        logger.warning(f'Failed to send Telegram message to {chat_id}: {e}')
+        logger.warning(f"Failed to send Telegram message to {chat_id}: {e}")
         try:
             raise self.retry(exc=e)
         except self.MaxRetriesExceededError:
-            logger.error(
-                f'Max retries exceeded sending Telegram to {chat_id}'
-            )
+            logger.error(f"Max retries exceeded sending Telegram to {chat_id}")
     except Exception as e:
-        logger.exception(
-            f'Unexpected error sending Telegram to {chat_id}: {e}'
-        )
+        logger.exception(f"Unexpected error sending Telegram to {chat_id}: {e}")
 
 
-def _enqueue_telegram(chat_id, text, parse_mode='HTML'):
+def _enqueue_telegram(chat_id, text, parse_mode="HTML"):
     """
     Внутренний хелпер: ставит отправку в Celery, корректно работая внутри
     транзакции (откладывает .delay() до коммита).
     """
     if not chat_id:
         return
-    transaction.on_commit(
-        lambda: send_telegram_async.delay(chat_id, text, parse_mode)
-    )
+    transaction.on_commit(lambda: send_telegram_async.delay(chat_id, text, parse_mode))
 
 
 class TelegramNotificationService:
@@ -99,10 +95,10 @@ class TelegramNotificationService:
     """
 
     def __init__(self):
-        self.token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
+        self.token = getattr(settings, "TELEGRAM_BOT_TOKEN", "")
         self.enabled = bool(self.token)
 
-    def send_message(self, chat_id, text, parse_mode='HTML'):
+    def send_message(self, chat_id, text, parse_mode="HTML"):
         """
         Поставить сообщение в очередь Celery.
 
@@ -157,7 +153,7 @@ class TelegramNotificationService:
         if not user.profile.telegram_chat_id or not user.profile.telegram_notifications:
             return False
 
-        change = 'снижена' if new_price < old_price else 'повышена'
+        change = "снижена" if new_price < old_price else "повышена"
 
         text = f"""
 <b>Цена {change}</b>

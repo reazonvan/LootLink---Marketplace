@@ -34,6 +34,9 @@ services:
       - type: bind
         source: ${PROJECT_ROOT:-.}/media
         target: /app/media
+      # P0-17: приватный storage для KYC/dispute-evidence.
+      # НЕ маунтится в Caddy — раздача только через Django serve view.
+      - media_private:/app/media_private
     expose:
       - "8000"
     env_file:
@@ -72,7 +75,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  
+
   # Celery Worker для асинхронных задач
   celery_worker:
     build: .
@@ -83,6 +86,9 @@ services:
       - type: bind
         source: ${PROJECT_ROOT:-.}/media
         target: /app/media
+      # P0-17: Celery worker должен видеть KYC/dispute файлы
+      # (для отправки email с вложениями, генерации thumbnails и т.п.).
+      - media_private:/app/media_private
     env_file:
       - .env
     environment:
@@ -167,8 +173,9 @@ volumes:
   staticfiles:
   caddy_data:
   caddy_config:
+  # P0-17: приватный storage для KYC/dispute evidence — не для публичной раздачи
+  media_private:
 
 networks:
   lootlink_network:
     driver: bridge
-

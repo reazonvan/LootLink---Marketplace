@@ -1,158 +1,273 @@
 """
 Views для работы со спорами.
 """
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.http import JsonResponse
-from django.db import models
-from .models import PurchaseRequest
-from .models_disputes import Dispute, DisputeMessage, DisputeEvidence
+
 from django import forms
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import models
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+
+from payments.models import Escrow
+from payments.models_disputes import Dispute, DisputeEvidence, DisputeMessage
+
+from .models import PurchaseRequest
 
 
 class DisputeForm(forms.ModelForm):
     """Форма создания спора"""
+
     class Meta:
         model = Dispute
-        fields = ['reason', 'description']
+        fields = ["reason", "description"]
         widgets = {
-            'reason': forms.Select(attrs={'class': 'form-select'}),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 5,
-                'placeholder': 'Подробно опишите проблему...'
-            })
+            "reason": forms.Select(attrs={"class": "form-select"}),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 5,
+                    "placeholder": "Подробно опишите проблему...",
+                }
+            ),
         }
 
 
 class DisputeMessageForm(forms.ModelForm):
     """Форма отправки сообщения в споре"""
+
     class Meta:
         model = DisputeMessage
-        fields = ['message']
+        fields = ["message"]
         widgets = {
-            'message': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Введите сообщение...'
-            })
+            "message": forms.Textarea(
+                attrs={"class": "form-control", "rows": 3, "placeholder": "Введите сообщение..."}
+            )
         }
 
 
 @login_required
 def create_dispute(request, purchase_request_id):
-    """Создание спора по сделке"""
+    """Создание спора по сделке.
+
+    P1-14: спор можно открыть только при funded эскроу и не позже
+    DISPUTE_WINDOW_DAYS после принятия. Иначе либо нет денег для возврата,
+    либо deadline auto-release уже прошёл.
+    """
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    DISPUTE_WINDOW_DAYS = 30
+
     purchase_request = get_object_or_404(PurchaseRequest, id=purchase_request_id)
-    
-    # Проверка прав
+
     if request.user != purchase_request.buyer and request.user != purchase_request.seller:
-        messages.error(request, 'У вас нет доступа к этой сделке')
-        return redirect('listings:home')
-    
-    # Проверка что спор еще не создан
-    if hasattr(purchase_request, 'dispute'):
-        messages.info(request, 'Спор по этой сделке уже существует')
-        return redirect('transactions:dispute_detail', dispute_id=purchase_request.dispute.id)
-    
-    # Проверка что сделка в нужном статусе
-    if purchase_request.status not in ['accepted', 'completed']:
-        messages.error(request, 'Спор можно открыть только для принятых или завершенных сделок')
-        return redirect('transactions:purchase_request_detail', pk=purchase_request_id)
-    
-    if request.method == 'POST':
+        messages.error(request, "У вас нет доступа к этой сделке")
+        return redirect("listings:home")
+
+    if not hasattr(purchase_request, "escrow"):
+        messages.error(request, "Для этой сделки не создан escrow")
+        return redirect("transactions:purchase_request_detail", pk=purchase_request_id)
+
+    if hasattr(purchase_request.escrow, "dispute"):
+        messages.info(request, "Спор по этой сделке уже существует")
+        return redirect(
+            "transactions:dispute_detail", dispute_id=purchase_request.escrow.dispute.id
+        )
+
+    if purchase_request.status not in ["accepted", "completed", "disputed"]:
+        messages.error(request, "Спор можно открыть только для принятых или завершенных сделок")
+        return redirect("transactions:purchase_request_detail", pk=purchase_request_id)
+
+    # Эскроу должен быть funded (а не released/refunded) — иначе нет средств
+    # для возврата покупателю.
+    if purchase_request.escrow.status != "funded":
+        messages.error(
+            request,
+            "Средства уже освобождены/возвращены. Спор по этой сделке невозможен.",
+        )
+        return redirect("transactions:purchase_request_detail", pk=purchase_request_id)
+
+    # Таймаут: спор открывается в течение N дней после accept
+    accepted_at = purchase_request.accepted_at or purchase_request.created_at
+    if timezone.now() > accepted_at + timedelta(days=DISPUTE_WINDOW_DAYS):
+        messages.error(
+            request,
+            f"Срок открытия спора истёк ({DISPUTE_WINDOW_DAYS} дней с момента принятия).",
+        )
+        return redirect("transactions:purchase_request_detail", pk=purchase_request_id)
+
+    if request.method == "POST":
         form = DisputeForm(request.POST)
         if form.is_valid():
-            dispute = form.save(commit=False)
-            dispute.purchase_request = purchase_request
-            dispute.initiator = request.user
-            dispute.save()
-            
-            messages.success(request, 'Спор создан. Модератор рассмотрит вашу жалобу в ближайшее время.')
-            return redirect('transactions:dispute_detail', dispute_id=dispute.id)
+            from django.db import IntegrityError
+            from django.db import transaction as db_transaction
+
+            try:
+                with db_transaction.atomic():
+                    dispute = form.save(commit=False)
+                    dispute.escrow = purchase_request.escrow
+                    dispute.opened_by = request.user
+                    dispute.save()
+
+                    # Помечаем PurchaseRequest как disputed
+                    pr_locked = PurchaseRequest.objects.select_for_update().get(
+                        pk=purchase_request.pk
+                    )
+                    pr_locked.status = "disputed"
+                    pr_locked.save(update_fields=["status"])
+
+                    # Эскроу тоже отмечаем (reverse OneToOne — escrow без _id)
+                    escrow_locked = Escrow.objects.select_for_update().get(
+                        pk=purchase_request.escrow.pk
+                    )
+                    if escrow_locked.status == "funded":
+                        escrow_locked.status = "disputed"
+                        escrow_locked.save(update_fields=["status"])
+            except IntegrityError:
+                messages.info(request, "Спор уже был создан.")
+                return redirect(
+                    "transactions:dispute_detail",
+                    dispute_id=purchase_request.escrow.dispute.id,
+                )
+
+            messages.success(
+                request, "Спор создан. Модератор рассмотрит вашу жалобу в ближайшее время."
+            )
+            return redirect("transactions:dispute_detail", dispute_id=dispute.id)
     else:
         form = DisputeForm()
-    
-    context = {
-        'form': form,
-        'purchase_request': purchase_request
-    }
-    return render(request, 'transactions/dispute_create.html', context)
+
+    context = {"form": form, "purchase_request": purchase_request}
+    return render(request, "transactions/dispute_create.html", context)
 
 
 @login_required
 def dispute_detail(request, dispute_id):
-    """Детали спора"""
+    """Детали спора. Сообщения read-only после resolved/closed."""
     dispute = get_object_or_404(Dispute, id=dispute_id)
-    
-    # Проверка прав доступа
-    if request.user not in [dispute.initiator, dispute.purchase_request.buyer, 
-                            dispute.purchase_request.seller, dispute.moderator]:
-        if not request.user.is_staff:
-            messages.error(request, 'У вас нет доступа к этому спору')
-            return redirect('listings:home')
-    
-    # Обработка отправки сообщения
-    if request.method == 'POST':
+
+    pr = dispute.escrow.purchase_request
+    is_moderator = request.user.is_staff or (
+        hasattr(request.user, "profile") and request.user.profile.is_moderator
+    )
+    allowed_users = {dispute.opened_by_id, pr.buyer_id, pr.seller_id, dispute.assigned_to_id}
+    if request.user.id not in allowed_users and not is_moderator:
+        messages.error(request, "У вас нет доступа к этому спору")
+        return redirect("listings:home")
+
+    is_closed = dispute.status in Dispute.RESOLVED_STATUSES
+
+    if request.method == "POST":
+        if is_closed:
+            messages.error(request, "Спор закрыт — сообщения не принимаются.")
+            return redirect("transactions:dispute_detail", dispute_id=dispute_id)
         form = DisputeMessageForm(request.POST)
         if form.is_valid():
             msg = form.save(commit=False)
             msg.dispute = dispute
             msg.sender = request.user
-            msg.is_moderator_message = request.user.is_staff or request.user == dispute.moderator
+            # is_moderator_message только если реально модератор
+            msg.is_moderator_message = is_moderator and request.user.id == (
+                dispute.assigned_to_id or (request.user.id if request.user.is_staff else None)
+            )
             msg.save()
-            
-            messages.success(request, 'Сообщение отправлено')
-            return redirect('transactions:dispute_detail', dispute_id=dispute_id)
+
+            messages.success(request, "Сообщение отправлено")
+            return redirect("transactions:dispute_detail", dispute_id=dispute_id)
     else:
         form = DisputeMessageForm()
-    
-    messages_list = dispute.messages.select_related('sender').all()
-    evidence = dispute.evidence.select_related('uploader').all()
-    
+
+    messages_list = dispute.messages.select_related("sender").all()
+    evidence = dispute.evidences.select_related("uploaded_by").all()
+
     context = {
-        'dispute': dispute,
-        'messages_list': messages_list,
-        'evidence': evidence,
-        'form': form
+        "dispute": dispute,
+        "messages_list": messages_list,
+        "evidence": evidence,
+        "form": form,
+        "is_closed": is_closed,
+        "is_moderator": is_moderator,
     }
-    return render(request, 'transactions/dispute_detail.html', context)
+    return render(request, "transactions/dispute_detail.html", context)
 
 
 @login_required
 def my_disputes(request):
     """Список споров пользователя"""
     # Споры где пользователь - инициатор, покупатель или продавец
-    disputes = Dispute.objects.filter(
-        models.Q(initiator=request.user) |
-        models.Q(purchase_request__buyer=request.user) |
-        models.Q(purchase_request__seller=request.user)
-    ).select_related('purchase_request', 'initiator', 'moderator').order_by('-created_at')
-    
-    context = {
-        'disputes': disputes
-    }
-    return render(request, 'transactions/my_disputes.html', context)
+    disputes = (
+        Dispute.objects.filter(
+            models.Q(opened_by=request.user)
+            | models.Q(escrow__purchase_request__buyer=request.user)
+            | models.Q(escrow__purchase_request__seller=request.user)
+        )
+        .select_related("escrow__purchase_request", "opened_by", "assigned_to")
+        .order_by("-created_at")
+    )
+
+    context = {"disputes": disputes}
+    return render(request, "transactions/my_disputes.html", context)
 
 
 @login_required
 def upload_evidence(request, dispute_id):
-    """Загрузка доказательств"""
-    dispute = get_object_or_404(Dispute, id=dispute_id)
-    
-    # Проверка прав
-    if request.user not in [dispute.purchase_request.buyer, dispute.purchase_request.seller]:
-        messages.error(request, 'У вас нет прав на загрузку доказательств')
-        return redirect('transactions:dispute_detail', dispute_id=dispute_id)
-    
-    if request.method == 'POST' and request.FILES.get('file'):
-        evidence = DisputeEvidence.objects.create(
-            dispute=dispute,
-            uploader=request.user,
-            file=request.FILES['file'],
-            description=request.POST.get('description', '')
-        )
-        messages.success(request, 'Доказательство загружено')
-    
-    return redirect('transactions:dispute_detail', dispute_id=dispute_id)
+    """Загрузка доказательств с валидацией файла и лимитом количества.
 
+    P1-22: валидация через AttachmentValidator (размер + MIME).
+    P2-26: тип доказательства принимается из формы (не всегда screenshot).
+    """
+    from django.core.exceptions import ValidationError as DjangoValidationError
+
+    from core.validators import AttachmentValidator
+
+    EVIDENCE_LIMIT_PER_USER = 20
+
+    dispute = get_object_or_404(Dispute, id=dispute_id)
+
+    # Только участники могут загружать. Модератор смотрит, но не добавляет.
+    pr = dispute.escrow.purchase_request
+    if request.user.id not in (pr.buyer_id, pr.seller_id):
+        messages.error(request, "У вас нет прав на загрузку доказательств")
+        return redirect("transactions:dispute_detail", dispute_id=dispute_id)
+
+    # Запрещаем загрузку для разрешённых споров (read-only после resolution)
+    if dispute.status in Dispute.RESOLVED_STATUSES:
+        messages.error(request, "Спор закрыт, доказательства не принимаются.")
+        return redirect("transactions:dispute_detail", dispute_id=dispute_id)
+
+    if request.method == "POST" and request.FILES.get("file"):
+        uploaded_file = request.FILES["file"]
+        evidence_type = (request.POST.get("evidence_type") or "screenshot").strip()
+        if evidence_type not in dict(DisputeEvidence.EVIDENCE_TYPES):
+            evidence_type = "screenshot"
+
+        # Лимит количества доказательств от одного юзера в одном споре
+        existing_count = DisputeEvidence.objects.filter(
+            dispute=dispute, uploaded_by=request.user
+        ).count()
+        if existing_count >= EVIDENCE_LIMIT_PER_USER:
+            messages.error(
+                request,
+                f"Достигнут лимит доказательств ({EVIDENCE_LIMIT_PER_USER}) на этот спор.",
+            )
+            return redirect("transactions:dispute_detail", dispute_id=dispute_id)
+
+        # Валидация файла
+        try:
+            AttachmentValidator(max_size_mb=15)(uploaded_file)
+        except DjangoValidationError as exc:
+            messages.error(request, str(exc))
+            return redirect("transactions:dispute_detail", dispute_id=dispute_id)
+
+        DisputeEvidence.objects.create(
+            dispute=dispute,
+            uploaded_by=request.user,
+            evidence_type=evidence_type,
+            file=uploaded_file,
+            description=(request.POST.get("description", "") or "")[:1000],
+        )
+        messages.success(request, "Доказательство загружено")
+
+    return redirect("transactions:dispute_detail", dispute_id=dispute_id)

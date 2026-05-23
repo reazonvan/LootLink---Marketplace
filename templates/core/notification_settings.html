@@ -4,29 +4,35 @@
 <div style="padding:var(--space-6) 0 var(--space-12);">
     <div style="max-width:560px;margin:0 auto;">
         <div class="page-header"><h1>Настройки уведомлений</h1><p>Управляйте типами уведомлений</p></div>
-        <div class="card-glass">
-            <div style="display:flex;flex-direction:column;gap:var(--space-4);">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div><div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Новые сообщения</div><div style="font-size:var(--text-xs);color:var(--text-tertiary);">Уведомления о входящих сообщениях</div></div>
-                    <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
-                </div>
-                <div class="divider" style="margin:0;"></div>
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div><div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Покупки и продажи</div><div style="font-size:var(--text-xs);color:var(--text-tertiary);">Обновления по сделкам</div></div>
-                    <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
-                </div>
-                <div class="divider" style="margin:0;"></div>
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div><div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Отзывы</div><div style="font-size:var(--text-xs);color:var(--text-tertiary);">Новые отзывы о вас</div></div>
-                    <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
-                </div>
-                <div class="divider" style="margin:0;"></div>
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div><div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Системные</div><div style="font-size:var(--text-xs);color:var(--text-tertiary);">Важные обновления платформы</div></div>
-                    <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+        <form method="post" action="">
+            {% csrf_token %}
+            <div class="card-glass">
+                <div style="display:flex;flex-direction:column;gap:var(--space-4);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div><div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Новые сообщения</div><div style="font-size:var(--text-xs);color:var(--text-tertiary);">Уведомления о входящих сообщениях</div></div>
+                        <label class="toggle-switch"><input type="checkbox" name="email_new_message" {% if settings.email_new_message %}checked{% endif %}><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="divider" style="margin:0;"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div><div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Покупки и продажи</div><div style="font-size:var(--text-xs);color:var(--text-tertiary);">Обновления по сделкам</div></div>
+                        <label class="toggle-switch"><input type="checkbox" name="email_purchase_request" {% if settings.email_purchase_request %}checked{% endif %}><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="divider" style="margin:0;"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div><div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Предложения цены</div><div style="font-size:var(--text-xs);color:var(--text-tertiary);">Уведомления о предложениях цены</div></div>
+                        <label class="toggle-switch"><input type="checkbox" name="email_price_offer" {% if settings.email_price_offer %}checked{% endif %}><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="divider" style="margin:0;"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div><div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);">Отзывы</div><div style="font-size:var(--text-xs);color:var(--text-tertiary);">Новые отзывы о вас</div></div>
+                        <label class="toggle-switch"><input type="checkbox" name="email_review" {% if settings.email_review %}checked{% endif %}><span class="toggle-slider"></span></label>
+                    </div>
                 </div>
             </div>
-        </div>
+            <div style="margin-top:var(--space-4);">
+                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;"><i data-lucide="save"></i> Сохранить настройки</button>
+            </div>
+        </form>
     </div>
 </div>
 <style>
@@ -37,5 +43,5 @@
 .toggle-switch input:checked + .toggle-slider { background: var(--accent-primary); }
 .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
 </style>
-{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}
 {% endblock %}
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}

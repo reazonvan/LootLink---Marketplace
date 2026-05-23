@@ -1,6 +1,7 @@
 """
 Context processors для глобального доступа к данным.
 """
+
 from django.conf import settings
 
 
@@ -10,25 +11,21 @@ def notifications_processor(request):
     Использует кэширование для снижения нагрузки на БД.
     """
     unread_count = 0
-    
+
     if request.user.is_authenticated:
         from django.core.cache import cache
+
         from core.models import Notification
-        
+
         # Кэшируем количество уведомлений на 1 минуту
-        cache_key = f'unread_notif_count_{request.user.id}'
+        cache_key = f"unread_notif_count_{request.user.id}"
         unread_count = cache.get(cache_key)
-        
+
         if unread_count is None:
-            unread_count = Notification.objects.filter(
-                user=request.user,
-                is_read=False
-            ).count()
+            unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
             cache.set(cache_key, unread_count, 60)  # 1 минута
-    
-    return {
-        'unread_notifications_count': unread_count
-    }
+
+    return {"unread_notifications_count": unread_count}
 
 
 def wallet_balance_processor(request):
@@ -38,24 +35,28 @@ def wallet_balance_processor(request):
     """
     if request.user.is_authenticated:
         from payments.models import Wallet
+
         wallet, _ = Wallet.objects.get_or_create(
-            user=request.user,
-            defaults={'balance': 0, 'frozen_balance': 0}
+            user=request.user, defaults={"balance": 0, "frozen_balance": 0}
         )
-        return {'wallet_balance': wallet.balance}
-    return {'wallet_balance': 0}
+        return {"wallet_balance": wallet.balance}
+    return {"wallet_balance": 0}
 
 
 def site_context(request):
     """
-    Добавляет нормализованный SITE_URL и canonical URL в контекст.
-    Нужен для корректных SEO-мета-тегов без хардкода домена.
+    Добавляет нормализованный SITE_URL, canonical URL и публичные
+    настройки соцсетей/поддержки в контекст. Нужен для SEO-мета-тегов
+    и условного рендеринга соцссылок в шаблонах.
     """
-    configured_site_url = (getattr(settings, 'SITE_URL', '') or '').rstrip('/')
-    site_url = configured_site_url or request.build_absolute_uri('/').rstrip('/')
+    configured_site_url = (getattr(settings, "SITE_URL", "") or "").rstrip("/")
+    site_url = configured_site_url or request.build_absolute_uri("/").rstrip("/")
 
     return {
-        'site_url': site_url,
-        'canonical_url': f'{site_url}{request.path}',
+        "site_url": site_url,
+        "canonical_url": f"{site_url}{request.path}",
+        "social_discord_url": getattr(settings, "SOCIAL_DISCORD_URL", "") or "",
+        "social_telegram_url": getattr(settings, "SOCIAL_TELEGRAM_URL", "") or "",
+        "social_vk_url": getattr(settings, "SOCIAL_VK_URL", "") or "",
+        "support_email": getattr(settings, "SUPPORT_EMAIL", "support@lootlink.ru"),
     }
-

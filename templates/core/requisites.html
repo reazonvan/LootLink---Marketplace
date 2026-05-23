@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}Реквизиты - LootLink{% endblock %}
+{% block title %}Реквизиты — LootLink{% endblock %}
 {% block content %}
 <div style="padding:var(--space-6) 0 var(--space-12);">
-    <div style="max-width:640px;margin:0 auto;">
+    <div style="max-width:720px;margin:0 auto;">
         <div class="page-header"><h1>Реквизиты</h1></div>
 
         <div class="card-glass">
@@ -13,16 +13,64 @@
                     </div>
                     <div>
                         <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:2px;">Наименование</div>
-                        <div style="font-size:var(--text-sm);color:var(--text-secondary);">LootLink</div>
+                        <div style="font-size:var(--text-sm);color:var(--text-secondary);">{{ legal_name|default:"LootLink" }}</div>
                     </div>
                 </div>
+                {% if legal_inn %}
+                <div style="display:flex;align-items:flex-start;gap:var(--space-3);">
+                    <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i data-lucide="file-text" style="width:20px;height:20px;color:var(--accent-primary);"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:2px;">ИНН</div>
+                        <div style="font-size:var(--text-sm);color:var(--text-secondary);">{{ legal_inn }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if legal_ogrn %}
+                <div style="display:flex;align-items:flex-start;gap:var(--space-3);">
+                    <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i data-lucide="hash" style="width:20px;height:20px;color:var(--accent-primary);"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:2px;">{{ legal_ogrn_label|default:"ОГРН" }}</div>
+                        <div style="font-size:var(--text-sm);color:var(--text-secondary);">{{ legal_ogrn }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if legal_address %}
+                <div style="display:flex;align-items:flex-start;gap:var(--space-3);">
+                    <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i data-lucide="map-pin" style="width:20px;height:20px;color:var(--accent-primary);"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:2px;">Юридический адрес</div>
+                        <div style="font-size:var(--text-sm);color:var(--text-secondary);">{{ legal_address }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if legal_bank_name %}
+                <div style="display:flex;align-items:flex-start;gap:var(--space-3);">
+                    <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i data-lucide="landmark" style="width:20px;height:20px;color:var(--accent-primary);"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:2px;">Банк</div>
+                        <div style="font-size:var(--text-sm);color:var(--text-secondary);">
+                            {{ legal_bank_name }}{% if legal_bank_bic %} · БИК {{ legal_bank_bic }}{% endif %}
+                            {% if legal_bank_account %}<br>Р/с {{ legal_bank_account }}{% endif %}
+                            {% if legal_bank_corr %}<br>К/с {{ legal_bank_corr }}{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
                 <div style="display:flex;align-items:flex-start;gap:var(--space-3);">
                     <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                         <i data-lucide="mail" style="width:20px;height:20px;color:var(--accent-primary);"></i>
                     </div>
                     <div>
                         <div style="font-size:var(--text-sm);font-weight:var(--weight-semibold);margin-bottom:2px;">Email</div>
-                        <a href="mailto:ivanpetrov20066.ip@gmail.com" style="font-size:var(--text-sm);">ivanpetrov20066.ip@gmail.com</a>
+                        <a href="mailto:{{ support_email }}" style="font-size:var(--text-sm);">{{ support_email }}</a>
                     </div>
                 </div>
                 <div style="display:flex;align-items:flex-start;gap:var(--space-3);">
@@ -35,6 +83,16 @@
                     </div>
                 </div>
             </div>
+
+            {% if not legal_inn %}
+            <div style="margin-top:var(--space-5);padding:var(--space-4);background:var(--color-warning-light, #fff8e1);border-radius:var(--radius-md);font-size:var(--text-xs);color:var(--text-secondary);line-height:1.5;">
+                <strong>Юридические реквизиты в процессе оформления.</strong>
+                Для подключения приёма платежей и публикации полного юридического статуса заполните
+                переменные окружения <code>LEGAL_NAME</code>, <code>LEGAL_INN</code>, <code>LEGAL_OGRN</code>,
+                <code>LEGAL_ADDRESS</code>, <code>LEGAL_BANK_NAME</code>, <code>LEGAL_BANK_BIC</code>,
+                <code>LEGAL_BANK_ACCOUNT</code>, <code>LEGAL_BANK_CORR</code> в&nbsp;<code>.env</code>.
+            </div>
+            {% endif %}
         </div>
 
         <div style="text-align:center;margin-top:var(--space-6);font-size:var(--text-xs);color:var(--text-tertiary);">
@@ -42,5 +100,5 @@
         </div>
     </div>
 </div>
-{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}
 {% endblock %}
+{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}

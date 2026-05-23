@@ -1,76 +1,85 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.db.models import Q
-from django.core.paginator import Paginator
-from django.http import JsonResponse
-from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
-from django.core.mail import mail_admins
-from django.views.decorators.http import require_http_methods, require_POST
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.core.exceptions import ObjectDoesNotExist
-from .models import Listing, Game, Category, Favorite, Report
-from .forms import ListingCreateForm, ListingUpdateForm, ListingFilterForm
-from .forms_reports import ReportForm
 import logging
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import mail_admins
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_http_methods, require_POST
+
+from .forms import ListingCreateForm, ListingFilterForm, ListingUpdateForm
+from .forms_reports import ReportForm
+from .models import Category, Favorite, Game, Listing, Report
 
 logger = logging.getLogger(__name__)
 security_logger = logging.getLogger("django.security")
 
 
 def landing_page(request):
-    """
-    Главная страница (Landing Page).
+    """Главная страница (Landing Page).
 
-    ВАЖНО: Эта страница НЕ должна кэшироваться полностью, так как содержит
-    персонализированный контент (информацию о пользователе в навигации).
-    Кэшируется только статистика.
+    P2-8: данные кешируются на 5 минут — публичный контент,
+    меняется редко, общий для всех пользователей.
     """
+    from django.core.cache import cache
     from django.db.models import Count
+
     from core.utils import get_platform_stats
 
-    # Последние объявления для отображения
-    latest_listings = Listing.objects.filter(status="active").select_related("game", "seller")[:8]
+    CACHE_KEY = "landing_page_data_v1"
+    CACHE_TTL = 300
 
-    # Популярные игры с счетчиком объявлений
-    games_with_counts = (
-        Game.objects.filter(is_active=True)
-        .annotate(listings_count=Count("listings", filter=Q(listings__status="active")))
-        .order_by("-listings_count")[:6]
-    )
+    cached = cache.get(CACHE_KEY)
+    if cached is None:
+        from accounts.models import Profile
+        from transactions.models import Review
 
-    # Единая статистика платформы (кешируется в core.utils).
+        latest_listings = list(
+            Listing.objects.filter(status="active", seller__is_active=True).select_related(
+                "game", "seller"
+            )[:8]
+        )
+        games_with_counts = list(
+            Game.objects.filter(is_active=True)
+            .annotate(listings_count=Count("listings", filter=Q(listings__status="active")))
+            .order_by("-listings_count")[:6]
+        )
+        real_reviews = list(
+            Review.objects.filter(rating__gte=4, reviewer__is_active=True)
+            .select_related("reviewer", "purchase_request__listing")
+            .order_by("-created_at")[:3]
+        )
+        top_sellers = list(
+            Profile.objects.filter(
+                user__is_active=True,
+                user__is_deleted=False,
+                rating__gt=0,
+                total_sales__gt=0,
+            )
+            .select_related("user")
+            .order_by("-rating", "-total_sales")[:3]
+        )
+        cached = {
+            "latest_listings": latest_listings,
+            "games": games_with_counts,
+            "real_reviews": real_reviews,
+            "top_sellers": top_sellers,
+        }
+        cache.set(CACHE_KEY, cached, CACHE_TTL)
+
     stats = get_platform_stats()
 
-    # Реальные отзывы из базы данных (последние 3 с оценкой 4+)
-    from transactions.models import Review
-
-    real_reviews = (
-        Review.objects.filter(rating__gte=4)  # Только хорошие отзывы
-        .select_related("reviewer", "purchase_request__listing")
-        .order_by("-created_at")[:3]
-    )
-
-    # Топ продавцов по рейтингу (только с реальными продажами)
-    from accounts.models import Profile
-
-    top_sellers = (
-        Profile.objects.filter(
-            user__is_active=True, rating__gt=0, total_sales__gt=0  # Есть рейтинг  # Есть продажи
-        )
-        .select_related("user")
-        .order_by("-rating", "-total_sales")[:3]
-    )
-
     context = {
-        "latest_listings": latest_listings,
-        "games": games_with_counts,  # Теперь с счетчиками
-        "stats": stats,  # Передаем stats напрямую
-        "total_listings": stats["total_listings"],  # Для совместимости
+        **cached,
+        "stats": stats,
+        "total_listings": stats["total_listings"],
         "total_users": stats["active_users"],
         "total_deals": stats["total_deals"],
-        "real_reviews": real_reviews,  # РЕАЛЬНЫЕ отзывы
-        "top_sellers": top_sellers,  # РЕАЛЬНЫЕ топ продавцы
     }
 
     return render(request, "listings/landing_page.html", context)
@@ -205,11 +214,12 @@ def listing_create(request):
             extra_tags="resend_verification",
         )
 
-    # Проверка лимита активных объявлений
-    active_listings_count = request.user.listings.filter(status="active").count()
     from django.conf import settings as django_settings
+    from django.db import transaction as db_transaction
 
     max_listings = django_settings.MAX_ACTIVE_LISTINGS
+    # Считаем для UI, фактическую проверку делаем под select_for_update ниже.
+    active_listings_count = request.user.listings.filter(status="active").count()
 
     if active_listings_count >= max_listings:
         messages.error(
@@ -223,9 +233,24 @@ def listing_create(request):
         try:
             form = ListingCreateForm(request.POST, request.FILES)
             if form.is_valid():
-                listing = form.save(commit=False)
-                listing.seller = request.user
-                listing.save()
+                from accounts.models import CustomUser
+
+                with db_transaction.atomic():
+                    # Блокируем пользователя — гарантия что лимит не обойти
+                    # параллельными запросами (P1-3 race condition).
+                    locked_user = CustomUser.objects.select_for_update().get(pk=request.user.pk)
+                    current_active = Listing.objects.filter(
+                        seller=locked_user, status="active"
+                    ).count()
+                    if current_active >= max_listings:
+                        messages.error(
+                            request,
+                            f"Достигнут максимальный лимит активных объявлений ({max_listings}).",
+                        )
+                        return redirect("accounts:my_listings")
+                    listing = form.save(commit=False)
+                    listing.seller = locked_user
+                    listing.save()
                 messages.success(request, "Объявление успешно создано!")
                 return redirect("listings:listing_detail", pk=listing.pk)
             else:
@@ -234,7 +259,7 @@ def listing_create(request):
             import logging
 
             logger = logging.getLogger(__name__)
-            logger.error(f"Ошибка при создании объявления: {e}")
+            logger.exception(f"Ошибка при создании объявления: {e}")
             messages.error(request, "Произошла ошибка при создании объявления. Попробуйте еще раз.")
             form = ListingCreateForm()
     else:
@@ -309,8 +334,9 @@ def listing_delete(request, pk):
 
 def category_listings(request, game_slug, category_slug):
     """Объявления конкретной категории игры с динамическими фильтрами."""
-    from .models_filters import CategoryFilter, ListingFilterValue
     from django.db.models import Prefetch
+
+    from .models_filters import CategoryFilter, ListingFilterValue
 
     game = get_object_or_404(Game, slug=game_slug, is_active=True)
     category = get_object_or_404(Category, slug=category_slug, game=game, is_active=True)
@@ -453,19 +479,38 @@ def game_categories_api(request, game_slug):
 @login_required
 @require_POST
 def toggle_favorite(request, pk):
-    """Добавить/убрать из избранного (AJAX)."""
+    """Добавить/убрать из избранного (AJAX).
+
+    Защита от race-condition: unique_together(user, listing) + try/except.
+    Параллельные клики не создадут дубликат.
+    """
+    from django.db import IntegrityError
+
     listing = get_object_or_404(Listing, pk=pk)
 
-    favorite = Favorite.objects.filter(user=request.user, listing=listing).first()
+    # Нельзя добавить в избранное собственное объявление
+    if listing.seller_id == request.user.id:
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse(
+                {"success": False, "message": "Нельзя добавить собственное объявление"},
+                status=400,
+            )
+        messages.error(request, "Нельзя добавить собственное объявление в избранное.")
+        return redirect("listings:listing_detail", pk=pk)
 
-    if favorite:
-        favorite.delete()
+    deleted, _ = Favorite.objects.filter(user=request.user, listing=listing).delete()
+    if deleted:
         is_favorited = False
         message = "Удалено из избранного"
     else:
-        Favorite.objects.create(user=request.user, listing=listing)
-        is_favorited = True
-        message = "Добавлено в избранное"
+        try:
+            Favorite.objects.create(user=request.user, listing=listing)
+            is_favorited = True
+            message = "Добавлено в избранное"
+        except IntegrityError:
+            # Гонка: добавили параллельно — считаем что уже в избранном
+            is_favorited = True
+            message = "Уже в избранном"
 
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return JsonResponse({"success": True, "is_favorited": is_favorited, "message": message})
@@ -496,23 +541,22 @@ def favorites_list(request):
 
 @login_required
 def report_listing(request, pk):
-    """Подать жалобу на объявление."""
+    """Подать жалобу на объявление с защитой от race-condition дублей."""
+    from django.db import IntegrityError
+    from django.db import transaction as db_transaction
+
     listing = get_object_or_404(Listing, pk=pk)
 
-    # Нельзя жаловаться на свое объявление
     if listing.seller == request.user:
         messages.error(request, "Вы не можете пожаловаться на свое объявление.")
-        # Логируем подозрительную активность
         security_logger.warning(
             f"User attempted to report own listing: user={request.user.username} | listing_id={pk}"
         )
         return redirect("listings:listing_detail", pk=pk)
 
-    # Проверяем, не подавал ли уже жалобу
     existing_report = Report.objects.filter(
         reporter=request.user, listing=listing, report_type="listing"
     ).first()
-
     if existing_report:
         messages.info(
             request,
@@ -523,16 +567,33 @@ def report_listing(request, pk):
     if request.method == "POST":
         form = ReportForm(request.POST)
         if form.is_valid():
-            report = form.save(commit=False)
-            report.reporter = request.user
-            report.listing = listing
-            report.report_type = "listing"
-            report.save()
-
-            # Отправляем email администраторам
             try:
-                # Используем build_absolute_uri вместо hardcoded URL
+                with db_transaction.atomic():
+                    # Повторная проверка под блокировкой — закрывает race condition
+                    if Report.objects.filter(
+                        reporter=request.user,
+                        listing=listing,
+                        report_type="listing",
+                    ).exists():
+                        messages.info(request, "Жалоба уже подана.")
+                        return redirect("listings:listing_detail", pk=pk)
+                    report = form.save(commit=False)
+                    report.reporter = request.user
+                    report.listing = listing
+                    report.report_type = "listing"
+                    report.save()
+            except IntegrityError:
+                messages.info(request, "Жалоба уже подана.")
+                return redirect("listings:listing_detail", pk=pk)
+
+            # Email админам — асинхронно через Celery (P2-16): mail_admins был
+            # синхронным и подвешивал view при тормозном SMTP.
+            try:
+                from django.conf import settings as dj_settings
+                from django.db import transaction as db_transaction
                 from django.urls import reverse
+
+                from core.tasks import send_email_async
 
                 listing_url = request.build_absolute_uri(
                     reverse("listings:listing_detail", kwargs={"pk": listing.pk})
@@ -540,25 +601,26 @@ def report_listing(request, pk):
                 report_admin_url = request.build_absolute_uri(
                     reverse("admin:listings_report_change", args=[report.pk])
                 )
-
-                mail_admins(
-                    subject=f"Новая жалоба на объявление: {listing.title}",
-                    message=f"""
-Пользователь: {request.user.username}
-Объявление: {listing.title} (ID: {listing.pk})
-Продавец: {listing.seller.username}
-Причина: {report.get_reason_display()}
-
-Описание:
-{report.description}
-
-Ссылка на объявление: {listing_url}
-Ссылка на жалобу (админка): {report_admin_url}
-                    """,
-                    fail_silently=True,
+                subject = f"Новая жалоба на объявление: {listing.title}"
+                body = (
+                    f"Пользователь: {request.user.username}\n"
+                    f"Объявление: {listing.title} (ID: {listing.pk})\n"
+                    f"Продавец: {listing.seller.username}\n"
+                    f"Причина: {report.get_reason_display()}\n\n"
+                    f"Описание:\n{report.description}\n\n"
+                    f"Ссылка: {listing_url}\n"
+                    f"Админка: {report_admin_url}\n"
                 )
+                admin_emails = [addr for _, addr in getattr(dj_settings, "ADMINS", [])] or [
+                    getattr(dj_settings, "SUPPORT_EMAIL", "")
+                ]
+                for admin_email in admin_emails:
+                    if admin_email:
+                        db_transaction.on_commit(
+                            lambda s=subject, b=body, e=admin_email: send_email_async.delay(s, b, e)
+                        )
             except Exception as e:
-                logger.error(f"Ошибка отправки email админам при жалобе на объявление: {e}")
+                logger.error(f"Ошибка постановки email админам в очередь: {e}")
 
             messages.success(
                 request, "Жалоба отправлена. Администрация рассмотрит её в ближайшее время."
