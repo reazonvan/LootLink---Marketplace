@@ -7,9 +7,8 @@
 # Production server
 gunicorn>=23.0.0
 
-# AWS S3 for media storage
+# AWS S3 for media storage (django-storages вынесен в base.txt — нужен везде)
 boto3>=1.40.0
-django-storages>=1.14.2
 
 # Performance and caching
 redis>=7.0.0
