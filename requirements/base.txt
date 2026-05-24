@@ -37,8 +37,10 @@ python-magic>=0.4.27
 
 # Storage backends — django-storages используется безусловно в INSTALLED_APPS,
 # даже когда DEFAULT_FILE_STORAGE указывает на локальный диск; иначе Django
-# падает с ModuleNotFoundError при старте.
+# падает с ModuleNotFoundError при старте. boto3 — транзитивная зависимость
+# storages.backends.s3, который импортируется apps-конфигом без проверок.
 django-storages>=1.14.2
+boto3>=1.40.0
 
 # Encryption (P0-4: шифрование Withdrawal.payment_details через Fernet)
 # Приходит как транзитивная зависимость pywebpush, но фиксируем явно
