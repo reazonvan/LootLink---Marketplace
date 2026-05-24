@@ -13,6 +13,7 @@
     - buyer_demo/demo12345 (покупатель, verified)
     - 5 игр, 4 категории, 6 объявлений
 """
+
 import os
 
 import django

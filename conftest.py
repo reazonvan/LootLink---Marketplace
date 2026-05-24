@@ -12,11 +12,13 @@
 Username/email/phone всех фикстур специально не пересекаются с явными
 значениями в accounts/tests.py (testuser / test@example.com / +7 (999) 123-45-67).
 """
+
 from decimal import Decimal
 
-import pytest
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+
+import pytest
 
 CustomUser = get_user_model()
 
@@ -24,6 +26,7 @@ CustomUser = get_user_model()
 # ─────────────────────────────────────────────────────────────────────
 # Инфраструктура
 # ─────────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture(autouse=True)
 def _clear_cache():
@@ -47,11 +50,12 @@ def _celery_eager(settings):
 # Пользователи
 # ─────────────────────────────────────────────────────────────────────
 
-def _make_user(username, *, email=None, phone=None, verified=True, password='testpass123'):
+
+def _make_user(username, *, email=None, phone=None, verified=True, password="testpass123"):
     """Создаёт пользователя с профилем. Профиль создаётся сигналом post_save."""
     user = CustomUser.objects.create_user(
         username=username,
-        email=email or f'{username}@fixture.local',
+        email=email or f"{username}@fixture.local",
         password=password,
     )
     # Profile создаётся сигналом; обновляем его поля
@@ -66,25 +70,25 @@ def _make_user(username, *, email=None, phone=None, verified=True, password='tes
 @pytest.fixture
 def verified_user(db):
     """Основной пользователь, под которым логинится authenticated_client."""
-    return _make_user('fixt_verified', phone='+70000000001', verified=True)
+    return _make_user("fixt_verified", phone="+70000000001", verified=True)
 
 
 @pytest.fixture
 def unverified_user(db):
     """Пользователь без верификации."""
-    return _make_user('fixt_unverified', phone='+70000000002', verified=False)
+    return _make_user("fixt_unverified", phone="+70000000002", verified=False)
 
 
 @pytest.fixture
 def seller(db):
     """Продавец. Отличается от verified_user."""
-    return _make_user('fixt_seller', phone='+70000000003', verified=True)
+    return _make_user("fixt_seller", phone="+70000000003", verified=True)
 
 
 @pytest.fixture
 def buyer(db):
     """Покупатель. Отличается от seller и verified_user."""
-    return _make_user('fixt_buyer', phone='+70000000004', verified=True)
+    return _make_user("fixt_buyer", phone="+70000000004", verified=True)
 
 
 @pytest.fixture
@@ -94,12 +98,12 @@ def user_factory(db):
     Username и email можно переопределить, остальное — дефолты с автоинкрементом
     телефона, чтобы не пересекаться с другими фикстурами.
     """
-    counter = {'n': 0}
+    counter = {"n": 0}
 
-    def make(username=None, email=None, phone=None, verified=True, password='testpass123'):
-        counter['n'] += 1
+    def make(username=None, email=None, phone=None, verified=True, password="testpass123"):
+        counter["n"] += 1
         username = username or f'fixt_factory_{counter["n"]}'
-        email = email or f'{username}@fixture.local'
+        email = email or f"{username}@fixture.local"
         phone = phone or f'+7100000{counter["n"]:04d}'
         user = CustomUser.objects.create_user(
             username=username,
@@ -119,6 +123,7 @@ def user_factory(db):
 # Клиенты
 # ─────────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def authenticated_client(client, verified_user):
     """Django test client, залогинен под verified_user."""
@@ -130,23 +135,26 @@ def authenticated_client(client, verified_user):
 # Игры и листинги
 # ─────────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def game(db):
     """Активная игра по умолчанию."""
     from listings.models import Game
-    return Game.objects.create(name='Fixture Game', slug='fixture-game')
+
+    return Game.objects.create(name="Fixture Game", slug="fixture-game")
 
 
 @pytest.fixture
 def game_factory(db):
     """Фабрика игр. Каждое обращение создаёт уникальную игру."""
     from listings.models import Game
-    counter = {'n': 0}
+
+    counter = {"n": 0}
 
     def make(name=None, **kwargs):
-        counter['n'] += 1
+        counter["n"] += 1
         name = name or f'Fixture Game {counter["n"]}'
-        slug = kwargs.pop('slug', None) or f'fixture-game-{counter["n"]}'
+        slug = kwargs.pop("slug", None) or f'fixture-game-{counter["n"]}'
         return Game.objects.create(name=name, slug=slug, **kwargs)
 
     return make
@@ -159,17 +167,18 @@ def listing_factory(db, game):
     Дефолтные значения: game=game fixture, status='active', price=100.
     """
     from listings.models import Listing
-    counter = {'n': 0}
+
+    counter = {"n": 0}
 
     def make(seller, **overrides):
-        counter['n'] += 1
+        counter["n"] += 1
         defaults = {
-            'seller': seller,
-            'game': game,
-            'title': f'Fixture Listing {counter["n"]}',
-            'description': 'Fixture description',
-            'price': Decimal('100.00'),
-            'status': 'active',
+            "seller": seller,
+            "game": game,
+            "title": f'Fixture Listing {counter["n"]}',
+            "description": "Fixture description",
+            "price": Decimal("100.00"),
+            "status": "active",
         }
         defaults.update(overrides)
         return Listing.objects.create(**defaults)
@@ -180,18 +189,19 @@ def listing_factory(db, game):
 @pytest.fixture
 def active_listing(listing_factory, seller):
     """Активное объявление, принадлежит seller."""
-    return listing_factory(seller, title='Active Fixture Listing')
+    return listing_factory(seller, title="Active Fixture Listing")
 
 
 @pytest.fixture
 def sold_listing(listing_factory, seller):
     """Проданное объявление, принадлежит seller."""
-    return listing_factory(seller, title='Sold Fixture Listing', status='sold')
+    return listing_factory(seller, title="Sold Fixture Listing", status="sold")
 
 
 # ─────────────────────────────────────────────────────────────────────
 # Чат
 # ─────────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def conversation_factory(db):
@@ -218,7 +228,7 @@ def message_factory(db):
     """Фабрика сообщений чата."""
     from chat.models import Message
 
-    def make(conversation, sender, content='Fixture message'):
+    def make(conversation, sender, content="Fixture message"):
         return Message.objects.create(
             conversation=conversation,
             sender=sender,
@@ -232,6 +242,7 @@ def message_factory(db):
 # Транзакции
 # ─────────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def purchase_request_factory(db):
     """
@@ -240,7 +251,7 @@ def purchase_request_factory(db):
     """
     from transactions.models import PurchaseRequest
 
-    def make(listing, buyer, status='pending', message='Fixture purchase'):
+    def make(listing, buyer, status="pending", message="Fixture purchase"):
         return PurchaseRequest.objects.create(
             listing=listing,
             buyer=buyer,

@@ -1,9 +1,8 @@
 # Generated migration for PostgreSQL Full-Text Search
 
-from django.contrib.postgres.search import SearchVector
 from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.db import migrations, models
-from django.contrib.postgres.search import SearchVectorField
 
 
 def compute_search_vector(apps, schema_editor):

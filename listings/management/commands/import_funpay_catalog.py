@@ -10,6 +10,7 @@
 Идемпотентен: повторный запуск обновит существующие записи (по funpay_id),
 не создаст дубликатов. Флаг --clean удаляет всё перед загрузкой.
 """
+
 from __future__ import annotations
 
 import html
@@ -23,7 +24,6 @@ from django.utils.text import slugify
 
 from listings.models import Category, Game, Listing
 from listings.models_filters import CategoryFilter
-
 
 # Маппинг ключевых слов в названии категории -> Bootstrap Icon.
 # Перебирается по порядку, первое совпадение выигрывает.
@@ -131,11 +131,39 @@ def pick_icon(category_name: str) -> str:
 
 # Транслитерация для slug
 TRANSLIT = {
-    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "yo",
-    "ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
-    "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
-    "ф": "f", "х": "h", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sch",
-    "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+    "а": "a",
+    "б": "b",
+    "в": "v",
+    "г": "g",
+    "д": "d",
+    "е": "e",
+    "ё": "yo",
+    "ж": "zh",
+    "з": "z",
+    "и": "i",
+    "й": "y",
+    "к": "k",
+    "л": "l",
+    "м": "m",
+    "н": "n",
+    "о": "o",
+    "п": "p",
+    "р": "r",
+    "с": "s",
+    "т": "t",
+    "у": "u",
+    "ф": "f",
+    "х": "h",
+    "ц": "ts",
+    "ч": "ch",
+    "ш": "sh",
+    "щ": "sch",
+    "ъ": "",
+    "ы": "y",
+    "ь": "",
+    "э": "e",
+    "ю": "yu",
+    "я": "ya",
 }
 
 
@@ -189,9 +217,9 @@ class Command(BaseCommand):
 
         total_games = len(data)
         total_cats = sum(len(g["categories"]) for g in data)
-        self.stdout.write(self.style.SUCCESS(
-            f"[i] Загружено из JSON: {total_games} игр / {total_cats} категорий"
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(f"[i] Загружено из JSON: {total_games} игр / {total_cats} категорий")
+        )
 
         if opts["dry_run"]:
             self.stdout.write(self.style.WARNING("[i] DRY-RUN — изменения в БД не пишутся"))
@@ -206,6 +234,7 @@ class Command(BaseCommand):
         # Сбрасываем кэш каталога — иначе пользователи увидят старое до 5 минут.
         try:
             from listings.signals import invalidate_catalog_cache
+
             invalidate_catalog_cache()
         except Exception:  # noqa: BLE001
             pass
@@ -222,7 +251,11 @@ class Command(BaseCommand):
             )
         new_g = updated_g = 0
         for g in data:
-            qs = Game.objects.filter(funpay_id=g["funpay_id"]) if g["funpay_id"] else Game.objects.filter(name=g["name"])
+            qs = (
+                Game.objects.filter(funpay_id=g["funpay_id"])
+                if g["funpay_id"]
+                else Game.objects.filter(name=g["name"])
+            )
             if qs.exists():
                 updated_g += 1
             else:
@@ -248,10 +281,12 @@ class Command(BaseCommand):
         Category.objects.all().delete()
         # У Game.delete есть собственная проверка active listings — обходим напрямую через QuerySet
         Game.objects.all().delete()
-        self.stdout.write(self.style.WARNING(
-            f"[clean] удалено: {l_count} listings, {f_count} filters, "
-            f"{c_count} categories, {g_count} games"
-        ))
+        self.stdout.write(
+            self.style.WARNING(
+                f"[clean] удалено: {l_count} listings, {f_count} filters, "
+                f"{c_count} categories, {g_count} games"
+            )
+        )
 
     def _import(self, data: list) -> None:
         existing_slugs: set[str] = set(Game.objects.values_list("slug", flat=True))
@@ -317,10 +352,12 @@ class Command(BaseCommand):
                 else:
                     updated_c += 1
 
-        self.stdout.write(self.style.SUCCESS(
-            f"[done] games: +{created_g} created, ~{updated_g} updated; "
-            f"categories: +{created_c} created, ~{updated_c} updated"
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"[done] games: +{created_g} created, ~{updated_g} updated; "
+                f"categories: +{created_c} created, ~{updated_c} updated"
+            )
+        )
 
     @staticmethod
     def _unique_slug(base: str, taken: set[str]) -> str:
@@ -333,4 +370,6 @@ class Command(BaseCommand):
 
     def _summary(self) -> None:
         self.stdout.write("")
-        self.stdout.write(f"  Итого в БД: {Game.objects.count()} игр, {Category.objects.count()} категорий")
+        self.stdout.write(
+            f"  Итого в БД: {Game.objects.count()} игр, {Category.objects.count()} категорий"
+        )

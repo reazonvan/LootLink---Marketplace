@@ -2,6 +2,7 @@
 # Updated to use new ListingImageValidator
 
 from django.db import migrations, models
+
 import core.validators
 
 

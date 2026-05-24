@@ -1,6 +1,6 @@
 # Generated migration for conversation ordering constraint
 from django.db import migrations, models
-from django.db.models import Q, CheckConstraint
+from django.db.models import CheckConstraint, Q
 
 
 class Migration(migrations.Migration):

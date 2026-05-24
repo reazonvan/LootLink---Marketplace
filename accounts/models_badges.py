@@ -5,8 +5,10 @@
 ВАЖНО: Все бейджи основаны на заслугах и активности.
 Никаких платных преимуществ - все пользователи равны.
 """
-from django.utils import timezone
+
 from datetime import timedelta
+
+from django.utils import timezone
 
 
 def get_user_badges(profile):
@@ -26,57 +28,69 @@ def get_user_badges(profile):
 
     # Верифицированный пользователь
     if profile.is_verified:
-        badges.append({
-            'icon': 'bi-patch-check-fill',
-            'text': 'Верифицирован',
-            'color': 'success',
-            'tooltip': 'Подтвержден email и телефон'
-        })
+        badges.append(
+            {
+                "icon": "bi-patch-check-fill",
+                "text": "Верифицирован",
+                "color": "success",
+                "tooltip": "Подтвержден email и телефон",
+            }
+        )
 
     # Топ продавец (рейтинг >= 4.8 и >= 50 продаж)
     if profile.rating >= 4.8 and profile.total_sales >= 50:
-        badges.append({
-            'icon': 'bi-star-fill',
-            'text': 'Топ продавец',
-            'color': 'warning',
-            'tooltip': 'Высокий рейтинг и опыт'
-        })
+        badges.append(
+            {
+                "icon": "bi-star-fill",
+                "text": "Топ продавец",
+                "color": "warning",
+                "tooltip": "Высокий рейтинг и опыт",
+            }
+        )
 
     # Активный (онлайн сейчас)
-    if profile.get_online_status() == 'online':
-        badges.append({
-            'icon': 'bi-circle-fill',
-            'text': 'Онлайн',
-            'color': 'danger',
-            'tooltip': 'Сейчас на сайте'
-        })
+    if profile.get_online_status() == "online":
+        badges.append(
+            {
+                "icon": "bi-circle-fill",
+                "text": "Онлайн",
+                "color": "danger",
+                "tooltip": "Сейчас на сайте",
+            }
+        )
 
     # Новичок (аккаунт создан менее 30 дней назад)
     if profile.created_at > timezone.now() - timedelta(days=30):
-        badges.append({
-            'icon': 'bi-person-plus-fill',
-            'text': 'Новичок',
-            'color': 'info',
-            'tooltip': 'Недавно зарегистрирован'
-        })
+        badges.append(
+            {
+                "icon": "bi-person-plus-fill",
+                "text": "Новичок",
+                "color": "info",
+                "tooltip": "Недавно зарегистрирован",
+            }
+        )
 
     # Опытный продавец (10+ продаж, но меньше 50)
     if 10 <= profile.total_sales < 50:
-        badges.append({
-            'icon': 'bi-briefcase-fill',
-            'text': 'Опытный',
-            'color': 'primary',
-            'tooltip': f'{profile.total_sales} успешных продаж'
-        })
+        badges.append(
+            {
+                "icon": "bi-briefcase-fill",
+                "text": "Опытный",
+                "color": "primary",
+                "tooltip": f"{profile.total_sales} успешных продаж",
+            }
+        )
 
     # Модератор
     if profile.is_moderator:
-        badges.append({
-            'icon': 'bi-shield-fill',
-            'text': 'Модератор',
-            'color': 'dark',
-            'tooltip': 'Модератор платформы'
-        })
+        badges.append(
+            {
+                "icon": "bi-shield-fill",
+                "text": "Модератор",
+                "color": "dark",
+                "tooltip": "Модератор платформы",
+            }
+        )
 
     return badges
 
@@ -88,4 +102,5 @@ def add_badges_method():
     Вызывается в apps.py при инициализации приложения.
     """
     from accounts.models import Profile
+
     Profile.get_badges = lambda self: get_user_badges(self)

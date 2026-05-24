@@ -1,121 +1,94 @@
 from django.db import models
+
 from accounts.models import CustomUser
 
 # Импортируем audit модели
-from .models_audit import SecurityAuditLog, DataChangeLog
+from .models_audit import DataChangeLog, SecurityAuditLog
 
 
 class Notification(models.Model):
     """
     Модель уведомлений для пользователей.
     """
+
     NOTIFICATION_TYPES = [
-        ('new_message', 'Новое сообщение'),
-        ('purchase_request', 'Запрос на покупку'),
-        ('request_accepted', 'Запрос принят'),
-        ('request_rejected', 'Запрос отклонен'),
-        ('deal_completed', 'Сделка завершена'),
-        ('new_review', 'Новый отзыв'),
-        ('price_offer', 'Новое предложение цены'),
-        ('listing_reserved', 'Объявление зарезервировано'),
-        ('dispute_resolved', 'Спор разрешен'),
-        ('price_alert', 'Сработало уведомление о цене'),
-        ('system', 'Системное уведомление'),
+        ("new_message", "Новое сообщение"),
+        ("purchase_request", "Запрос на покупку"),
+        ("request_accepted", "Запрос принят"),
+        ("request_rejected", "Запрос отклонен"),
+        ("deal_completed", "Сделка завершена"),
+        ("new_review", "Новый отзыв"),
+        ("price_offer", "Новое предложение цены"),
+        ("listing_reserved", "Объявление зарезервировано"),
+        ("dispute_resolved", "Спор разрешен"),
+        ("price_alert", "Сработало уведомление о цене"),
+        ("system", "Системное уведомление"),
     ]
-    
+
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='notifications',
-        verbose_name='Пользователь'
+        related_name="notifications",
+        verbose_name="Пользователь",
     )
     notification_type = models.CharField(
-        max_length=30,
-        choices=NOTIFICATION_TYPES,
-        verbose_name='Тип уведомления'
+        max_length=30, choices=NOTIFICATION_TYPES, verbose_name="Тип уведомления"
     )
-    title = models.CharField(
-        max_length=200,
-        verbose_name='Заголовок'
-    )
-    message = models.TextField(
-        max_length=500,
-        verbose_name='Сообщение'
-    )
+    title = models.CharField(max_length=200, verbose_name="Заголовок")
+    message = models.TextField(max_length=500, verbose_name="Сообщение")
     link = models.CharField(
-        max_length=500,
-        blank=True,
-        verbose_name='Ссылка',
-        help_text='URL для перехода при клике'
+        max_length=500, blank=True, verbose_name="Ссылка", help_text="URL для перехода при клике"
     )
-    
-    is_read = models.BooleanField(
-        default=False,
-        db_index=True,
-        verbose_name='Прочитано'
-    )
+
+    is_read = models.BooleanField(default=False, db_index=True, verbose_name="Прочитано")
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        db_index=True,
-        verbose_name='Дата создания'
+        auto_now_add=True, db_index=True, verbose_name="Дата создания"
     )
-    read_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name='Дата прочтения'
-    )
-    
+    read_at = models.DateTimeField(null=True, blank=True, verbose_name="Дата прочтения")
+
     class Meta:
-        verbose_name = 'Уведомление'
-        verbose_name_plural = 'Уведомления'
-        ordering = ['-created_at']
+        verbose_name = "Уведомление"
+        verbose_name_plural = "Уведомления"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['user', 'is_read']),
-            models.Index(fields=['-created_at']),
+            models.Index(fields=["user", "is_read"]),
+            models.Index(fields=["-created_at"]),
             # Композит под главный запрос badge: непрочитанные пользователя в порядке свежести
-            models.Index(fields=['user', 'is_read', '-created_at'], name='notif_user_unread_idx'),
+            models.Index(fields=["user", "is_read", "-created_at"], name="notif_user_unread_idx"),
         ]
-    
+
     def __str__(self):
-        return f'{self.title} для {self.user.username}'
-    
+        return f"{self.title} для {self.user.username}"
+
     def mark_as_read(self):
         """Отметить уведомление как прочитанное."""
-        from django.utils import timezone
         from django.core.cache import cache
-        
+        from django.utils import timezone
+
         if not self.is_read:
             self.is_read = True
             self.read_at = timezone.now()
-            self.save(update_fields=['is_read', 'read_at'])
-            
+            self.save(update_fields=["is_read", "read_at"])
+
             # Инвалидируем кэш количества уведомлений
-            cache_key = f'unread_notif_count_{self.user.id}'
+            cache_key = f"unread_notif_count_{self.user.id}"
             cache.delete(cache_key)
-    
+
     @classmethod
-    def create_notification(cls, user, notification_type, title, message, link=''):
+    def create_notification(cls, user, notification_type, title, message, link=""):
         """Создать новое уведомление."""
         return cls.objects.create(
-            user=user,
-            notification_type=notification_type,
-            title=title,
-            message=message,
-            link=link
+            user=user, notification_type=notification_type, title=title, message=message, link=link
         )
-    
+
     @classmethod
     def mark_all_as_read(cls, user):
         """Отметить все уведомления пользователя как прочитанные."""
-        from django.utils import timezone
         from django.core.cache import cache
-        
-        cls.objects.filter(user=user, is_read=False).update(
-            is_read=True,
-            read_at=timezone.now()
-        )
-        
-        # Инвалидируем кэш количества уведомлений
-        cache_key = f'unread_notif_count_{user.id}'
-        cache.delete(cache_key)
+        from django.utils import timezone
 
+        cls.objects.filter(user=user, is_read=False).update(is_read=True, read_at=timezone.now())
+
+        # Инвалидируем кэш количества уведомлений
+        cache_key = f"unread_notif_count_{user.id}"
+        cache.delete(cache_key)
