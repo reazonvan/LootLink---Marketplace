@@ -1,5 +1,5 @@
 # Официальный Python 3.13 образ
-FROM python:3.13-slim
+FROM python:3.14-slim
 
 # Устанавливаем переменные окружения
 ENV PYTHONDONTWRITEBYTECODE=1 \
