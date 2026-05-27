@@ -77,16 +77,19 @@ check:
 	python manage.py check
 
 docker-up:
-	docker-compose up -d
+	docker compose -f docker-compose.yml -f docker-compose.dev.override.yml up -d
+
+docker-up-prod:
+	docker compose -f docker-compose.yml up -d
 
 docker-up-win:
 	powershell -NoProfile -ExecutionPolicy Bypass -File scripts/docker-compose-up.ps1 up -d
 
 docker-down:
-	docker-compose down
+	docker compose down
 
 docker-logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
