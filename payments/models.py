@@ -686,24 +686,31 @@ class Withdrawal(models.Model):
 
         self.payment_details_masked = self._mask_details(raw_details, self.payment_method)
 
+        from django.conf import settings as django_settings
+        from django.core.exceptions import ImproperlyConfigured
+
         try:
-            from django.conf import settings as django_settings
-
             from cryptography.fernet import Fernet
+        except ImportError as exc:
+            logger.error("cryptography не установлен — PCI-DSS нарушение")
+            raise ImproperlyConfigured(
+                "Пакет 'cryptography' обязателен для шифрования payment_details. "
+                "Установите cryptography>=44.0.1."
+            ) from exc
 
-            key = getattr(django_settings, "PAYMENT_DETAILS_KEY", None)
-            if not key:
-                logger.error(
-                    "PAYMENT_DETAILS_KEY не задан в settings — "
-                    "payment_details хранится в открытом виде. PCI-DSS нарушение."
-                )
-                self.payment_details = raw_details[:512]
-                return
-            f = Fernet(key.encode() if isinstance(key, str) else key)
-            self.payment_details = f.encrypt(raw_details.encode("utf-8")).decode("ascii")
-        except ImportError:
-            logger.error("cryptography не установлен — payment_details в открытом виде")
-            self.payment_details = raw_details[:512]
+        key = getattr(django_settings, "PAYMENT_DETAILS_KEY", None)
+        if not key:
+            # PCI-DSS: запрещено хранить реквизиты карты в открытом виде.
+            # Падаем сразу — лучше ошибка вывода, чем утечка PAN.
+            logger.error("PAYMENT_DETAILS_KEY не задан — отказ записи payment_details")
+            raise ImproperlyConfigured(
+                "PAYMENT_DETAILS_KEY не задан. Реквизиты вывода не могут быть "
+                "сохранены без шифрования (PCI-DSS). Сгенерируйте Fernet-ключ и "
+                "пропишите в .env: PAYMENT_DETAILS_KEY=<key>."
+            )
+
+        f = Fernet(key.encode() if isinstance(key, str) else key)
+        self.payment_details = f.encrypt(raw_details.encode("utf-8")).decode("ascii")
 
     def get_payment_details(self) -> str:
         """Расшифровать реквизиты для админ-UI / выплаты.
@@ -729,4 +736,4 @@ class Withdrawal(models.Model):
 
 
 # Импортируем модели диспутов в конец для избежания circular imports
-from .models_disputes import Dispute, DisputeEvidence, DisputeMessage
+from .models_disputes import Dispute, DisputeEvidence, DisputeMessage  # noqa: E402, F401
