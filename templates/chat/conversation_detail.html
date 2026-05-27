@@ -425,7 +425,20 @@ function openImageModal(src) {
         pendingImageFile = file;
         var reader = new FileReader();
         reader.onload = function(e) {
-            imagePreview.innerHTML = '<img src="' + e.target.result + '" alt=""><button type="button" class="remove-img" onclick="clearImagePreview()">&times;</button>';
+            // Собираем DOM узлами вместо innerHTML, чтобы не было XSS-pattern
+            // и чтобы CSP без 'unsafe-inline' (когда мы её включим) не блокировал
+            // inline onclick. Дочерние listeners привязываются явно.
+            imagePreview.replaceChildren();
+            var img = document.createElement('img');
+            img.src = e.target.result;
+            img.alt = '';
+            var removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'remove-img';
+            removeBtn.textContent = '×';
+            removeBtn.addEventListener('click', function () { clearImagePreview(); });
+            imagePreview.appendChild(img);
+            imagePreview.appendChild(removeBtn);
             imagePreview.classList.add('active');
         };
         reader.readAsDataURL(file);
