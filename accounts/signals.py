@@ -14,7 +14,7 @@ from .models_security import LoginHistory
 logger = logging.getLogger("django.security")
 
 
-@receiver(user_logged_in)
+@receiver(user_logged_in, dispatch_uid="accounts.login_history_success")
 def on_user_logged_in(sender, request, user, **kwargs):
     """Запись успешного входа в LoginHistory."""
     if request is None:
@@ -30,7 +30,7 @@ def on_user_logged_in(sender, request, user, **kwargs):
         logger.warning("LoginHistory.log_login failed: %s", exc)
 
 
-@receiver(user_login_failed)
+@receiver(user_login_failed, dispatch_uid="accounts.login_history_failed")
 def on_user_login_failed(sender, credentials, request, **kwargs):
     """Запись неудачной попытки входа.
 

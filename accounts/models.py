@@ -289,17 +289,20 @@ class Profile(models.Model):
 
 
 # Сигнал для автоматического создания профиля при создании пользователя
-@receiver(post_save, sender=CustomUser)
+@receiver(post_save, sender=CustomUser, dispatch_uid="accounts.create_user_profile")
 def create_or_update_user_profile(sender, instance, created, **kwargs):
-    """
-    Создает профиль при создании пользователя или обновляет существующий.
-    Объединенный сигнал для предотвращения дублирования логики.
+    """Создаёт Profile при создании CustomUser.
+
+    Раньше для существующего юзера дёргался instance.profile.save() —
+    бесполезный save() при КАЖДОМ user.save() (login, last_login,
+    set_unusable_password и т.п.), плюс рекурсивный обход через
+    Profile.save() и ImageField storage check. На SQLite/Windows fsync
+    давал замедление логина на 9+ секунд. Profile теперь обновляется
+    явно через ProfileForm/services. get_or_create — защита от двойного
+    post_save при reimport приложения.
     """
     if created:
-        Profile.objects.create(user=instance)
-    elif hasattr(instance, "profile"):
-        # Обновляем профиль только если он уже существует
-        instance.profile.save()
+        Profile.objects.get_or_create(user=instance)
 
 
 class EmailVerification(models.Model):
