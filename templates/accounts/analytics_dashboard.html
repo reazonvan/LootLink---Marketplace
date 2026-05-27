@@ -116,12 +116,14 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ sales_by_day|default_if_none:""|json_script:"sales-data" }}
 <script>
 lucide.createIcons();
 document.addEventListener('DOMContentLoaded', function() {
     var ctx = document.getElementById('salesChart');
     if (!ctx) return;
-    var salesData = {{ sales_by_day_json|safe|default:"[]" }};
+    var salesEl = document.getElementById('sales-data');
+    var salesData = salesEl ? JSON.parse(salesEl.textContent || '[]') : [];
     var labels = salesData.map(function(d) { return d.date; });
     var values = salesData.map(function(d) { return d.count; });
     var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -131,8 +133,8 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: labels,
             datasets: [{
                 label: 'Продажи', data: values,
-                borderColor: isDark ? '#818cf8' : '#4a90e2',
-                backgroundColor: isDark ? 'rgba(129,140,248,0.1)' : 'rgba(74,144,226,0.1)',
+                borderColor: isDark ? '#38bdf8' : '#4a90e2',
+                backgroundColor: isDark ? 'rgba(56,189,248,0.1)' : 'rgba(74,144,226,0.1)',
                 fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3
             }]
         },

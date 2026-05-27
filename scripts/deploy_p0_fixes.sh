@@ -57,6 +57,17 @@ TARGET_COMMIT=$(git rev-parse origin/main)
 if [[ "$CURRENT_COMMIT" == "$TARGET_COMMIT" ]]; then
     log "Уже на актуальном коммите $CURRENT_COMMIT — pull не нужен"
 else
+    # Safe pull: сохраняем локальные изменения (Caddyfile, systemd-юниты,
+    # ad-hoc правки) в stash, чтобы reset --hard их не уничтожил.
+    # .env в .gitignore, его reset не трогает в любом случае.
+    DIRTY="$(git status --porcelain)"
+    if [[ -n "$DIRTY" ]]; then
+        warn "Обнаружены локальные изменения — сохраняем в git stash"
+        echo "$DIRTY"
+        git stash push -u -m "deploy_p0_fixes auto-stash $DATE_TAG" || \
+            err "Не удалось сохранить локальные изменения. Прерываемся, чтобы не потерять данные."
+        log "Локальные изменения в stash. Восстановить: git stash pop"
+    fi
     log "Пуллим $CURRENT_COMMIT → $TARGET_COMMIT"
     git reset --hard origin/main
 fi
@@ -134,16 +145,19 @@ ensure_env_key "CSRF_COOKIE_SECURE" "True" "Secure CSRF cookie"
 # ──────────────────────────────────────────────────────────────────────
 
 log "Сборка Docker-образов (~3-5 мин)"
-docker compose build web celery_worker celery_beat flower
+# CRITICAL: явно указываем prod-конфиг. Без -f docker-compose.yml compose
+# подцепил бы docker-compose.override.yml (исторический dev-конфиг) и
+# собрал бы web с DEBUG=True и DJANGO_SETTINGS_MODULE=development.
+docker compose -f docker-compose.yml build web celery_worker celery_beat flower
 
 # ──────────────────────────────────────────────────────────────────────
 # 6. Поднимаем стек (без force-recreate всех — только обновлённые)
 # ──────────────────────────────────────────────────────────────────────
 
 log "Обновление контейнеров"
-docker compose up -d --no-deps --force-recreate web celery_worker celery_beat flower
+docker compose -f docker-compose.yml up -d --no-deps --force-recreate web celery_worker celery_beat flower
 # Caddy перезагружаем, чтобы подхватить новый Caddyfile
-docker compose up -d --force-recreate caddy
+docker compose -f docker-compose.yml up -d --force-recreate caddy
 
 # ──────────────────────────────────────────────────────────────────────
 # 7. Миграции (выполняются автоматически на старте web, но дублируем

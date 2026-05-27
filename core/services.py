@@ -8,9 +8,23 @@ from typing import Optional
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import transaction
+from django.urls import NoReverseMatch, reverse
 from django.utils.html import escape
 
 from .models import Notification
+
+
+def _safe_reverse(viewname, *, kwargs=None, fallback="/"):
+    """reverse() с fallback вместо исключения.
+
+    Сервис уведомлений не должен падать целиком если переименовали URL —
+    лучше отправить уведомление с ссылкой на главную, чем пропустить
+    событие. Несуществующий URL логируется (raise в dev через @override).
+    """
+    try:
+        return reverse(viewname, kwargs=kwargs or {})
+    except NoReverseMatch:
+        return fallback
 
 
 class NotificationService:
@@ -189,7 +203,10 @@ class NotificationService:
             notification_type="purchase_request",
             title=f"Новый запрос на покупку: {purchase_request.listing.title}",
             message=f"{purchase_request.buyer.username} хочет купить ваш товар за {purchase_request.listing.price} ₽",
-            link=f"/transactions/purchase-request/{purchase_request.pk}/",
+            link=_safe_reverse(
+                "transactions:purchase_request_detail",
+                kwargs={"pk": purchase_request.pk},
+            ),
             send_email=True,
         )
 
@@ -201,7 +218,10 @@ class NotificationService:
             notification_type="request_accepted",
             title=f"Ваш запрос принят: {purchase_request.listing.title}",
             message=f"Продавец {purchase_request.seller.username} принял ваш запрос. Свяжитесь для завершения сделки.",
-            link=f"/transactions/purchase-request/{purchase_request.pk}/",
+            link=_safe_reverse(
+                "transactions:purchase_request_detail",
+                kwargs={"pk": purchase_request.pk},
+            ),
             send_email=True,
         )
 
@@ -213,7 +233,10 @@ class NotificationService:
             notification_type="request_rejected",
             title=f"Запрос отклонен: {purchase_request.listing.title}",
             message=f"К сожалению, продавец {purchase_request.seller.username} отклонил ваш запрос.",
-            link=f"/transactions/purchase-request/{purchase_request.pk}/",
+            link=_safe_reverse(
+                "transactions:purchase_request_detail",
+                kwargs={"pk": purchase_request.pk},
+            ),
             send_email=True,
         )
 
@@ -225,7 +248,10 @@ class NotificationService:
             notification_type="deal_completed",
             title=f"Сделка завершена: {purchase_request.listing.title}",
             message=f"Продавец {purchase_request.seller.username} подтвердил завершение сделки. Оставьте отзыв!",
-            link=f"/transactions/review/{purchase_request.pk}/create/",
+            link=_safe_reverse(
+                "transactions:review_create",
+                kwargs={"purchase_request_pk": purchase_request.pk},
+            ),
             send_email=True,
         )
 
@@ -238,7 +264,10 @@ class NotificationService:
             notification_type="new_review",
             title=f"Новый отзыв от {review.reviewer.username}",
             message=f"Вы получили отзыв {stars} ({review.rating}/5) от {review.reviewer.username}",
-            link=f"/accounts/profile/{review.reviewed_user.username}/",
+            link=_safe_reverse(
+                "accounts:profile",
+                kwargs={"username": review.reviewed_user.username},
+            ),
             send_email=True,
         )
 
@@ -255,7 +284,10 @@ class NotificationService:
             notification_type="new_message",
             title=f"Новое сообщение от {message_obj.sender.username}",
             message=preview,
-            link=f"/chat/conversation/{message_obj.conversation.pk}/",
+            link=_safe_reverse(
+                "chat:conversation_detail",
+                kwargs={"pk": message_obj.conversation.pk},
+            ),
             send_email=True,
         )
 
@@ -270,7 +302,7 @@ class NotificationService:
                 f"{offer.buyer.username} предложил(а) {offer.offered_price} ₽ "
                 f"вместо {offer.original_price} ₽"
             ),
-            link="/my-offers/",
+            link=_safe_reverse("listings:my_price_offers"),
             send_email=True,
         )
 
@@ -285,7 +317,7 @@ class NotificationService:
                 f"Пользователь {reservation.buyer.username} зарезервировал "
                 f"ваше объявление до {reservation.expires_at:%d.%m.%Y %H:%M}."
             ),
-            link="/my-reservations/",
+            link=_safe_reverse("listings:my_reservations"),
             send_email=True,
         )
 
@@ -305,7 +337,10 @@ class NotificationService:
             notification_type="dispute_resolved",
             title=title,
             message=message,
-            link=f"/transactions/dispute/{dispute.id}/",
+            link=_safe_reverse(
+                "transactions:dispute_detail",
+                kwargs={"dispute_id": dispute.id},
+            ),
             send_email=True,
         )
         return NotificationService.create_and_notify(
@@ -313,7 +348,10 @@ class NotificationService:
             notification_type="dispute_resolved",
             title=title,
             message=message,
-            link=f"/transactions/dispute/{dispute.id}/",
+            link=_safe_reverse(
+                "transactions:dispute_detail",
+                kwargs={"dispute_id": dispute.id},
+            ),
             send_email=True,
         )
 

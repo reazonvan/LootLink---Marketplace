@@ -14,6 +14,8 @@
 
 import warnings
 
+from django.core.exceptions import ImproperlyConfigured as _ImpConfig
+
 from .base import *  # noqa: F401, F403
 from .base import config
 
@@ -63,26 +65,33 @@ if not config("USE_REDIS", default=False, cast=bool):
     )
 
 # P2-17: в продакшне ADMIN_URL должен быть непредсказуемым
-from django.core.exceptions import ImproperlyConfigured as _ImpConfig
-
 if config("ADMIN_URL", default="admin/") == "admin/":
     raise _ImpConfig(
         "В production ADMIN_URL='admin/' запрещён. Задайте непредсказуемый путь "
         "в .env (например, 'a8sd9-mgmt-7zx2/')."
     )
 
-# P0-4: предупреждение про отсутствие ключа шифрования payment_details
+# P0-4 (CRITICAL): без ключа шифрования Withdrawal.payment_details будут
+# писаться в открытом виде → PCI-DSS нарушение. В prod падаем сразу.
 if not config("PAYMENT_DETAILS_KEY", default=""):
-    warnings.warn(
-        "PAYMENT_DETAILS_KEY не задан — Withdrawal.payment_details будет "
-        "храниться в открытом виде (PCI-DSS нарушение). Задайте Fernet-ключ.",
-        RuntimeWarning,
+    raise _ImpConfig(
+        "PAYMENT_DETAILS_KEY обязателен в production. Сгенерируйте Fernet-ключ: "
+        'python -c "from cryptography.fernet import Fernet; '
+        'print(Fernet.generate_key().decode())" — и пропишите в .env.'
     )
 
-# P2-12: в production TRUSTED_PROXIES обязателен (иначе XFF-спуфинг)
+# P2-12 (CRITICAL): без TRUSTED_PROXIES атакующий подделывает X-Forwarded-For
+# и обходит rate-limit, брутфорс-защиту и IP-whitelist YooKassa webhook.
 if not config("TRUSTED_PROXIES", default=""):
-    warnings.warn(
-        "TRUSTED_PROXIES не задан в production — get_client_ip будет доверять "
-        "любому X-Forwarded-For, что открывает обход rate-limit и брутфорс-защиты.",
-        RuntimeWarning,
+    raise _ImpConfig(
+        "TRUSTED_PROXIES обязателен в production (IP/CIDR через запятую). "
+        "Например: TRUSTED_PROXIES=127.0.0.1,::1 для Caddy на том же хосте."
+    )
+
+# P0-3 (CRITICAL): без HMAC-секрета YooKassa webhook принимает любой payload.
+# В сочетании с подменой XFF — полный обход проверки источника.
+if not config("YOOKASSA_WEBHOOK_SECRET", default=""):
+    raise _ImpConfig(
+        "YOOKASSA_WEBHOOK_SECRET обязателен в production. Задайте секрет "
+        "в личном кабинете YooKassa и в .env."
     )

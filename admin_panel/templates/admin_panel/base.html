@@ -9,14 +9,16 @@
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
     <style>
         :root {
-            --ap-primary: #6366F1; --ap-primary-dark: #4F46E5; --ap-primary-light: #818CF8;
+            --ap-primary: #0891B2; --ap-primary-dark: #0E7490; --ap-primary-light: #22D3EE;
+            --ap-accent: #06B6D4;
             --ap-success: #10B981; --ap-warning: #F59E0B; --ap-danger: #EF4444; --ap-info: #3B82F6;
             --ap-dark: #1F2937; --ap-darker: #111827; --ap-light: #F9FAFB; --ap-border: #E5E7EB;
             --ap-sidebar-bg: #1F2937; --ap-sidebar-text: #9CA3AF; --ap-sidebar-hover: #374151;
             --sidebar-w: 260px; --topbar-h: 64px;
+            --ap-font: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
         }
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--ap-light); color: var(--ap-dark); }
+        body { font-family: var(--ap-font); background: var(--ap-light); color: var(--ap-dark); }
 
         .ap-layout { display: flex; min-height: 100vh; }
 
@@ -25,7 +27,7 @@
         .ap-sidebar.collapsed { transform: translateX(-100%); }
         .sb-header { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .sb-logo { display: flex; align-items: center; gap: 0.75rem; color: white; text-decoration: none; font-size: 1.25rem; font-weight: 700; }
-        .sb-logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--ap-primary), #8B5CF6); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; }
+        .sb-logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--ap-primary), var(--ap-primary-light)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; }
         .sb-logo-icon svg { width: 20px; height: 20px; }
         .sb-section { padding: 1rem 1.5rem 0.5rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; opacity: 0.55; }
         .sb-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.5rem; color: var(--ap-sidebar-text); text-decoration: none; transition: all 0.2s; position: relative; font-size: 0.9rem; }

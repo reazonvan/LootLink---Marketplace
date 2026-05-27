@@ -35,16 +35,16 @@ def invalidate_catalog_cache() -> None:
     cache.delete_many(CATALOG_CACHE_KEYS + TEMPLATE_FRAGMENT_KEYS)
 
 
-@receiver(post_save, sender=Game)
-@receiver(post_delete, sender=Game)
-@receiver(post_save, sender=Category)
-@receiver(post_delete, sender=Category)
+@receiver(post_save, sender=Game, dispatch_uid="listings.taxonomy_save_game")
+@receiver(post_delete, sender=Game, dispatch_uid="listings.taxonomy_delete_game")
+@receiver(post_save, sender=Category, dispatch_uid="listings.taxonomy_save_category")
+@receiver(post_delete, sender=Category, dispatch_uid="listings.taxonomy_delete_category")
 def _invalidate_on_taxonomy_change(sender, **kwargs) -> None:
     invalidate_catalog_cache()
 
 
-@receiver(post_save, sender=Listing)
-@receiver(post_delete, sender=Listing)
+@receiver(post_save, sender=Listing, dispatch_uid="listings.listing_save")
+@receiver(post_delete, sender=Listing, dispatch_uid="listings.listing_delete")
 def _invalidate_on_listing_change(sender, instance, **kwargs) -> None:
     # listings_count и min_price на каталоге зависят от состояния листингов.
     invalidate_catalog_cache()

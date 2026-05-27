@@ -7,6 +7,39 @@
 - **Тесты:** 530 passed
 - **Миграции:** 9 новых, требуется применить на проде
 
+## ВНИМАНИЕ перед деплоем (audit 2026-05-27)
+
+После audit найдены дополнительные критики:
+
+1. **`docker-compose.override.yml` переименован в `docker-compose.dev.override.yml`** —
+   на проде compose теперь читает только `docker-compose.yml`. Если на сервере
+   `/opt/lootlink/docker-compose.override.yml` лежит — **удали его перед деплоем**,
+   иначе старый dev-конфиг с `DEBUG=True` останется.
+   ```bash
+   ssh root@lootlink.ru
+   rm -f /opt/lootlink/docker-compose.override.yml
+   ```
+
+2. **Ротация секретов** — Yandex SMTP-пароль, PAYMENT_DETAILS_KEY,
+   YOOKASSA_WEBHOOK_SECRET, VAPID_PRIVATE_KEY локально в `.env` могли быть
+   видны во время разработки. `.env` НИКОГДА не был в git-истории
+   (проверено: `git log --all -- .env` пуст), но всё равно рекомендуется
+   ротация перед публичным запуском:
+
+   - **Yandex SMTP**: ID.Yandex → Безопасность → Пароли приложений → пересоздать
+   - **PAYMENT_DETAILS_KEY**: внимание! Ротация требует расшифровки старых
+     `Withdrawal.payment_details` старым ключом и перешифровки новым.
+     Скрипт миграции писать отдельно.
+   - **YOOKASSA_WEBHOOK_SECRET**: сгенерировать `openssl rand -hex 32`,
+     поменять в .env И в ЛК ЮKassa одновременно.
+   - **VAPID**: `python -c "from py_vapid import Vapid; v=Vapid(); v.generate_keys(); print(v.private_pem().decode())"`.
+     После ротации все существующие push-подписки умрут — пользователям
+     придётся переподписаться.
+
+3. **`PAYMENT_DETAILS_KEY`, `TRUSTED_PROXIES`, `YOOKASSA_WEBHOOK_SECRET`** теперь
+   обязательны — Django падает с `ImproperlyConfigured` на старте, если их нет.
+   Скрипт `scripts/deploy_p0_fixes.sh` генерирует все три, если их нет в .env.
+
 ## Вариант А — автоматический (рекомендуется)
 
 ```bash

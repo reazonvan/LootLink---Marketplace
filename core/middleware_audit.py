@@ -106,7 +106,7 @@ class SecurityAuditMiddleware(MiddlewareMixin):
 
 
 # Signal handlers для логирования событий аутентификации
-@receiver(user_login_failed)
+@receiver(user_login_failed, dispatch_uid="core.audit_login_failed")
 def log_failed_login(sender, credentials, request, **kwargs):
     """Логируем неудачные попытки входа (через trusted-proxy-aware IP)."""
     from core.utils import get_client_ip
