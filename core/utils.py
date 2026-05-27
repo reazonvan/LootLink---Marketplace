@@ -129,7 +129,7 @@ def invalidate_cache_pattern(pattern: str):
         return 0
 
 
-def _ip_in_trusted(remote_addr: str) -> bool:
+def _ip_in_trusted(remote_addr: str) -> bool:  # noqa: C901
     """Проверка, что REMOTE_ADDR — один из доверенных прокси.
 
     Поддерживает голые IP и CIDR из settings.TRUSTED_PROXIES.
@@ -140,9 +140,11 @@ def _ip_in_trusted(remote_addr: str) -> bool:
 
     trusted = getattr(settings, "TRUSTED_PROXIES", []) or []
     if not trusted:
-        # Совместимость со старым поведением: если список пуст, доверяем XFF.
-        # Для prod ОБЯЗАТЕЛЬНО задать TRUSTED_PROXIES.
-        return True
+        # Fail-closed: пустой список значит «доверенных прокси нет». XFF от
+        # неизвестного источника подделать тривиально, поэтому при пустой
+        # конфигурации XFF игнорируется. Для prod TRUSTED_PROXIES обязателен
+        # (см. production.py — ImproperlyConfigured при пустом значении).
+        return False
     if not remote_addr:
         return False
     try:
