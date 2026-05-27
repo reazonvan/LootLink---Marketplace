@@ -1,5 +1,14 @@
 # Локальный override для dev-окружения.
-# Автоматически мерджится с docker-compose.yml при `docker compose up`.
+#
+# CRITICAL: файл переименован из docker-compose.override.yml, чтобы НЕ
+# авто-мерджиться. На проде compose по умолчанию читает только
+# docker-compose.yml — DEBUG=True и открытые порты 5432/6379/8000
+# больше не утекают в production.
+#
+# Локальный запуск:
+#   make docker-up                          # Linux/macOS
+#   .\scripts\docker-compose-up.ps1 up -d   # Windows
+#   docker compose -f docker-compose.yml -f docker-compose.dev.override.yml up -d
 #
 # Что меняет:
 # - Публикует порт 8000 наружу (web)

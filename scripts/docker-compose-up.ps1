@@ -15,4 +15,7 @@ if (-not (Test-Path (Join-Path $repoRoot "manage.py"))) {
 }
 
 Set-Location $repoRoot
-docker compose @args
+# CRITICAL: dev override НЕ должен авто-мерджиться (был бы DEBUG=True
+# на проде если файл случайно scp на сервер). Явно подключаем dev-конфиг
+# только локально на Windows.
+docker compose -f docker-compose.yml -f docker-compose.dev.override.yml @args
