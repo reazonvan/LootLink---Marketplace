@@ -3,6 +3,20 @@
    Glassmorphism + Light/Dark theme
    ============================================================ */
 
+/* ── Brand typography ───────────────────────────────────────
+   Manrope: open-source geometric sans, GoFL-license. Self-host
+   из static/fonts/manrope/ (см. docs/setup/fonts.md). Пока файлы
+   не загружены, браузер откатывается на system-ui — Segoe UI на
+   Windows, San Francisco на macOS, Cantarell на Linux. */
+@font-face {
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 400 800;
+    font-display: swap;
+    src: url('/static/fonts/manrope/Manrope-VariableFont_wght.woff2') format('woff2-variations'),
+         url('/static/fonts/manrope/Manrope-VariableFont_wght.woff2') format('woff2');
+}
+
 /* ── Theme Variables ─────────────────────────────────────── */
 :root {
     --bg-gradient-start: #f0f7ff;
@@ -99,7 +113,7 @@
     --leading-normal: 1.5;
     --leading-relaxed: 1.625;
 
-    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-display: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
     /* Radius */
     --radius-sm: 8px;
@@ -149,13 +163,15 @@
     --text-tertiary: #64748b;
     --nav-text: #94a3b8;
 
-    --accent-primary: #818cf8;
-    --accent-secondary: #a78bfa;
-    --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    /* Холодный cyan/teal вместо purple — light тема уже использует
+       blue (#4a90e2), dark остаётся в той же холодной семье. */
+    --accent-primary: #38bdf8;
+    --accent-secondary: #22d3ee;
+    --accent-gradient: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%);
 
-    --orb1-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    --orb2-gradient: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
-    --orb3-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    --orb1-gradient: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+    --orb2-gradient: linear-gradient(135deg, #22d3ee 0%, #0ea5e9 100%);
+    --orb3-gradient: linear-gradient(135deg, #0e7490 0%, #155e75 100%);
     --orb-opacity: 0.2;
 
     --card-bg: rgba(30, 41, 59, 0.85);
@@ -176,8 +192,8 @@
     --footer-bg: rgba(15, 23, 42, 0.6);
     --footer-border: rgba(71, 85, 105, 0.3);
 
-    --card-image-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    --offer-image-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    --card-image-gradient: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+    --offer-image-gradient: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%);
 
     --gray-50: #1e293b;
     --gray-100: #1e293b;
@@ -190,8 +206,8 @@
     --gray-800: #f1f5f9;
     --gray-900: #f8fafc;
 
-    --color-primary: #818cf8;
-    --color-primary-light: rgba(129, 140, 248, 0.15);
+    --color-primary: #38bdf8;
+    --color-primary-light: rgba(56, 189, 248, 0.15);
     --color-success: #4ade80;
     --color-success-light: rgba(74, 222, 128, 0.15);
     --color-warning: #fbbf24;
@@ -209,7 +225,7 @@
     --input-bg: rgba(30, 41, 59, 0.6);
     --input-border: rgba(71, 85, 105, 0.5);
     --input-focus-border: var(--accent-primary);
-    --input-focus-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+    --input-focus-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
 
     --color-white: #1e293b;
     --dark: var(--text-primary);

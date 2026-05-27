@@ -3,9 +3,6 @@
 {% block title %}{{ game.name }} - LootLink{% endblock %}
 
 {% block content %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
 <div class="gpage">
     <!-- Breadcrumb -->
     <nav class="gpage-crumb">
@@ -100,28 +97,24 @@
 
 <style>
 .gpage {
-    --c-accent: #00f0ff;
-    --c-accent2: #ff2d6b;
-    --c-accent-dim: rgba(0, 240, 255, 0.1);
+    --c-accent: var(--accent-primary);
+    --c-accent2: var(--color-warning);
+    --c-accent-dim: var(--color-primary-light);
     --c-surface: rgba(255,255,255,0.04);
     --c-surface-hover: rgba(255,255,255,0.07);
     --c-border: rgba(255,255,255,0.06);
-    --ff-display: 'Chakra Petch', sans-serif;
-    --ff-mono: 'JetBrains Mono', monospace;
+    --ff-display: var(--font-display);
+    --ff-mono: var(--font-display);
     max-width: 940px;
     margin: 0 auto;
     padding: 0 var(--space-4) var(--space-16);
 }
 :root .gpage {
-    --c-accent: #0080ff;
-    --c-accent-dim: rgba(0,128,255,0.08);
     --c-surface: rgba(0,0,0,0.02);
     --c-surface-hover: rgba(0,0,0,0.04);
     --c-border: rgba(0,0,0,0.06);
 }
 [data-theme="dark"] .gpage {
-    --c-accent: #00f0ff;
-    --c-accent-dim: rgba(0,240,255,0.1);
     --c-surface: rgba(255,255,255,0.04);
     --c-surface-hover: rgba(255,255,255,0.08);
     --c-border: rgba(255,255,255,0.06);
