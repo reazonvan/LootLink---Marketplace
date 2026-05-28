@@ -137,19 +137,6 @@ def unread_notifications_count(request):
     return JsonResponse({"count": count})
 
 
-def yandex_verification(request):
-    """Yandex Webmaster verification file."""
-    from django.http import HttpResponse
-
-    html_content = """<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    </head>
-    <body>Verification: a6899228ac192041</body>
-</html>"""
-    return HttpResponse(html_content, content_type="text/html")
-
-
 def requisites(request):
     """Страница с реквизитами для платежных систем.
 

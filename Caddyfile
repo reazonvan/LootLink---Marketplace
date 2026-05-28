@@ -1,6 +1,8 @@
 {
-    # Replace with your production email for Let's Encrypt notices.
-    email ivanpetrov20066.ip@gmail.com
+    # Q4: email для Let's Encrypt notices. Берётся из env CADDY_ACME_EMAIL,
+    # дефолт — operational support@lootlink.ru (не личный email).
+    # Передать: `CADDY_ACME_EMAIL=ops@lootlink.ru docker-compose up -d`.
+    email {$CADDY_ACME_EMAIL:support@lootlink.ru}
     # Use Let's Encrypt explicitly to avoid fallback noise from other CAs.
     acme_ca https://acme-v02.api.letsencrypt.org/directory
 }

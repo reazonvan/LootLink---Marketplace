@@ -42,5 +42,7 @@ cryptography>=42.0.0
 
 # Utils
 Pillow>=11.3.0
-pywebpush==1.14.0
-python-telegram-bot==20.7
+# Q2: ~= вместо == чтобы получать patch-релизы с security-фиксами.
+# Минорные апгрейды (1.15, 21.x) — через Dependabot и review.
+pywebpush~=1.14
+python-telegram-bot~=20.7
