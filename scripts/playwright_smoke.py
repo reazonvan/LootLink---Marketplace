@@ -144,15 +144,13 @@ def run() -> int:  # noqa: C901
                 same_origin_request_failures.append(line)
 
         def verify_no_horizontal_overflow() -> tuple[bool, str]:
-            metrics = page.evaluate(
-                """
+            metrics = page.evaluate("""
                 () => ({
                     clientWidth: document.documentElement.clientWidth,
                     scrollWidth: document.documentElement.scrollWidth,
                     bodyScrollWidth: document.body ? document.body.scrollWidth : 0
                 })
-                """
-            )
+                """)
             ok = metrics["scrollWidth"] <= metrics["clientWidth"] + 1
             detail = (
                 f"client={metrics['clientWidth']}, "
