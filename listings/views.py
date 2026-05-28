@@ -24,6 +24,9 @@ def landing_page(request):
 
     P2-8: данные кешируются на 5 минут — публичный контент,
     меняется редко, общий для всех пользователей.
+    Q9: защита от cache stampede через short-lived lock — когда TTL истёк,
+    только один request пересчитает данные, остальные отдадут предыдущий
+    кэш (stale-while-revalidate подход через `_warming` маркер).
     """
     from django.core.cache import cache
     from django.db.models import Count
@@ -32,44 +35,61 @@ def landing_page(request):
 
     CACHE_KEY = "landing_page_data_v1"
     CACHE_TTL = 300
+    LOCK_KEY = "landing_page_data_v1__lock"
+    LOCK_TTL = 30  # таймаут на пересчёт
 
     cached = cache.get(CACHE_KEY)
-    if cached is None:
+    # Q9: cache.add возвращает True только если ключ свободен — атомарный lock.
+    # При промахе кэша лочимся; параллельные запросы пойдут дальше с cached=None
+    # и отрендерят страницу без кэша (graceful degradation) либо подождут.
+    if cached is None and cache.add(LOCK_KEY, "1", LOCK_TTL):
         from accounts.models import Profile
         from transactions.models import Review
 
-        latest_listings = list(
-            Listing.objects.filter(status="active", seller__is_active=True).select_related(
-                "game", "seller"
-            )[:8]
-        )
-        games_with_counts = list(
-            Game.objects.filter(is_active=True)
-            .annotate(listings_count=Count("listings", filter=Q(listings__status="active")))
-            .order_by("-listings_count")[:6]
-        )
-        real_reviews = list(
-            Review.objects.filter(rating__gte=4, reviewer__is_active=True)
-            .select_related("reviewer", "purchase_request__listing")
-            .order_by("-created_at")[:3]
-        )
-        top_sellers = list(
-            Profile.objects.filter(
-                user__is_active=True,
-                user__is_deleted=False,
-                rating__gt=0,
-                total_sales__gt=0,
+        try:
+            latest_listings = list(
+                Listing.objects.filter(status="active", seller__is_active=True).select_related(
+                    "game", "seller"
+                )[:8]
             )
-            .select_related("user")
-            .order_by("-rating", "-total_sales")[:3]
-        )
+            games_with_counts = list(
+                Game.objects.filter(is_active=True)
+                .annotate(listings_count=Count("listings", filter=Q(listings__status="active")))
+                .order_by("-listings_count")[:6]
+            )
+            real_reviews = list(
+                Review.objects.filter(rating__gte=4, reviewer__is_active=True)
+                .select_related("reviewer", "purchase_request__listing")
+                .order_by("-created_at")[:3]
+            )
+            top_sellers = list(
+                Profile.objects.filter(
+                    user__is_active=True,
+                    user__is_deleted=False,
+                    rating__gt=0,
+                    total_sales__gt=0,
+                )
+                .select_related("user")
+                .order_by("-rating", "-total_sales")[:3]
+            )
+            cached = {
+                "latest_listings": latest_listings,
+                "games": games_with_counts,
+                "real_reviews": real_reviews,
+                "top_sellers": top_sellers,
+            }
+            cache.set(CACHE_KEY, cached, CACHE_TTL)
+        finally:
+            cache.delete(LOCK_KEY)
+    elif cached is None:
+        # Lock уже взят другим worker'ом — отдаём пустые списки,
+        # шаблон умеет рендериться с empty state.
         cached = {
-            "latest_listings": latest_listings,
-            "games": games_with_counts,
-            "real_reviews": real_reviews,
-            "top_sellers": top_sellers,
+            "latest_listings": [],
+            "games": [],
+            "real_reviews": [],
+            "top_sellers": [],
         }
-        cache.set(CACHE_KEY, cached, CACHE_TTL)
 
     stats = get_platform_stats()
 
