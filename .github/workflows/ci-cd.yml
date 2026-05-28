@@ -44,7 +44,7 @@ jobs:
         run: python manage.py check --deploy --fail-level=ERROR
         env:
           DJANGO_SETTINGS_MODULE: config.settings.production
-          SECRET_KEY: test-secret-key-for-ci-only-not-for-prod
+          SECRET_KEY: test-secret-key-for-ci-only-not-for-production-do-not-use-anywhere-else-50chars
           ADMIN_URL: ci-admin-7zx2-mgmt/
           PAYMENT_DETAILS_KEY: 4dM2k7HRl9_C5gXTcS9p1g8oC4qO9o6JIxAa-_y0fxc=
           TRUSTED_PROXIES: 127.0.0.1
@@ -102,7 +102,7 @@ jobs:
         run: python manage.py migrate --noinput
         env:
           DJANGO_SETTINGS_MODULE: config.settings.test
-          SECRET_KEY: test-secret-key-for-ci-only-not-for-prod
+          SECRET_KEY: test-secret-key-for-ci-only-not-for-production-do-not-use-anywhere-else-50chars
           DB_NAME: lootlink_test
           DB_USER: postgres
           DB_PASSWORD: postgres

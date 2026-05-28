@@ -454,14 +454,19 @@ class TestYookassaHandleWebhook:
 
 @pytest.mark.django_db
 class TestYookassaWebhookView:
+    # A5: webhook view возвращает 503 если YOOKASSA_WEBHOOK_SECRET пуст в prod
+    # (DEBUG=False). Тесты должны явно ставить DEBUG=True ИЛИ непустой секрет,
+    # чтобы проверять HTTP-логику (200/400/403), а не A5-fail-fast.
 
-    def test_invalid_json_returns_400(self, client):
+    def test_invalid_json_returns_400(self, client, settings):
+        settings.DEBUG = True  # обход A5 fail-fast в тестах HTTP-логики
         url = reverse("payments:yookassa_webhook")
         response = client.post(url, data=b"not-json", content_type="application/json")
         assert response.status_code == 400
 
     @patch("payments.views.yookassa_service")
-    def test_webhook_view_calls_service(self, mock_service, client):
+    def test_webhook_view_calls_service(self, mock_service, client, settings):
+        settings.DEBUG = True
         mock_service.allowed_webhook_ips = set()
         mock_service.handle_webhook.return_value = True
         url = reverse("payments:yookassa_webhook")
@@ -471,13 +476,23 @@ class TestYookassaWebhookView:
         assert mock_service.handle_webhook.called
 
     @patch("payments.views.yookassa_service")
-    def test_webhook_view_returns_400_on_failure(self, mock_service, client):
+    def test_webhook_view_returns_400_on_failure(self, mock_service, client, settings):
+        settings.DEBUG = True
         mock_service.allowed_webhook_ips = set()
         mock_service.handle_webhook.return_value = False
         url = reverse("payments:yookassa_webhook")
         body = json.dumps({"event": "payment.succeeded", "object": {"id": "p"}})
         response = client.post(url, data=body, content_type="application/json")
         assert response.status_code == 400
+
+    def test_webhook_view_returns_503_in_prod_without_secret(self, client, settings):
+        """A5 регрессия: webhook в prod без YOOKASSA_WEBHOOK_SECRET → 503."""
+        settings.DEBUG = False
+        settings.YOOKASSA_WEBHOOK_SECRET = ""
+        url = reverse("payments:yookassa_webhook")
+        body = json.dumps({"event": "payment.succeeded", "object": {"id": "p"}})
+        response = client.post(url, data=body, content_type="application/json")
+        assert response.status_code == 503
 
     @patch("payments.views.yookassa_service")
     def test_webhook_view_blocks_unknown_ip(self, mock_service, client):
