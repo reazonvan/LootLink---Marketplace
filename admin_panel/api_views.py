@@ -1,7 +1,6 @@
-"""
-API endpoints для админ-панели (AJAX операции)
-"""
+"""API endpoints для админ-панели (AJAX операции)."""
 
+import logging
 from datetime import timedelta
 
 from django.contrib.admin.views.decorators import staff_member_required
@@ -19,6 +18,15 @@ from core.utils import get_client_ip
 from listings.models import Listing, Report
 from payments.models_disputes import Dispute
 from transactions.models import PurchaseRequest
+
+logger = logging.getLogger(__name__)
+
+
+def _has_2fa(user):
+    """Возвращает True, если у пользователя есть подтверждённое TOTP-устройство."""
+    from django_otp.plugins.otp_totp.models import TOTPDevice
+
+    return TOTPDevice.objects.filter(user=user, confirmed=True).exists()
 
 
 def is_staff_or_moderator(user):
@@ -68,13 +76,19 @@ def json_response(success=True, message="", data=None):
 @require_POST
 @user_passes_test(is_staff_or_moderator)
 def verify_user(request, user_id):
-    """Верификация пользователя"""
+    """Верификация пользователя."""
     user = get_object_or_404(CustomUser, id=user_id)
     profile = user.profile
 
     profile.is_verified = not profile.is_verified
     profile.save(update_fields=["is_verified"])
 
+    logger.info(
+        "admin verify_user: actor=%s target=%s -> is_verified=%s",
+        request.user.pk,
+        user.pk,
+        profile.is_verified,
+    )
     _audit(
         action_type="profile_update",
         actor=request.user,
@@ -102,15 +116,24 @@ def ban_user(request, user_id):
 
     P2-10: критическая операция — требуем 2FA через middleware/checker.
     """
-    from django_otp.plugins.otp_totp.models import TOTPDevice
-
-    if not TOTPDevice.objects.filter(user=request.user, confirmed=True).exists():
+    if not _has_2fa(request.user):
+        logger.warning(
+            "admin ban_user denied (no 2FA): actor=%s target=%s",
+            request.user.pk,
+            user_id,
+        )
         return json_response(False, "Включите 2FA для критических админ-операций")
     user = get_object_or_404(CustomUser, id=user_id)
 
     if user.is_superuser:
+        logger.warning(
+            "admin ban_user blocked (superuser target): actor=%s target=%s",
+            request.user.pk,
+            user.pk,
+        )
         return json_response(False, "Нельзя заблокировать владельца")
     if user.pk == request.user.pk:
+        logger.warning("admin ban_user blocked (self): actor=%s", request.user.pk)
         return json_response(False, "Нельзя заблокировать самого себя")
 
     from django.contrib.sessions.models import Session
@@ -125,11 +148,23 @@ def ban_user(request, user_id):
             try:
                 data = session.get_decoded()
             except Exception:
+                # Сессия с битым/неподписанным payload — Django сам её удалит при
+                # следующей очистке. Пропускаем, но фиксируем для разбора.
+                logger.debug(
+                    "ban_user: skipping un-decodable session key=%s",
+                    getattr(session, "session_key", "?"),
+                )
                 continue
             if str(data.get("_auth_user_id")) == str(user.pk):
                 session.delete()
                 terminated_sessions += 1
 
+    logger.warning(
+        "admin ban_user: actor=%s target=%s terminated_sessions=%s",
+        request.user.pk,
+        user.pk,
+        terminated_sessions,
+    )
     _audit(
         action_type="account_locked",
         actor=request.user,
@@ -146,12 +181,13 @@ def ban_user(request, user_id):
 @require_POST
 @staff_member_required
 def unban_user(request, user_id):
-    """Разблокировка пользователя"""
+    """Разблокировка пользователя."""
     user = get_object_or_404(CustomUser, id=user_id)
 
     user.is_active = True
     user.save(update_fields=["is_active"])
 
+    logger.info("admin unban_user: actor=%s target=%s", request.user.pk, user.pk)
     _audit(
         action_type="account_unlocked",
         actor=request.user,
@@ -167,13 +203,19 @@ def unban_user(request, user_id):
 @require_POST
 @staff_member_required
 def toggle_moderator(request, user_id):
-    """Назначить/снять модератора"""
+    """Назначить/снять модератора."""
     user = get_object_or_404(CustomUser, id=user_id)
     profile = user.profile
 
     profile.is_moderator = not profile.is_moderator
     profile.save(update_fields=["is_moderator"])
 
+    logger.warning(
+        "admin toggle_moderator: actor=%s target=%s -> is_moderator=%s",
+        request.user.pk,
+        user.pk,
+        profile.is_moderator,
+    )
     _audit(
         action_type="profile_update",
         actor=request.user,
@@ -203,11 +245,23 @@ def approve_listing(request, listing_id):
     listing = get_object_or_404(Listing, id=listing_id)
 
     if listing.status in ("sold", "reserved"):
+        logger.info(
+            "admin approve_listing blocked (bad status): actor=%s listing=%s status=%s",
+            request.user.pk,
+            listing.pk,
+            listing.status,
+        )
         return json_response(False, "Нельзя одобрить проданное/зарезервированное объявление")
 
     listing.status = "active"
     listing.save(update_fields=["status"])
 
+    logger.info(
+        "admin approve_listing: actor=%s listing=%s seller=%s",
+        request.user.pk,
+        listing.pk,
+        listing.seller_id,
+    )
     _audit(
         action_type="listing_edit",
         actor=request.user,
@@ -229,11 +283,24 @@ def reject_listing(request, listing_id):
     reason = (request.POST.get("reason", "") or "")[:500]
 
     if listing.status not in ("active", "reserved"):
+        logger.info(
+            "admin reject_listing blocked (bad status): actor=%s listing=%s status=%s",
+            request.user.pk,
+            listing.pk,
+            listing.status,
+        )
         return json_response(False, f"Нельзя отклонить объявление в статусе {listing.status}")
 
     listing.status = "cancelled"
     listing.save(update_fields=["status"])
 
+    logger.warning(
+        "admin reject_listing: actor=%s listing=%s seller=%s reason=%r",
+        request.user.pk,
+        listing.pk,
+        listing.seller_id,
+        reason,
+    )
     _audit(
         action_type="listing_edit",
         actor=request.user,
@@ -257,9 +324,12 @@ def delete_listing(request, listing_id):
     Escrow с замороженными деньгами. Для деактивации используем cancelled.
     P2-10: требуем 2FA для критической операции.
     """
-    from django_otp.plugins.otp_totp.models import TOTPDevice
-
-    if not TOTPDevice.objects.filter(user=request.user, confirmed=True).exists():
+    if not _has_2fa(request.user):
+        logger.warning(
+            "admin delete_listing denied (no 2FA): actor=%s listing=%s",
+            request.user.pk,
+            listing_id,
+        )
         return json_response(False, "Включите 2FA для критических админ-операций")
     listing = get_object_or_404(Listing, id=listing_id)
     title = listing.title
@@ -267,6 +337,11 @@ def delete_listing(request, listing_id):
 
     # Проверка: нельзя «удалять» листинг с funded эскроу или активными запросами
     if listing.purchase_requests.filter(status__in=["pending", "accepted"]).exists():
+        logger.warning(
+            "admin delete_listing blocked (active requests): actor=%s listing=%s",
+            request.user.pk,
+            listing.pk,
+        )
         return json_response(
             False,
             "Нельзя удалить объявление с активными запросами. "
@@ -276,6 +351,13 @@ def delete_listing(request, listing_id):
     listing.status = "cancelled"
     listing.save(update_fields=["status"])
 
+    logger.warning(
+        "admin delete_listing: actor=%s listing=%s seller=%s title=%r",
+        request.user.pk,
+        listing.pk,
+        seller.pk,
+        title,
+    )
     _audit(
         action_type="listing_delete",
         actor=request.user,
@@ -301,16 +383,30 @@ def cancel_transaction(request, transaction_id):
 
     P2-10: финансовая операция — требуем 2FA.
     """
-    from django_otp.plugins.otp_totp.models import TOTPDevice
-
-    if not TOTPDevice.objects.filter(user=request.user, confirmed=True).exists():
+    if not _has_2fa(request.user):
+        logger.warning(
+            "admin cancel_transaction denied (no 2FA): actor=%s pr=%s",
+            request.user.pk,
+            transaction_id,
+        )
         return json_response(False, "Включите 2FA для критических админ-операций")
     pr = get_object_or_404(PurchaseRequest, id=transaction_id)
     reason = (request.POST.get("reason") or "Отменено администратором")[:500]
 
     if pr.status == "completed":
+        logger.info(
+            "admin cancel_transaction blocked (completed): actor=%s pr=%s",
+            request.user.pk,
+            pr.pk,
+        )
         return json_response(False, "Нельзя отменить завершенную сделку")
     if pr.status in ("cancelled", "rejected"):
+        logger.info(
+            "admin cancel_transaction blocked (already %s): actor=%s pr=%s",
+            pr.status,
+            request.user.pk,
+            pr.pk,
+        )
         return json_response(False, f"Сделка уже в статусе {pr.status}")
 
     with db_transaction.atomic():
@@ -332,6 +428,16 @@ def cancel_transaction(request, transaction_id):
             pr_locked.listing.status = "active"
             pr_locked.listing.save(update_fields=["status"])
 
+    logger.warning(
+        "admin cancel_transaction: actor=%s pr=%s buyer=%s seller=%s "
+        "escrow_refunded=%s reason=%r",
+        request.user.pk,
+        pr.pk,
+        pr.buyer_id,
+        pr.listing.seller_id,
+        refunded,
+        reason,
+    )
     _audit(
         action_type="purchase_complete",
         actor=request.user,
@@ -352,6 +458,61 @@ def cancel_transaction(request, transaction_id):
 # ═══════════════════════════════════════════════════════════════
 
 
+def _validate_resolve_dispute_input(request, dispute):
+    """Валидация POST resolve_dispute. Возвращает (resolution, winner) или JsonResponse-ошибку."""
+    resolution = (request.POST.get("resolution") or "").strip()
+    winner = request.POST.get("winner")
+
+    if not resolution:
+        logger.info(
+            "admin resolve_dispute rejected (empty resolution): actor=%s dispute=%s",
+            request.user.pk,
+            dispute.pk,
+        )
+        return None, None, json_response(False, "Укажите текст решения")
+    if winner not in ("buyer", "seller", "partial"):
+        logger.info(
+            "admin resolve_dispute rejected (bad winner): actor=%s dispute=%s winner=%r",
+            request.user.pk,
+            dispute.pk,
+            winner,
+        )
+        return None, None, json_response(False, "winner должен быть buyer|seller|partial")
+    if dispute.status in Dispute.RESOLVED_STATUSES:
+        logger.info(
+            "admin resolve_dispute blocked (already resolved): actor=%s dispute=%s status=%s",
+            request.user.pk,
+            dispute.pk,
+            dispute.status,
+        )
+        return None, None, json_response(False, f"Спор уже разрешён ({dispute.status})")
+    return resolution, winner, None
+
+
+def _parse_refund_amount(request, dispute):
+    """Парсит refund_amount для winner=partial. Возвращает (Decimal, None) или (None, error)."""
+    from decimal import Decimal, InvalidOperation
+
+    raw_amount = request.POST.get("refund_amount")
+    if not raw_amount:
+        logger.info(
+            "admin resolve_dispute rejected (no refund_amount): actor=%s dispute=%s",
+            request.user.pk,
+            dispute.pk,
+        )
+        return None, json_response(False, "Для partial укажите refund_amount")
+    try:
+        return Decimal(str(raw_amount)), None
+    except (InvalidOperation, ValueError):
+        logger.info(
+            "admin resolve_dispute rejected (bad amount): actor=%s dispute=%s raw=%r",
+            request.user.pk,
+            dispute.pk,
+            raw_amount,
+        )
+        return None, json_response(False, "Некорректная сумма refund_amount")
+
+
 @require_POST
 @staff_member_required
 def resolve_dispute(request, dispute_id):
@@ -364,25 +525,21 @@ def resolve_dispute(request, dispute_id):
 
     P2-10: финансовая операция — требуем 2FA.
     """
-    from decimal import Decimal, InvalidOperation
-
-    from django_otp.plugins.otp_totp.models import TOTPDevice
-
-    if not TOTPDevice.objects.filter(user=request.user, confirmed=True).exists():
+    if not _has_2fa(request.user):
+        logger.warning(
+            "admin resolve_dispute denied (no 2FA): actor=%s dispute=%s",
+            request.user.pk,
+            dispute_id,
+        )
         return json_response(False, "Включите 2FA для критических админ-операций")
 
     dispute = get_object_or_404(Dispute.objects.select_related("escrow"), id=dispute_id)
-    resolution = (request.POST.get("resolution") or "").strip()
-    winner = request.POST.get("winner")
 
-    if not resolution:
-        return json_response(False, "Укажите текст решения")
-    if winner not in ("buyer", "seller", "partial"):
-        return json_response(False, "winner должен быть buyer|seller|partial")
+    resolution, winner, err = _validate_resolve_dispute_input(request, dispute)
+    if err is not None:
+        return err
 
-    if dispute.status in Dispute.RESOLVED_STATUSES:
-        return json_response(False, f"Спор уже разрешён ({dispute.status})")
-
+    refund_amount = None
     try:
         if winner == "buyer":
             dispute.resolve_for_buyer(
@@ -393,13 +550,9 @@ def resolve_dispute(request, dispute_id):
         elif winner == "seller":
             dispute.resolve_for_seller(decision_text=resolution, moderator=request.user)
         else:  # partial
-            raw_amount = request.POST.get("refund_amount")
-            if not raw_amount:
-                return json_response(False, "Для partial укажите refund_amount")
-            try:
-                refund_amount = Decimal(str(raw_amount))
-            except (InvalidOperation, ValueError):
-                return json_response(False, "Некорректная сумма refund_amount")
+            refund_amount, err = _parse_refund_amount(request, dispute)
+            if err is not None:
+                return err
             dispute.resolve_for_buyer(
                 decision_text=resolution,
                 full_refund=False,
@@ -407,13 +560,28 @@ def resolve_dispute(request, dispute_id):
                 moderator=request.user,
             )
     except ValueError as exc:
+        logger.warning(
+            "admin resolve_dispute rejected (model ValueError): actor=%s dispute=%s err=%s",
+            request.user.pk,
+            dispute.pk,
+            exc,
+        )
         return json_response(False, str(exc))
     except Exception as exc:  # pragma: no cover
-        import logging
-
-        logging.getLogger(__name__).exception("resolve_dispute failed")
+        logger.exception(
+            "admin resolve_dispute failed: actor=%s dispute=%s",
+            request.user.pk,
+            dispute.pk,
+        )
         return json_response(False, f"Ошибка: {exc}")
 
+    logger.warning(
+        "admin resolve_dispute: actor=%s dispute=%s winner=%s refund=%s",
+        request.user.pk,
+        dispute.pk,
+        winner,
+        refund_amount,
+    )
     return json_response(True, "Спор разрешен")
 
 
@@ -428,11 +596,23 @@ def process_report(request, report_id):
     """Обработать жалобу: атомарно меняет статус с проверкой текущего."""
     action = request.POST.get("action")  # 'approve' | 'reject'
     if action not in ("approve", "reject"):
+        logger.info(
+            "admin process_report rejected (bad action): actor=%s report=%s action=%r",
+            request.user.pk,
+            report_id,
+            action,
+        )
         return json_response(False, "Неверное действие")
 
     with db_transaction.atomic():
         report = Report.objects.select_for_update().select_related("listing").get(pk=report_id)
         if report.status != "pending":
+            logger.info(
+                "admin process_report blocked (not pending): actor=%s report=%s status=%s",
+                request.user.pk,
+                report.pk,
+                report.status,
+            )
             return json_response(False, f"Жалоба уже обработана ({report.status})")
 
         if action == "approve":
@@ -454,6 +634,13 @@ def process_report(request, report_id):
             report.save(update_fields=["status", "admin_comment", "resolved_at"])
             message = "Жалоба отклонена"
 
+    logger.info(
+        "admin process_report: actor=%s report=%s action=%s listing=%s",
+        request.user.pk,
+        report.pk,
+        action,
+        report.listing_id,
+    )
     _audit(
         action_type="report_create",
         actor=request.user,
