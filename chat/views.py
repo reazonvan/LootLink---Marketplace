@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -10,6 +12,8 @@ from listings.models import Listing
 
 from .forms import MessageForm
 from .models import Conversation, Message
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -71,6 +75,11 @@ def conversation_detail(request, pk):
     conversation = get_object_or_404(Conversation, pk=pk)
 
     if request.user not in [conversation.participant1, conversation.participant2]:
+        logger.warning(
+            "chat IDOR attempt on conversation_detail: user=%s conv=%s",
+            request.user.pk,
+            conversation.pk,
+        )
         messages.error(request, "У вас нет доступа к этой беседе.")
         return redirect("chat:conversations_list")
 
@@ -93,6 +102,13 @@ def conversation_detail(request, pk):
             message.conversation = conversation
             message.sender = request.user
             message.save()
+            logger.info(
+                "chat message via form: id=%s conv=%s sender=%s has_image=%s",
+                message.pk,
+                conversation.pk,
+                request.user.pk,
+                bool(message.image),
+            )
 
             # Обновляем last_seen отправителя сразу
             from django.utils import timezone
@@ -144,6 +160,11 @@ def conversation_start(request, listing_pk):
 
     # Нельзя начать беседу с самим собой
     if listing.seller == request.user:
+        logger.info(
+            "chat start blocked (self-listing): user=%s listing=%s",
+            request.user.pk,
+            listing.pk,
+        )
         messages.error(request, "Вы не можете начать беседу по своему объявлению.")
         return redirect("listings:listing_detail", pk=listing_pk)
 
@@ -151,6 +172,7 @@ def conversation_start(request, listing_pk):
     participant1, participant2 = sorted([request.user, listing.seller], key=lambda u: u.pk)
 
     # Используем get_or_create с транзакцией для атомарности
+    created = False
     try:
         with transaction.atomic():
             conversation, created = Conversation.objects.get_or_create(
@@ -167,11 +189,25 @@ def conversation_start(request, listing_pk):
             # Беседа создана — контекст товара показывается как карточка в чате
     except IntegrityError:
         # На случай если все равно создался дубликат (крайне редко)
+        logger.warning(
+            "chat start IntegrityError fallback: buyer=%s seller=%s listing=%s",
+            request.user.pk,
+            listing.seller_id,
+            listing.pk,
+        )
         conversation = Conversation.objects.filter(
             Q(participant1=participant1, participant2=participant2, listing=listing)
             | Q(participant1=participant2, participant2=participant1, listing=listing)
         ).first()
 
+    if created:
+        logger.info(
+            "chat conversation started: id=%s buyer=%s seller=%s listing=%s",
+            conversation.pk,
+            request.user.pk,
+            listing.seller_id,
+            listing.pk,
+        )
     return redirect("chat:conversation_detail", pk=conversation.pk)
 
 
@@ -186,6 +222,12 @@ def get_new_messages(request, conversation_pk):
     requests_count = cache.get(cache_key, 0)
 
     if requests_count >= 200:
+        logger.warning(
+            "chat poll rate-limited: user=%s conv=%s count=%s",
+            request.user.pk,
+            conversation_pk,
+            requests_count,
+        )
         return JsonResponse(
             {"error": "Слишком много запросов. Подождите минуту.", "messages": []}, status=429
         )
@@ -196,6 +238,11 @@ def get_new_messages(request, conversation_pk):
 
     # Проверяем доступ
     if request.user not in [conversation.participant1, conversation.participant2]:
+        logger.warning(
+            "chat IDOR attempt on get_new_messages: user=%s conv=%s",
+            request.user.pk,
+            conversation.pk,
+        )
         return JsonResponse({"error": "Доступ запрещён"}, status=403)
 
     # P3-12: cast after в int — иначе ORM может ругнуться на «'after'» строку.

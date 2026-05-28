@@ -1,5 +1,4 @@
-"""
-Сервисный слой `chat/`.
+"""Сервисный слой `chat/`.
 
 Здесь живёт бизнес-логика для бесед (Conversation) и сообщений (Message).
 
@@ -11,6 +10,7 @@ Naming: `conversation_<action>`, `message_<action>`.
 Постепенно перенесите сюда логику из `chat/views.py` и `chat/consumers.py`.
 """
 
+import logging
 from typing import TYPE_CHECKING
 
 from django.db import transaction
@@ -20,6 +20,8 @@ if TYPE_CHECKING:
     from chat.models import Conversation, Message
     from listings.models import Listing
 
+logger = logging.getLogger(__name__)
+
 
 @transaction.atomic
 def conversation_get_or_create(
@@ -28,8 +30,7 @@ def conversation_get_or_create(
     user2: "CustomUser",
     listing: "Listing | None" = None,
 ) -> "Conversation":
-    """
-    Получить или создать беседу между двумя пользователями.
+    """Получить или создать беседу между двумя пользователями.
 
     Модель требует participant1_id < participant2_id (CheckConstraint).
     Поэтому сортируем по pk перед созданием.
@@ -37,24 +38,39 @@ def conversation_get_or_create(
     from chat.models import Conversation
 
     p1, p2 = sorted([user1, user2], key=lambda u: u.pk)
-    conversation, _created = Conversation.objects.get_or_create(
+    conversation, created = Conversation.objects.get_or_create(
         participant1=p1,
         participant2=p2,
         listing=listing,
     )
+    if created:
+        logger.info(
+            "conversation created: id=%s p1=%s p2=%s listing=%s",
+            conversation.pk,
+            p1.pk,
+            p2.pk,
+            listing.pk if listing else None,
+        )
     return conversation
 
 
 def message_send(*, conversation: "Conversation", sender: "CustomUser", content: str) -> "Message":
-    """
-    Отправить сообщение в беседу.
+    """Отправить сообщение в беседу.
 
     Триггерит сигнал post_save → отправляет уведомление через Channels (WebSocket).
     """
     from chat.models import Message
 
-    return Message.objects.create(
+    msg = Message.objects.create(
         conversation=conversation,
         sender=sender,
         content=content,
     )
+    logger.info(
+        "message sent: id=%s conv=%s sender=%s length=%s",
+        msg.pk,
+        conversation.pk,
+        sender.pk,
+        len(content or ""),
+    )
+    return msg
