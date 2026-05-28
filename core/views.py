@@ -39,23 +39,29 @@ def health_check(request):
 
 
 def about(request):
-    """Страница 'О нас' с реальной статистикой из PostgreSQL."""
-    from accounts.models import CustomUser
-    from listings.models import Game, Listing
-    from transactions.models import PurchaseRequest
+    """Страница 'О нас' с реальной статистикой из PostgreSQL.
 
-    # Реальная статистика
-    total_users = CustomUser.objects.count()
-    total_listings = Listing.objects.filter(status="active").count()
-    total_deals = PurchaseRequest.objects.filter(status="completed").count()
-    total_games = Game.objects.filter(is_active=True).count()
+    A4: кэшируется на 5 минут — публичная страница, 4 COUNT по большим
+    таблицам должны хитать БД не на каждый запрос.
+    """
+    from django.core.cache import cache
 
-    context = {
-        "total_users": total_users,
-        "total_listings": total_listings,
-        "total_deals": total_deals,
-        "total_games": total_games,
-    }
+    CACHE_KEY = "about_page_stats_v1"
+    CACHE_TTL = 300
+
+    context = cache.get(CACHE_KEY)
+    if context is None:
+        from accounts.models import CustomUser
+        from listings.models import Game, Listing
+        from transactions.models import PurchaseRequest
+
+        context = {
+            "total_users": CustomUser.objects.count(),
+            "total_listings": Listing.objects.filter(status="active").count(),
+            "total_deals": PurchaseRequest.objects.filter(status="completed").count(),
+            "total_games": Game.objects.filter(is_active=True).count(),
+        }
+        cache.set(CACHE_KEY, context, CACHE_TTL)
 
     return render(request, "pages/about.html", context)
 
