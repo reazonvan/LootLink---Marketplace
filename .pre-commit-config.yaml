@@ -3,9 +3,9 @@
 # Run manually: pre-commit run --all-files
 
 repos:
-  # Python code formatting
+  # Python code formatting (точная версия — должна совпадать с requirements/development.txt)
   - repo: https://github.com/psf/black
-    rev: 26.3.1
+    rev: 26.5.1
     hooks:
       - id: black
         language_version: python3

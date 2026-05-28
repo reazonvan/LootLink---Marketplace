@@ -10,9 +10,9 @@ pytest-django>=4.11.0
 pytest-cov>=4.1.0
 playwright>=1.58.0
 flake8>=6.1.0
-# Точная версия black — иначе CI (23.x) и локальный black (26.x) дают
-# разный output и Code Quality всегда падает.
-black~=26.3
+# Точная версия black — каждый minor (26.3/26.4/26.5) даёт чуть разный
+# output, что ломает CI. Обновлять синхронно с .pre-commit-config.yaml.
+black==26.5.1
 isort>=5.13.0
 
 # Development tools
