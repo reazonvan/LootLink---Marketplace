@@ -5,8 +5,6 @@ P2P маркетплейс для торговли внутриигровыми 
 [![Live Demo](https://img.shields.io/badge/demo-lootlink.ru-blue)](https://lootlink.ru)
 [![Python](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/django-5.2-green.svg)](https://www.djangoproject.com/)
-[![Tests](https://img.shields.io/badge/tests-513%20passed-brightgreen.svg)](#тесты)
-[![Coverage](https://img.shields.io/badge/coverage-75%25-green.svg)](#тесты)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
 **Демо:** [lootlink.ru](https://lootlink.ru)
@@ -91,10 +89,10 @@ config/          — Settings, urls, ASGI/WSGI, Celery
 - `models.py` + `signals.py` — данные и сигналы
 - `tasks.py` — Celery-задачи (идемпотентные, с retry)
 
-**Метрики кода:**
-- 168 Python-файлов, 26 425 строк
-- 88 моделей, 53 миграции, ~151 endpoint
-- 74 HTML-шаблона
+**Метрики кода (28.05.2026):**
+- ~265 Python-файлов, ~1.5 МБ исходников
+- ~88 моделей, ~53 миграции
+- HTML-шаблоны Django + custom CSS
 
 ## API
 
@@ -112,15 +110,16 @@ Session-based аутентификация + CSRF.
 ## Тесты
 
 ```bash
-pytest                                   # все 513 тестов (~9 мин)
-pytest --cov=. --cov-report=html         # с отчётом о покрытии (~75%)
+pytest                                   # все тесты
+pytest --cov=. --cov-report=html         # с отчётом о покрытии
 pytest -m "not slow"                     # быстрые тесты
 pytest payments/                         # тесты конкретного app
 ```
 
-**Метрики:**
-- 513 тестов (passed, 1 skipped, 0 failed)
-- ~75% покрытие
+**Состояние покрытия (28.05.2026):**
+- Общее покрытие: ~21% — низкое, есть план по доращиванию
+- Слабее всего: `admin_panel` (1%), `api` (13%), `core` (14%)
+- Лучше: `config` (64%), `chat`/`listings`/`payments` (22-26%)
 - Mock'и для внешних API (YooKassa, Telegram, push)
 - Фикстуры в `conftest.py` — `verified_user`, `seller`, `buyer`, `listing_factory` и др.
 

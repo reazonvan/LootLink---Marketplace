@@ -1,5 +1,4 @@
-"""
-Настройки для продакшна.
+"""Настройки для продакшна.
 
 Использование:
     DJANGO_SETTINGS_MODULE=config.settings.production
@@ -9,7 +8,7 @@
 - Sentry для мониторинга ошибок
 - Принудительный HTTPS (HSTS, secure cookies)
 - Защита от прокси-спуфинга через X-Forwarded-Proto
-- Предупреждение, если USE_REDIS=False (rate-limit/channels работают per-worker)
+- fail-fast при отсутствии PAYMENT_DETAILS_KEY/TRUSTED_PROXIES
 """
 
 import warnings
@@ -63,7 +62,7 @@ if not config("USE_REDIS", default=False, cast=bool):
     )
 
 # P2-17: в продакшне ADMIN_URL должен быть непредсказуемым
-from django.core.exceptions import ImproperlyConfigured as _ImpConfig
+from django.core.exceptions import ImproperlyConfigured as _ImpConfig  # noqa: E402
 
 if config("ADMIN_URL", default="admin/") == "admin/":
     raise _ImpConfig(
@@ -71,18 +70,26 @@ if config("ADMIN_URL", default="admin/") == "admin/":
         "в .env (например, 'a8sd9-mgmt-7zx2/')."
     )
 
-# P0-4: предупреждение про отсутствие ключа шифрования payment_details
+# P0-4: отсутствие ключа шифрования payment_details — fail-fast.
+# Withdrawal.payment_details без Fernet — PCI-DSS нарушение,
+# запуск с пустым ключом недопустим.
 if not config("PAYMENT_DETAILS_KEY", default=""):
-    warnings.warn(
-        "PAYMENT_DETAILS_KEY не задан — Withdrawal.payment_details будет "
-        "храниться в открытом виде (PCI-DSS нарушение). Задайте Fernet-ключ.",
-        RuntimeWarning,
+    raise _ImpConfig(
+        "PAYMENT_DETAILS_KEY не задан в production. Без Fernet-ключа "
+        "Withdrawal.payment_details будет храниться в открытом виде "
+        "(нарушение PCI-DSS). Сгенерировать: "
+        'python -c "from cryptography.fernet import Fernet; '
+        'print(Fernet.generate_key().decode())"'
     )
 
-# P2-12: в production TRUSTED_PROXIES обязателен (иначе XFF-спуфинг)
+# P2-12: в production TRUSTED_PROXIES обязателен (иначе XFF-спуфинг → обход rate-limit).
 if not config("TRUSTED_PROXIES", default=""):
-    warnings.warn(
-        "TRUSTED_PROXIES не задан в production — get_client_ip будет доверять "
-        "любому X-Forwarded-For, что открывает обход rate-limit и брутфорс-защиты.",
-        RuntimeWarning,
+    raise _ImpConfig(
+        "TRUSTED_PROXIES не задан в production. Без него get_client_ip "
+        "доверяет любому X-Forwarded-For, что позволяет атакующему "
+        "обойти rate-limit и брутфорс-защиту. Задайте IP/CIDR "
+        "реверс-прокси через запятую (например 172.16.0.0/12)."
     )
+
+# Опционально: предупреждение если USE_REDIS=False
+# (warning, не raise — в edge-cases dev/test может быть полезно).
