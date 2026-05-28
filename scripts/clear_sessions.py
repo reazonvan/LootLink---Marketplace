@@ -4,22 +4,26 @@
 Скрипт для очистки всех сессий Django.
 Полезно когда есть проблемы с "зависшими" сессиями.
 """
+
 import os
 import sys
+
 import django
 
 # Для Windows - устанавливаем UTF-8
-if sys.platform == 'win32':
+if sys.platform == "win32":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 # Настройка Django
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
 
-from django.contrib.sessions.models import Session
-from django.core.cache import cache
+from django.contrib.sessions.models import Session  # noqa: E402
+from django.core.cache import cache  # noqa: E402
+
 
 def clear_all_sessions():
     """Очищает все сессии и кэш."""
@@ -44,6 +48,6 @@ def clear_all_sessions():
 
     print("\nГотово! Теперь перезагрузите страницу в браузере (Ctrl+Shift+R)\n")
 
-if __name__ == '__main__':
-    clear_all_sessions()
 
+if __name__ == "__main__":
+    clear_all_sessions()

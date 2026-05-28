@@ -1,9 +1,11 @@
 """
 Тесты для истории просмотров.
 """
-from django.test import TestCase
+
 from django.contrib.auth import get_user_model
-from listings.models import Listing, Game
+from django.test import TestCase
+
+from listings.models import Game, Listing
 from listings.models_history import ViewHistory
 
 User = get_user_model()
@@ -16,26 +18,19 @@ class ViewHistoryTests(TestCase):
         """Настройка тестов."""
         # Создаем продавца
         self.seller = User.objects.create_user(
-            username='seller',
-            email='seller@example.com',
-            password='testpass123'
+            username="seller", email="seller@example.com", password="testpass123"
         )
         # Создаем покупателя (просматривающего)
         self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
+            username="testuser", email="test@example.com", password="testpass123"
         )
-        self.game = Game.objects.create(
-            name='Test Game',
-            slug='test-game'
-        )
+        self.game = Game.objects.create(name="Test Game", slug="test-game")
         self.listing = Listing.objects.create(
-            title='Test Listing',
-            description='Test description',
+            title="Test Listing",
+            description="Test description",
             price=100,
             game=self.game,
-            seller=self.seller  # Продавец - другой пользователь
+            seller=self.seller,  # Продавец - другой пользователь
         )
 
     def test_record_view(self):
@@ -43,12 +38,7 @@ class ViewHistoryTests(TestCase):
         ViewHistory.record_view(self.user, self.listing)
 
         # Проверяем что запись создана
-        self.assertTrue(
-            ViewHistory.objects.filter(
-                user=self.user,
-                listing=self.listing
-            ).exists()
-        )
+        self.assertTrue(ViewHistory.objects.filter(user=self.user, listing=self.listing).exists())
 
     def test_record_view_updates_timestamp(self):
         """Тест обновления timestamp при повторном просмотре."""
@@ -67,8 +57,7 @@ class ViewHistoryTests(TestCase):
 
         # Должна быть только одна запись
         self.assertEqual(
-            ViewHistory.objects.filter(user=self.user, listing=self.listing).count(),
-            1
+            ViewHistory.objects.filter(user=self.user, listing=self.listing).count(), 1
         )
 
     def test_view_limit(self):
@@ -76,16 +65,13 @@ class ViewHistoryTests(TestCase):
         # Создаем 60 объявлений от продавца
         for i in range(60):
             listing = Listing.objects.create(
-                title=f'Listing {i}',
-                description='Test',
+                title=f"Listing {i}",
+                description="Test",
                 price=100,
                 game=self.game,
-                seller=self.seller  # Продавец - другой пользователь
+                seller=self.seller,  # Продавец - другой пользователь
             )
             ViewHistory.record_view(self.user, listing)
 
         # Должно быть только 50 записей
-        self.assertEqual(
-            ViewHistory.objects.filter(user=self.user).count(),
-            50
-        )
+        self.assertEqual(ViewHistory.objects.filter(user=self.user).count(), 50)

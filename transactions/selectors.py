@@ -5,6 +5,7 @@ HackSoft styleguide:
     - selectors.py — только чтение БД, никаких side-effects.
     - select_related/prefetch_related — внутри селекторов, не во views.
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -13,15 +14,15 @@ from django.db.models import QuerySet
 
 from .models import PurchaseRequest, Review
 
-
 # ---------------------------------------------------------------------------
 # PurchaseRequest
 # ---------------------------------------------------------------------------
 
+
 def user_purchase_requests(
     *,
     user,
-    role: str = 'buyer',
+    role: str = "buyer",
     status: Optional[str] = None,
 ) -> QuerySet[PurchaseRequest]:
     """
@@ -32,14 +33,13 @@ def user_purchase_requests(
         role: ``'buyer'`` или ``'seller'``.
         status: Фильтр по статусу (опционально).
     """
-    if role not in ('buyer', 'seller'):
-        raise ValueError(f'Unsupported role: {role!r}')
+    if role not in ("buyer", "seller"):
+        raise ValueError(f"Unsupported role: {role!r}")
 
     qs = (
-        PurchaseRequest.objects
-        .filter(**{role: user})
-        .select_related('listing', 'buyer', 'seller')
-        .order_by('-created_at')
+        PurchaseRequest.objects.filter(**{role: user})
+        .select_related("listing", "buyer", "seller")
+        .order_by("-created_at")
     )
     if status:
         qs = qs.filter(status=status)
@@ -58,13 +58,13 @@ def get_purchase_request_for_participant(
         PurchaseRequest.DoesNotExist: Если запроса нет или user не участник.
     """
     return (
-        PurchaseRequest.objects
-        .select_related('listing', 'buyer', 'seller')
+        PurchaseRequest.objects.select_related("listing", "buyer", "seller")
         .filter(pk=request_id)
-        .filter(buyer=user) | (
-            PurchaseRequest.objects
-            .select_related('listing', 'buyer', 'seller')
-            .filter(pk=request_id, seller=user)
+        .filter(buyer=user)
+        | (
+            PurchaseRequest.objects.select_related("listing", "buyer", "seller").filter(
+                pk=request_id, seller=user
+            )
         )
     ).get()
 
@@ -75,7 +75,7 @@ def can_user_leave_review(*, purchase_request: PurchaseRequest, user) -> bool:
 
     Условия: сделка завершена и пользователь ещё не оставлял отзыв.
     """
-    if purchase_request.status != 'completed':
+    if purchase_request.status != "completed":
         return False
     return not Review.objects.filter(
         purchase_request=purchase_request,

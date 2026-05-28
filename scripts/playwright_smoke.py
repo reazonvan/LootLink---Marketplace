@@ -44,7 +44,7 @@ def parse_numeric_value(raw: str) -> int:
     return int(digits)
 
 
-def run() -> int:
+def run() -> int:  # noqa: C901
     parser = argparse.ArgumentParser(description="Playwright browser smoke checks")
     parser.add_argument(
         "--base-url",
@@ -97,7 +97,9 @@ def run() -> int:
         suffix = f" - {result.detail}" if result.detail else ""
         print(f"[{state}] {result.name}{suffix}")
 
-    def add_visit_check(page, name: str, path: str, verify: Callable[[], tuple[bool, str]] | None = None) -> None:
+    def add_visit_check(
+        page, name: str, path: str, verify: Callable[[], tuple[bool, str]] | None = None
+    ) -> None:
         url = urljoin(expected_home, path.lstrip("/"))
         try:
             response = page.goto(url, wait_until="domcontentloaded", timeout=args.timeout_ms)
@@ -182,15 +184,23 @@ def run() -> int:
             return ok, detail
 
         add_visit_check(page, "Home SEO meta", "/", verify=verify_home_meta)
-        add_visit_check(page, "Login layout desktop", "/accounts/login/", verify=verify_no_horizontal_overflow)
+        add_visit_check(
+            page, "Login layout desktop", "/accounts/login/", verify=verify_no_horizontal_overflow
+        )
 
         # Mobile layout check to catch form stretching or horizontal scroll regressions.
         try:
             page.set_viewport_size({"width": 390, "height": 844})
-            response = page.goto(expected_login_url, wait_until="domcontentloaded", timeout=args.timeout_ms)
+            response = page.goto(
+                expected_login_url, wait_until="domcontentloaded", timeout=args.timeout_ms
+            )
             status = response.status if response else None
             if status != 200:
-                record(CheckResult("Login layout mobile", False, f"status={status}, url={expected_login_url}"))
+                record(
+                    CheckResult(
+                        "Login layout mobile", False, f"status={status}, url={expected_login_url}"
+                    )
+                )
             else:
                 ok, detail = verify_no_horizontal_overflow()
                 record(CheckResult("Login layout mobile", ok, detail))
@@ -212,7 +222,9 @@ def run() -> int:
             alert_text = alert.inner_text().strip() if alert_count else ""
             alert_visible = alert.is_visible() if alert_count else False
             stays_on_login = "/accounts/login/" in page.url
-            has_error_hint = any(token in alert_text.lower() for token in ("невер", "ошиб", "invalid"))
+            has_error_hint = any(
+                token in alert_text.lower() for token in ("невер", "ошиб", "invalid")
+            )
 
             ok = stays_on_login and alert_visible and has_error_hint
             detail = f"url={page.url}, alertVisible={alert_visible}, alertText={alert_text[:80]}"
@@ -223,18 +235,24 @@ def run() -> int:
         # Same counter should be shown on home/login for active users.
         try:
             page.goto(expected_home, wait_until="domcontentloaded", timeout=args.timeout_ms)
-            home_item = page.locator(".hero-stats .stat-item", has_text="Активных пользователей").first
+            home_item = page.locator(
+                ".hero-stats .stat-item", has_text="Активных пользователей"
+            ).first
             home_count = home_item.count()
             if home_count == 0:
                 raise ValueError("active users block not found on home page")
             home_users = parse_numeric_value(home_item.locator(".stat-value").first.inner_text())
 
             page.goto(expected_login_url, wait_until="domcontentloaded", timeout=args.timeout_ms)
-            login_item = page.locator(".info-stats .info-stat-item", has_text="Активных пользователей").first
+            login_item = page.locator(
+                ".info-stats .info-stat-item", has_text="Активных пользователей"
+            ).first
             login_count = login_item.count()
             if login_count == 0:
                 raise ValueError("active users block not found on login page")
-            login_users = parse_numeric_value(login_item.locator(".info-stat-value").first.inner_text())
+            login_users = parse_numeric_value(
+                login_item.locator(".info-stat-value").first.inner_text()
+            )
 
             users_ok = home_users == login_users
             record(
@@ -274,7 +292,9 @@ def run() -> int:
             )
 
         try:
-            redirect_response = context.request.get(args.www_url, max_redirects=0, timeout=args.timeout_ms)
+            redirect_response = context.request.get(
+                args.www_url, max_redirects=0, timeout=args.timeout_ms
+            )
             location = redirect_response.headers.get("location", "")
             redirect_ok = redirect_response.status == 308 and location.startswith(expected_home)
             detail = f"status={redirect_response.status}, location={location}"

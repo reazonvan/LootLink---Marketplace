@@ -16,6 +16,8 @@ exclude =
     .eggs/,
     *.egg-info/,
     logs/,
+    scripts/,
+    tests/locust/,
     docs/ПП01,
     docs/ПП02
 
@@ -40,5 +42,11 @@ ignore =
 per-file-ignores =
     __init__.py:F401
     settings.py:E501
+    # Тесты часто используют 'l' для listing/loop, C901 для сложных fixture-сценариев
+    test_*.py:E741,C901
+    tests_*.py:E741,C901
+    tests.py:E741,C901
 
-max-complexity = 10
+# max-complexity=15 — реалистично для Django views с branching по статусу/permissions.
+# Конкретные сложные функции помечать noqa: C901 с комментарием почему.
+max-complexity = 15
