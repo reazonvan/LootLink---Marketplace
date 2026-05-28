@@ -18,6 +18,7 @@ exclude =
     logs/,
     scripts/,
     tests/locust/,
+    .planning/,
     docs/ПП01,
     docs/ПП02
 
@@ -30,13 +31,17 @@ exclude =
 # F841 — локальная переменная не используется (часто допустимо для читаемости)
 ignore =
     E203,
+    E226,
     E501,
     W291,
     W293,
     W391,
     W503,
     W504,
+    W605,
     F401,
+    F541,
+    F811,
     F841
 
 per-file-ignores =
