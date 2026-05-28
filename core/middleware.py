@@ -1,6 +1,4 @@
-"""
-Middleware для rate limiting и защиты от брутфорса.
-"""
+"""Middleware для rate limiting и защиты от брутфорса."""
 
 import logging
 import time
@@ -14,8 +12,8 @@ security_logger = logging.getLogger("django.security")
 
 
 class SimpleRateLimitMiddleware:
-    """
-    Простое middleware для ограничения количества запросов.
+    """Простое middleware для ограничения количества запросов.
+
     Защита от брутфорса на критичных эндпоинтах.
     """
 
@@ -35,9 +33,11 @@ class SimpleRateLimitMiddleware:
     }
 
     def __init__(self, get_response):
+        """Сохраняем get_response для middleware-цепочки."""
         self.get_response = get_response
 
     def __call__(self, request):
+        """Проверяем rate-limit для POST на защищённые пути."""
         # Проверяем POST запросы и определенные пути на rate limiting
         should_check = False
 
@@ -107,14 +107,14 @@ class SimpleRateLimitMiddleware:
 
 
 class SecurityHeadersMiddleware:
-    """
-    Middleware для добавления заголовков безопасности.
-    """
+    """Middleware для добавления заголовков безопасности."""
 
     def __init__(self, get_response):
+        """Сохраняем get_response для middleware-цепочки."""
         self.get_response = get_response
 
     def __call__(self, request):
+        """Добавляем security-заголовки и CSP в response."""
         response = self.get_response(request)
 
         # Заголовки безопасности.
@@ -127,10 +127,13 @@ class SecurityHeadersMiddleware:
         response["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
 
-        # Content Security Policy
-        # В production - строже, в development - разрешаем eval для отладки
+        # Content Security Policy.
+        # ИЗВЕСТНОЕ ОГРАНИЧЕНИЕ (S6): 'unsafe-inline' остаётся для script-src
+        # потому что 30+ шаблонов содержат inline <script> и onclick=.
+        # Долгосрочный фикс — миграция на nonce-based CSP (django-csp).
+        # Временно усилены остальные директивы: object-src 'none',
+        # frame-src 'none', upgrade-insecure-requests.
         if not settings.DEBUG:
-            # Production CSP - разрешаем Bootstrap, CDN и Google Fonts
             response["Content-Security-Policy"] = (
                 "default-src 'self'; "
                 "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
@@ -139,11 +142,14 @@ class SecurityHeadersMiddleware:
                 "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; "
                 "connect-src 'self' wss://lootlink.ru https://cdn.jsdelivr.net; "
                 "frame-ancestors 'none'; "
+                "frame-src 'none'; "
+                "object-src 'none'; "
                 "base-uri 'self'; "
-                "form-action 'self';"
+                "form-action 'self'; "
+                "upgrade-insecure-requests;"
             )
         else:
-            # Development CSP - более мягкий для удобства разработки
+            # Development CSP — мягче, но те же object-src/frame-src.
             response["Content-Security-Policy"] = (
                 "default-src 'self'; "
                 "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; "
@@ -152,6 +158,8 @@ class SecurityHeadersMiddleware:
                 "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; "
                 "connect-src 'self'; "
                 "frame-ancestors 'none'; "
+                "frame-src 'none'; "
+                "object-src 'none'; "
                 "base-uri 'self'; "
                 "form-action 'self';"
             )

@@ -7,7 +7,7 @@ on:
     branches: [main, develop]
 
 env:
-  PYTHON_VERSION: "3.11"
+  PYTHON_VERSION: "3.13"
   POSTGRES_VERSION: "15"
 
 jobs:
@@ -40,17 +40,21 @@ jobs:
       - name: Run Bandit
         run: bandit -r . -c pyproject.toml
 
-      - name: Run Django Check
-        run: python manage.py check
+      - name: Run Django Check (production settings)
+        run: python manage.py check --deploy --fail-level=ERROR
         env:
-          DJANGO_SETTINGS_MODULE: config.settings.development
-          SECRET_KEY: test-secret-key-for-ci
-          DEBUG: False
+          DJANGO_SETTINGS_MODULE: config.settings.production
+          SECRET_KEY: test-secret-key-for-ci-only-not-for-prod
+          ADMIN_URL: ci-admin-7zx2-mgmt/
+          PAYMENT_DETAILS_KEY: 4dM2k7HRl9_C5gXTcS9p1g8oC4qO9o6JIxAa-_y0fxc=
+          TRUSTED_PROXIES: 127.0.0.1
           DB_NAME: lootlink_test
           DB_USER: postgres
           DB_PASSWORD: postgres
           DB_HOST: localhost
           DB_PORT: 5432
+          USE_REDIS: "False"
+          DJANGO_ENV: production
 
   test:
     name: Tests
@@ -95,11 +99,10 @@ jobs:
           pip install -r requirements/development.txt
 
       - name: Run migrations
-        run: python manage.py migrate
+        run: python manage.py migrate --noinput
         env:
-          DJANGO_SETTINGS_MODULE: config.settings.development
-          SECRET_KEY: test-secret-key-for-ci
-          DEBUG: True
+          DJANGO_SETTINGS_MODULE: config.settings.test
+          SECRET_KEY: test-secret-key-for-ci-only-not-for-prod
           DB_NAME: lootlink_test
           DB_USER: postgres
           DB_PASSWORD: postgres
@@ -151,11 +154,9 @@ jobs:
 
       - name: Run Safety check
         run: safety check --json
-        continue-on-error: true
 
       - name: Run Bandit
         run: bandit -r . -f json -o bandit-report.json
-        continue-on-error: true
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
