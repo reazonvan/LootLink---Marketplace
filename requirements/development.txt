@@ -13,7 +13,7 @@ flake8>=6.1.0
 # Точная версия black — каждый minor (26.3/26.4/26.5) даёт чуть разный
 # output, что ломает CI. Обновлять синхронно с .pre-commit-config.yaml.
 black==26.5.1
-isort>=5.13.0
+isort==8.0.1
 
 # Development tools
 django-debug-toolbar>=4.2.0
