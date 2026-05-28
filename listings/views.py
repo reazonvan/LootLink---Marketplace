@@ -4,7 +4,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.mail import mail_admins
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse
@@ -540,7 +539,7 @@ def favorites_list(request):
 
 
 @login_required
-def report_listing(request, pk):
+def report_listing(request, pk):  # noqa: C901
     """Подать жалобу на объявление с защитой от race-condition дублей."""
     from django.db import IntegrityError
     from django.db import transaction as db_transaction
@@ -670,10 +669,14 @@ def report_user(request, username):
             report.report_type = "user"
             report.save()
 
-            # Отправляем email администраторам
+            # A6: email админам асинхронно через Celery
+            # (раньше mail_admins был синхронным — зависал на SMTP-таймауте).
             try:
-                # Используем build_absolute_uri вместо hardcoded URL
+                from django.conf import settings as dj_settings
+                from django.db import transaction as db_transaction
                 from django.urls import reverse
+
+                from core.tasks import send_email_async
 
                 profile_url = request.build_absolute_uri(
                     reverse("accounts:profile", kwargs={"username": reported_user.username})
@@ -681,24 +684,25 @@ def report_user(request, username):
                 report_admin_url = request.build_absolute_uri(
                     reverse("admin:listings_report_change", args=[report.pk])
                 )
-
-                mail_admins(
-                    subject=f"Новая жалоба на пользователя: {reported_user.username}",
-                    message=f"""
-Жалобщик: {request.user.username}
-Пользователь: {reported_user.username}
-Причина: {report.get_reason_display()}
-
-Описание:
-{report.description}
-
-Ссылка на профиль: {profile_url}
-Ссылка на жалобу (админка): {report_admin_url}
-                    """,
-                    fail_silently=True,
+                subject = f"Новая жалоба на пользователя: {reported_user.username}"
+                body = (
+                    f"Жалобщик: {request.user.username}\n"
+                    f"Пользователь: {reported_user.username}\n"
+                    f"Причина: {report.get_reason_display()}\n\n"
+                    f"Описание:\n{report.description}\n\n"
+                    f"Ссылка на профиль: {profile_url}\n"
+                    f"Ссылка на жалобу (админка): {report_admin_url}\n"
                 )
+                admin_emails = [addr for _, addr in getattr(dj_settings, "ADMINS", [])] or [
+                    getattr(dj_settings, "SUPPORT_EMAIL", "")
+                ]
+                for admin_email in admin_emails:
+                    if admin_email:
+                        db_transaction.on_commit(
+                            lambda s=subject, b=body, e=admin_email: send_email_async.delay(s, b, e)
+                        )
             except Exception as e:
-                logger.error(f"Ошибка отправки email админам при жалобе на объявление: {e}")
+                logger.error(f"Ошибка постановки email админам в очередь: {e}")
 
             messages.success(
                 request, "Жалоба отправлена. Администрация рассмотрит её в ближайшее время."

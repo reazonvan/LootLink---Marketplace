@@ -94,13 +94,17 @@ class CustomUser(AbstractUser):
             except Profile.DoesNotExist:
                 pass
 
-            # Инвалидируем сессии
-            for session in Session.objects.filter(expire_date__gte=timezone.now()):
+            # A1: Инвалидируем сессии стримом — на проде могут быть 10k+ сессий.
+            # `.iterator(chunk_size=500)` грузит порциями, без загрузки всего
+            # списка в память. Долгосрочный фикс — индекс user_id→session_keys.
+            user_id_str = str(user.pk)
+            sessions_qs = Session.objects.filter(expire_date__gte=timezone.now())
+            for session in sessions_qs.iterator(chunk_size=500):
                 try:
                     data = session.get_decoded()
-                except Exception:
+                except Exception:  # nosec B112 — порченная сессия → skip
                     continue
-                if str(data.get("_auth_user_id")) == str(user.pk):
+                if str(data.get("_auth_user_id")) == user_id_str:
                     session.delete()
 
     def hard_delete(self, *args, **kwargs):
