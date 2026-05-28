@@ -140,4 +140,4 @@ class Command(BaseCommand):
             )
 
 
-import smtplib  # Для обработки SMTP исключений
+import smtplib  # noqa: E402  — для обработки SMTP исключений
