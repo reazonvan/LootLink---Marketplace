@@ -1,11 +1,13 @@
-"""
-Middleware для админ-панели: счётчики sidebar.
-"""
+"""Middleware для админ-панели: счётчики sidebar."""
+
+import logging
 
 from django.core.cache import cache
 
 from listings.models import Report
 from payments.models_disputes import Dispute
+
+logger = logging.getLogger(__name__)
 
 SIDEBAR_CACHE_TTL = 60  # секунд
 
@@ -29,6 +31,11 @@ class AdminPanelContextMiddleware:
                     "active_disputes": active_disputes,
                 }
                 cache.set("admin_panel:sidebar_counters", counters, SIDEBAR_CACHE_TTL)
+                logger.debug(
+                    "admin sidebar counters MISS: reports=%s disputes=%s",
+                    pending_reports,
+                    active_disputes,
+                )
 
             request.pending_moderation = counters["pending_reports"]
             request.pending_reports = counters["pending_reports"]

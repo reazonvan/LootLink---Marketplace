@@ -1,7 +1,6 @@
-"""
-Views для кастомной админ-панели
-"""
+"""Views для кастомной админ-панели."""
 
+import logging
 from datetime import timedelta
 
 from django.contrib.admin.views.decorators import staff_member_required
@@ -18,9 +17,11 @@ from payments.models import Wallet
 from payments.models_disputes import Dispute
 from transactions.models import PurchaseRequest, Review
 
+logger = logging.getLogger(__name__)
+
 
 def is_staff_or_moderator(user):
-    """Проверка: админ или модератор"""
+    """Проверка: админ или модератор."""
     return user.is_staff or (hasattr(user, "profile") and user.profile.is_moderator)
 
 
@@ -40,6 +41,7 @@ def dashboard(request):
 
     cached = cache.get(CACHE_KEY)
     if cached is None:
+        logger.info("admin dashboard cache MISS — recomputing aggregates")
         today = timezone.now().date()
         week_ago = today - timedelta(days=7)
         month_ago = today - timedelta(days=30)
@@ -173,8 +175,13 @@ def users_list(request):
 
 @user_passes_test(is_staff_or_moderator)
 def user_detail(request, user_id):
-    """Детальная информация о пользователе"""
+    """Детальная информация о пользователе."""
     user = get_object_or_404(CustomUser.objects.select_related("profile"), id=user_id)
+    logger.info(
+        "admin user_detail: actor=%s target=%s",
+        request.user.pk,
+        user.pk,
+    )
 
     # Статистика пользователя
     user_listings = Listing.objects.filter(seller=user).count()
@@ -407,7 +414,18 @@ def reports_list(request):
 
 @user_passes_test(is_staff_or_moderator)
 def security_logs(request):
-    """Логи безопасности"""
+    """Логи безопасности."""
+    # Меттааудит: фиксируем сам факт обращения к security-журналу
+    logger.warning(
+        "admin security_logs viewed: actor=%s filters=%s",
+        request.user.pk,
+        {
+            "risk_level": request.GET.get("risk_level"),
+            "action_type": request.GET.get("action_type"),
+            "date_from": request.GET.get("date_from"),
+            "date_to": request.GET.get("date_to"),
+        },
+    )
     logs = SecurityAuditLog.objects.select_related("user").all()
 
     # Фильтры
@@ -449,7 +467,8 @@ def security_logs(request):
 
 @staff_member_required
 def settings(request):
-    """Настройки админ-панели"""
+    """Настройки админ-панели."""
+    logger.warning("admin settings page viewed: actor=%s", request.user.pk)
     from django.conf import settings as django_settings
 
     context = {
