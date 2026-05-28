@@ -3,6 +3,7 @@
 Сервис для отправки SMS через SMS.ru
 Документация API: https://sms.ru/api
 """
+
 import logging
 
 from django.conf import settings

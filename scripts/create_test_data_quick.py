@@ -13,6 +13,7 @@
     - buyer_demo/demo12345 (покупатель, verified)
     - 5 игр, 4 категории, 6 объявлений
 """
+
 import os
 
 import django
@@ -20,11 +21,11 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
 django.setup()
 
-from decimal import Decimal
+from decimal import Decimal  # noqa: E402
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model  # noqa: E402
 
-from listings.models import Category, Game, Listing
+from listings.models import Category, Game, Listing  # noqa: E402
 
 User = get_user_model()
 

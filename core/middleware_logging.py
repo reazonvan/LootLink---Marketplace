@@ -2,6 +2,7 @@
 Middleware для request_id — уникальный идентификатор каждого HTTP-запроса.
 Позволяет связывать все логи одного запроса между собой.
 """
+
 import logging
 import threading
 import uuid
@@ -10,7 +11,7 @@ _request_id = threading.local()
 
 
 def get_request_id():
-    return getattr(_request_id, 'id', '-')
+    return getattr(_request_id, "id", "-")
 
 
 class RequestIDFilter(logging.Filter):
@@ -31,12 +32,12 @@ class RequestIDMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        rid = request.META.get('HTTP_X_REQUEST_ID', uuid.uuid4().hex[:12])
+        rid = request.META.get("HTTP_X_REQUEST_ID", uuid.uuid4().hex[:12])
         _request_id.id = rid
         request.request_id = rid
 
         response = self.get_response(request)
-        response['X-Request-ID'] = rid
+        response["X-Request-ID"] = rid
 
         _request_id.id = None
         return response

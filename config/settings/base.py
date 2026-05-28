@@ -59,7 +59,6 @@ INSTALLED_APPS = [
     "channels",
     "crispy_forms",
     "crispy_bootstrap5",
-    "storages",
     "rest_framework",
     "django_filters",
     "django_celery_beat",
@@ -75,6 +74,10 @@ INSTALLED_APPS = [
     "api.apps.ApiConfig",
     "admin_panel.apps.AdminPanelConfig",  # Кастомная админ-панель
 ]
+
+# `storages` нужен только при USE_S3=True (production). В dev/test/CI без S3
+# модуль django-storages не установлен — отсутствие в INSTALLED_APPS убирает
+# ModuleNotFoundError. Подключение через condition ниже (см. блок USE_S3).
 
 # django-otp (2FA)
 OTP_TOTP_ISSUER = "LootLink"
@@ -257,6 +260,8 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 USE_S3 = config("USE_S3", default=False, cast=bool)
 
 if USE_S3:
+    # storages добавляется только при USE_S3 — иначе нет dep `django-storages`.
+    INSTALLED_APPS.append("storages")
     # AWS S3 settings
     AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")

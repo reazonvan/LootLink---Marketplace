@@ -2,31 +2,34 @@
 # Updated to use new ListingImageValidator
 
 from django.db import migrations, models
+
 import core.validators
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('listings', '0005_alter_listing_image_alter_listing_price'),
+        ("listings", "0005_alter_listing_image_alter_listing_price"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='listing',
-            name='description',
-            field=models.TextField(help_text='Максимум 5000 символов', max_length=5000, verbose_name='Описание'),
+            model_name="listing",
+            name="description",
+            field=models.TextField(
+                help_text="Максимум 5000 символов", max_length=5000, verbose_name="Описание"
+            ),
         ),
         migrations.AlterField(
-            model_name='listing',
-            name='image',
+            model_name="listing",
+            name="image",
             field=models.ImageField(
-                blank=True, 
-                null=True, 
-                upload_to='listings/', 
-                validators=[core.validators.ListingImageValidator()], 
-                verbose_name='Изображение',
-                help_text='Макс. 5 МБ. Форматы: JPG, PNG, WebP'
+                blank=True,
+                null=True,
+                upload_to="listings/",
+                validators=[core.validators.ListingImageValidator()],
+                verbose_name="Изображение",
+                help_text="Макс. 5 МБ. Форматы: JPG, PNG, WebP",
             ),
         ),
     ]
