@@ -114,7 +114,7 @@ jobs:
         run: pytest --cov=. --cov-report=xml --cov-report=html
         env:
           DJANGO_SETTINGS_MODULE: config.settings.test
-          SECRET_KEY: test-secret-key-for-ci
+          SECRET_KEY: test-secret-key-for-ci-only-not-for-production-do-not-use-anywhere-else-50chars
           DEBUG: False
           DB_NAME: lootlink_test
           DB_USER: postgres

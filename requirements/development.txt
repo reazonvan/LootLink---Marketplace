@@ -10,7 +10,9 @@ pytest-django>=4.11.0
 pytest-cov>=4.1.0
 playwright>=1.58.0
 flake8>=6.1.0
-black>=23.12.0
+# Точная версия black — иначе CI (23.x) и локальный black (26.x) дают
+# разный output и Code Quality всегда падает.
+black~=26.3
 isort>=5.13.0
 
 # Development tools
@@ -24,4 +26,3 @@ django-redis>=6.0.0
 
 # Async tasks (optional для dev)
 celery>=5.5.0
-
