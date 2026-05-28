@@ -1,8 +1,11 @@
+import logging
 from decimal import Decimal
 
 from django import forms
 
 from .models import PromoCode, Withdrawal
+
+logger = logging.getLogger(__name__)
 
 
 class DepositForm(forms.Form):
@@ -58,10 +61,12 @@ class PromoCodeForm(forms.Form):
         try:
             promo = PromoCode.objects.get(code=code)
             if not promo.is_valid():
+                logger.info("promo code expired/invalid: code=%s", code)
                 raise forms.ValidationError("Промокод недействителен или истек")
             self.promo_code = promo
             return code
         except PromoCode.DoesNotExist:
+            logger.info("promo code not found: code=%s", code)
             raise forms.ValidationError("Промокод не найден")
 
 
@@ -117,8 +122,19 @@ class WithdrawalForm(forms.Form):
                 wallet = self.user.wallet
                 available = wallet.get_available_balance()
                 if amount > available:
+                    logger.info(
+                        "withdrawal denied (insufficient funds): user=%s amount=%s available=%s",
+                        self.user.pk,
+                        amount,
+                        available,
+                    )
                     raise forms.ValidationError(f"Недостаточно средств. Доступно: {available} ₽")
             except Withdrawal._meta.model.user.field.related_model.wallet.RelatedObjectDoesNotExist:
+                logger.warning(
+                    "withdrawal denied (no wallet): user=%s amount=%s",
+                    self.user.pk,
+                    amount,
+                )
                 raise forms.ValidationError("У вас нет кошелька. Пополните баланс.")
         return amount
 
