@@ -1,0 +1,53 @@
+# ripgrep/Glob ignore — ускоряет поиск, исключая мусорные каталоги.
+# Не путать с .gitignore: этот файл влияет ТОЛЬКО на инструменты,
+# которые читают .ignore (rg, claude-code Glob, fd).
+
+# Виртуальные окружения
+venv/
+.venv-dev/
+.venv-local/
+
+# Python байт-код
+__pycache__/
+*.pyc
+*.pyo
+
+# Coverage и тестовые артефакты
+htmlcov/
+.coverage
+.pytest_cache/
+.tox/
+
+# Build артефакты
+build/
+dist/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+.windsurf/
+
+# Git
+.git/
+
+# Static collected / media
+staticfiles/
+media/
+media_private/
+
+# Backups
+backups/
+*.dump
+*.sql.gz
+
+# Logs
+logs/
+*.log
+
+# Локальные tools (Redis portable, MCP бинари)
+tools/
+
+# Тяжёлые SQLite
+db.sqlite3
+db.test.sqlite3

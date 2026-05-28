@@ -1,66 +1,72 @@
 """
 Продвинутая система поиска по объявлениям.
 """
-from django.shortcuts import render
-from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
-from django.core.cache import cache
-from django.db import connection
-from django.db.models import Q, Count, Avg, Min, Max
-from django.core.paginator import Paginator
-from django.http import JsonResponse
-from django.views.decorators.cache import cache_page
-from django.views.decorators.http import require_GET
-from .models import Listing, Game, Category
-from accounts.models import Profile
+
 from decimal import Decimal
 
+from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+from django.core.cache import cache
+from django.core.paginator import Paginator
+from django.db import connection
+from django.db.models import Avg, Count, Max, Min, Q
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.views.decorators.cache import cache_page
+from django.views.decorators.http import require_GET
 
-def global_search(request):
+from accounts.models import Profile
+
+from .models import Category, Game, Listing
+
+
+def global_search(request):  # noqa: C901
     """
     Глобальный поиск по всем объявлениям с расширенными фильтрами.
     """
     # Получаем параметры поиска
-    search_query = request.GET.get('q', '').strip()
-    game_slug = request.GET.get('game', '')
-    category_slug = request.GET.get('category', '')
-    min_price = request.GET.get('min_price', '')
-    max_price = request.GET.get('max_price', '')
-    seller_rating = request.GET.get('seller_rating', '')
-    verified_only = request.GET.get('verified_only', False)
-    sort_by = request.GET.get('sort', '-created_at')
-    
+    search_query = request.GET.get("q", "").strip()
+    game_slug = request.GET.get("game", "")
+    category_slug = request.GET.get("category", "")
+    min_price = request.GET.get("min_price", "")
+    max_price = request.GET.get("max_price", "")
+    seller_rating = request.GET.get("seller_rating", "")
+    verified_only = request.GET.get("verified_only", False)
+    sort_by = request.GET.get("sort", "-created_at")
+
     # Базовый queryset
-    listings = Listing.objects.filter(status='active').select_related(
-        'seller', 'seller__profile', 'game', 'category'
+    listings = Listing.objects.filter(status="active").select_related(
+        "seller", "seller__profile", "game", "category"
     )
-    
+
     # Полнотекстовый поиск — PostgreSQL FTS в prod, icontains как fallback для SQLite/dev
     if search_query:
-        if connection.vendor == 'postgresql':
-            search_vector = SearchVector('title', weight='A', config='russian') + \
-                           SearchVector('description', weight='B', config='russian')
-            search_q = SearchQuery(search_query, config='russian')
-            listings = listings.annotate(
-                rank=SearchRank(search_vector, search_q)
-            ).filter(
-                Q(search_vector=search_q) |
-                Q(title__icontains=search_query) |
-                Q(description__icontains=search_query)
-            ).order_by('-rank', '-created_at')
+        if connection.vendor == "postgresql":
+            search_vector = SearchVector("title", weight="A", config="russian") + SearchVector(
+                "description", weight="B", config="russian"
+            )
+            search_q = SearchQuery(search_query, config="russian")
+            listings = (
+                listings.annotate(rank=SearchRank(search_vector, search_q))
+                .filter(
+                    Q(search_vector=search_q)
+                    | Q(title__icontains=search_query)
+                    | Q(description__icontains=search_query)
+                )
+                .order_by("-rank", "-created_at")
+            )
         else:
             listings = listings.filter(
-                Q(title__icontains=search_query) |
-                Q(description__icontains=search_query)
-            ).order_by('-created_at')
-    
+                Q(title__icontains=search_query) | Q(description__icontains=search_query)
+            ).order_by("-created_at")
+
     # Фильтр по игре
     if game_slug:
         listings = listings.filter(game__slug=game_slug)
-    
+
     # Фильтр по категории
     if category_slug:
         listings = listings.filter(category__slug=category_slug)
-    
+
     # Фильтр по цене
     if min_price:
         try:
@@ -81,58 +87,55 @@ def global_search(request):
             listings = listings.filter(seller__profile__rating__gte=min_rating)
         except (ValueError, TypeError, ArithmeticError):
             pass
-    
+
     # Только верифицированные продавцы
     if verified_only:
         listings = listings.filter(seller__profile__is_verified=True)
-    
+
     # Сортировка
-    if sort_by == 'price_asc':
-        listings = listings.order_by('price', '-created_at')
-    elif sort_by == 'price_desc':
-        listings = listings.order_by('-price', '-created_at')
-    elif sort_by == 'rating':
-        listings = listings.order_by('-seller__profile__rating', '-created_at')
-    elif sort_by == 'oldest':
-        listings = listings.order_by('created_at')
-    elif sort_by != '-created_at' and not search_query:
-        listings = listings.order_by('-created_at')
-    
+    if sort_by == "price_asc":
+        listings = listings.order_by("price", "-created_at")
+    elif sort_by == "price_desc":
+        listings = listings.order_by("-price", "-created_at")
+    elif sort_by == "rating":
+        listings = listings.order_by("-seller__profile__rating", "-created_at")
+    elif sort_by == "oldest":
+        listings = listings.order_by("created_at")
+    elif sort_by != "-created_at" and not search_query:
+        listings = listings.order_by("-created_at")
+
     # Статистика для фильтров
-    price_range = listings.aggregate(
-        min_price=Min('price'),
-        max_price=Max('price')
-    )
-    
+    price_range = listings.aggregate(min_price=Min("price"), max_price=Max("price"))
+
     # Пагинация
     paginator = Paginator(listings, 24)  # 24 объявления на странице
-    page_number = request.GET.get('page', 1)
+    page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
-    
+
     # Список игр с количеством объявлений
-    games_with_count = Game.objects.filter(
-        is_active=True,
-        listings__status='active'
-    ).annotate(
-        listing_count=Count('listings')
-    ).filter(listing_count__gt=0).order_by('-listing_count')[:20]
-    
+    games_with_count = (
+        Game.objects.filter(is_active=True, listings__status="active")
+        .annotate(listing_count=Count("listings"))
+        .filter(listing_count__gt=0)
+        .order_by("-listing_count")[:20]
+    )
+
     context = {
-        'page_obj': page_obj,
-        'search_query': search_query,
-        'games': games_with_count,
-        'selected_game': game_slug,
-        'selected_category': category_slug,
-        'min_price': min_price,
-        'max_price': max_price,
-        'seller_rating': seller_rating,
-        'verified_only': verified_only,
-        'sort_by': sort_by,
-        'price_range': price_range,
-        'total_count': paginator.count,
+        "page_obj": page_obj,
+        "search_query": search_query,
+        "games": games_with_count,
+        "selected_game": game_slug,
+        "selected_category": category_slug,
+        "min_price": min_price,
+        "max_price": max_price,
+        "seller_rating": seller_rating,
+        "verified_only": verified_only,
+        "sort_by": sort_by,
+        "price_range": price_range,
+        "total_count": paginator.count,
     }
-    
-    return render(request, 'listings/global_search.html', context)
+
+    return render(request, "listings/global_search.html", context)
 
 
 def saved_searches(request):
@@ -140,42 +143,41 @@ def saved_searches(request):
     Сохраненные поисковые запросы пользователя.
     """
     if not request.user.is_authenticated:
-        return render(request, 'listings/saved_searches.html', {'saved_searches': []})
-    
+        return render(request, "listings/saved_searches.html", {"saved_searches": []})
+
     # Получаем из сессии или модели
-    saved_searches = request.session.get('saved_searches', [])
-    
-    context = {
-        'saved_searches': saved_searches
-    }
-    return render(request, 'listings/saved_searches.html', context)
+    saved_searches = request.session.get("saved_searches", [])
+
+    context = {"saved_searches": saved_searches}
+    return render(request, "listings/saved_searches.html", context)
 
 
 def save_search(request):
     """
     Сохранить текущий поисковый запрос.
     """
-    if request.method == 'POST' and request.user.is_authenticated:
+    if request.method == "POST" and request.user.is_authenticated:
         search_data = {
-            'query': request.POST.get('q', ''),
-            'game': request.POST.get('game', ''),
-            'category': request.POST.get('category', ''),
-            'min_price': request.POST.get('min_price', ''),
-            'max_price': request.POST.get('max_price', ''),
+            "query": request.POST.get("q", ""),
+            "game": request.POST.get("game", ""),
+            "category": request.POST.get("category", ""),
+            "min_price": request.POST.get("min_price", ""),
+            "max_price": request.POST.get("max_price", ""),
         }
-        
+
         # Сохраняем в сессии (можно потом перенести в модель)
-        saved_searches = request.session.get('saved_searches', [])
-        
+        saved_searches = request.session.get("saved_searches", [])
+
         # Проверяем, что такого поиска еще нет
         if search_data not in saved_searches:
             saved_searches.insert(0, search_data)
             # Ограничиваем до 10 сохраненных поисков
             saved_searches = saved_searches[:10]
-            request.session['saved_searches'] = saved_searches
-    
+            request.session["saved_searches"] = saved_searches
+
     from django.shortcuts import redirect
-    return redirect('listings:global_search')
+
+    return redirect("listings:global_search")
 
 
 @require_GET
@@ -189,31 +191,30 @@ def search_suggest(request):
     Кэшируется на 60 секунд по нормализованному запросу.
     Минимум 2 символа в запросе.
     """
-    query = request.GET.get('q', '').strip()
+    query = request.GET.get("q", "").strip()
 
     if len(query) < 2:
-        return JsonResponse({'games': [], 'listings': []})
+        return JsonResponse({"games": [], "listings": []})
 
-    cache_key = f'search:suggest:{query.lower()}'
+    cache_key = f"search:suggest:{query.lower()}"
     cached = cache.get(cache_key)
     if cached is not None:
         return JsonResponse(cached)
 
     games = list(
-        Game.objects.filter(is_active=True, name__icontains=query)
-        .values('name', 'slug')[:5]
+        Game.objects.filter(is_active=True, name__icontains=query).values("name", "slug")[:5]
     )
 
     listings = list(
-        Listing.objects.filter(status='active', title__icontains=query)
-        .select_related('game')
-        .values('pk', 'title', 'price', 'game__name')[:5]
+        Listing.objects.filter(status="active", title__icontains=query)
+        .select_related("game")
+        .values("pk", "title", "price", "game__name")[:5]
     )
     # Decimal не сериализуется в JSON напрямую
     for item in listings:
-        item['price'] = str(item['price'])
+        item["price"] = str(item["price"])
 
-    payload = {'games': games, 'listings': listings}
+    payload = {"games": games, "listings": listings}
     cache.set(cache_key, payload, 60)
     return JsonResponse(payload)
 
@@ -223,26 +224,25 @@ def quick_filters(request):
     Быстрые фильтры (популярные категории, ценовые диапазоны).
     """
     # Популярные категории
-    popular_categories = Category.objects.filter(
-        is_active=True,
-        listings__status='active'
-    ).annotate(
-        listing_count=Count('listings')
-    ).filter(listing_count__gt=0).order_by('-listing_count')[:10]
-    
+    popular_categories = (
+        Category.objects.filter(is_active=True, listings__status="active")
+        .annotate(listing_count=Count("listings"))
+        .filter(listing_count__gt=0)
+        .order_by("-listing_count")[:10]
+    )
+
     # Ценовые диапазоны
     price_ranges = [
-        {'min': 0, 'max': 100, 'label': 'До 100 ₽'},
-        {'min': 100, 'max': 500, 'label': '100-500 ₽'},
-        {'min': 500, 'max': 1000, 'label': '500-1000 ₽'},
-        {'min': 1000, 'max': 5000, 'label': '1000-5000 ₽'},
-        {'min': 5000, 'max': None, 'label': 'Более 5000 ₽'},
+        {"min": 0, "max": 100, "label": "До 100 ₽"},
+        {"min": 100, "max": 500, "label": "100-500 ₽"},
+        {"min": 500, "max": 1000, "label": "500-1000 ₽"},
+        {"min": 1000, "max": 5000, "label": "1000-5000 ₽"},
+        {"min": 5000, "max": None, "label": "Более 5000 ₽"},
     ]
-    
-    context = {
-        'popular_categories': popular_categories,
-        'price_ranges': price_ranges,
-    }
-    
-    return render(request, 'listings/quick_filters.html', context)
 
+    context = {
+        "popular_categories": popular_categories,
+        "price_ranges": price_ranges,
+    }
+
+    return render(request, "listings/quick_filters.html", context)

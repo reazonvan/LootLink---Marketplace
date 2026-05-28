@@ -729,4 +729,4 @@ class Withdrawal(models.Model):
 
 
 # Импортируем модели диспутов в конец для избежания circular imports
-from .models_disputes import Dispute, DisputeEvidence, DisputeMessage
+from .models_disputes import Dispute, DisputeEvidence, DisputeMessage  # noqa: E402, F401

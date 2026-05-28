@@ -94,13 +94,17 @@ class CustomUser(AbstractUser):
             except Profile.DoesNotExist:
                 pass
 
-            # Инвалидируем сессии
-            for session in Session.objects.filter(expire_date__gte=timezone.now()):
+            # A1: Инвалидируем сессии стримом — на проде могут быть 10k+ сессий.
+            # `.iterator(chunk_size=500)` грузит порциями, без загрузки всего
+            # списка в память. Долгосрочный фикс — индекс user_id→session_keys.
+            user_id_str = str(user.pk)
+            sessions_qs = Session.objects.filter(expire_date__gte=timezone.now())
+            for session in sessions_qs.iterator(chunk_size=500):
                 try:
                     data = session.get_decoded()
-                except Exception:
+                except Exception:  # nosec B112 — порченная сессия → skip
                     continue
-                if str(data.get("_auth_user_id")) == str(user.pk):
+                if str(data.get("_auth_user_id")) == user_id_str:
                     session.delete()
 
     def hard_delete(self, *args, **kwargs):
@@ -214,28 +218,22 @@ class Profile(models.Model):
         self.refresh_from_db()
 
     def get_online_status(self):
-        """
-        Возвращает онлайн-статус пользователя.
+        """Возвращает онлайн-статус пользователя ('online'/'offline').
 
-        Returns:
-            str: 'online' или 'offline'
+        Окно «онлайн» — settings.ONLINE_WINDOW_MINUTES, дефолт 5 минут (M2).
         """
         from datetime import timedelta
 
+        from django.conf import settings
         from django.utils import timezone
 
         if not self.last_seen:
             return "offline"
 
-        now = timezone.now()
-        diff = now - self.last_seen
-
-        # Онлайн: активность в последние 5 минут
-        if diff < timedelta(minutes=5):
+        window = getattr(settings, "ONLINE_WINDOW_MINUTES", 5)
+        if (timezone.now() - self.last_seen) < timedelta(minutes=window):
             return "online"
-        # Offline: более 5 минут назад
-        else:
-            return "offline"
+        return "offline"
 
     def get_last_seen_display(self):
         """

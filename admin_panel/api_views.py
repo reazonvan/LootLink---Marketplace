@@ -119,14 +119,16 @@ def ban_user(request, user_id):
         user.is_active = False
         user.save(update_fields=["is_active"])
 
-        # Инвалидируем активные сессии забаненного пользователя
+        # A1: Инвалидируем сессии стримом (см. accounts.models.CustomUser.delete).
         terminated_sessions = 0
-        for session in Session.objects.filter(expire_date__gte=timezone.now()):
+        user_id_str = str(user.pk)
+        sessions_qs = Session.objects.filter(expire_date__gte=timezone.now())
+        for session in sessions_qs.iterator(chunk_size=500):
             try:
                 data = session.get_decoded()
-            except Exception:
+            except Exception:  # nosec B112 — порченная сессия → skip
                 continue
-            if str(data.get("_auth_user_id")) == str(user.pk):
+            if str(data.get("_auth_user_id")) == user_id_str:
                 session.delete()
                 terminated_sessions += 1
 
@@ -354,7 +356,7 @@ def cancel_transaction(request, transaction_id):
 
 @require_POST
 @staff_member_required
-def resolve_dispute(request, dispute_id):
+def resolve_dispute(request, dispute_id):  # noqa: C901
     """Разрешить спор: вызывает корректный метод модели Dispute.
 
     Параметры POST:

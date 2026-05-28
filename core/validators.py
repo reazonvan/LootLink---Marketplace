@@ -39,7 +39,7 @@ class SecureImageValidator:
         self.allowed_extensions = allowed_extensions or ["jpg", "jpeg", "png", "gif", "webp"]
         self.allowed_mime_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
 
-    def __call__(self, file):
+    def __call__(self, file):  # noqa: C901
         """Основная валидация файла."""
         # 1. Проверка размера
         if file.size > self.max_size_bytes:

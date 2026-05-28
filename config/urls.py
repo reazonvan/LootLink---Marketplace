@@ -41,9 +41,15 @@ urlpatterns = [
     path("rules/", core_views.rules, name="rules"),
     path("requisites/", core_views.requisites, name="requisites"),
     path("privacy/", core_views.privacy_policy, name="privacy_policy"),
-    # Verification files
+    # Verification files. Q7/Q8: yandex_a*.html теперь статический файл
+    # (static/yandex_a6899228ac192041.html), раздаётся через Caddy file_server.
+    # Если файл нужно обновить — заменить в static/, без правки Python.
     path(
-        "yandex_a6899228ac192041.html", core_views.yandex_verification, name="yandex_verification"
+        "yandex_a6899228ac192041.html",
+        RedirectView.as_view(
+            url=settings.STATIC_URL + "yandex_a6899228ac192041.html", permanent=True
+        ),
+        name="yandex_verification",
     ),
     # SEO
     path(

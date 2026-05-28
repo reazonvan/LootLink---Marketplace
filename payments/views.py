@@ -145,14 +145,12 @@ def apply_promo_code(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def yookassa_webhook(request):
-    """
-    Webhook от ЮKassa с многоуровневой защитой:
-        1. IP whitelist (если настроен YOOKASSA_WEBHOOK_ALLOWED_IPS)
-        2. Опциональная HMAC-подпись через YOOKASSA_WEBHOOK_SECRET
-        3. Сверка с API YooKassa в _verify_webhook_payload (статус/сумма)
+    """Webhook от ЮKassa с многоуровневой защитой.
 
-    Защита от replay/forgery: даже без HMAC секрета webhook проходит
-    верификацию через API (двусторонний trust).
+    1. IP whitelist (если настроен YOOKASSA_WEBHOOK_ALLOWED_IPS).
+    2. HMAC-подпись через YOOKASSA_WEBHOOK_SECRET — ОБЯЗАТЕЛЬНА в проде
+       (A5: раньше была опциональной → MITM/replay).
+    3. Сверка с API YooKassa в _verify_webhook_payload (статус/сумма).
     """
     from django.conf import settings as django_settings
 
@@ -167,10 +165,15 @@ def yookassa_webhook(request):
             return HttpResponse(status=403)
 
         body = request.body
-        # HMAC верификация, если задан секрет.
-        # YooKassa может отправлять подпись в заголовке X-Yookassa-Signature
-        # или похожем; формат специфичный — здесь общий шаблон.
         webhook_secret = getattr(django_settings, "YOOKASSA_WEBHOOK_SECRET", "")
+
+        # A5: HMAC обязателен в проде. Если секрет не задан и DEBUG=False —
+        # webhook отклоняется. В тестах/dev (DEBUG=True или пустой секрет)
+        # пропускаем для совместимости — но в проде это fail-fast.
+        if not webhook_secret and not getattr(django_settings, "DEBUG", False):
+            logger.error("Webhook отклонён: YOOKASSA_WEBHOOK_SECRET не задан в production")
+            return HttpResponse(status=503)
+
         if webhook_secret:
             import hashlib
             import hmac

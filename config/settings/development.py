@@ -32,9 +32,13 @@ CSRF_COOKIE_DOMAIN = None
 
 # Быстрый хешер паролей для dev (production использует Argon2id/PBKDF2 1M итераций).
 # Защита от случайного использования в prod — фиксируем явный env-маркер.
-import os as _os
+import os as _os  # noqa: E402
 
-assert _os.environ.get("DJANGO_ENV", "dev").lower() in ("dev", "development", "local"), (
+assert _os.environ.get("DJANGO_ENV", "dev").lower() in (  # nosec B101 — defense-in-depth
+    "dev",
+    "development",
+    "local",
+), (
     "config.settings.development НЕЛЬЗЯ использовать в production. "
     "Установите DJANGO_ENV=development или используйте config.settings.production."
 )
@@ -45,18 +49,18 @@ PASSWORD_HASHERS = [
 # Отключаем Daphne в dev — используем стандартный WSGI runserver.
 # Daphne (ASGI) убивает соединения по таймауту раньше, чем Django отвечает.
 # WebSocket чат всё равно требует Redis, которого нет в dev.
-INSTALLED_APPS = [app for app in INSTALLED_APPS if app != "daphne"]
+INSTALLED_APPS = [app for app in INSTALLED_APPS if app != "daphne"]  # noqa: F405
 
 # SQLite не держит конкурентные записи — ставим таймаут ожидания блокировки.
 # ВАЖНО: не затираем существующие OPTIONS (для postgres там client_encoding и пр.).
-DATABASES["default"].setdefault("OPTIONS", {})
-DATABASES["default"]["OPTIONS"]["timeout"] = 30
+DATABASES["default"].setdefault("OPTIONS", {})  # noqa: F405
+DATABASES["default"]["OPTIONS"]["timeout"] = 30  # noqa: F405
 
 # Отключаем тяжёлые security-middleware, которые пишут в БД на каждый запрос.
 # В dev они бесполезны и вызывают "database is locked" на SQLite.
-MIDDLEWARE = [
+MIDDLEWARE = [  # noqa: F405
     m
-    for m in MIDDLEWARE
+    for m in MIDDLEWARE  # noqa: F405
     if m
     not in (
         "core.middleware_audit.BruteForceProtectionMiddleware",
@@ -78,8 +82,9 @@ CHANNEL_LAYERS = {
     },
 }
 
-# Доверенные origins для CSRF (proxy Windsurf browser preview)
+# Доверенные origins для CSRF в dev. Дефолт — стандартные runserver-порты.
+# Q6: IDE-специфичные порты (Windsurf 62732 и т.п.) задавать в .env, не в коде.
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
-    default="http://127.0.0.1:62732,http://localhost:62732",
+    default="http://127.0.0.1:8000,http://localhost:8000",
 ).split(",")

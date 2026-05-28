@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # verify_email перенесён в accounts.views — здесь оставляем заглушку для совместимости
 # импортов в тестах.
-from .views import verify_email  # noqa: F401
+from .views import verify_email  # noqa: F401, E402
 
 
 @login_required

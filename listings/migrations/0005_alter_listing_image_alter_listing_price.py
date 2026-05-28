@@ -3,31 +3,37 @@
 
 import django.core.validators
 from django.db import migrations, models
+
 import core.validators
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('listings', '0004_alter_listing_created_at_alter_listing_status_and_more'),
+        ("listings", "0004_alter_listing_created_at_alter_listing_status_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='listing',
-            name='image',
+            model_name="listing",
+            name="image",
             field=models.ImageField(
-                blank=True, 
-                null=True, 
-                upload_to='listings/', 
-                validators=[core.validators.ListingImageValidator()], 
-                verbose_name='Изображение',
-                help_text='Макс. 5 МБ. Форматы: JPG, PNG, WebP'
+                blank=True,
+                null=True,
+                upload_to="listings/",
+                validators=[core.validators.ListingImageValidator()],
+                verbose_name="Изображение",
+                help_text="Макс. 5 МБ. Форматы: JPG, PNG, WebP",
             ),
         ),
         migrations.AlterField(
-            model_name='listing',
-            name='price',
-            field=models.DecimalField(decimal_places=2, max_digits=10, validators=[django.core.validators.MinValueValidator(0)], verbose_name='Цена'),
+            model_name="listing",
+            name="price",
+            field=models.DecimalField(
+                decimal_places=2,
+                max_digits=10,
+                validators=[django.core.validators.MinValueValidator(0)],
+                verbose_name="Цена",
+            ),
         ),
     ]

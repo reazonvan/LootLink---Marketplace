@@ -2,11 +2,10 @@ from django.apps import AppConfig
 
 
 class ListingsConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'listings'
-    verbose_name = 'Объявления'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "listings"
+    verbose_name = "Объявления"
 
     def ready(self) -> None:
         # Регистрируем сигналы инвалидации кэша каталога.
         from . import signals  # noqa: F401
-

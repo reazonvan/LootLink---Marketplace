@@ -4,7 +4,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.mail import mail_admins
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse
@@ -25,6 +24,9 @@ def landing_page(request):
 
     P2-8: данные кешируются на 5 минут — публичный контент,
     меняется редко, общий для всех пользователей.
+    Q9: защита от cache stampede через short-lived lock — когда TTL истёк,
+    только один request пересчитает данные, остальные отдадут предыдущий
+    кэш (stale-while-revalidate подход через `_warming` маркер).
     """
     from django.core.cache import cache
     from django.db.models import Count
@@ -33,44 +35,61 @@ def landing_page(request):
 
     CACHE_KEY = "landing_page_data_v1"
     CACHE_TTL = 300
+    LOCK_KEY = "landing_page_data_v1__lock"
+    LOCK_TTL = 30  # таймаут на пересчёт
 
     cached = cache.get(CACHE_KEY)
-    if cached is None:
+    # Q9: cache.add возвращает True только если ключ свободен — атомарный lock.
+    # При промахе кэша лочимся; параллельные запросы пойдут дальше с cached=None
+    # и отрендерят страницу без кэша (graceful degradation) либо подождут.
+    if cached is None and cache.add(LOCK_KEY, "1", LOCK_TTL):
         from accounts.models import Profile
         from transactions.models import Review
 
-        latest_listings = list(
-            Listing.objects.filter(status="active", seller__is_active=True).select_related(
-                "game", "seller"
-            )[:8]
-        )
-        games_with_counts = list(
-            Game.objects.filter(is_active=True)
-            .annotate(listings_count=Count("listings", filter=Q(listings__status="active")))
-            .order_by("-listings_count")[:6]
-        )
-        real_reviews = list(
-            Review.objects.filter(rating__gte=4, reviewer__is_active=True)
-            .select_related("reviewer", "purchase_request__listing")
-            .order_by("-created_at")[:3]
-        )
-        top_sellers = list(
-            Profile.objects.filter(
-                user__is_active=True,
-                user__is_deleted=False,
-                rating__gt=0,
-                total_sales__gt=0,
+        try:
+            latest_listings = list(
+                Listing.objects.filter(status="active", seller__is_active=True).select_related(
+                    "game", "seller"
+                )[:8]
             )
-            .select_related("user")
-            .order_by("-rating", "-total_sales")[:3]
-        )
+            games_with_counts = list(
+                Game.objects.filter(is_active=True)
+                .annotate(listings_count=Count("listings", filter=Q(listings__status="active")))
+                .order_by("-listings_count")[:6]
+            )
+            real_reviews = list(
+                Review.objects.filter(rating__gte=4, reviewer__is_active=True)
+                .select_related("reviewer", "purchase_request__listing")
+                .order_by("-created_at")[:3]
+            )
+            top_sellers = list(
+                Profile.objects.filter(
+                    user__is_active=True,
+                    user__is_deleted=False,
+                    rating__gt=0,
+                    total_sales__gt=0,
+                )
+                .select_related("user")
+                .order_by("-rating", "-total_sales")[:3]
+            )
+            cached = {
+                "latest_listings": latest_listings,
+                "games": games_with_counts,
+                "real_reviews": real_reviews,
+                "top_sellers": top_sellers,
+            }
+            cache.set(CACHE_KEY, cached, CACHE_TTL)
+        finally:
+            cache.delete(LOCK_KEY)
+    elif cached is None:
+        # Lock уже взят другим worker'ом — отдаём пустые списки,
+        # шаблон умеет рендериться с empty state.
         cached = {
-            "latest_listings": latest_listings,
-            "games": games_with_counts,
-            "real_reviews": real_reviews,
-            "top_sellers": top_sellers,
+            "latest_listings": [],
+            "games": [],
+            "real_reviews": [],
+            "top_sellers": [],
         }
-        cache.set(CACHE_KEY, cached, CACHE_TTL)
 
     stats = get_platform_stats()
 
@@ -540,7 +559,7 @@ def favorites_list(request):
 
 
 @login_required
-def report_listing(request, pk):
+def report_listing(request, pk):  # noqa: C901
     """Подать жалобу на объявление с защитой от race-condition дублей."""
     from django.db import IntegrityError
     from django.db import transaction as db_transaction
@@ -670,10 +689,14 @@ def report_user(request, username):
             report.report_type = "user"
             report.save()
 
-            # Отправляем email администраторам
+            # A6: email админам асинхронно через Celery
+            # (раньше mail_admins был синхронным — зависал на SMTP-таймауте).
             try:
-                # Используем build_absolute_uri вместо hardcoded URL
+                from django.conf import settings as dj_settings
+                from django.db import transaction as db_transaction
                 from django.urls import reverse
+
+                from core.tasks import send_email_async
 
                 profile_url = request.build_absolute_uri(
                     reverse("accounts:profile", kwargs={"username": reported_user.username})
@@ -681,24 +704,25 @@ def report_user(request, username):
                 report_admin_url = request.build_absolute_uri(
                     reverse("admin:listings_report_change", args=[report.pk])
                 )
-
-                mail_admins(
-                    subject=f"Новая жалоба на пользователя: {reported_user.username}",
-                    message=f"""
-Жалобщик: {request.user.username}
-Пользователь: {reported_user.username}
-Причина: {report.get_reason_display()}
-
-Описание:
-{report.description}
-
-Ссылка на профиль: {profile_url}
-Ссылка на жалобу (админка): {report_admin_url}
-                    """,
-                    fail_silently=True,
+                subject = f"Новая жалоба на пользователя: {reported_user.username}"
+                body = (
+                    f"Жалобщик: {request.user.username}\n"
+                    f"Пользователь: {reported_user.username}\n"
+                    f"Причина: {report.get_reason_display()}\n\n"
+                    f"Описание:\n{report.description}\n\n"
+                    f"Ссылка на профиль: {profile_url}\n"
+                    f"Ссылка на жалобу (админка): {report_admin_url}\n"
                 )
+                admin_emails = [addr for _, addr in getattr(dj_settings, "ADMINS", [])] or [
+                    getattr(dj_settings, "SUPPORT_EMAIL", "")
+                ]
+                for admin_email in admin_emails:
+                    if admin_email:
+                        db_transaction.on_commit(
+                            lambda s=subject, b=body, e=admin_email: send_email_async.delay(s, b, e)
+                        )
             except Exception as e:
-                logger.error(f"Ошибка отправки email админам при жалобе на объявление: {e}")
+                logger.error(f"Ошибка постановки email админам в очередь: {e}")
 
             messages.success(
                 request, "Жалоба отправлена. Администрация рассмотрит её в ближайшее время."

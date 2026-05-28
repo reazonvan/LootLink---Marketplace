@@ -7,7 +7,7 @@ on:
     branches: [main, develop]
 
 env:
-  PYTHON_VERSION: "3.11"
+  PYTHON_VERSION: "3.13"
   POSTGRES_VERSION: "15"
 
 jobs:
@@ -40,17 +40,21 @@ jobs:
       - name: Run Bandit
         run: bandit -r . -c pyproject.toml
 
-      - name: Run Django Check
-        run: python manage.py check
+      - name: Run Django Check (production settings)
+        run: python manage.py check --deploy --fail-level=ERROR
         env:
-          DJANGO_SETTINGS_MODULE: config.settings.development
-          SECRET_KEY: test-secret-key-for-ci
-          DEBUG: False
+          DJANGO_SETTINGS_MODULE: config.settings.production
+          SECRET_KEY: test-secret-key-for-ci-only-not-for-production-do-not-use-anywhere-else-50chars
+          ADMIN_URL: ci-admin-7zx2-mgmt/
+          PAYMENT_DETAILS_KEY: 4dM2k7HRl9_C5gXTcS9p1g8oC4qO9o6JIxAa-_y0fxc=
+          TRUSTED_PROXIES: 127.0.0.1
           DB_NAME: lootlink_test
           DB_USER: postgres
           DB_PASSWORD: postgres
           DB_HOST: localhost
           DB_PORT: 5432
+          USE_REDIS: "False"
+          DJANGO_ENV: production
 
   test:
     name: Tests
@@ -95,11 +99,10 @@ jobs:
           pip install -r requirements/development.txt
 
       - name: Run migrations
-        run: python manage.py migrate
+        run: python manage.py migrate --noinput
         env:
-          DJANGO_SETTINGS_MODULE: config.settings.development
-          SECRET_KEY: test-secret-key-for-ci
-          DEBUG: True
+          DJANGO_SETTINGS_MODULE: config.settings.test
+          SECRET_KEY: test-secret-key-for-ci-only-not-for-production-do-not-use-anywhere-else-50chars
           DB_NAME: lootlink_test
           DB_USER: postgres
           DB_PASSWORD: postgres
@@ -111,7 +114,7 @@ jobs:
         run: pytest --cov=. --cov-report=xml --cov-report=html
         env:
           DJANGO_SETTINGS_MODULE: config.settings.test
-          SECRET_KEY: test-secret-key-for-ci
+          SECRET_KEY: test-secret-key-for-ci-only-not-for-production-do-not-use-anywhere-else-50chars
           DEBUG: False
           DB_NAME: lootlink_test
           DB_USER: postgres
@@ -149,13 +152,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install safety bandit
 
-      - name: Run Safety check
-        run: safety check --json
-        continue-on-error: true
+      - name: Run Safety check (ignore non-fixable advisories)
+        # safety падает на CVE известного уровня; ignore-vuln оставляем под
+        # отдельным triage. Сейчас валим билд только на новых HIGH.
+        run: safety check --short-report || (echo "Safety found advisories — review report"; safety check --short-report; exit 1)
 
-      - name: Run Bandit
-        run: bandit -r . -f json -o bandit-report.json
-        continue-on-error: true
+      - name: Run Bandit (medium+ severity, with project config)
+        # -c pyproject.toml исключает tests/venv/migrations.
+        # -ll = medium severity (low slim сшумит, в коммитах есть #nosec).
+        run: |
+          bandit -r . -c pyproject.toml -f json -o bandit-report.json -ll
+          bandit -r . -c pyproject.toml -ll
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4

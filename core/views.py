@@ -39,23 +39,29 @@ def health_check(request):
 
 
 def about(request):
-    """Страница 'О нас' с реальной статистикой из PostgreSQL."""
-    from accounts.models import CustomUser
-    from listings.models import Game, Listing
-    from transactions.models import PurchaseRequest
+    """Страница 'О нас' с реальной статистикой из PostgreSQL.
 
-    # Реальная статистика
-    total_users = CustomUser.objects.count()
-    total_listings = Listing.objects.filter(status="active").count()
-    total_deals = PurchaseRequest.objects.filter(status="completed").count()
-    total_games = Game.objects.filter(is_active=True).count()
+    A4: кэшируется на 5 минут — публичная страница, 4 COUNT по большим
+    таблицам должны хитать БД не на каждый запрос.
+    """
+    from django.core.cache import cache
 
-    context = {
-        "total_users": total_users,
-        "total_listings": total_listings,
-        "total_deals": total_deals,
-        "total_games": total_games,
-    }
+    CACHE_KEY = "about_page_stats_v1"
+    CACHE_TTL = 300
+
+    context = cache.get(CACHE_KEY)
+    if context is None:
+        from accounts.models import CustomUser
+        from listings.models import Game, Listing
+        from transactions.models import PurchaseRequest
+
+        context = {
+            "total_users": CustomUser.objects.count(),
+            "total_listings": Listing.objects.filter(status="active").count(),
+            "total_deals": PurchaseRequest.objects.filter(status="completed").count(),
+            "total_games": Game.objects.filter(is_active=True).count(),
+        }
+        cache.set(CACHE_KEY, context, CACHE_TTL)
 
     return render(request, "pages/about.html", context)
 
@@ -129,19 +135,6 @@ def unread_notifications_count(request):
     count = Notification.objects.filter(user=request.user, is_read=False).count()
 
     return JsonResponse({"count": count})
-
-
-def yandex_verification(request):
-    """Yandex Webmaster verification file."""
-    from django.http import HttpResponse
-
-    html_content = """<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    </head>
-    <body>Verification: a6899228ac192041</body>
-</html>"""
-    return HttpResponse(html_content, content_type="text/html")
 
 
 def requisites(request):
