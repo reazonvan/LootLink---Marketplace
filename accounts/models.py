@@ -218,28 +218,22 @@ class Profile(models.Model):
         self.refresh_from_db()
 
     def get_online_status(self):
-        """
-        Возвращает онлайн-статус пользователя.
+        """Возвращает онлайн-статус пользователя ('online'/'offline').
 
-        Returns:
-            str: 'online' или 'offline'
+        Окно «онлайн» — settings.ONLINE_WINDOW_MINUTES, дефолт 5 минут (M2).
         """
         from datetime import timedelta
 
+        from django.conf import settings
         from django.utils import timezone
 
         if not self.last_seen:
             return "offline"
 
-        now = timezone.now()
-        diff = now - self.last_seen
-
-        # Онлайн: активность в последние 5 минут
-        if diff < timedelta(minutes=5):
+        window = getattr(settings, "ONLINE_WINDOW_MINUTES", 5)
+        if (timezone.now() - self.last_seen) < timedelta(minutes=window):
             return "online"
-        # Offline: более 5 минут назад
-        else:
-            return "offline"
+        return "offline"
 
     def get_last_seen_display(self):
         """
