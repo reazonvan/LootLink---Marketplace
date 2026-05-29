@@ -62,8 +62,10 @@ if not config("USE_REDIS", default=False, cast=bool):
         RuntimeWarning,
     )
 
-# P2-17: в продакшне ADMIN_URL должен быть непредсказуемым
-from django.core.exceptions import ImproperlyConfigured as _ImpConfig
+# P2-17: в продакшне ADMIN_URL должен быть непредсказуемым.
+# Импорт после warnings — намеренно (E402 noqa): валидируем env-vars сначала,
+# а Django-исключение нужно только если правило про admin_url нарушено.
+from django.core.exceptions import ImproperlyConfigured as _ImpConfig  # noqa: E402
 
 if config("ADMIN_URL", default="admin/") == "admin/":
     raise _ImpConfig(
@@ -86,3 +88,9 @@ if not config("TRUSTED_PROXIES", default=""):
         "любому X-Forwarded-For, что открывает обход rate-limit и брутфорс-защиты.",
         RuntimeWarning,
     )
+
+# В production console handler пишет в verbose-формате с request_id,
+# чтобы docker logs / loki / cloudwatch видели структурированные строки.
+# Без этого дев-формат "[LEVEL] message" не парсится агрегаторами.
+LOGGING["handlers"]["console"]["formatter"] = "verbose"  # noqa: F405
+LOGGING["handlers"]["console"]["filters"] = ["request_id"]  # noqa: F405

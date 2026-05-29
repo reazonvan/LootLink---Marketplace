@@ -253,6 +253,29 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
+# ManifestStaticFilesStorage добавляет content-hash в имена файлов
+# (style.abc123.css) и пишет staticfiles.json — это даёт корректный
+# cache-busting при долгом max-age=2592000 в Caddyfile. Без него после
+# deploy юзер видит старый CSS/JS до истечения TTL.
+# Локально (DEBUG=True) используем встроенный bypass, чтобы не пересобирать
+# manifest на каждый чих.
+STORAGES = {
+    "default": {
+        "BACKEND": (
+            "storages.backends.s3boto3.S3Boto3Storage"
+            if config("USE_S3", default=False, cast=bool)
+            else "django.core.files.storage.FileSystemStorage"
+        ),
+    },
+    "staticfiles": {
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if DEBUG
+            else "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+        ),
+    },
+}
+
 # Media files configuration
 USE_S3 = config("USE_S3", default=False, cast=bool)
 
@@ -375,8 +398,12 @@ if USE_REDIS:
         }
     }
 
-    # Session хранение в БД для совместимости с WebSocket
-    SESSION_ENGINE = "django.contrib.sessions.backends.db"
+    # Session: cached_db — read через Redis (быстро), write через БД (надёжно).
+    # Под нагрузкой dbb-only бэкенд делает UPDATE django_session на каждый
+    # запрос → лок на одну строку на пользователя → bottleneck.
+    # cached_db даёт O(1) lookup из Redis, fallback на БД при cache miss.
+    SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+    SESSION_CACHE_ALIAS = "default"
 else:
     # Локальный кеш для разработки
     CACHES = {
@@ -529,6 +556,15 @@ LOGGING = {
             "level": "INFO",
             "class": "logging.StreamHandler",
             "formatter": "simple",
+        },
+        # stdout с verbose-форматом — для docker logs / loki / cloudwatch.
+        # Тот же formatter что у файловых, но без request_id-фильтра, чтобы
+        # фоновые задачи и management-команды (без request scope) тоже шли в stdout.
+        "stdout_verbose": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+            "filters": ["request_id"],
         },
         "file": {
             "level": "WARNING",
