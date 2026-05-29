@@ -23,21 +23,67 @@ def custom_500(request):
 
 
 def health_check(request):
-    """Liveness/readiness endpoint для reverse proxy и Docker healthcheck.
+    """Health-check для обратной совместимости — alias на /health/ready.
 
-    Проверяет доступность БД.
+    Caddy / docker healthcheck исторически смотрят сюда. Для k8s-стиля
+    отдельных liveness/readiness probes используем /health/live и /health/ready.
     """
+    return health_ready(request)
+
+
+def health_live(request):
+    """Liveness probe: процесс жив и обрабатывает HTTP.
+
+    Не трогает ни БД, ни Redis, ни Celery — только подтверждает что
+    приложение поднято. Подходит для k8s livenessProbe — restart pod'а
+    при провале.
+    """
+    return JsonResponse({"status": "ok", "check": "live"})
+
+
+def health_ready(request):
+    """Readiness probe: instance готов принимать трафик.
+
+    Проверяет:
+        - PostgreSQL — обязательно (нет БД = ничего не работает)
+        - Redis cache — опционально (IGNORE_EXCEPTIONS=True маскирует
+          падения для приложения, но healthcheck показывает деградацию)
+
+    503 если БД недоступна — балансер должен вывести инстанс из ротации.
+    200 с warnings если Redis недоступен — приложение деградировало, но работает.
+    """
+    checks = {}
+    overall_ok = True
+
+    # БД — критичная зависимость
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-    except Exception:
-        # Любой сбой БД (OperationalError, InterfaceError, ConnectionError) —
-        # endpoint должен ответить 503 чтобы балансер вывел инстанс из ротации.
-        logger.exception("Health check DB probe failed")
-        return JsonResponse({"status": "error"}, status=503)
+        checks["database"] = "ok"
+    except Exception as exc:
+        logger.exception("Health ready: DB probe failed")
+        checks["database"] = f"error: {exc.__class__.__name__}"
+        overall_ok = False
 
-    return JsonResponse({"status": "ok"})
+    # Redis — деградация без выхода из ротации
+    try:
+        from django.core.cache import cache
+
+        cache.set("health:ready:probe", "1", 5)
+        if cache.get("health:ready:probe") == "1":
+            checks["cache"] = "ok"
+        else:
+            checks["cache"] = "warn: read after write returned None"
+    except Exception as exc:
+        logger.warning("Health ready: cache probe failed: %s", exc)
+        checks["cache"] = f"warn: {exc.__class__.__name__}"
+
+    status_code = 200 if overall_ok else 503
+    return JsonResponse(
+        {"status": "ok" if overall_ok else "error", "check": "ready", "checks": checks},
+        status=status_code,
+    )
 
 
 def about(request):

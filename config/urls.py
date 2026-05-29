@@ -37,6 +37,8 @@ urlpatterns = [
     path("api/", include("api.urls")),
     path("", include("core.urls")),
     path("health/", core_views.health_check, name="health_check"),
+    path("health/live/", core_views.health_live, name="health_live"),
+    path("health/ready/", core_views.health_ready, name="health_ready"),
     path("about/", core_views.about, name="about"),
     path("rules/", core_views.rules, name="rules"),
     path("requisites/", core_views.requisites, name="requisites"),
