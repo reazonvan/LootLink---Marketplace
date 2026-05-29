@@ -17,10 +17,13 @@ Naming: `<entity>_<action>`, например `user_register`, `profile_update`.
 оставляя во views только: валидация формы → вызов сервиса → redirect/render.
 """
 
+import logging
+
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
 CustomUser = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 @transaction.atomic
@@ -59,4 +62,11 @@ def user_register(*, username: str, email: str, password: str, phone: str = "") 
         # Profile создаётся сигналом post_save
         user.profile.phone = phone
         user.profile.save()
+    logger.info(
+        "user registered: id=%s username=%r email=%r phone_set=%s",
+        user.pk,
+        username,
+        email,
+        bool(phone),
+    )
     return user
