@@ -4,8 +4,12 @@
 
 -r base.txt
 
-# Production server
+# Production server: gunicorn-master + uvicorn workers (ASGI/WebSocket).
+# Daphne (в base.txt) остаётся как single-process fallback и для тестов
+# Channels через WebsocketCommunicator. В docker-compose web-сервис стартует
+# через `gunicorn config.asgi:application -k uvicorn.workers.UvicornWorker`.
 gunicorn>=23.0.0
+uvicorn[standard]>=0.35.0
 
 # AWS S3 for media storage
 boto3>=1.40.0
@@ -19,4 +23,3 @@ hiredis>=3.3.0
 # Monitoring and error tracking
 sentry-sdk>=2.42.0
 flower>=2.0.0
-
