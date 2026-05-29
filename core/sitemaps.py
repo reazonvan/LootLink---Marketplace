@@ -1,73 +1,81 @@
 """
 Sitemaps для SEO.
 """
+
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
-from listings.models import Listing, Game
+
 from accounts.models import CustomUser
+from listings.models import Game, Listing
 
 
 class StaticViewSitemap(Sitemap):
     """Статические страницы"""
+
     priority = 0.5
-    changefreq = 'weekly'
-    
+    changefreq = "weekly"
+
     def items(self):
-        return ['listings:home', 'listings:catalog', 'about', 'rules']
-    
+        return ["listings:home", "listings:catalog", "about", "rules"]
+
     def location(self, item):
         return reverse(item)
 
 
 class GameSitemap(Sitemap):
     """Игры"""
-    changefreq = 'daily'
+
+    changefreq = "daily"
     priority = 0.8
-    
+
     def items(self):
-        return Game.objects.filter(is_active=True)
-    
+        # order_by обязателен: Sitemap пагинирует queryset постранично
+        # (50k items/page) и без сортировки Django ругается
+        # UnorderedObjectListWarning, а порядок может плавать между запросами.
+        return Game.objects.filter(is_active=True).order_by("pk")
+
     def lastmod(self, obj):
         return obj.created_at
-    
+
     def location(self, obj):
-        return reverse('listings:game_listings', args=[obj.slug])
+        return reverse("listings:game_listings", args=[obj.slug])
 
 
 class ListingSitemap(Sitemap):
     """Объявления"""
-    changefreq = 'hourly'
+
+    changefreq = "hourly"
     priority = 1.0
-    
+
     def items(self):
-        return Listing.objects.filter(status='active').select_related('game')
-    
+        return Listing.objects.filter(status="active").select_related("game").order_by("pk")
+
     def lastmod(self, obj):
         return obj.updated_at
-    
+
     def location(self, obj):
-        return reverse('listings:listing_detail', args=[obj.pk])
+        return reverse("listings:listing_detail", args=[obj.pk])
 
 
 class ProfileSitemap(Sitemap):
     """Профили пользователей"""
-    changefreq = 'weekly'
+
+    changefreq = "weekly"
     priority = 0.6
-    
+
     def items(self):
-        return CustomUser.objects.filter(is_active=True, profile__is_verified=True)
-    
+        return CustomUser.objects.filter(is_active=True, profile__is_verified=True).order_by("pk")
+
     def lastmod(self, obj):
-        return obj.profile.updated_at if hasattr(obj, 'profile') else obj.date_joined
-    
+        return obj.profile.updated_at if hasattr(obj, "profile") else obj.date_joined
+
     def location(self, obj):
-        return reverse('accounts:profile', args=[obj.username])
+        return reverse("accounts:profile", args=[obj.username])
 
 
 sitemaps = {
-    'static': StaticViewSitemap,
-    'games': GameSitemap,
-    'listings': ListingSitemap,
-    'profiles': ProfileSitemap,
+    "static": StaticViewSitemap,
+    "games": GameSitemap,
+    "listings": ListingSitemap,
+    "profiles": ProfileSitemap,
 }
-
