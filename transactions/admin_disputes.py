@@ -1,11 +1,13 @@
-"""
-Админ-панель для споров и диспутов.
-"""
+"""Админ-панель для споров и диспутов."""
+
+import logging
 
 from django.contrib import admin
 from django.utils.html import format_html
 
 from payments.models_disputes import Dispute, DisputeEvidence, DisputeMessage
+
+logger = logging.getLogger(__name__)
 
 
 class DisputeMessageInline(admin.TabularInline):
@@ -70,15 +72,31 @@ class DisputeAdmin(admin.ModelAdmin):
     status_display.short_description = "Статус"
 
     def assign_to_me(self, request, queryset):
+        dispute_ids = list(queryset.filter(assigned_to__isnull=True).values_list("id", flat=True))
         updated = queryset.filter(assigned_to__isnull=True).update(
             assigned_to=request.user, status="under_review"
         )
+        if updated:
+            logger.warning(
+                "dispute admin assign_to_me: moderator=%s count=%s disputes=%s",
+                request.user.pk,
+                updated,
+                dispute_ids,
+            )
         self.message_user(request, f"Назначено {updated} споров")
 
     assign_to_me.short_description = "Назначить на меня"
 
     def mark_under_review(self, request, queryset):
+        dispute_ids = list(queryset.filter(status="open").values_list("id", flat=True))
         updated = queryset.filter(status="open").update(status="under_review")
+        if updated:
+            logger.info(
+                "dispute admin mark_under_review: moderator=%s count=%s disputes=%s",
+                request.user.pk,
+                updated,
+                dispute_ids,
+            )
         self.message_user(request, f"Отмечено {updated} споров как на рассмотрении")
 
     mark_under_review.short_description = "Отметить на рассмотрении"
