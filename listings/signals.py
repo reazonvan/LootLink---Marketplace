@@ -1,5 +1,5 @@
-"""
-Сигналы листингов: инвалидация кэша каталога при изменениях
+"""Сигналы листингов: инвалидация кэша каталога при изменениях.
+
 Game/Category/Listing.
 
 Кэш каталога (`games_catalog_ctx_v1`) и фрагменты шаблона
@@ -9,11 +9,15 @@ Game/Category/Listing.
 
 from __future__ import annotations
 
+import logging
+
 from django.core.cache import cache
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from .models import Category, Game, Listing
+
+logger = logging.getLogger(__name__)
 
 CATALOG_CACHE_KEYS = ("games_catalog_ctx_v1",)
 
@@ -40,6 +44,7 @@ def invalidate_catalog_cache() -> None:
 @receiver(post_save, sender=Category)
 @receiver(post_delete, sender=Category)
 def _invalidate_on_taxonomy_change(sender, **kwargs) -> None:
+    logger.debug("catalog cache invalidated (taxonomy): sender=%s", sender.__name__)
     invalidate_catalog_cache()
 
 
@@ -47,4 +52,9 @@ def _invalidate_on_taxonomy_change(sender, **kwargs) -> None:
 @receiver(post_delete, sender=Listing)
 def _invalidate_on_listing_change(sender, instance, **kwargs) -> None:
     # listings_count и min_price на каталоге зависят от состояния листингов.
+    logger.debug(
+        "catalog cache invalidated (listing): id=%s status=%s",
+        getattr(instance, "pk", "?"),
+        getattr(instance, "status", "?"),
+    )
     invalidate_catalog_cache()
