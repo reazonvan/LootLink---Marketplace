@@ -302,6 +302,36 @@ class SeoAndDeployViewsTest(TestCase):
         self.assertIn("database", body["checks"])
         self.assertIn("cache", body["checks"])
 
+    def test_metrics_blocked_for_anonymous(self):
+        """/metrics без токена и не для staff → 403."""
+        from django.test import override_settings
+
+        with override_settings(METRICS_TOKEN=""):
+            response = self.client.get("/metrics/")
+        self.assertEqual(response.status_code, 403)
+
+    def test_metrics_requires_bearer_when_token_set(self):
+        """С METRICS_TOKEN — wrong/missing Bearer → 403, верный → 200."""
+        from django.test import override_settings
+
+        with override_settings(METRICS_TOKEN="secret-scrape-token"):
+            # Без токена
+            r1 = self.client.get("/metrics/")
+            self.assertEqual(r1.status_code, 403)
+            # Неверный токен
+            r2 = self.client.get(
+                "/metrics/",
+                HTTP_AUTHORIZATION="Bearer wrong-token",
+            )
+            self.assertEqual(r2.status_code, 403)
+            # Правильный токен — возвращает Prometheus exposition
+            r3 = self.client.get(
+                "/metrics/",
+                HTTP_AUTHORIZATION="Bearer secret-scrape-token",
+            )
+            self.assertEqual(r3.status_code, 200)
+            self.assertIn(b"python_info", r3.content)
+
     def test_health_ready_returns_503_when_db_down(self):
         """Когда БД отвалилась — /health/ready возвращает 503 для балансера."""
         from unittest.mock import patch

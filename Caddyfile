@@ -16,7 +16,9 @@ lootlink.ru {
     # Block sensitive paths — return 403 regardless of backend state.
     # P0-17: media_private содержит KYC документы и dispute evidence —
     # доступ ТОЛЬКО через Django serve view с проверкой прав.
-    @sensitive path /.env* /.git* /.docker* /docker-compose* /.planning* /manage.py /media_private/*
+    # /metrics закрыт от публики; Prometheus scrape должен ходить по
+    # внутренней docker-сети напрямую на web:8000/metrics с Bearer-токеном.
+    @sensitive path /.env* /.git* /.docker* /docker-compose* /.planning* /manage.py /media_private/* /metrics*
     respond @sensitive 403
 
     # Canonical SEO files from collected static

@@ -23,3 +23,7 @@ hiredis>=3.3.0
 # Monitoring and error tracking
 sentry-sdk>=2.42.0
 flower>=2.0.0
+
+# Prometheus metrics — /metrics endpoint защищён METRICS_TOKEN/staff-only.
+# Auto-instruments: DB, cache, middleware timing, request count by status/method/view.
+django-prometheus>=2.5.0
