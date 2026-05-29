@@ -1,10 +1,11 @@
-"""
-Views для двухфакторной аутентификации (2FA).
+"""Views для двухфакторной аутентификации (2FA).
+
 Использует django-otp.
 """
 
 import base64
 import io
+import logging
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -16,6 +17,8 @@ from django_otp.plugins.otp_totp.models import TOTPDevice
 from django_otp.util import random_hex
 
 from core.models_audit import SecurityAuditLog
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -41,6 +44,7 @@ def setup_2fa(request):
         unconfirmed_device = TOTPDevice.objects.create(
             user=user, name=f"{user.username}-totp", confirmed=False
         )
+        logger.info("2fa setup started: user=%s device=%s", user.pk, unconfirmed_device.pk)
 
     # Генерируем QR код
     otpauth_url = unconfirmed_device.config_url
@@ -94,6 +98,7 @@ def verify_2fa(request):
     rl_key = f"2fa_setup_attempts:{user.id}"
     allowed, _ = check_rate_limit(rl_key, max_attempts=5, window_seconds=300)
     if not allowed:
+        logger.warning("2fa verify rate-limited: user=%s", user.pk)
         SecurityAuditLog.log(
             action_type="rate_limit_exceeded",
             user=user,
@@ -107,6 +112,7 @@ def verify_2fa(request):
     try:
         device = TOTPDevice.objects.get(id=device_id, user=user, confirmed=False)
     except TOTPDevice.DoesNotExist:
+        logger.info("2fa verify device not found: user=%s device_id=%r", user.pk, device_id)
         messages.error(request, "Устройство не найдено.")
         return redirect("accounts:setup_2fa")
 
@@ -119,6 +125,7 @@ def verify_2fa(request):
 
         cache.delete(rl_key)
 
+        logger.warning("2fa enabled: user=%s device=%s", user.pk, device.pk)
         SecurityAuditLog.log(
             action_type="2fa_enabled",
             user=user,
@@ -131,6 +138,7 @@ def verify_2fa(request):
         messages.success(request, "Двухфакторная аутентификация успешно настроена!")
         return redirect("accounts:profile", username=user.username)
     else:
+        logger.warning("2fa verify bad token: user=%s device=%s", user.pk, device.pk)
         messages.error(request, "Неверный код. Попробуйте еще раз.")
         return redirect("accounts:setup_2fa")
 
@@ -149,6 +157,7 @@ def disable_2fa(request):
     password = request.POST.get("password", "")
 
     if not user.check_password(password):
+        logger.warning("2fa disable bad password: user=%s", user.pk)
         SecurityAuditLog.log(
             action_type="login_failed",
             user=user,
@@ -162,6 +171,11 @@ def disable_2fa(request):
     deleted_count = TOTPDevice.objects.filter(user=user).delete()[0]
 
     if deleted_count > 0:
+        logger.warning(
+            "2fa disabled: user=%s removed_devices=%s",
+            user.pk,
+            deleted_count,
+        )
         SecurityAuditLog.log(
             action_type="2fa_disabled",
             user=user,
@@ -177,6 +191,7 @@ def disable_2fa(request):
             "уведомление — если это были не вы, срочно смените пароль.",
         )
     else:
+        logger.info("2fa disable no-op (none configured): user=%s", user.pk)
         messages.info(request, "2FA не была настроена.")
 
     return redirect("accounts:profile", username=user.username)
@@ -191,7 +206,7 @@ def _notify_security_change(user, action: str) -> None:
 
         from core.tasks import send_email_async
 
-        subject = f"Изменение настроек безопасности — LootLink"
+        subject = "Изменение настроек безопасности — LootLink"
         body = (
             f"Здравствуйте, {user.username}!\n\n"
             f"Двухфакторная аутентификация на вашем аккаунте {action}.\n\n"
@@ -204,9 +219,7 @@ def _notify_security_change(user, action: str) -> None:
         recipient = user.email
         db_transaction.on_commit(lambda: send_email_async.delay(subject, body, recipient))
     except Exception:
-        import logging
-
-        logging.getLogger(__name__).exception("Не удалось отправить 2FA-алерт")
+        logger.exception("Не удалось отправить 2FA-алерт user=%s", user.pk)
 
 
 @login_required

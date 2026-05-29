@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # verify_email перенесён в accounts.views — здесь оставляем заглушку для совместимости
 # импортов в тестах.
-from .views import verify_email  # noqa: F401
+from .views import verify_email  # noqa: F401,E402
 
 
 @login_required
@@ -50,6 +50,7 @@ def resend_verification_email(request):
         from core.email_utils import send_verification_email
 
         send_verification_email(request.user, verification_url)
+        logger.info("verification email resent: user=%s", request.user.pk)
 
         messages.success(request, "Письмо верификации отправлено на ваш email.")
         return redirect("accounts:verification_status")
@@ -65,6 +66,10 @@ def resend_verification_email(request):
         from core.email_utils import send_verification_email
 
         send_verification_email(request.user, verification_url)
+        logger.info(
+            "verification email sent (created fresh): user=%s",
+            request.user.pk,
+        )
 
         messages.success(request, "Письмо верификации отправлено на ваш email.")
         return redirect("accounts:verification_status")
@@ -115,6 +120,11 @@ def phone_verification_request(request):
             f"sms_request:{request.user.id}", max_attempts=3, window_seconds=3600
         )
         if not allowed:
+            logger.warning(
+                "sms_request rate-limited: user=%s phone=%s",
+                request.user.pk,
+                profile.phone,
+            )
             messages.error(
                 request,
                 "Слишком много запросов SMS. Попробуйте через час.",
@@ -127,11 +137,22 @@ def phone_verification_request(request):
         success = send_verification_sms(profile.phone, verification.code)
 
         if success:
+            logger.info(
+                "sms_request sent: user=%s phone=%s verification=%s",
+                request.user.pk,
+                profile.phone,
+                verification.pk,
+            )
             messages.success(
                 request, f"SMS код отправлен на номер {profile.phone}. Код действителен 10 минут."
             )
             return redirect("accounts:phone_verification_confirm")
         else:
+            logger.warning(
+                "sms_request send_verification_sms failed: user=%s phone=%s",
+                request.user.pk,
+                profile.phone,
+            )
             messages.error(request, "Ошибка отправки SMS. Попробуйте позже.")
             verification.delete()
 
@@ -184,12 +205,26 @@ def phone_verification_confirm(request):
                 success, message = verification.verify(entered_code)
 
                 if success:
+                    logger.warning(
+                        "phone verified: user=%s phone=%s",
+                        request.user.pk,
+                        profile.phone,
+                    )
                     messages.success(request, "Телефон подтверждён! Добро пожаловать в LootLink!")
                     return redirect("listings:home")
                 else:
+                    logger.info(
+                        "phone verification rejected: user=%s reason=%s",
+                        request.user.pk,
+                        message,
+                    )
                     messages.error(request, message)
 
             except PhoneVerification.DoesNotExist:
+                logger.info(
+                    "phone verification: no active verification for user=%s",
+                    request.user.pk,
+                )
                 messages.error(request, "Код верификации не найден. Запросите новый код.")
                 return redirect("accounts:phone_verification_request")
     else:

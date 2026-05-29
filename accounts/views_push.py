@@ -1,5 +1,4 @@
-"""
-Views для управления Web Push подписками.
+"""Views для управления Web Push подписками.
 
 CSRF: запросы — AJAX от авторизованного пользователя. CSRF-токен берётся
 JS-клиентом из <meta name="csrf-token"> в base.html и отправляется в
@@ -7,12 +6,15 @@ X-CSRFToken header. Стандартная Django CSRF-защита включе
 """
 
 import json
+import logging
 
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 
 from core.models_notifications import PushSubscription
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -40,6 +42,12 @@ def subscribe_push(request):
                 "is_active": True,
             },
         )
+        logger.info(
+            "push subscription %s: user=%s id=%s",
+            "created" if created else "updated",
+            request.user.pk,
+            subscription.pk,
+        )
 
         return JsonResponse(
             {
@@ -50,8 +58,10 @@ def subscribe_push(request):
         )
 
     except json.JSONDecodeError:
+        logger.info("push subscribe bad JSON: user=%s", request.user.pk)
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     except Exception as e:
+        logger.exception("push subscribe failed: user=%s", request.user.pk)
         return JsonResponse({"error": str(e)}, status=500)
 
 
@@ -69,6 +79,11 @@ def unsubscribe_push(request):
         deleted_count = PushSubscription.objects.filter(
             user=request.user, subscription_info__endpoint=endpoint
         ).delete()[0]
+        logger.info(
+            "push unsubscribe: user=%s deleted=%s",
+            request.user.pk,
+            deleted_count,
+        )
 
         return JsonResponse(
             {
@@ -79,8 +94,10 @@ def unsubscribe_push(request):
         )
 
     except json.JSONDecodeError:
+        logger.info("push unsubscribe bad JSON: user=%s", request.user.pk)
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     except Exception as e:
+        logger.exception("push unsubscribe failed: user=%s", request.user.pk)
         return JsonResponse({"error": str(e)}, status=500)
 
 
