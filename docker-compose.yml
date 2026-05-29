@@ -20,6 +20,60 @@ services:
       timeout: 5s
       retries: 5
 
+  # PgBouncer — connection pooler перед Postgres.
+  # Каждый gunicorn worker × replica × celery worker держит CONN_MAX_AGE=600
+  # коннект, что мгновенно упирается в postgres max_connections=100.
+  # PgBouncer в transaction-mode переиспользует коннекты per-transaction,
+  # позволяя сотням приложенческих "соединений" работать через 20-30 реальных.
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: lootlink_pgbouncer
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-lootlink_db}
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 500
+      DEFAULT_POOL_SIZE: 25
+      RESERVE_POOL_SIZE: 5
+      SERVER_RESET_QUERY: DISCARD ALL
+      AUTH_TYPE: md5
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - lootlink_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Migrator — однократный init-сервис.
+  # Запускает migrate и завершается; web/celery ждут его через
+  # `condition: service_completed_successfully`. Без этого N web-реплик
+  # одновременно гоняют migrate → race condition на schema.
+  # Подключается к db напрямую (не через pgbouncer), чтобы DDL+savepoint
+  # работали корректно — pgbouncer transaction-mode их ломает.
+  migrator:
+    build: .
+    container_name: lootlink_migrator
+    command: python manage.py migrate --noinput
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - lootlink_network
+    restart: "no"
+
   # Django приложение — gunicorn + uvicorn workers (ASGI/WebSocket).
   # CMD из Dockerfile запускает gunicorn с WEB_CONCURRENCY worker'ами.
   # Миграции и collectstatic вынесены: первое — в init-сервис `migrator`,
@@ -41,11 +95,14 @@ services:
     env_file:
       - .env
     environment:
-      DB_HOST: db
+      # Через pgbouncer, не напрямую в db
+      DB_HOST: pgbouncer
       DB_PORT: 5432
     depends_on:
-      db:
+      pgbouncer:
         condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
     healthcheck:
       test:
         [
@@ -91,13 +148,15 @@ services:
     env_file:
       - .env
     environment:
-      DB_HOST: db
+      DB_HOST: pgbouncer
       DB_PORT: 5432
     depends_on:
-      db:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
     networks:
       - lootlink_network
     healthcheck:
@@ -116,13 +175,15 @@ services:
     env_file:
       - .env
     environment:
-      DB_HOST: db
+      DB_HOST: pgbouncer
       DB_PORT: 5432
     depends_on:
-      db:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
     networks:
       - lootlink_network
 
