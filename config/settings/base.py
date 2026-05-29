@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "django_otp",
     "django_otp.plugins.otp_totp",
+    "django_prometheus",  # /metrics + auto-instrumented DB/cache/queries
     # Local apps
     "core.apps.CoreConfig",
     "accounts.apps.AccountsConfig",
@@ -110,6 +111,10 @@ REST_FRAMEWORK = {
 }
 
 MIDDLEWARE = [
+    # django-prometheus: Before — самый первый, After — самый последний,
+    # чтобы измерять полное время обработки запроса (включая security
+    # checks и rate-limit). Метрики не должны влиять на request_id flow.
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     # Request ID первым — чтобы все последующие логи подхватили идентификатор
     "core.middleware_logging.RequestIDMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -130,6 +135,9 @@ MIDDLEWARE = [
     "core.middleware_activity.UpdateLastSeenMiddleware",
     # Админ-панель
     "admin_panel.middleware.AdminPanelContextMiddleware",  # Счетчики для sidebar
+    # PrometheusAfter — последним: после всех middleware, чтобы поймать
+    # полное время response_time, включая admin_panel context.
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -312,6 +320,12 @@ LOGOUT_REDIRECT_URL = "listings:home"
 
 # Listings
 MAX_ACTIVE_LISTINGS = config("MAX_ACTIVE_LISTINGS", default=50, cast=int)
+
+# Prometheus /metrics auth.
+# Если задан — endpoint требует Authorization: Bearer <token> (для prometheus
+# scrape-job через bearer_token). Если пусто — fallback на staff-only access.
+# В production значение должно быть задано в .env.
+METRICS_TOKEN = config("METRICS_TOKEN", default="")
 
 # Messages framework
 from django.contrib.messages import constants as messages  # noqa: E402

@@ -31,6 +31,42 @@ def health_check(request):
     return health_ready(request)
 
 
+def metrics_view(request):
+    """Prometheus /metrics endpoint, ограниченный по auth.
+
+    django-prometheus отдаёт ExportToDjangoView без auth по умолчанию.
+    Метрики раскрывают пути, статусы, тайминги — потенциальная утечка
+    для атакующего. Закрываем по двум альтернативным правилам:
+
+    1. METRICS_TOKEN env — если задан, требуем заголовок
+       Authorization: Bearer <token>. Для Prometheus scrape job это
+       чистый способ авторизации.
+    2. Если токен не задан — разрешаем только staff, чтобы случайно
+       не открыть endpoint наружу.
+    """
+    from django.conf import settings as dj_settings
+    from django.http import HttpResponseForbidden
+
+    token = getattr(dj_settings, "METRICS_TOKEN", "")
+    if token:
+        provided = request.headers.get("Authorization", "")
+        if provided != f"Bearer {token}":
+            logger.warning(
+                "metrics endpoint: bad/missing token, ip=%s",
+                request.META.get("REMOTE_ADDR", "?"),
+            )
+            return HttpResponseForbidden("metrics requires Bearer token")
+    else:
+        if not (request.user.is_authenticated and request.user.is_staff):
+            return HttpResponseForbidden(
+                "metrics endpoint disabled — set METRICS_TOKEN env or auth as staff",
+            )
+
+    from django_prometheus import exports
+
+    return exports.ExportToDjangoView(request)
+
+
 def health_live(request):
     """Liveness probe: процесс жив и обрабатывает HTTP.
 
