@@ -1,5 +1,4 @@
-"""
-Сервисный слой `listings/`.
+"""Сервисный слой `listings/`.
 
 Здесь живёт бизнес-логика для объявлений (Listing), категорий, фильтров.
 Сервисы должны:
@@ -17,6 +16,7 @@ Naming: `listing_<action>`, например `listing_create`, `listing_archive`
 Постепенно перенесите сюда логику из `listings/views.py` (523 строки).
 """
 
+import logging
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
@@ -25,6 +25,8 @@ from django.db import transaction
 if TYPE_CHECKING:
     from accounts.models import CustomUser
     from listings.models import Game, Listing
+
+logger = logging.getLogger(__name__)
 
 
 @transaction.atomic
@@ -69,11 +71,17 @@ def listing_create(
 
     active_count = Listing.objects.filter(seller=seller, status="active").count()
     if active_count >= settings.MAX_ACTIVE_LISTINGS:
+        logger.warning(
+            "listing_create rejected (limit): seller=%s active=%s max=%s",
+            seller.pk,
+            active_count,
+            settings.MAX_ACTIVE_LISTINGS,
+        )
         raise ValidationError(
             f"Достигнут лимит активных объявлений ({settings.MAX_ACTIVE_LISTINGS})"
         )
 
-    return Listing.objects.create(
+    listing = Listing.objects.create(
         seller=seller,
         game=game,
         title=title,
@@ -82,3 +90,12 @@ def listing_create(
         image=image,
         status="active",
     )
+    logger.info(
+        "listing created: id=%s seller=%s game=%s price=%s has_image=%s",
+        listing.pk,
+        seller.pk,
+        game.pk,
+        price,
+        bool(image),
+    )
+    return listing
