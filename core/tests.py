@@ -1,10 +1,11 @@
 """
 Unit тесты для приложения core.
 """
-from django.test import TestCase, Client
-from django.test import override_settings
-from django.urls import reverse
+
 from django.contrib.auth import get_user_model
+from django.test import Client, TestCase, override_settings
+from django.urls import reverse
+
 from .models import Notification
 
 User = get_user_model()
@@ -12,121 +13,95 @@ User = get_user_model()
 
 class NotificationModelTest(TestCase):
     """Тесты для модели Notification."""
-    
+
     def setUp(self):
         """Подготовка тестовых данных."""
         self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
+            username="testuser", email="test@example.com", password="testpass123"
         )
-    
+
     def test_notification_creation(self):
         """Тест создания уведомления."""
         notification = Notification.objects.create(
             user=self.user,
-            notification_type='new_message',
-            title='Test Notification',
-            message='This is a test notification',
-            link='/test/'
+            notification_type="new_message",
+            title="Test Notification",
+            message="This is a test notification",
+            link="/test/",
         )
-        
+
         self.assertEqual(notification.user, self.user)
-        self.assertEqual(notification.notification_type, 'new_message')
-        self.assertEqual(notification.title, 'Test Notification')
+        self.assertEqual(notification.notification_type, "new_message")
+        self.assertEqual(notification.title, "Test Notification")
         self.assertFalse(notification.is_read)
         self.assertIsNone(notification.read_at)
-    
+
     def test_mark_as_read(self):
         """Тест отметки уведомления как прочитанного."""
         notification = Notification.objects.create(
-            user=self.user,
-            notification_type='system',
-            title='Test',
-            message='Test message'
+            user=self.user, notification_type="system", title="Test", message="Test message"
         )
-        
+
         # Изначально непрочитано
         self.assertFalse(notification.is_read)
         self.assertIsNone(notification.read_at)
-        
+
         # Отмечаем как прочитанное
         notification.mark_as_read()
-        
+
         # Проверяем
         self.assertTrue(notification.is_read)
         self.assertIsNotNone(notification.read_at)
-    
+
     def test_create_notification_classmethod(self):
         """Тест создания уведомления через classmethod."""
         notification = Notification.create_notification(
             user=self.user,
-            notification_type='purchase_request',
-            title='New Purchase Request',
-            message='Someone wants to buy your item',
-            link='/transactions/1/'
+            notification_type="purchase_request",
+            title="New Purchase Request",
+            message="Someone wants to buy your item",
+            link="/transactions/1/",
         )
-        
+
         self.assertIsInstance(notification, Notification)
         self.assertEqual(notification.user, self.user)
-        self.assertEqual(notification.link, '/transactions/1/')
-    
+        self.assertEqual(notification.link, "/transactions/1/")
+
     def test_mark_all_as_read(self):
         """Тест отметки всех уведомлений как прочитанных."""
         # Создаем несколько уведомлений
         Notification.objects.create(
-            user=self.user,
-            notification_type='new_message',
-            title='Message 1',
-            message='Content 1'
+            user=self.user, notification_type="new_message", title="Message 1", message="Content 1"
         )
         Notification.objects.create(
-            user=self.user,
-            notification_type='new_message',
-            title='Message 2',
-            message='Content 2'
+            user=self.user, notification_type="new_message", title="Message 2", message="Content 2"
         )
         Notification.objects.create(
-            user=self.user,
-            notification_type='new_review',
-            title='Review',
-            message='New review'
+            user=self.user, notification_type="new_review", title="Review", message="New review"
         )
-        
+
         # Все должны быть непрочитанными
-        self.assertEqual(
-            Notification.objects.filter(user=self.user, is_read=False).count(),
-            3
-        )
-        
+        self.assertEqual(Notification.objects.filter(user=self.user, is_read=False).count(), 3)
+
         # Отмечаем все как прочитанные
         Notification.mark_all_as_read(self.user)
-        
+
         # Все должны быть прочитанными
-        self.assertEqual(
-            Notification.objects.filter(user=self.user, is_read=False).count(),
-            0
-        )
-        self.assertEqual(
-            Notification.objects.filter(user=self.user, is_read=True).count(),
-            3
-        )
-    
+        self.assertEqual(Notification.objects.filter(user=self.user, is_read=False).count(), 0)
+        self.assertEqual(Notification.objects.filter(user=self.user, is_read=True).count(), 3)
+
     def test_notification_ordering(self):
         """Тест сортировки уведомлений (новые первыми)."""
         notif1 = Notification.objects.create(
-            user=self.user,
-            notification_type='system',
-            title='First',
-            message='First notification'
+            user=self.user, notification_type="system", title="First", message="First notification"
         )
         notif2 = Notification.objects.create(
             user=self.user,
-            notification_type='system',
-            title='Second',
-            message='Second notification'
+            notification_type="system",
+            title="Second",
+            message="Second notification",
         )
-        
+
         notifications = list(Notification.objects.all())
         # Новые должны быть первыми (ordering = ['-created_at'])
         self.assertEqual(notifications[0], notif2)
@@ -135,181 +110,164 @@ class NotificationModelTest(TestCase):
 
 class NotificationViewsTest(TestCase):
     """Тесты для views уведомлений."""
-    
+
     def setUp(self):
         """Подготовка тестовых данных."""
         self.client = Client()
         self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
+            username="testuser", email="test@example.com", password="testpass123"
         )
-    
+
     def test_notifications_list_requires_login(self):
         """Тест требования авторизации для списка уведомлений."""
-        url = reverse('core:notifications_list')
+        url = reverse("core:notifications_list")
         response = self.client.get(url)
-        
+
         # Должен быть редирект на страницу входа
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/accounts/login/', response.url)
-    
+        self.assertIn("/accounts/login/", response.url)
+
     def test_notifications_list_authenticated(self):
         """Тест доступа к списку уведомлений для авторизованного пользователя."""
-        self.client.login(username='testuser', password='testpass123')
-        
+        self.client.login(username="testuser", password="testpass123")
+
         # Создаем уведомления
         Notification.objects.create(
             user=self.user,
-            notification_type='new_message',
-            title='Test Notification',
-            message='Test'
+            notification_type="new_message",
+            title="Test Notification",
+            message="Test",
         )
-        
-        url = reverse('core:notifications_list')
+
+        url = reverse("core:notifications_list")
         response = self.client.get(url)
-        
+
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Test Notification')
-    
+        self.assertContains(response, "Test Notification")
+
     def test_mark_notification_read(self):
         """Тест отметки уведомления как прочитанного."""
-        self.client.login(username='testuser', password='testpass123')
-        
+        self.client.login(username="testuser", password="testpass123")
+
         notification = Notification.objects.create(
-            user=self.user,
-            notification_type='system',
-            title='Test',
-            message='Test message'
+            user=self.user, notification_type="system", title="Test", message="Test message"
         )
-        
-        url = reverse('core:mark_notification_read', kwargs={'pk': notification.pk})
+
+        url = reverse("core:mark_notification_read", kwargs={"pk": notification.pk})
         response = self.client.post(url)
-        
+
         # Проверяем что уведомление отмечено как прочитанное
         notification.refresh_from_db()
         self.assertTrue(notification.is_read)
-    
+
     def test_mark_all_notifications_read(self):
         """Тест отметки всех уведомлений как прочитанных."""
-        self.client.login(username='testuser', password='testpass123')
-        
+        self.client.login(username="testuser", password="testpass123")
+
         # Создаем несколько уведомлений
         Notification.objects.create(
             user=self.user,
-            notification_type='new_message',
-            title='Notification 1',
-            message='Test 1'
+            notification_type="new_message",
+            title="Notification 1",
+            message="Test 1",
         )
         Notification.objects.create(
             user=self.user,
-            notification_type='new_message',
-            title='Notification 2',
-            message='Test 2'
+            notification_type="new_message",
+            title="Notification 2",
+            message="Test 2",
         )
-        
-        url = reverse('core:mark_all_notifications_read')
+
+        url = reverse("core:mark_all_notifications_read")
         response = self.client.post(url)
-        
+
         # Все уведомления должны быть прочитанными
-        unread_count = Notification.objects.filter(
-            user=self.user,
-            is_read=False
-        ).count()
+        unread_count = Notification.objects.filter(user=self.user, is_read=False).count()
         self.assertEqual(unread_count, 0)
-    
+
     def test_unread_notifications_count_api(self):
         """Тест API для получения количества непрочитанных уведомлений."""
-        self.client.login(username='testuser', password='testpass123')
-        
+        self.client.login(username="testuser", password="testpass123")
+
         # Создаем уведомления
         Notification.objects.create(
             user=self.user,
-            notification_type='new_message',
-            title='Unread 1',
-            message='Test',
-            is_read=False
+            notification_type="new_message",
+            title="Unread 1",
+            message="Test",
+            is_read=False,
         )
         Notification.objects.create(
             user=self.user,
-            notification_type='new_message',
-            title='Unread 2',
-            message='Test',
-            is_read=False
+            notification_type="new_message",
+            title="Unread 2",
+            message="Test",
+            is_read=False,
         )
         Notification.objects.create(
-            user=self.user,
-            notification_type='system',
-            title='Read',
-            message='Test',
-            is_read=True
+            user=self.user, notification_type="system", title="Read", message="Test", is_read=True
         )
-        
-        url = reverse('core:unread_notifications_count')
+
+        url = reverse("core:unread_notifications_count")
         response = self.client.get(url)
-        
+
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data['count'], 2)
-    
+        self.assertEqual(data["count"], 2)
+
     def test_cannot_read_other_users_notification(self):
         """Тест запрета отметки чужого уведомления как прочитанного."""
         # Создаем второго пользователя
         user2 = User.objects.create_user(
-            username='user2',
-            email='user2@example.com',
-            password='testpass123'
+            username="user2", email="user2@example.com", password="testpass123"
         )
-        
+
         # Создаем уведомление для user2
         notification = Notification.objects.create(
-            user=user2,
-            notification_type='system',
-            title='Private',
-            message='Private notification'
+            user=user2, notification_type="system", title="Private", message="Private notification"
         )
-        
+
         # Пытаемся прочитать от имени testuser
-        self.client.login(username='testuser', password='testpass123')
-        url = reverse('core:mark_notification_read', kwargs={'pk': notification.pk})
+        self.client.login(username="testuser", password="testpass123")
+        url = reverse("core:mark_notification_read", kwargs={"pk": notification.pk})
         response = self.client.post(url)
-        
+
         # Должна быть ошибка 404
         self.assertEqual(response.status_code, 404)
 
 
 class CoreViewsTest(TestCase):
     """Тесты для других views приложения core."""
-    
+
     def setUp(self):
         """Подготовка тестовых данных."""
         self.client = Client()
-    
+
     def test_about_page_loads(self):
         """Тест загрузки страницы 'О нас'."""
-        url = reverse('about')
+        url = reverse("about")
         response = self.client.get(url)
-        
+
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'О нас')
-    
+        self.assertContains(response, "О нас")
+
     def test_rules_page_loads(self):
         """Тест загрузки страницы 'Правила'."""
-        url = reverse('rules')
+        url = reverse("rules")
         response = self.client.get(url)
-        
+
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Правила')
-    
+        self.assertContains(response, "Правила")
+
     def test_about_page_shows_statistics(self):
         """Тест отображения статистики на странице 'О нас'."""
-        url = reverse('about')
+        url = reverse("about")
         response = self.client.get(url)
-        
+
         # Проверяем что есть статистика
-        self.assertIn('total_users', response.context)
-        self.assertIn('total_listings', response.context)
-        self.assertIn('total_deals', response.context)
+        self.assertIn("total_users", response.context)
+        self.assertIn("total_listings", response.context)
+        self.assertIn("total_deals", response.context)
 
 
 @override_settings(SECURE_SSL_REDIRECT=False)
@@ -320,26 +278,58 @@ class SeoAndDeployViewsTest(TestCase):
         self.client = Client()
 
     def test_health_endpoint_returns_ok(self):
-        """Health endpoint должен отдавать 200 и JSON статус."""
-        response = self.client.get('/health/')
+        """Health endpoint должен отдавать 200 и JSON статус (alias на /ready)."""
+        response = self.client.get("/health/")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {'status': 'ok'})
+        body = response.json()
+        self.assertEqual(body["status"], "ok")
+        # Backwards-compat: смотрит на checks.database
+        self.assertEqual(body.get("checks", {}).get("database"), "ok")
+
+    def test_health_live_returns_ok_without_db(self):
+        """/health/live не дёргает БД и Redis — только проверяет процесс."""
+        response = self.client.get("/health/live/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok", "check": "live"})
+
+    def test_health_ready_includes_db_and_cache_checks(self):
+        """/health/ready отдаёт detailed checks по dependencies."""
+        response = self.client.get("/health/ready/")
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["status"], "ok")
+        self.assertEqual(body["check"], "ready")
+        self.assertIn("database", body["checks"])
+        self.assertIn("cache", body["checks"])
+
+    def test_health_ready_returns_503_when_db_down(self):
+        """Когда БД отвалилась — /health/ready возвращает 503 для балансера."""
+        from unittest.mock import patch
+
+        with patch("core.views.connection") as mock_conn:
+            mock_conn.cursor.side_effect = Exception("db down")
+            response = self.client.get("/health/ready/")
+
+        self.assertEqual(response.status_code, 503)
+        body = response.json()
+        self.assertEqual(body["status"], "error")
+        self.assertTrue(body["checks"]["database"].startswith("error"))
 
     def test_robots_redirects_to_static(self):
         """robots.txt доступен по корневому URL через редирект в static."""
-        response = self.client.get('/robots.txt')
+        response = self.client.get("/robots.txt")
         self.assertEqual(response.status_code, 301)
-        self.assertEqual(response['Location'], '/static/robots.txt')
+        self.assertEqual(response["Location"], "/static/robots.txt")
 
     def test_manifest_redirects_to_static(self):
         """manifest.json доступен по корневому URL через редирект в static."""
-        response = self.client.get('/manifest.json')
+        response = self.client.get("/manifest.json")
         self.assertEqual(response.status_code, 301)
-        self.assertEqual(response['Location'], '/static/manifest.json')
+        self.assertEqual(response["Location"], "/static/manifest.json")
 
-    @override_settings(SITE_URL='https://example.com')
+    @override_settings(SITE_URL="https://example.com")
     def test_canonical_uses_site_url(self):
         """Canonical ссылка строится через SITE_URL, а не через хардкод."""
-        response = self.client.get(reverse('about'))
+        response = self.client.get(reverse("about"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'rel="canonical" href="https://example.com/about/"')
