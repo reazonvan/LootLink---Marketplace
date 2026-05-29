@@ -20,15 +20,14 @@ services:
       timeout: 5s
       retries: 5
 
-  # Django приложение
+  # Django приложение — gunicorn + uvicorn workers (ASGI/WebSocket).
+  # CMD из Dockerfile запускает gunicorn с WEB_CONCURRENCY worker'ами.
+  # Миграции и collectstatic вынесены: первое — в init-сервис `migrator`,
+  # второе — в build-time RUN в Dockerfile (manifest.json уже внутри образа).
   web:
     build: .
     container_name: lootlink_web
     restart: unless-stopped
-    command: >
-      sh -c "python manage.py migrate --noinput &&
-             python manage.py collectstatic --noinput &&
-             daphne -b 0.0.0.0 -p 8000 config.asgi:application"
     volumes:
       - staticfiles:/app/staticfiles
       - type: bind
