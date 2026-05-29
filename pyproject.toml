@@ -80,9 +80,11 @@ django_settings_module = "config.settings.development"
 exclude_dirs = ["tests", "venv", "migrations"]
 # B101 — assert в production-коде небезопасен, но pytest полагается на assert
 # во всех test_*/tests*.py.
+# B105 — hardcoded password string. Шумит на любых строках с словом 'token',
+# 'secret', 'password' (в т.ч. settings.TELEGRAM_BOT_TOKEN = "abc" в тестах).
 # B308 — устаревший Markup для XSS, в Django-проектах не используется.
 # B703 — устаревшая защита от XSS через Django templates.
-skips = ["B101", "B308", "B703"]
+skips = ["B101", "B105", "B308", "B703"]
 
 [tool.pylint.messages_control]
 disable = [
