@@ -27,6 +27,7 @@ DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["test_*.py", "*_test.py", "tests.py", "tests_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+asyncio_mode = "auto"
 addopts = [
     "--strict-markers",
     "--strict-config",
@@ -77,7 +78,11 @@ django_settings_module = "config.settings.development"
 
 [tool.bandit]
 exclude_dirs = ["tests", "venv", "migrations"]
-skips = ["B308", "B703"]
+# B101 — assert в production-коде небезопасен, но pytest полагается на assert
+# во всех test_*/tests*.py.
+# B308 — устаревший Markup для XSS, в Django-проектах не используется.
+# B703 — устаревшая защита от XSS через Django templates.
+skips = ["B101", "B308", "B703"]
 
 [tool.pylint.messages_control]
 disable = [
