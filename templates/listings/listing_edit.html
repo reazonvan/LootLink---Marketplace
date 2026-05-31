@@ -101,9 +101,9 @@
 
 {% block extra_js %}
 <link rel="stylesheet" href="{% static 'css/image-cropper.css' %}">
-<script src="{% static 'js/cropper.min.js' %}"></script>
-<script src="{% static 'js/listing-image-cropper.js' %}"></script>
-<script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/cropper.min.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/listing-image-cropper.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}">
 lucide.createIcons();
 document.addEventListener('DOMContentLoaded', function() {
     var gameSelect = document.getElementById('id_game');

@@ -42,7 +42,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ request.csp_nonce }}">
 lucide.createIcons();
 async function cancelTransaction(id) { var reason = prompt('Причина отмены:'); if(!reason)return; var r = await adminAjax('/custom-admin/api/transactions/'+id+'/cancel/',{reason:reason}); if(r.success){showToast(r.message);setTimeout(function(){location.reload()},1000);}else{showToast(r.message,'danger');} }
 </script>

@@ -65,7 +65,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ request.csp_nonce }}">
 lucide.createIcons();
 async function verifyUser(id) { var r = await adminAjax('/custom-admin/api/users/'+id+'/verify/'); if(r.success){showToast(r.message);setTimeout(function(){location.reload()},1000);}else{showToast(r.message,'danger');} }
 async function banUser(id) { if(!confirm('Заблокировать?'))return; var r = await adminAjax('/custom-admin/api/users/'+id+'/ban/'); if(r.success){showToast(r.message);setTimeout(function(){location.reload()},1000);}else{showToast(r.message,'danger');} }

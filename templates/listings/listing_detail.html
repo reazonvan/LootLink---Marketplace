@@ -53,7 +53,7 @@
         <div class="listing-detail__sidebar">
             <div class="listing-detail__price-card" data-animate="slide-right">
                 <div class="listing-detail__price">{{ listing.price }} <small>₽</small></div>
-                
+
                 <div class="listing-detail__actions">
                     {% if user.is_authenticated %}
                         {% if user == listing.seller %}
@@ -204,6 +204,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/favorites.js' %}"></script>
-<script>lucide.createIcons();</script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/favorites.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}">lucide.createIcons();</script>
 {% endblock %}

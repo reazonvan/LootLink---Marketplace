@@ -29,7 +29,7 @@
     <meta property="twitter:title" content="{% block twitter_title %}LootLink - Маркетплейс игровых предметов{% endblock %}">
     <meta property="twitter:description" content="{% block twitter_description %}Покупайте и продавайте игровые предметы напрямую у других игроков{% endblock %}">
 
-    <script type="application/ld+json">
+    <script nonce="{{ request.csp_nonce }}" type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
@@ -43,7 +43,7 @@
       }
     }
     </script>
-    <script type="application/ld+json">
+    <script nonce="{{ request.csp_nonce }}" type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
@@ -62,7 +62,7 @@
     <link rel="manifest" href="{% static 'manifest.json' %}">
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
 
-    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script nonce="{{ request.csp_nonce }}" src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
 
     <link rel="stylesheet" href="{% static 'css/lootlink.css' %}?v=20260325m3">
     <link rel="stylesheet" href="{% static 'css/image-cropper.css' %}?v=20260322">
@@ -377,7 +377,7 @@
         </div>
     </div>
 
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
         lucide.createIcons();
 
         (function() {
@@ -555,7 +555,7 @@
     </script>
 
     {% if user.is_authenticated %}
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
     (function() {
         var lastCount = {{ unread_notifications_count|default:0 }};
 
@@ -589,7 +589,7 @@
     </script>
     {% endif %}
 
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
     (function(){
         function animateEntrance() {
             var els = document.querySelectorAll('[data-animate]:not(.animated)');
@@ -615,8 +615,8 @@
         }
     })();
     </script>
-    <script src="{% static 'js/search-autocomplete.js' %}?v=20260427" defer></script>
-    <script src="{% static 'js/image-gallery.js' %}?v=20260427" defer></script>
+    <script nonce="{{ request.csp_nonce }}" src="{% static 'js/search-autocomplete.js' %}?v=20260427" defer></script>
+    <script nonce="{{ request.csp_nonce }}" src="{% static 'js/image-gallery.js' %}?v=20260427" defer></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

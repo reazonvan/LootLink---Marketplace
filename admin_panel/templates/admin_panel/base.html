@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Админ-панель{% endblock %} - LootLink</title>
     {% load static %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script nonce="{{ request.csp_nonce }}" src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script nonce="{{ request.csp_nonce }}" src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
     <style>
         :root {
             --ap-primary: #6366F1; --ap-primary-dark: #4F46E5; --ap-primary-light: #818CF8;
@@ -264,7 +264,7 @@
 
     <div id="toastBox"></div>
 
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
         lucide.createIcons();
         var sidebar = document.getElementById('apSidebar');
         var mainC = document.getElementById('apMain');

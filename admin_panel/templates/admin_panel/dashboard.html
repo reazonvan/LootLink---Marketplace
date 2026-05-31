@@ -172,7 +172,7 @@
 {% block extra_js %}
 {{ registrations_chart|json_script:"reg-chart-data" }}
 {{ listings_chart|json_script:"listings-chart-data" }}
-<script>
+<script nonce="{{ request.csp_nonce }}">
 lucide.createIcons();
 var regData = JSON.parse(document.getElementById('reg-chart-data').textContent);
 new Chart(document.getElementById('registrationsChart'), {

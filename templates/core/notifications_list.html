@@ -88,7 +88,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ request.csp_nonce }}">
 lucide.createIcons();
 document.getElementById('markAllRead')?.addEventListener('click', function() {
     fetch('/notifications/mark-all-read/', {

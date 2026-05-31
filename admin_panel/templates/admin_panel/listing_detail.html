@@ -51,7 +51,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ request.csp_nonce }}">
 lucide.createIcons();
 async function approveListing(id) { var r = await adminAjax('/custom-admin/api/listings/'+id+'/approve/'); if(r.success){showToast(r.message);setTimeout(function(){window.location.href='{% url "admin_panel:listings_moderation" %}'},1000);}else{showToast(r.message,'danger');} }
 function rejectListing(id) { var reason = prompt('Причина отклонения:'); if(!reason)return; adminAjax('/custom-admin/api/listings/'+id+'/reject/',{reason:reason}).then(function(r){if(r.success){showToast(r.message);setTimeout(function(){window.location.href='{% url "admin_panel:listings_moderation" %}'},1000);}else{showToast(r.message,'danger');}}); }

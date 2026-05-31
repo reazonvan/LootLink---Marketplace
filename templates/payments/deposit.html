@@ -39,5 +39,5 @@
 .form-group input[type="radio"]:checked + label,
 label:has(input[type="radio"]:checked) { border-color: var(--accent-primary); background: var(--color-primary-light); color: var(--accent-primary); }
 </style>
-{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}
+{% block extra_js %}<script nonce="{{ request.csp_nonce }}">lucide.createIcons();</script>{% endblock %}
 {% endblock %}

@@ -57,5 +57,5 @@
 .star-rating input:checked ~ label, .star-rating label:hover, .star-rating label:hover ~ label { color: #fbbf24; }
 .star-rating input:checked ~ label svg, .star-rating label:hover svg, .star-rating label:hover ~ label svg { fill: #fbbf24; }
 </style>
-{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}
+{% block extra_js %}<script nonce="{{ request.csp_nonce }}">lucide.createIcons();</script>{% endblock %}
 {% endblock %}

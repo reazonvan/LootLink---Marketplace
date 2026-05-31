@@ -37,5 +37,5 @@
         <div style="text-align:center;margin-top:var(--space-4);"><a href="{% url 'payments:wallet_dashboard' %}" style="font-size:var(--text-sm);color:var(--text-secondary);"><i data-lucide="arrow-left" style="width:14px;height:14px;display:inline;vertical-align:middle;"></i> Назад</a></div>
     </div>
 </div>
-{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}
+{% block extra_js %}<script nonce="{{ request.csp_nonce }}">lucide.createIcons();</script>{% endblock %}
 {% endblock %}
