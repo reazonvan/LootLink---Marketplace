@@ -14,9 +14,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
 COPY requirements/ requirements/
-RUN pip wheel --wheel-dir /wheels -r requirements.txt
+# Собираем из хэш-залоченного production.lock (uv pip compile) — воспроизводимо
+# и с проверкой целостности при скачивании.
+RUN pip wheel --wheel-dir /wheels -r requirements/production.lock
 
 # ---------- Stage 2: runtime ----------
 FROM python:3.13-slim
@@ -39,9 +40,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Ставим пакеты из заранее собранных wheels — без сети и без компиляторов.
 COPY --from=builder /wheels /wheels
-COPY requirements.txt .
 COPY requirements/ requirements/
-RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt \
+RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements/production.lock \
     && rm -rf /wheels
 
 # Копируем проект
