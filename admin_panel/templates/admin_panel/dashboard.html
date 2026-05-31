@@ -170,15 +170,17 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ registrations_chart|json_script:"reg-chart-data" }}
+{{ listings_chart|json_script:"listings-chart-data" }}
 <script>
 lucide.createIcons();
-var regData = {{ registrations_chart|safe }};
+var regData = JSON.parse(document.getElementById('reg-chart-data').textContent);
 new Chart(document.getElementById('registrationsChart'), {
     type: 'line',
     data: { labels: regData.map(function(i){return i.date}), datasets: [{ label: 'Регистрации', data: regData.map(function(i){return i.count}), borderColor: '#6366F1', backgroundColor: 'rgba(99,102,241,0.1)', tension: 0.4, fill: true, borderWidth: 2, pointRadius: 4 }] },
     options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
 });
-var lData = {{ listings_chart|safe }};
+var lData = JSON.parse(document.getElementById('listings-chart-data').textContent);
 new Chart(document.getElementById('listingsChart'), {
     type: 'bar',
     data: { labels: lData.map(function(i){return i.date}), datasets: [{ label: 'Объявления', data: lData.map(function(i){return i.count}), backgroundColor: 'rgba(16,185,129,0.8)', borderRadius: 8, borderSkipped: false }] },

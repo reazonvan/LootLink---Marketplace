@@ -200,6 +200,17 @@ def conversation_start(request, listing_pk):
             | Q(participant1=participant2, participant2=participant1, listing=listing)
         ).first()
 
+    if conversation is None:
+        logger.error(
+            "chat start: беседа не найдена после IntegrityError-фолбэка: "
+            "buyer=%s seller=%s listing=%s",
+            request.user.pk,
+            listing.seller_id,
+            listing.pk,
+        )
+        messages.error(request, "Не удалось открыть беседу. Попробуйте ещё раз.")
+        return redirect("listings:listing_detail", pk=listing_pk)
+
     if created:
         logger.info(
             "chat conversation started: id=%s buyer=%s seller=%s listing=%s",
