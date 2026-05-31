@@ -13,7 +13,7 @@ uvicorn[standard]>=0.35.0
 
 # AWS S3 for media storage
 boto3>=1.40.0
-django-storages>=1.14.2
+django-storages>=1.14.6
 
 # Performance and caching
 redis>=7.0.0

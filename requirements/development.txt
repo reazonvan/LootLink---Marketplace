@@ -23,5 +23,5 @@ redis>=7.0.0
 django-redis>=6.0.0
 
 # Async tasks (optional для dev)
-celery>=5.5.0
+celery>=5.6.3
 
