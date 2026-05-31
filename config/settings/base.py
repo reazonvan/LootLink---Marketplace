@@ -14,7 +14,7 @@ from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
 
-from decouple import config
+from decouple import UndefinedValueError, config
 
 # Build paths inside the project
 # settings/base.py → config/settings/base.py → корень проекта = parent.parent.parent
@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # SECRET_KEY ОБЯЗАТЕЛЬНО должен быть в .env файле! Без default для безопасности.
 try:
     SECRET_KEY = config("SECRET_KEY")
-except Exception:
+except UndefinedValueError:
     raise ImproperlyConfigured(
         "SECRET_KEY not found in environment variables! "
         "Add SECRET_KEY=your-secret-key-here to your .env file. "

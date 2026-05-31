@@ -1,28 +1,48 @@
-# Официальный Python 3.13 образ
+# ---------- Stage 1: builder ----------
+# Собираем wheels со всеми C-зависимостями (psycopg2, hiredis, cryptography,
+# argon2-cffi, Pillow). gcc/libpq-dev ставятся ТОЛЬКО здесь и в финальный
+# образ не попадают — меньше вес и attack surface в проде.
+FROM python:3.13-slim AS builder
+
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+COPY requirements/ requirements/
+RUN pip wheel --wheel-dir /wheels -r requirements.txt
+
+# ---------- Stage 2: runtime ----------
 FROM python:3.13-slim
 
-# Устанавливаем переменные окружения
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     DJANGO_SETTINGS_MODULE=config.settings.production
 
-# Создаем рабочую директорию
 WORKDIR /app
 
-# Устанавливаем системные зависимости
-RUN apt-get update && apt-get install -y \
+# Только runtime-зависимости: libmagic1 (python-magic), postgresql-client
+# (pg_isready/psql в healthcheck и init-скриптах). gcc/libpq-dev НЕ ставим —
+# psycopg2-binary везёт собственный libpq внутри wheel.
+RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
-    libpq-dev \
-    gcc \
     libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Копируем requirements.txt и устанавливаем зависимости
+# Ставим пакеты из заранее собранных wheels — без сети и без компиляторов.
+COPY --from=builder /wheels /wheels
 COPY requirements.txt .
 COPY requirements/ requirements/
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt \
+    && rm -rf /wheels
 
 # Копируем проект
 COPY . .

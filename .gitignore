@@ -65,6 +65,7 @@ db.sqlite3-journal
 .env
 !.env.example
 .venv
+.venv-dev/
 env/
 venv/
 ENV/

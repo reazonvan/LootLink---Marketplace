@@ -2,11 +2,14 @@
 Утилиты для core приложения.
 """
 
+import logging
 from typing import Optional
 
 from django.core.cache import cache
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import QuerySet
+
+logger = logging.getLogger(__name__)
 
 
 def paginate_queryset(queryset: QuerySet, request, per_page: int = 20):
@@ -125,8 +128,20 @@ def invalidate_cache_pattern(pattern: str):
         return 0
     except Exception as e:
         # Fallback если Redis недоступен
-        print(f"Cache invalidation failed: {e}")
+        logger.warning("Cache invalidation failed: %s", e)
         return 0
+
+
+def _ip_matches_trusted_entry(ip, entry: str) -> bool:
+    """True, если ip совпадает с одним правилом TRUSTED_PROXIES (голый IP или CIDR)."""
+    import ipaddress
+
+    try:
+        if "/" in entry:
+            return ip in ipaddress.ip_network(entry, strict=False)
+        return ip == ipaddress.ip_address(entry)
+    except ValueError:
+        return False
 
 
 def _ip_in_trusted(remote_addr: str) -> bool:
@@ -149,17 +164,7 @@ def _ip_in_trusted(remote_addr: str) -> bool:
         ip = ipaddress.ip_address(remote_addr)
     except ValueError:
         return False
-    for entry in trusted:
-        try:
-            if "/" in entry:
-                if ip in ipaddress.ip_network(entry, strict=False):
-                    return True
-            else:
-                if ip == ipaddress.ip_address(entry):
-                    return True
-        except ValueError:
-            continue
-    return False
+    return any(_ip_matches_trusted_entry(ip, entry) for entry in trusted)
 
 
 def get_client_ip(request) -> str:

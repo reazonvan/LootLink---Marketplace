@@ -1,7 +1,6 @@
 """Дашборд аналитики для продавцов и покупателей."""
 
 import csv
-import json
 import logging
 from datetime import timedelta
 from decimal import Decimal
@@ -104,7 +103,7 @@ def analytics_dashboard(request):
     context = {
         "sales_stats": sales_stats,
         "purchase_stats": purchase_stats,
-        "sales_by_day_json": json.dumps(sales_by_day),
+        "sales_by_day": sales_by_day,
         "popular_listings": popular_listings,
         "reviews_stats": reviews_stats,
         "period": period,
@@ -182,6 +181,24 @@ def export_data(request):
                     str(listing.price),
                     listing.get_status_display(),
                     listing.created_at.strftime("%d.%m.%Y %H:%M"),
+                ]
+            )
+
+    elif data_type == "reviews":
+        writer.writerow(["Дата", "Автор", "Оценка", "Комментарий"])
+        rows = (
+            Review.objects.filter(reviewed_user=request.user)
+            .select_related("reviewer")
+            .order_by("-created_at")
+            .iterator(chunk_size=500)
+        )
+        for review in rows:
+            writer.writerow(
+                [
+                    review.created_at.strftime("%d.%m.%Y %H:%M"),
+                    review.reviewer.username,
+                    review.rating,
+                    review.comment,
                 ]
             )
 

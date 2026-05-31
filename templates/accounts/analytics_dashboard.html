@@ -107,21 +107,23 @@
         </h3>
         <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-4);">Скачайте отчёты в формате CSV</p>
         <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;">
-            <a href="{% url 'accounts:export_sales_csv' %}?period={{ period }}" class="btn btn-secondary btn-sm"><i data-lucide="file-down"></i> Продажи</a>
-            <a href="{% url 'accounts:export_listings_csv' %}" class="btn btn-secondary btn-sm"><i data-lucide="file-down"></i> Объявления</a>
-            <a href="{% url 'accounts:export_reviews_csv' %}" class="btn btn-secondary btn-sm"><i data-lucide="file-down"></i> Отзывы</a>
+            <a href="{% url 'accounts:export_data' %}?type=sales" class="btn btn-secondary btn-sm"><i data-lucide="file-down"></i> Продажи</a>
+            <a href="{% url 'accounts:export_data' %}?type=listings" class="btn btn-secondary btn-sm"><i data-lucide="file-down"></i> Объявления</a>
+            <a href="{% url 'accounts:export_data' %}?type=reviews" class="btn btn-secondary btn-sm"><i data-lucide="file-down"></i> Отзывы</a>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+{{ sales_by_day|json_script:"sales-chart-data" }}
 <script>
 lucide.createIcons();
 document.addEventListener('DOMContentLoaded', function() {
     var ctx = document.getElementById('salesChart');
     if (!ctx) return;
-    var salesData = {{ sales_by_day_json|safe|default:"[]" }};
+    var salesEl = document.getElementById('sales-chart-data');
+    var salesData = salesEl ? JSON.parse(salesEl.textContent) : [];
     var labels = salesData.map(function(d) { return d.date; });
     var values = salesData.map(function(d) { return d.count; });
     var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
