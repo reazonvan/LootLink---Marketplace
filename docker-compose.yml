@@ -41,6 +41,12 @@ services:
       RESERVE_POOL_SIZE: 5
       SERVER_RESET_QUERY: DISCARD ALL
       AUTH_TYPE: md5
+      # Django шлёт statement_timeout/extra_float_digits как startup-параметры
+      # подключения; PgBouncer в transaction-mode их не пропускает и рвёт
+      # соединение (FATAL: unsupported startup parameter). Игнорируем их на
+      # уровне пулера — соединение проходит, а statement_timeout при нужде
+      # задаётся на стороне Postgres.
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits,statement_timeout
     depends_on:
       db:
         condition: service_healthy
