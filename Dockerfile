@@ -52,7 +52,12 @@ COPY . .
 # с ValueError("Missing staticfiles manifest entry...").
 # DJANGO_SETTINGS_MODULE задан выше, SECRET_KEY достаточно фейкового —
 # collectstatic не дёргает БД и не валидирует ключ.
-RUN SECRET_KEY=build-time-dummy DEBUG=False USE_REDIS=False \
+# logs/ исключён через .dockerignore, а RotatingFileHandler в base.py
+# открывает BASE_DIR/logs/*.log при любой management-команде (включая
+# collectstatic). Поэтому каталог нужно создать ДО collectstatic, иначе
+# configure_logging падает с FileNotFoundError на errors.log.
+RUN mkdir -p /app/logs && \
+    SECRET_KEY=build-time-dummy DEBUG=False USE_REDIS=False \
     DB_ENGINE=sqlite SQLITE_PATH=/tmp/build.sqlite3 \
     ADMIN_URL=build-only/ TRUSTED_PROXIES=127.0.0.1 \
     python manage.py collectstatic --noinput --clear
