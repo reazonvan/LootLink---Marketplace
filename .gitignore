@@ -57,6 +57,8 @@ MANIFEST
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
 /media
 /staticfiles
 /static_root
@@ -166,3 +168,21 @@ reset_db_password.sql
 # TLS certificates/private keys for reverse proxy
 certs/*
 !certs/.gitkeep
+
+# Celery / Redis runtime
+celerybeat-schedule
+celerybeat-schedule.*
+celerybeat.pid
+dump.rdb
+*.rdb
+
+# Node (GSD hooks / tooling)
+node_modules/
+
+# Linter / type-checker caches
+.mypy_cache/
+.ruff_cache/
+
+# Runtime sockets & pids
+*.pid
+*.sock
