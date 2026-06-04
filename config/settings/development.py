@@ -51,6 +51,17 @@ INSTALLED_APPS = [app for app in INSTALLED_APPS if app != "daphne"]
 # ВАЖНО: не затираем существующие OPTIONS (для postgres там client_encoding и пр.).
 DATABASES["default"].setdefault("OPTIONS", {})
 DATABASES["default"]["OPTIONS"]["timeout"] = 30
+# SQLite + WAL: дефолтные DEFERRED-транзакции под конкурентной нагрузкой
+# (поллинг уведомлений/чата + записи сессии/last_login/LoginHistory при логине)
+# застревают на upgrade read→write и дают многосекундные залипания (логин 5–15с).
+# IMMEDIATE берёт write-lock сразу на BEGIN → чистое ожидание busy_timeout без
+# стола. Ключ поддерживается Django 5.1+ и только для sqlite.
+if "sqlite" in DATABASES["default"]["ENGINE"]:
+    DATABASES["default"]["OPTIONS"]["transaction_mode"] = "IMMEDIATE"
+    # synchronous=NORMAL безопасен в WAL (теряется максимум последняя транзакция
+    # при отключении питания, без повреждения БД) и убирает fsync на каждый
+    # commit — именно он на Windows даёт многосекундные «холодные» записи.
+    DATABASES["default"]["OPTIONS"]["init_command"] = "PRAGMA synchronous=NORMAL"
 
 # Отключаем тяжёлые security-middleware, которые пишут в БД на каждый запрос.
 # В dev они бесполезны и вызывают "database is locked" на SQLite.
