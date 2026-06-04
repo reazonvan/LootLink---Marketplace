@@ -10,12 +10,11 @@
 Клиент (браузер)
     │ HTTPS
     ▼
-Caddy            (terminate TLS, gzip, reverse proxy, auto-cert)
+Caddy        (terminate TLS, gzip, reverse proxy, auto-cert, отдача static/media)
     │
-    ├── HTTP   ──► Gunicorn ──► Django (WSGI)
-    └── WS     ──► Daphne   ──► Django (ASGI, Channels)
+    └── HTTP+WS ──► gunicorn + uvicorn workers ──► Django (ASGI, Channels)
                        │
-                       ├── PostgreSQL 15 (основная БД, FTS, GIN-индексы)
+                       ├── PgBouncer ──► PostgreSQL 15 (FTS, GIN-индексы)
                        └── Redis 7        (cache, sessions, Channels layer,
                                           Celery broker и result backend)
 
@@ -26,17 +25,18 @@ Celery worker и Celery beat подключены к тому же Redis и БД
 ## Стек
 
 - Python 3.13, Django 5.2, DRF, Django Channels, Celery 5.x.
-- ASGI: Daphne. WSGI: Gunicorn. Прокси: Caddy.
+- Прод-сервер: gunicorn + uvicorn workers (ASGI, обслуживает и HTTP, и
+  WebSocket единым воркером). Прокси: Caddy. Dev: `runserver` (daphne для ASGI).
 - БД: PostgreSQL 15 (prod), SQLite (dev по умолчанию через `DB_ENGINE=sqlite`).
 - Redis 7 в четырёх ролях: cache, sessions, Celery broker, Channels layer.
 - Frontend: Django templates, custom CSS (`static/css/lootlink.css`),
   vanilla JS ES6+, иконки Lucide. React не используется.
 
-## Метрики кода (на момент 1.3.0)
+## Метрики кода (на 2026-06-01)
 
-- 168 Python-файлов, ~26 400 строк (без `venv` и `migrations`).
-- 88 моделей, 53 миграции, ~151 endpoint, 74 HTML-шаблона.
-- 513 тестов в pytest, ~75% покрытия.
+- ~160 Python-файлов приложения, ~24 800 строк (без `venv`, `migrations`, тестов).
+- 21 модель, 70 миграций, 162 endpoint, 98 HTML-шаблонов.
+- 716 тестов в pytest (716 passed, 1 skipped), 80% покрытия (`pytest --cov`).
 
 ## Структура приложений
 
@@ -280,23 +280,31 @@ JS — модули в `static/js/`, без сборщика. Загружают
 
 ## Деплой
 
-Прод — Docker compose с сервисами:
+Прод — Docker compose. Публичный вход только через Caddy; `web` слушает
+`:8000` внутри сети. Сервисы:
 
-- `web` — Daphne (ASGI) + Gunicorn (WSGI) за единым Caddy.
+- `caddy` — reverse proxy, auto-TLS, отдача static/media, www→apex 308.
+- `web` — Django под gunicorn + uvicorn workers (HTTP + WebSocket).
+- `migrator` — однократный init: `migrate` напрямую в `db`, затем выходит.
+- `pgbouncer` — пул соединений (transaction-mode) перед Postgres.
 - `db` — PostgreSQL 15.
 - `redis` — Redis 7.
-- `worker` — Celery worker.
-- `beat` — Celery beat.
-- `caddy` — reverse proxy с auto-TLS.
+- `celery_worker`, `celery_beat` — фоновые и периодические задачи.
+- `flower` — мониторинг Celery (`/flower/`).
 
+Первый запуск — `PRE_DEPLOY_CHECKLIST.md`, выкат обновлений — `DEPLOY_NOW.md`.
 Скрипт `scripts/deploy_with_smoke.sh` делает выкат и триггерит smoke-тесты
 через `repository_dispatch` на GitHub Actions.
 
 ## Логирование и мониторинг
 
 - Sentry с request-id трассировкой и Django-интеграцией.
+- `/metrics/` — django-prometheus (latency, БД/кэш-запросы, 5xx), авторизация
+  по Bearer-токену (`METRICS_TOKEN`); снаружи закрыт Caddy.
+- Health-пробы: `/health/live/` (liveness) и `/health/ready/` (БД + кэш).
 - Логи Django пишутся в `logs/`: `lootlink.log` (INFO+), `errors.log`
-  (ERROR+), `security.log` (WARNING+ из `django.security`).
+  (ERROR+), `security.log` (WARNING+ из `django.security`); verbose-копия
+  в stdout для docker/loki.
 - Метрики, за которыми смотрим: время отклика (p50/p95/p99), доля 5xx,
   длина очереди Celery, hit rate Redis, число активных WebSocket-соединений.
 

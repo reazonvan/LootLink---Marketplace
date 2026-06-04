@@ -212,7 +212,7 @@ def test_listing_create_view(self):
         'game': self.game.id,
         'price': 100
     })
-    
+
     self.assertEqual(response.status_code, 302)
     self.assertTrue(Listing.objects.filter(title='Test Item').exists())
 ```
@@ -228,24 +228,24 @@ from django.test import TestCase
 
 class MyFeatureTest(TestCase):
     """Описание набора тестов."""
-    
+
     def setUp(self):
         """Подготовка данных перед каждым тестом."""
         # Создание пользователей, объектов и т.д.
         pass
-    
+
     def tearDown(self):
         """Очистка после теста (опционально)."""
         pass
-    
+
     def test_something(self):
         """Описание конкретного теста."""
         # Arrange - подготовка данных
         user = CustomUser.objects.create_user(...)
-        
+
         # Act - выполнение действия
         result = some_function(user)
-        
+
         # Assert - проверка результата
         self.assertEqual(result, expected_value)
 ```
@@ -259,14 +259,14 @@ class MyFeatureTest(TestCase):
        self.assertEqual(user.username, 'test')
        self.assertTrue(user.is_active)
        self.assertIsNotNone(user.profile)
-   
+
    # Хорошо
    def test_user_creation(self):
        self.assertEqual(user.username, 'test')
-   
+
    def test_user_is_active_by_default(self):
        self.assertTrue(user.is_active)
-   
+
    def test_profile_auto_created(self):
        self.assertIsNotNone(user.profile)
    ```
@@ -276,7 +276,7 @@ class MyFeatureTest(TestCase):
    def setUp(self):
        self.user = self.create_user()
        self.game = self.create_game()
-   
+
    def create_user(self, username='testuser'):
        return CustomUser.objects.create_user(...)
    ```
@@ -285,10 +285,10 @@ class MyFeatureTest(TestCase):
    ```python
    def test_empty_description(self):
        # Что если описание пустое?
-   
+
    def test_negative_price(self):
        # Что если цена отрицательная?
-   
+
    def test_duplicate_listing(self):
        # Что если создать дубликат?
    ```
@@ -312,18 +312,27 @@ xdg-open htmlcov/index.html
 
 ### Целевой coverage
 
+- **Текущее (verified):** 80% — `pytest --cov`, 716 passed / 1 skipped, ~9.5 мин.
 - **Минимум:** 70%
-- **Цель:** 80%
+- **Цель:** 80%+
 - **Идеал:** 90%+
+
+Команда `pytest` без аргументов уже считает покрытие (`--cov` зашит в
+`addopts` в `pyproject.toml`) и использует `DJANGO_SETTINGS_MODULE=config.settings.test`
+(SQLite, in-memory cache и channel layer — Redis не нужен).
 
 ### Что не считается
 
-```python
-# pytest.ini
-omit = 
-    */migrations/*
-    */tests/*
-    manage.py
+```toml
+# pyproject.toml — [tool.coverage.run]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/venv/*",
+    "manage.py",
+    "*/wsgi.py",
+    "*/asgi.py",
+]
 ```
 
 ---
@@ -372,7 +381,7 @@ def test_listing_creation(self):
         description='Test description',
         price=100
     )
-    
+
     self.assertEqual(listing.status, 'active')
     self.assertTrue(listing.is_available())
 ```
@@ -407,7 +416,7 @@ def test_get_new_messages_api(self):
         f'/chat/api/messages/{conversation.id}/',
         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
     )
-    
+
     self.assertEqual(response.status_code, 200)
     data = response.json()
     self.assertIn('messages', data)
@@ -419,11 +428,10 @@ def test_get_new_messages_api(self):
 
 ### Тесты не находятся
 
-```bash
-# Проверьте pytest.ini
-[pytest]
-python_files = tests.py test_*.py
-testpaths = accounts chat core listings transactions
+```toml
+# pyproject.toml — [tool.pytest.ini_options]
+python_files = ["test_*.py", "*_test.py", "tests.py"]
+testpaths = ["tests", "accounts", "listings", "transactions", "chat", "payments", "api", "core"]
 ```
 
 ### База данных не очищается
@@ -438,12 +446,9 @@ pytest --create-db
 
 ### Coverage неточный
 
-```bash
-# Убедитесь что файлы не в omit списке
-# pytest.ini
-omit = 
-    */migrations/*
-    */tests/*
+```toml
+# Проверьте omit в pyproject.toml → [tool.coverage.run]
+omit = ["*/migrations/*", "*/tests/*", "*/venv/*", "manage.py"]
 ```
 
 ---
@@ -466,4 +471,3 @@ pytest -n auto
 # Только тесты с определенной меткой
 pytest -m "slow"
 ```
-

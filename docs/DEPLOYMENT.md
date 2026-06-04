@@ -1,635 +1,329 @@
 # Deployment Guide для LootLink
 
-Полное руководство по развертыванию LootLink в production.
+Развёртывание LootLink в production. Боевой стек — **Docker Compose + Caddy**
+(автоматический TLS). Ручная установка через systemd/nginx больше не
+поддерживается.
+
+Связанные документы:
+
+- **[PRE_DEPLOY_CHECKLIST.md](../PRE_DEPLOY_CHECKLIST.md)** — пошаговый первый
+  запуск на чистом сервере (DNS, `.env`, генерация секретов, первый `up`).
+- **[DEPLOY_NOW.md](../DEPLOY_NOW.md)** — выкат обновлений и применение
+  миграций на уже работающем сервере, откат.
+
+Этот файл описывает архитектуру стека, эксплуатацию и тюнинг.
 
 ---
 
 ## Предварительные требования
 
-- **Сервер**: Ubuntu 20.04+ / Debian 11+ / RHEL 8+
-- **RAM**: минимум 2GB (рекомендуется 4GB+)
-- **CPU**: минимум 2 cores
-- **Диск**: минимум 20GB SSD
-- **Домен**: с настроенными A/AAAA записями
-- **Email**: SMTP сервер для уведомлений
+- **Сервер**: Ubuntu 22.04+ / Debian 12+ (любой Linux с Docker)
+- **RAM**: минимум 2 GB, рекомендуется 4 GB+
+- **CPU**: минимум 2 ядра
+- **Диск**: минимум 20 GB SSD
+- **Домен**: с A/AAAA-записями на IP сервера (для Let's Encrypt)
+- **Docker**: Docker Engine + Compose v2 (`docker compose`, не `docker-compose`)
+- **Порты наружу**: только 22 (SSH), 80 и 443 (Caddy). Всё остальное —
+  внутри docker-сети.
 
 ---
 
-## Вариант 1: Docker Deployment (Рекомендуется)
+## Архитектура стека
 
-### 1. Установка Docker
+Всё поднимается одним `docker compose up -d`. Публичный вход — только через
+Caddy; `web` слушает `:8000` исключительно внутри docker-сети.
 
-```bash
-# Ubuntu/Debian
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo usermod -aG docker $USER
-
-# Установка Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+```
+Интернет ──443/80──► caddy ──┬── /static/*, /media/*   → отдаёт файлы напрямую
+                             ├── /flower/*             → reverse_proxy flower:5555
+                             ├── /.env*, /metrics*, …  → 403
+                             └── остальное             → reverse_proxy web:8000
+                                                              │
+   web (gunicorn + uvicorn ASGI workers)  ──DB──► pgbouncer ──► postgres:15
+        │   ▲                                      (transaction pool)
+        │   └── ждёт migrator (один раз migrate) и pgbouncer (healthy)
+        └──────────────► redis ◄── celery_worker, celery_beat, channels, cache
 ```
 
-### 2. Клонирование проекта
+| Сервис | Образ / запуск | Роль |
+|--------|----------------|------|
+| `caddy` | `caddy` | Reverse proxy, авто-TLS (Let's Encrypt), отдача static/media, www→apex 308 |
+| `web` | `gunicorn config.asgi:application` с `uvicorn.workers.UvicornWorker` | Django (HTTP + WebSocket), `WEB_CONCURRENCY` воркеров |
+| `migrator` | `python manage.py migrate --noinput` | Однократный init: применяет миграции напрямую в `db` (не через pgbouncer) и завершается |
+| `pgbouncer` | `edoburu/pgbouncer` | Пул соединений в transaction-mode перед Postgres |
+| `db` | `postgres:15-alpine` | Основная БД (FTS, GIN-индексы, CheckConstraint) |
+| `redis` | `redis:7` | Cache, sessions (`cached_db`), Celery broker+result, Channels layer |
+| `celery_worker` | `celery -A config worker` | Фоновые задачи (email, миниатюры, push, эскроу) |
+| `celery_beat` | `celery -A config beat` | Планировщик: auto-release эскроу, очистка логов, прогрев кэша |
+| `flower` | `flower` | Мониторинг Celery, доступен по `/flower/` |
+
+**Порядок старта** (через healthcheck-зависимости): `db` → `pgbouncer` →
+`migrator` (отрабатывает и выходит) → `web`, `celery_*`, `flower` → `caddy`
+получает сертификат. `collectstatic` выполняется на этапе сборки образа
+(`ManifestStaticFilesStorage`, `staticfiles.json` уже внутри образа), поэтому
+отдельным шагом гонять его не нужно.
+
+---
+
+## Первый запуск
+
+Полная процедура с генерацией секретов — в
+**[PRE_DEPLOY_CHECKLIST.md](../PRE_DEPLOY_CHECKLIST.md)**. Кратко:
 
 ```bash
-git clone https://github.com/your-username/LootLink.git
-cd LootLink
-```
+# 1. Код
+git clone https://github.com/reazonvan/LootLink---Marketplace.git
+cd LootLink---Marketplace
 
-### 3. Настройка environment
-
-```bash
-# Создайте .env файл
-cp env.example.txt .env
-
-# Отредактируйте .env
+# 2. .env из примера, заполнить и сгенерировать секреты
+cp .env.example .env
 nano .env
+
+# 3. Поднять стек
+docker compose pull          # postgres, redis, caddy, pgbouncer
+docker compose build         # web-образ (collectstatic зашивается в build)
+docker compose up -d         # весь стек, migrator применит миграции сам
+
+# 4. Первый администратор
+docker exec -it lootlink_web python manage.py createsuperuser
 ```
 
-**Критичные настройки для production:**
+### Критичные переменные `.env`
+
+Обязательные (см. полный список и команды генерации в PRE_DEPLOY_CHECKLIST):
 
 ```env
-# Django
-SECRET_KEY=<сгенерируйте через: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())">
+DJANGO_SETTINGS_MODULE=config.settings.production
 DEBUG=False
+SECRET_KEY=<get_random_secret_key()>
 ALLOWED_HOSTS=lootlink.ru,www.lootlink.ru
+CSRF_TRUSTED_ORIGINS=https://lootlink.ru,https://www.lootlink.ru
 
-# Database
 DB_NAME=lootlink_db
-DB_USER=lootlink_user
-DB_PASSWORD=<strong-password-here>
-DB_HOST=db
-DB_PORT=5432
-
-# Email
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=smtp.gmail.com
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=<app-password>
-
-# AWS S3 (опционально)
-USE_S3=True
-AWS_ACCESS_KEY_ID=<your-key>
-AWS_SECRET_ACCESS_KEY=<your-secret>
-AWS_STORAGE_BUCKET_NAME=lootlink-media
-
-# Redis
+DB_USER=postgres
+DB_PASSWORD=<secrets.token_urlsafe(32)>
 USE_REDIS=True
 REDIS_URL=redis://redis:6379/1
 
-# Sentry (опционально)
-SENTRY_DSN=https://your-dsn@sentry.io/project
-ENVIRONMENT=production
-RELEASE_VERSION=1.0.0
+ADMIN_URL=<непредсказуемая-строка>/        # production.py упадёт, если admin/
+TRUSTED_PROXIES=172.16.0.0/12              # docker bridge — для доверия XFF
+WEB_CONCURRENCY=4                          # или 2*CPU+1
+
+# Безопасность платежей (P0-фиксы)
+PAYMENT_DETAILS_KEY=<Fernet.generate_key()>
+YOOKASSA_WEBHOOK_SECRET=<secrets.token_hex(32)>
+
+# Наблюдаемость
+METRICS_TOKEN=<secrets.token_urlsafe(32)>  # для Prometheus scrape
+SENTRY_DSN=https://...                      # опционально
 ```
 
-### 4. Запуск через Docker Compose
+> `production.py` намеренно валит старт, если `ADMIN_URL=admin/` или
+> `USE_REDIS=False` — это защита от деплоя с дефолтами.
+
+---
+
+## Обновление
+
+Подробно — в **[DEPLOY_NOW.md](../DEPLOY_NOW.md)**. Рекомендуемый путь —
+единый скрипт с post-deploy smoke:
 
 ```bash
-# Сборка и запуск контейнеров
-docker-compose up -d
-
-# Применение миграций
-docker-compose exec web python manage.py migrate
-
-# Создание суперпользователя
-docker-compose exec web python manage.py createsuperuser
-
-# Сбор статики
-docker-compose exec web python manage.py collectstatic --noinput
+cd /opt/lootlink
+export GITHUB_DISPATCH_TOKEN="<github_token>"   # для авто-триггера smoke
+bash scripts/deploy_with_smoke.sh
 ```
 
-### 5. SSL сертификаты (Let's Encrypt)
+Вручную:
 
 ```bash
-# Установите Certbot
-sudo apt install certbot python3-certbot-nginx
-
-# Получите сертификат
-sudo certbot --nginx -d lootlink.ru -d www.lootlink.ru
-
-# Автоматическое обновление
-sudo certbot renew --dry-run
-```
-
-### 6. Запуск Nginx
-
-```bash
-# Запустите Nginx профиль
-docker-compose --profile production up -d nginx
+git fetch origin main && git reset --hard origin/main
+docker compose build web celery_worker celery_beat flower
+docker compose up -d --force-recreate web celery_worker celery_beat flower caddy
+# Миграции применит сервис migrator при пересоздании; либо вручную:
+docker compose exec web python manage.py migrate --noinput
+docker compose exec web python manage.py check --deploy
+curl -sI https://lootlink.ru/health/live/
 ```
 
 ---
 
-## Вариант 2: Manual Deployment (без Docker)
+## Эксплуатация
 
-### 1. Установка зависимостей
-
-```bash
-# Обновите систему
-sudo apt update && sudo apt upgrade -y
-
-# Установите Python 3.11
-sudo apt install python3.11 python3.11-venv python3-pip
-
-# Установите PostgreSQL
-sudo apt install postgresql postgresql-contrib
-
-# Установите Redis
-sudo apt install redis-server
-
-# Установите Nginx
-sudo apt install nginx
-```
-
-### 2. Настройка PostgreSQL
+### Health-checks и метрики
 
 ```bash
-# Подключитесь к PostgreSQL
-sudo -u postgres psql
+# Liveness (процесс жив)
+docker exec lootlink_web curl -s http://localhost:8000/health/live/
+# {"status": "ok", "check": "live"}
 
-# Создайте БД и пользователя
-CREATE DATABASE lootlink_db;
-CREATE USER lootlink_user WITH PASSWORD 'strong_password_here';
-ALTER ROLE lootlink_user SET client_encoding TO 'utf8';
-ALTER ROLE lootlink_user SET default_transaction_isolation TO 'read committed';
-ALTER ROLE lootlink_user SET timezone TO 'UTC';
-GRANT ALL PRIVILEGES ON DATABASE lootlink_db TO lootlink_user;
+# Readiness (БД + кэш доступны)
+docker exec lootlink_web curl -s http://localhost:8000/health/ready/
+# {"status": "ok", "check": "ready", "checks": {"database": "ok", "cache": "ok"}}
 
-# Включите русскую морфологию для full-text search
-\c lootlink_db
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
-\q
+# Prometheus-метрики (только из docker-сети; снаружи Caddy отдаёт 403)
+docker exec lootlink_web curl -s -H "Authorization: Bearer $METRICS_TOKEN" \
+  http://localhost:8000/metrics/ | head
 ```
 
-### 3. Настройка проекта
-
-```bash
-# Клонируйте проект
-cd /opt
-sudo git clone https://github.com/your-username/LootLink.git
-sudo chown -R $USER:$USER LootLink
-cd LootLink
-
-# Создайте venv
-python3.11 -m venv venv
-source venv/bin/activate
-
-# Установите зависимости
-pip install -r requirements/production.txt
-
-# Настройте .env
-cp env.example.txt .env
-nano .env
-```
-
-### 4. Django setup
-
-```bash
-# Применить миграции
-python manage.py migrate
-
-# Собрать статику
-python manage.py collectstatic --noinput
-
-# Создать суперпользователя
-python manage.py createsuperuser
-```
-
-### 5. Gunicorn setup
-
-```bash
-# Создайте systemd service
-sudo nano /etc/systemd/system/lootlink.service
-```
-
-```ini
-[Unit]
-Description=LootLink Gunicorn Daemon
-After=network.target
-
-[Service]
-User=www-data
-Group=www-data
-WorkingDirectory=/opt/LootLink
-Environment="PATH=/opt/LootLink/venv/bin"
-EnvironmentFile=/opt/LootLink/.env
-ExecStart=/opt/LootLink/venv/bin/gunicorn \
-          --workers 4 \
-          --bind unix:/opt/LootLink/lootlink.sock \
-          --timeout 60 \
-          --access-logfile /opt/LootLink/logs/gunicorn-access.log \
-          --error-logfile /opt/LootLink/logs/gunicorn-error.log \
-          --log-level info \
-          config.wsgi:application
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-# Запустите сервис
-sudo systemctl start lootlink
-sudo systemctl enable lootlink
-sudo systemctl status lootlink
-```
-
-### 6. Nginx setup
-
-```bash
-# Создайте конфиг
-sudo nano /etc/nginx/sites-available/lootlink
-```
-
-```nginx
-upstream lootlink_app {
-    server unix:/opt/LootLink/lootlink.sock fail_timeout=0;
-}
-
-server {
-    listen 80;
-    server_name lootlink.ru www.lootlink.ru;
-    
-    client_max_body_size 5M;
-    
-    location /static/ {
-        alias /opt/LootLink/staticfiles/;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-    
-    location /media/ {
-        alias /opt/LootLink/media/;
-        expires 7d;
-        add_header Cache-Control "public";
-    }
-    
-    location / {
-        proxy_pass http://lootlink_app;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-```bash
-# Активируйте конфиг
-sudo ln -s /etc/nginx/sites-available/lootlink /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
-### 7. SSL через Let's Encrypt
-
-```bash
-sudo certbot --nginx -d lootlink.ru -d www.lootlink.ru
-```
-
----
-
-## Мониторинг и обслуживание
+`/metrics/` отдаёт django-prometheus (latency, БД/кэш-запросы, 5xx). Если
+`METRICS_TOKEN` пуст — endpoint доступен только staff-пользователям.
 
 ### Логи
 
 ```bash
-# Django логи
-tail -f /opt/LootLink/logs/lootlink.log
-tail -f /opt/LootLink/logs/errors.log
+docker compose logs web --tail=100 -f
+docker compose logs caddy --tail=50          # выдача сертификата, проксирование
+docker compose logs celery_worker --tail=50
 
-# Gunicorn логи
-tail -f /opt/LootLink/logs/gunicorn-error.log
-
-# Nginx логи
-tail -f /var/log/nginx/access.log
-tail -f /var/log/nginx/error.log
-
-# PostgreSQL логи
-sudo tail -f /var/log/postgresql/postgresql-15-main.log
+# Файловые логи Django внутри web-контейнера (RotatingFileHandler):
+docker exec lootlink_web tail -f /app/logs/errors.log     # ERROR+
+docker exec lootlink_web tail -f /app/logs/security.log   # брутфорс, 2FA, аудит
 ```
 
-### Backup стратегия
+### Celery
+
+Очереди и задачи — через Flower: `https://lootlink.ru/flower/`
+(basic-auth настраивается самим Flower через `FLOWER_*` в `.env`).
+
+### Доступ к БД
 
 ```bash
-# Автоматические бекапы через cron
-crontab -e
+# Через pgbouncer (как ходит приложение)
+docker exec -it lootlink_pgbouncer psql -h 127.0.0.1 -U postgres lootlink_db
 
-# Добавьте строку (бекап каждый день в 2 ночи)
-0 2 * * * /opt/LootLink/scripts/backup_db.sh
+# Напрямую в postgres (для DDL, обслуживания)
+docker exec -it lootlink_db psql -U postgres lootlink_db
 
-# Бекапы хранятся 30 дней
-# Расположение: /var/backups/lootlink/
+# Число активных соединений (если близко к max_connections=100 — растить пул)
+docker exec lootlink_db psql -U postgres -c \
+  "SELECT count(*) FROM pg_stat_activity;"
 ```
 
-### Обновление проекта
-
-Рекомендуемый способ: единый скрипт деплоя + post-deploy smoke.
+### Бэкапы
 
 ```bash
-cd /opt/LootLink
-
-# Обязателен для автотриггера post-deploy smoke
-export GITHUB_DISPATCH_TOKEN="<github_token>"
-
-# Для e2e user-journey (если хотите автоподготовку smoke-аккаунтов)
-export SMOKE_SELLER_USERNAME="<seller_username>"
-export SMOKE_SELLER_PASSWORD="<seller_password>"
-export SMOKE_BUYER_USERNAME="<buyer_username>"
-export SMOKE_BUYER_PASSWORD="<buyer_password>"
-
-# Docker mode (по умолчанию)
-bash scripts/deploy_with_smoke.sh
+chmod +x scripts/auto_backup.sh
+# crontab пользователя — ежедневный дамп в 3:00
+echo "0 3 * * * cd $HOME/LootLink---Marketplace && ./scripts/auto_backup.sh" | crontab -
 ```
 
-Ручной путь (если нужно выполнить шаги по отдельности):
+По умолчанию дамп пишется в `backups/` локально. Для прода добавьте заливку
+в S3-совместимый bucket (`rclone copy` после `pg_dump`). Ручной бэкап:
 
 ```bash
-# Остановите сервис
-sudo systemctl stop lootlink
-
-# Обновите код
-cd /opt/LootLink
-git pull origin main
-
-# Активируйте venv
-source venv/bin/activate
-
-# Обновите зависимости
-pip install -r requirements/production.txt --upgrade
-
-# Примените миграции
-python manage.py migrate
-
-# Соберите статику
-python manage.py collectstatic --noinput
-
-# Перезапустите сервис
-sudo systemctl start lootlink
-sudo systemctl restart nginx
-
-# Запустите post-deploy smoke в GitHub Actions
-# (нужен GITHUB_DISPATCH_TOKEN в окружении сервера)
-bash scripts/trigger_post_deploy_smoke.sh
-```
-
-### Health Checks
-
-```bash
-# Проверка статуса сервисов
-sudo systemctl status lootlink
-sudo systemctl status nginx
-sudo systemctl status postgresql
-sudo systemctl status redis
-
-# Проверка портов
-sudo netstat -tlnp | grep -E ':(80|443|8000|5432|6379)'
-
-# Проверка Django
-curl -I http://localhost:8000/health/
-
-# Проверка Nginx
-curl -I http://lootlink.ru
+docker compose exec -T db pg_dump -U postgres lootlink_db > backup_$(date +%F).sql
 ```
 
 ---
 
-## Security Checklist
+## Безопасность сервера
 
-- [ ] `DEBUG=False` в production
-- [ ] Сильный `SECRET_KEY` (64+ символов)
-- [ ] `ALLOWED_HOSTS` настроен правильно
-- [ ] SSL сертификаты установлены
-- [ ] Firewall настроен (UFW/iptables)
-- [ ] Только необходимые порты открыты (80, 443)
-- [ ] SSH доступ только по ключу
-- [ ] Регулярные обновления системы
-- [ ] Автоматические бекапы настроены
-- [ ] Sentry мониторинг активен
-- [ ] Fail2ban установлен (защита от брутфорса)
-
-### Настройка Firewall (UFW)
+TLS, HSTS, security-заголовки и редиректы делает Caddy + Django middleware —
+вручную сертификаты получать не нужно. На уровне ОС остаётся firewall:
 
 ```bash
-# Установите UFW
-sudo apt install ufw
-
-# Разрешите SSH (ВАЖНО! Сначала SSH!)
-sudo ufw allow 22/tcp
-
-# Разрешите HTTP/HTTPS
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-
-# Активируйте firewall
+sudo ufw allow OpenSSH
+sudo ufw allow 80
+sudo ufw allow 443
 sudo ufw enable
-
-# Проверьте статус
-sudo ufw status
 ```
 
-### Fail2ban для защиты от брутфорса
+Чеклист:
 
-```bash
-# Установите
-sudo apt install fail2ban
-
-# Настройте для Nginx
-sudo nano /etc/fail2ban/jail.local
-```
-
-```ini
-[nginx-http-auth]
-enabled = true
-
-[nginx-noscript]
-enabled = true
-
-[nginx-badbots]
-enabled = true
-
-[nginx-noproxy]
-enabled = true
-```
-
-```bash
-sudo systemctl restart fail2ban
-```
+- [ ] `DEBUG=False`, сильный `SECRET_KEY`, корректный `ALLOWED_HOSTS`
+- [ ] `ADMIN_URL` — непредсказуемый (не `admin/`)
+- [ ] Секреты только в `.env` (никогда в git); `.env*` заблокирован в Caddy (403)
+- [ ] UFW: открыты только 22/80/443
+- [ ] SSH по ключу, fail2ban (опционально — поверх брутфорс-защиты Django)
+- [ ] `PAYMENT_DETAILS_KEY`, `YOOKASSA_WEBHOOK_SECRET` заданы
+- [ ] 2FA включена на staff-аккаунтах (иначе критичные admin-действия недоступны)
+- [ ] Бэкапы в cron и проверены на восстановление
 
 ---
 
-## Performance Tuning
+## Тюнинг производительности
+
+### PgBouncer
+
+Стоит в transaction-mode (`POOL_MODE=transaction`), `DEFAULT_POOL_SIZE=25`,
+`MAX_CLIENT_CONN=500`. Это позволяет десяткам воркеров приложения работать
+через ~25 реальных соединений к Postgres. Если в `pg_stat_activity` стабильно
+близко к `max_connections` — поднимайте `DEFAULT_POOL_SIZE` (но суммарно
+worker'ы × pool не должны превышать postgres `max_connections`).
+
+### Gunicorn/uvicorn
+
+`WEB_CONCURRENCY` в `.env`, формула `2*CPU + 1`. Воркеры — ASGI
+(`uvicorn.workers.UvicornWorker`), один тип обслуживает и HTTP, и WebSocket.
 
 ### PostgreSQL
 
-```bash
-sudo nano /etc/postgresql/15/main/postgresql.conf
-```
-
 ```ini
-# Memory
 shared_buffers = 256MB
 effective_cache_size = 1GB
-maintenance_work_mem = 64MB
 work_mem = 4MB
-
-# Connections
 max_connections = 100
-
-# Logging
-log_min_duration_statement = 1000  # Log slow queries (>1s)
+log_min_duration_statement = 1000   # лог запросов > 1s
 ```
 
-### Gunicorn Workers
+### Redis
 
-Формула: `(2 * CPU_CORES) + 1`
-
-```bash
-# Для 2 CPU cores
---workers 5
-
-# Для 4 CPU cores
---workers 9
-```
-
-### Redis Memory
-
-```bash
-# redis.conf
+```ini
 maxmemory 256mb
 maxmemory-policy allkeys-lru
 ```
 
 ---
 
-## CI/CD через GitHub Actions
+## CI/CD
 
-При push в main:
-1. Запускаются тесты
-2. Проверяются линтеры
-3. Сканируется безопасность
-4. Собирается Docker image
-5. Deploy на сервер (опционально)
+GitHub Actions (`.github/workflows/ci-cd.yml`): линт (black, isort, flake8),
+тесты (pytest), security-скан (bandit). Деплой — ручной (`deploy_with_smoke.sh`
+с сервера), не из CI.
 
-См. `.github/workflows/django.yml`.
-
-### Post-deploy smoke (production)
-
-Добавлен отдельный workflow: `.github/workflows/post-deploy-smoke.yml`.
-
-Что он делает:
-1. Запускает публичные browser smoke проверки (`scripts/playwright_smoke.py`).
-2. Запускает авторизованные user-journey сценарии (`scripts/playwright_user_journey.py`):
-   создание объявления, старт чата, отправка запроса на покупку.
-
-Перед первым запуском подготовьте QA-данные на сервере:
-
-```bash
-python manage.py setup_smoke_data \
-  --seller-username "<seller_username>" \
-  --seller-email "<seller_email>" \
-  --seller-password "<seller_password>" \
-  --buyer-username "<buyer_username>" \
-  --buyer-email "<buyer_email>" \
-  --buyer-password "<buyer_password>"
-```
-
-И добавьте в GitHub Secrets:
-- `SMOKE_SELLER_USERNAME`
-- `SMOKE_SELLER_PASSWORD`
-- `SMOKE_BUYER_USERNAME`
-- `SMOKE_BUYER_PASSWORD`
-
-Опционально для login smoke:
-- `SMOKE_LOGIN_USERNAME`
-- `SMOKE_LOGIN_PASSWORD`
-
-Запуск:
-1. Через Actions -> `Post-Deploy Smoke` -> `Run workflow`.
-2. Или через `repository_dispatch` (`event_type=post_deploy_smoke`) после вашего deploy-скрипта.
-
-Для автоматического триггера после деплоя используйте скрипт:
-
-```bash
-# 1) Один раз задайте токен на сервере
-export GITHUB_DISPATCH_TOKEN="<github_token>"
-
-# 2) Вызовите триггер (по умолчанию base_url=https://lootlink.ru)
-bash scripts/trigger_post_deploy_smoke.sh
-```
-
-Полный автодеплой + smoke:
-
-```bash
-bash scripts/deploy_with_smoke.sh
-```
-
-Опции для `deploy_with_smoke.sh` через переменные окружения:
-- `DEPLOY_MODE=docker|systemd`
-- `HEALTHCHECK_URL=https://lootlink.ru/health/`
-- `RUN_DISPATCH_AFTER_DEPLOY=true|false`
-- `STRICT_DISPATCH=true|false`
-- `DEPLOY_SKIP_SETUP_SMOKE_DATA=true|false`
-
-Опциональные переменные:
-- `SMOKE_BASE_URL` (например `https://staging.lootlink.ru`)
-- `GITHUB_OWNER`
-- `GITHUB_REPO`
-- `DISPATCH_EVENT_TYPE`
-- `DEPLOYED_SHA` (если хотите передать свой SHA вручную)
+**Post-deploy smoke** (`.github/workflows/post-deploy-smoke.yml`) — Playwright-
+проверки после выката: публичные сценарии (`scripts/playwright_smoke.py`) и
+авторизованные user-journey (`scripts/playwright_user_journey.py`). Подробности
+и нужные secrets — в [TESTING_GUIDE.md](TESTING_GUIDE.md).
 
 ---
 
 ## Troubleshooting
 
-### 500 Internal Server Error
+### Caddy не выдаёт сертификат
 
 ```bash
-# Проверьте логи
-tail -f /opt/LootLink/logs/errors.log
-tail -f /opt/LootLink/logs/gunicorn-error.log
-
-# Проверьте права на файлы
-sudo chown -R www-data:www-data /opt/LootLink
-
-# Перезапустите сервис
-sudo systemctl restart lootlink
+docker compose logs caddy 2>&1 | tail -50
 ```
 
-### Static files не загружаются
+Проверьте, что A-записи `lootlink.ru` и `www.lootlink.ru` указывают на IP
+сервера и порты 80/443 открыты (ACME-challenge ходит по 80).
+
+### `web` не стартует / 502 от Caddy
 
 ```bash
-# Соберите статику заново
-python manage.py collectstatic --clear --noinput
-
-# Проверьте права
-sudo chown -R www-data:www-data /opt/LootLink/staticfiles
+docker compose ps                       # web должен быть healthy
+docker compose logs web --tail=80
+docker exec lootlink_web python manage.py check --deploy
 ```
 
-### База данных недоступна
+Частая причина — `migrator` упал (битая миграция): `docker compose logs migrator`.
 
-```bash
-# Проверьте статус PostgreSQL
-sudo systemctl status postgresql
+### Упёрлись в лимит соединений Postgres
 
-# Проверьте подключение
-psql -U lootlink_user -d lootlink_db -h localhost
+Растёт `pg_stat_activity`, в логах `web` — `too many connections`. Поднять
+`DEFAULT_POOL_SIZE` у pgbouncer или снизить `WEB_CONCURRENCY`.
 
-# Проверьте pg_hba.conf
-sudo nano /etc/postgresql/15/main/pg_hba.conf
-```
+### Статика отдаёт старую версию
+
+Образ собирается с `collectstatic` и manifest. После изменения CSS/JS нужен
+`docker compose build web` (не только `up`), иначе в образе старый
+`staticfiles.json`.
 
 ---
 
-## Support
+## Поддержка
 
-Если возникли проблемы при deployment:
-- Создайте issue на GitHub
-- Напишите на tech@lootlink.ru
-- Проверьте документацию в `docs/`
-
----
-
-**Успешного развертывания!**
+- GitHub Issues: <https://github.com/reazonvan/LootLink---Marketplace/issues>
+- Security (приватно): см. [SECURITY.md](../SECURITY.md)

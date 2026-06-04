@@ -1,162 +1,81 @@
-# Deployment Checklist - Phase 1
+# Чеклист после деплоя
 
-## Pre-Deployment Testing
+Прогоняется после каждого выката на production. Первый запуск на чистом
+сервере — по [PRE_DEPLOY_CHECKLIST.md](../../PRE_DEPLOY_CHECKLIST.md);
+процедура самого выката и откат — в [DEPLOY_NOW.md](../../DEPLOY_NOW.md).
 
-### 1. Local Testing
-```bash
-# Start development server
-python manage.py runserver
-
-# Test URLs:
-# - http://127.0.0.1:8000/ (homepage with badges)
-# - http://127.0.0.1:8000/catalog/alphabet/ (alphabetical catalog)
-# - http://127.0.0.1:8000/accounts/profile/[username]/ (profile with badges)
-```
-
-### 2. Verify Badge System
-```python
-python manage.py shell
-
-from accounts.models import Profile
-profile = Profile.objects.first()
-badges = profile.get_badges()
-print(badges)
-# Should return list of badge dictionaries
-```
-
-### 3. Check for Errors
-```bash
-# Check for Python syntax errors
-python manage.py check
-
-# Run existing tests
-python manage.py test
-```
-
-## Deployment Steps
-
-### 1. Review Changes
-```bash
-git status
-git diff
-```
-
-### 2. Commit Changes
-```bash
-git add .
-
-git commit -m "Phase 1: User badges, alphabetical catalog, dark theme
-
-- Add merit-based badge system (no paid advantages)
-- Add alphabetical game catalog with navigation
-- Add dark theme switcher
-- Establish project principles (equality, unique design, honesty)
-- Remove emojis from documentation
-- Update roadmap (no premium features)
-
-Features:
-- 6 badge types (all earned, not bought)
-- Alphabetical game catalog with sticky navigation
-- Dark/light theme switcher with localStorage
-- Comprehensive documentation
-
-Files created: 16
-Files modified: 18
-
-"
-```
-
-### 3. Push to Repository
-```bash
-git push origin main
-```
-
-### 4. Deploy to Server
-```bash
-# SSH to server
-ssh user@your-server
-
-# Navigate to project
-cd /path/to/LootLink---Marketplace
-
-# Pull changes
-git pull origin main
-
-# Collect static files
-python manage.py collectstatic --noinput
-
-# Restart services
-docker-compose restart web
-
-# OR if using systemd:
-sudo systemctl restart lootlink
-```
-
-### 5. Verify Deployment
-```bash
-# Check logs
-tail -f logs/lootlink.log
-
-# Check for errors
-docker-compose logs web --tail=50
-
-# Test live site
-curl -I https://lootlink.ru
-```
-
-### 6. Clear Cache (if needed)
-```bash
-python manage.py shell
->>> from django.core.cache import cache
->>> cache.clear()
->>> exit()
-```
-
-## Post-Deployment Verification
-
-### Check These URLs:
-- [ ] https://lootlink.ru/ - homepage loads
-- [ ] https://lootlink.ru/catalog/alphabet/ - alphabetical catalog works
-- [ ] https://lootlink.ru/accounts/profile/[username]/ - badges display
-- [ ] Theme switcher in navbar works
-- [ ] Badges show on listing cards
-- [ ] Mobile view (badges show icons only)
-
-### Monitor Metrics:
-- [ ] Page load times < 1 sec
-- [ ] No JavaScript errors in console
-- [ ] No Python errors in logs
-- [ ] Cache is working (check Redis)
-
-## Rollback Plan (if needed)
+## 1. Контейнеры подняты
 
 ```bash
-# If something breaks, rollback:
-git revert HEAD
-git push origin main
-
-# On server:
-git pull origin main
-docker-compose restart web
+docker compose ps
 ```
 
-## Notes
+- [ ] `web` — `healthy`
+- [ ] `db`, `pgbouncer`, `redis` — `healthy`
+- [ ] `migrator` — `Exited (0)` (отработал миграции и вышел)
+- [ ] `caddy`, `celery_worker`, `celery_beat`, `flower` — `running`
 
-- All changes follow principle of user equality
-- No paid advantages or premium features
-- All badges are merit-based
-- No emojis in user-facing content
-- Дизайн уникальный, без шаблонных решений
+## 2. Миграции применены
 
-## Support
+```bash
+docker compose exec web python manage.py showmigrations | grep -c "\[ \]"
+# Должно быть 0 неприменённых
+docker compose exec web python manage.py check --deploy
+```
 
-If issues occur:
-1. Check logs: `tail -f logs/lootlink.log`
-2. Check browser console (F12)
-3. Verify all files were uploaded
-4. Clear browser cache
-5. Clear Redis cache
+## 3. Сайт отвечает
 
----
+```bash
+# Изнутри сети
+docker exec lootlink_web curl -s http://localhost:8000/health/ready/
+# {"status": "ok", ... "database": "ok", "cache": "ok"}
 
-Ready to deploy!
+# Снаружи (после выдачи сертификата Let's Encrypt — может занять 1–3 мин)
+curl -I https://lootlink.ru/health/live/      # HTTP/2 200 + HSTS
+curl -I https://www.lootlink.ru               # 308 → https://lootlink.ru
+```
+
+- [ ] `/health/ready/` отдаёт `database: ok`, `cache: ok`
+- [ ] `https://lootlink.ru/` открывается, есть заголовок `Strict-Transport-Security`
+- [ ] `www` редиректится на apex кодом 308
+- [ ] `/sitemap.xml`, `/robots.txt`, `/manifest.json` отдаются
+
+## 4. Логи чистые
+
+```bash
+docker compose logs web --tail=80
+docker exec lootlink_web tail -20 /app/logs/errors.log
+docker compose logs caddy --tail=20          # сертификат получен, без ACME-ошибок
+```
+
+- [ ] Нет повторяющихся 5xx и трейсбеков
+- [ ] В Sentry не сыплются новые ошибки выката
+
+## 5. Фоновые задачи и метрики
+
+- [ ] Flower доступен: `https://lootlink.ru/flower/`, воркеры online
+- [ ] Celery beat запланировал задачи (auto-release эскроу, прогрев кэша)
+- [ ] Метрики (из сети): `curl -H "Authorization: Bearer $METRICS_TOKEN" http://localhost:8000/metrics/`
+
+## 6. Бизнес-сценарии (smoke)
+
+Автоматически — через post-deploy smoke (Playwright), см.
+[TESTING_GUIDE.md](../TESTING_GUIDE.md):
+
+```bash
+export GITHUB_DISPATCH_TOKEN="<github_token>"
+bash scripts/trigger_post_deploy_smoke.sh
+```
+
+Либо вручную проверить:
+
+- [ ] Регистрация/вход работают, ошибки формы показываются
+- [ ] Создание объявления (продавец)
+- [ ] Старт чата и отправка сообщения (WebSocket)
+- [ ] Запрос на покупку → эскроу funded
+
+## 7. Если что-то сломалось
+
+Откат — по [DEPLOY_NOW.md](../../DEPLOY_NOW.md) (раздел «Откат»): `git reset`
+на предыдущий SHA, пересборка, при необходимости — восстановление БД из дампа
+в `backups/`.

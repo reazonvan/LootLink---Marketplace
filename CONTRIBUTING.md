@@ -161,7 +161,7 @@ docs(readme): update installation guide
 test(accounts): add profile tests
 refactor(views): optimize database queries
 style(css): improve responsive design
-chore(deps): update Django to 4.2.7
+chore(deps): update Django to 5.2.1
 ```
 
 **Types:**
@@ -202,19 +202,19 @@ from django.test import TestCase
 
 class YourFeatureTest(TestCase):
     """Описание тестируемой функции."""
-    
+
     def setUp(self):
         """Подготовка данных для тестов."""
         self.user = User.objects.create_user(...)
-    
+
     def test_feature_works(self):
         """Тест что функция работает."""
         # Arrange
         expected = 'result'
-        
+
         # Act
         actual = your_function()
-        
+
         # Assert
         self.assertEqual(actual, expected)
 ```

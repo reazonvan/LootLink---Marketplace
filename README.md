@@ -5,8 +5,8 @@ P2P маркетплейс для торговли внутриигровыми 
 [![Live Demo](https://img.shields.io/badge/demo-lootlink.ru-blue)](https://lootlink.ru)
 [![Python](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/django-5.2-green.svg)](https://www.djangoproject.com/)
-[![Tests](https://img.shields.io/badge/tests-513%20passed-brightgreen.svg)](#тесты)
-[![Coverage](https://img.shields.io/badge/coverage-75%25-green.svg)](#тесты)
+[![Tests](https://img.shields.io/badge/tests-716%20passed-brightgreen.svg)](#тесты)
+[![Coverage](https://img.shields.io/badge/coverage-80%25-green.svg)](#тесты)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
 **Демо:** [lootlink.ru](https://lootlink.ru)
@@ -28,9 +28,9 @@ P2P маркетплейс для торговли внутриигровыми 
 - **БД:** PostgreSQL 15 (FTS, GIN-индекс), SQLite (dev fallback)
 - **Кэш/брокер:** Redis 7 (cache, sessions, Celery, Channels)
 - **Frontend:** Django templates, custom CSS (lootlink.css), vanilla JS ES6+, Lucide Icons
-- **Деплой:** Docker, Caddy (auto-TLS), Daphne (ASGI), Gunicorn (WSGI), Systemd
-- **Безопасность:** Argon2id, 2FA TOTP, BruteForceProtection, audit log
-- **Мониторинг:** Sentry с request-id трассировкой
+- **Деплой:** Docker Compose, Caddy (auto-TLS), gunicorn + uvicorn workers (ASGI), PgBouncer
+- **Безопасность:** Argon2id, 2FA TOTP, BruteForceProtection, audit log, Fernet-шифрование платёжных реквизитов
+- **Мониторинг:** Sentry (request-id), Prometheus `/metrics`, health-пробы (`/health/live`, `/health/ready`)
 - **CI/CD:** GitHub Actions (lint + test + bandit + smoke)
 
 ## Установка
@@ -92,35 +92,36 @@ config/          — Settings, urls, ASGI/WSGI, Celery
 - `tasks.py` — Celery-задачи (идемпотентные, с retry)
 
 **Метрики кода:**
-- 168 Python-файлов, 26 425 строк
-- 88 моделей, 53 миграции, ~151 endpoint
-- 74 HTML-шаблона
+- ~160 Python-файлов приложения (~24 800 строк, без миграций/тестов)
+- 21 модель, 70 миграций, 162 endpoint
+- 98 HTML-шаблонов
 
 ## API
 
 ```
-GET    /api/listings/          — все объявления
-GET    /api/listings/{id}/     — детали
-POST   /api/listings/          — создать (auth)
-GET    /api/games/             — список игр
-GET    /api/conversations/     — диалоги
-GET    /api/transactions/      — сделки
+GET    /api/listings/          — объявления (POST/PUT/DELETE — владелец)
+GET    /api/games/             — игры (read-only)
+GET    /api/categories/        — категории (read-only)
+GET    /api/reviews/           — отзывы (POST — авторизованные)
+GET    /api/conversations/     — диалоги пользователя
+POST   /api/auth/token/        — получить токен
 ```
 
-Session-based аутентификация + CSRF.
+Session- или Token-аутентификация, throttling (anon 100/час, user 1000/час),
+пагинация по 20. Подробнее — [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md).
 
 ## Тесты
 
 ```bash
-pytest                                   # все 513 тестов (~9 мин)
-pytest --cov=. --cov-report=html         # с отчётом о покрытии (~75%)
+pytest                                   # все 716 тестов (~9.5 мин, покрытие в отчёте)
+pytest --cov=. --cov-report=html         # HTML-отчёт о покрытии (htmlcov/)
 pytest -m "not slow"                     # быстрые тесты
 pytest payments/                         # тесты конкретного app
 ```
 
 **Метрики:**
-- 513 тестов (passed, 1 skipped, 0 failed)
-- ~75% покрытие
+- 716 passed, 1 skipped (прогон ~9.5 мин на `config.settings.test`)
+- 80% покрытие (verified, `pytest --cov`)
 - Mock'и для внешних API (YooKassa, Telegram, push)
 - Фикстуры в `conftest.py` — `verified_user`, `seller`, `buyer`, `listing_factory` и др.
 

@@ -6,6 +6,88 @@
 
 ---
 
+## [1.4.0] - 2026-06-01
+
+### Production-readiness, безопасность, наблюдаемость, покрытие тестами
+
+### Безопасность
+- **88 P0–P3 фиксов** по итогам глубокого security-аудита (escrow, авторизация,
+  IDOR, секреты, валидация). Подробности применения — в `DEPLOY_NOW.md`.
+- **Шифрование `Withdrawal.payment_details`** через Fernet (`PAYMENT_DETAILS_KEY`).
+  В админке видна только маска `**** 1234` (P0-4, PCI-DSS).
+- **HMAC-верификация webhook ЮKassa** (`YOOKASSA_WEBHOOK_SECRET`, P0-3).
+- **Комиссия платформы** (`PLATFORM_COMMISSION_PERCENT`) удерживается с продавца
+  при release эскроу (P0-11).
+- **Завершение сделки только покупателем** (`confirm_received`) или авто-release
+  по дедлайну — продавец больше не финализирует сделку в одностороннем порядке.
+- **Приватный storage** для KYC/dispute-evidence (`media_private`) — раздача
+  только через Django serve view с проверкой прав, в обход Caddy (P0-17).
+- **Доверие `X-Forwarded-For` только от `TRUSTED_PROXIES`** (P0-14).
+- **2FA обязательна для staff** на критических действиях (ban_user,
+  delete_listing, cancel_transaction, resolve_dispute).
+- **`production.py` валит старт** при `ADMIN_URL=admin/` или `USE_REDIS=False`.
+
+### Инфраструктура
+- **PgBouncer** — пул соединений (transaction-mode) перед Postgres: десятки
+  воркеров работают через ~25 реальных коннектов.
+- **Сервис `migrator`** — однократный init, применяет миграции напрямую в `db`
+  (не через pgbouncer); `web`/`celery` ждут его завершения. Убирает race
+  condition при нескольких репликах.
+- **gunicorn + uvicorn workers** (ASGI) вместо раздельных Daphne/Gunicorn —
+  один тип воркера обслуживает HTTP и WebSocket. `collectstatic` вынесен
+  в build образа.
+- **Сессии `cached_db`**, `ManifestStaticFilesStorage` (cache-busting),
+  verbose-логи в stdout для docker/loki.
+
+### Наблюдаемость
+- **`/metrics/`** — django-prometheus с авторизацией по Bearer-токену
+  (`METRICS_TOKEN`), снаружи закрыт Caddy.
+- **Гранулярные health-проверки**: `/health/live/` (liveness) и `/health/ready/`
+  (БД + кэш) — для k8s/docker probes.
+- **Покрывающее логирование** во всех приложениях (api, accounts, listings,
+  transactions, chat, payments, core, admin_panel) с request-id трассировкой.
+
+### Добавлено
+- **Импорт каталога FunPay** — игры и таксономия категорий.
+- **Курируемые фильтры** для топовых игр в каталоге.
+- **Нагрузочные сценарии Locust** (`tests/locust/`).
+
+### Производительность
+- **Каталог: HTML 1.55 МБ → ~200 КБ**, FCP −65%.
+- **Кэш каталога игр в Redis** + прогрев через Celery beat (каждые 4 минуты).
+
+### Тестирование
+- Масштабный пасс по слоям services/selectors/tasks/consumers, GDPR-экспорт,
+  автомодерация, image optimization, SMS.ru, WebSocket-консьюмеры через
+  `WebsocketCommunicator`.
+- Тестовые настройки самодостаточны: `InMemoryChannelLayer`, eager Celery,
+  SQLite, in-memory cache — Redis для тестов не нужен.
+
+### Исправлено
+- `Decimal * float` TypeError в антифрод-проверке подозрительной цены.
+- Sitemap: `order_by('pk')` на пагинированных queryset'ах.
+- Ремонт сломанного дашборда аналитики, hardening-фиксы аудита.
+
+### DevOps
+- `scripts/deploy_p0_fixes.sh` — идемпотентный деплой P0-фиксов.
+- `PRE_DEPLOY_CHECKLIST.md`, `DEPLOY_NOW.md` — процедуры первого запуска и выката.
+- Docker-compose: сервисы `pgbouncer`, `migrator`, `flower`; `web` слушает
+  только внутри сети, наружу — только Caddy.
+- pre-commit: pydocstyle переведён в defect-only режим.
+
+### Документация
+- `docs/DEPLOYMENT.md` переписан под реальный стек (Docker + Caddy + pgbouncer),
+  убраны устаревшие nginx/certbot/systemd-инструкции.
+- Актуализированы README, ARCHITECTURE, API_DOCUMENTATION, TESTING_GUIDE,
+  quickstart и чеклисты; метрики приведены к фактическим значениям.
+
+### Метрики
+- 21 модель, 70 миграций, 162 endpoint, 98 HTML-шаблонов.
+- ~160 Python-файлов приложения (~24 800 строк, без миграций/тестов).
+- Тесты: **716 passed, 1 skipped**, покрытие **80%** (`pytest --cov`).
+
+---
+
 ## [1.3.0] - 2026-05-08
 
 ### Безопасность, целостность данных, индексы
@@ -245,4 +327,3 @@
 - **Удалено** - удаленные функции
 - **Исправлено** - исправления багов
 - **Безопасность** - исправления уязвимостей
-
