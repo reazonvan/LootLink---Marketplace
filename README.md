@@ -108,7 +108,7 @@ POST   /api/auth/token/        — получить токен
 ```
 
 Session- или Token-аутентификация, throttling (anon 100/час, user 1000/час),
-пагинация по 20. Подробнее — [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md).
+пагинация по 20. Подробнее — [docs/api.md](docs/api.md).
 
 ## Тесты
 

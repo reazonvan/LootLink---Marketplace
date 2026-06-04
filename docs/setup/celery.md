@@ -191,4 +191,3 @@ redis-cli ping
 - [Celery Documentation](https://docs.celeryq.dev/)
 - [Redis Documentation](https://redis.io/documentation)
 - [Django + Celery Best Practices](https://docs.celeryq.dev/en/stable/django/)
-

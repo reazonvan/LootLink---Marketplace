@@ -214,4 +214,3 @@ INFO memory
 # Очистить expired ключи
 KEYS * | xargs -L 1 TTL
 ```
-

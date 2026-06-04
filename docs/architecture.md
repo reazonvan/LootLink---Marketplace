@@ -292,8 +292,9 @@ JS — модули в `static/js/`, без сборщика. Загружают
 - `celery_worker`, `celery_beat` — фоновые и периодические задачи.
 - `flower` — мониторинг Celery (`/flower/`).
 
-Первый запуск — `PRE_DEPLOY_CHECKLIST.md`, выкат обновлений — `DEPLOY_NOW.md`.
-Скрипт `scripts/deploy_with_smoke.sh` делает выкат и триггерит smoke-тесты
+Первый запуск — `deployment/pre-deploy-checklist.md`, выкат обновлений и откат —
+`deployment.md` (раздел «Обновление»). Скрипт `scripts/deploy_with_smoke.sh`
+делает выкат и триггерит smoke-тесты
 через `repository_dispatch` на GitHub Actions.
 
 ## Логирование и мониторинг

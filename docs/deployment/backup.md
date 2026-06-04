@@ -301,7 +301,6 @@ gpg --encrypt --recipient your-email@example.com db_backup.sql.gz
 
 ---
 
-**Автор:** LootLink Team  
-**Дата:** 28 Октября 2025  
+**Автор:** LootLink Team
+**Дата:** 28 Октября 2025
 **Версия:** 1.0
-

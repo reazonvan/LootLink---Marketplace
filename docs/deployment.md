@@ -6,12 +6,13 @@
 
 Связанные документы:
 
-- **[PRE_DEPLOY_CHECKLIST.md](../PRE_DEPLOY_CHECKLIST.md)** — пошаговый первый
+- **[Pre-deploy checklist](deployment/pre-deploy-checklist.md)** — пошаговый первый
   запуск на чистом сервере (DNS, `.env`, генерация секретов, первый `up`).
-- **[DEPLOY_NOW.md](../DEPLOY_NOW.md)** — выкат обновлений и применение
-  миграций на уже работающем сервере, откат.
+- **[Чеклист после деплоя](deployment/post-deploy-checklist.md)** — что проверить
+  после каждого выката.
 
-Этот файл описывает архитектуру стека, эксплуатацию и тюнинг.
+Этот файл описывает архитектуру стека, эксплуатацию и тюнинг. Процедура выката
+обновлений и откат — в разделе «Обновление» ниже.
 
 ---
 
@@ -68,7 +69,7 @@ Caddy; `web` слушает `:8000` исключительно внутри dock
 ## Первый запуск
 
 Полная процедура с генерацией секретов — в
-**[PRE_DEPLOY_CHECKLIST.md](../PRE_DEPLOY_CHECKLIST.md)**. Кратко:
+**[pre-deploy checklist](deployment/pre-deploy-checklist.md)**. Кратко:
 
 ```bash
 # 1. Код
@@ -90,7 +91,7 @@ docker exec -it lootlink_web python manage.py createsuperuser
 
 ### Критичные переменные `.env`
 
-Обязательные (см. полный список и команды генерации в PRE_DEPLOY_CHECKLIST):
+Обязательные (полный список и команды генерации — в pre-deploy checklist):
 
 ```env
 DJANGO_SETTINGS_MODULE=config.settings.production
@@ -125,8 +126,7 @@ SENTRY_DSN=https://...                      # опционально
 
 ## Обновление
 
-Подробно — в **[DEPLOY_NOW.md](../DEPLOY_NOW.md)**. Рекомендуемый путь —
-единый скрипт с post-deploy smoke:
+Рекомендуемый путь — единый скрипт с post-deploy smoke:
 
 ```bash
 cd /opt/lootlink
@@ -144,6 +144,16 @@ docker compose up -d --force-recreate web celery_worker celery_beat flower caddy
 docker compose exec web python manage.py migrate --noinput
 docker compose exec web python manage.py check --deploy
 curl -sI https://lootlink.ru/health/live/
+```
+
+### Откат
+
+```bash
+git reset --hard <предыдущий-SHA>          # SHA до проблемного выката
+docker compose build web celery_worker celery_beat flower
+docker compose up -d --force-recreate web celery_worker celery_beat flower caddy
+# при необходимости — восстановить БД из дампа:
+docker compose exec -T db psql -U postgres -d lootlink_db < backups/<dump>.sql
 ```
 
 ---
@@ -285,7 +295,7 @@ GitHub Actions (`.github/workflows/ci-cd.yml`): линт (black, isort, flake8),
 **Post-deploy smoke** (`.github/workflows/post-deploy-smoke.yml`) — Playwright-
 проверки после выката: публичные сценарии (`scripts/playwright_smoke.py`) и
 авторизованные user-journey (`scripts/playwright_user_journey.py`). Подробности
-и нужные secrets — в [TESTING_GUIDE.md](TESTING_GUIDE.md).
+и нужные secrets — в [testing.md](testing.md).
 
 ---
 

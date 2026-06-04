@@ -1,67 +1,54 @@
 # Документация LootLink
 
-Вся документация проекта организована по категориям для удобной навигации.
-
----
-
 ## Быстрый старт
 
-- **[Быстрый старт](setup/quickstart.md)** - начните работу за 5 минут
-- **[Установка на Windows](setup/windows.md)** - специальный гайд для Windows
-- **[Админ-панель](setup/admin-panel.md)** - настройка административной панели
+- **[Быстрый старт](setup/quickstart.md)** — поднять локально за несколько минут (SQLite)
+- **[Полная установка](setup.md)** — установка для разработки с PostgreSQL, Redis, Celery
+- **[Установка на Windows](setup/windows.md)** — гайд под Windows + VS Code
 
----
+## Настройка компонентов
 
-## Настройка и развертывание
+- **[Celery](setup/celery.md)** — асинхронные задачи
+- **[Redis](setup/redis.md)** — кэш, сессии, брокер
+- **[Email и SMS](setup/email.md)** — отправка писем и кодов
+- **[Telegram-бот](setup/telegram-bot.md)** — уведомления в Telegram
+- **[Web Push](setup/web-push.md)** — браузерные push-уведомления
+- **[Админ-панель](setup/admin-panel.md)** — кастомная админка
+- **[Docker на Windows](setup/docker-windows.md)** — bind mount и File Sharing
 
-- **[Руководство по установке](SETUP_GUIDE.md)** — полная установка для разработки
-- **[Развертывание](DEPLOYMENT.md)** — архитектура прод-стека (Docker + Caddy), эксплуатация, тюнинг
-- **[Pre-deploy checklist](../PRE_DEPLOY_CHECKLIST.md)** — первый запуск на боевом сервере (DNS, `.env`, секреты)
-- **[Деплой обновлений](../DEPLOY_NOW.md)** — выкат на работающий сервер, миграции, откат
-- **[Чеклист после деплоя](deployment/checklist.md)** — что проверить после выката
-- **[Настройка бэкапов](deployment/BACKUP_SETUP.md)** - резервное копирование
+## Архитектура и API
 
-### Технические компоненты
-
-- **[Настройка Celery](setup/CELERY_SETUP.md)** - асинхронные задачи
-- **[Настройка Redis](setup/REDIS_USAGE.md)** - кэширование и сессии
-- **[Настройка Email (Production)](setup/EMAIL_PRODUCTION_SETUP.md)** - отправка писем
-- **[Настройка Email и SMS](setup/EMAIL_SMS_SETUP.md)** - уведомления
-- **[Кастомная админ-панель](setup/CUSTOM_ADMIN_PANEL.md)** - расширенная админка
-
----
-
-## Архитектура
-
-- **[Архитектура проекта](ARCHITECTURE.md)** — стек, слои, связи между app
-- **[API документация](API_DOCUMENTATION.md)** — REST endpoints
-
----
+- **[Архитектура](architecture.md)** — стек, слои, связи между app
+- **[API](api.md)** — REST endpoints
 
 ## Тестирование
 
-- **[Руководство по тестированию](TESTING_GUIDE.md)** - как писать и запускать тесты
+- **[Тестирование](testing.md)** — как писать и запускать тесты
 
----
+## Развёртывание
+
+- **[Deployment Guide](deployment.md)** — архитектура прод-стека (Docker + Caddy), эксплуатация, обновление, откат
+- **[Pre-deploy checklist](deployment/pre-deploy-checklist.md)** — первый запуск на боевом сервере (DNS, `.env`, секреты)
+- **[Чеклист после деплоя](deployment/post-deploy-checklist.md)** — что проверить после каждого выката
+- **[Бэкапы](deployment/backup.md)** — резервное копирование БД
 
 ## Решение проблем
 
-- **[Проблемы с venv](troubleshooting/venv.md)** — исправление виртуального окружения
-- **[Проблемы Windows](troubleshooting/windows.md)** — специфичные для Windows
-
----
-
-## Структура документации
-
-```
-docs/
-├── setup/              # установка и настройка компонентов
-├── deployment/         # развертывание и бэкапы
-└── troubleshooting/    # решение проблем
-```
-
----
+- **[Проблемы с venv](troubleshooting/venv.md)** — виртуальное окружение
+- **[Проблемы на Windows](troubleshooting/windows.md)** — Python, PowerShell, VS Code
 
 ## Вклад в проект
 
 См. [CONTRIBUTING.md](../CONTRIBUTING.md) в корне проекта.
+
+## Структура
+
+```
+docs/
+├── architecture.md  api.md  testing.md
+├── setup.md            # обзор установки
+├── deployment.md       # обзор деплоя
+├── setup/              # настройка компонентов
+├── deployment/         # чеклисты и бэкапы
+└── troubleshooting/    # решение проблем
+```

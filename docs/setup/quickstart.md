@@ -2,7 +2,7 @@
 
 Поднять LootLink локально за несколько минут. Для самого быстрого старта —
 на SQLite, без установки PostgreSQL. Полная установка с Postgres и всеми
-сервисами — в [SETUP_GUIDE.md](../SETUP_GUIDE.md).
+сервисами — в [setup.md](../setup.md).
 
 ## Требования
 
@@ -70,15 +70,15 @@ python manage.py runserver
 
 ## Дальше
 
-- Полная установка с PostgreSQL, Redis, Celery — [SETUP_GUIDE.md](../SETUP_GUIDE.md)
-- Архитектура и слои приложений — [ARCHITECTURE.md](../ARCHITECTURE.md)
-- Как писать и запускать тесты — [TESTING_GUIDE.md](../TESTING_GUIDE.md)
+- Полная установка с PostgreSQL, Redis, Celery — [setup.md](../setup.md)
+- Архитектура и слои приложений — [architecture.md](../architecture.md)
+- Как писать и запускать тесты — [testing.md](../testing.md)
 - Гайд для контрибьюторов — [CONTRIBUTING.md](../../CONTRIBUTING.md)
 
 ## Если не запускается
 
 - **Ошибка `SECRET_KEY not found`** — нет `.env` или в нём не задан `SECRET_KEY`.
 - **Ошибка БД** — при `DB_ENGINE=sqlite` Postgres не нужен; проверьте, что
-  переменная действительно `sqlite`. Для Postgres см. SETUP_GUIDE.
+  переменная действительно `sqlite`. Для Postgres см. setup.md.
 - **Не активировано окружение** — в начале строки должно быть `(venv)`.
 - **Проблемы с venv на Windows** — см. [troubleshooting/venv.md](../troubleshooting/venv.md).

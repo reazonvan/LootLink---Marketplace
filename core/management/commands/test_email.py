@@ -20,7 +20,7 @@ class Command(BaseCommand):
             "--check-only", action="store_true", help="Только проверить настройки без отправки"
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # noqa: C901
         self.stdout.write("=" * 70)
         self.stdout.write(self.style.HTTP_INFO("  EMAIL CONFIGURATION TEST"))
         self.stdout.write("=" * 70 + "\n")
@@ -46,9 +46,7 @@ class Command(BaseCommand):
             self.stdout.write("   2. Получите пароль приложения")
             self.stdout.write("   3. Обновите .env файл")
             self.stdout.write("   4. Перезапустите сервер\n")
-            self.stdout.write(
-                self.style.HTTP_INFO("См. docs/EMAIL_PRODUCTION_SETUP.md для инструкций\n")
-            )
+            self.stdout.write(self.style.HTTP_INFO("См. docs/setup/email.md для инструкций\n"))
 
             if not options["check_only"]:
                 self.stdout.write(
@@ -140,4 +138,4 @@ class Command(BaseCommand):
             )
 
 
-import smtplib  # Для обработки SMTP исключений
+import smtplib  # noqa: E402 — для обработки SMTP исключений

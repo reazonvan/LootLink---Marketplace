@@ -1,8 +1,8 @@
 # Чеклист после деплоя
 
 Прогоняется после каждого выката на production. Первый запуск на чистом
-сервере — по [PRE_DEPLOY_CHECKLIST.md](../../PRE_DEPLOY_CHECKLIST.md);
-процедура самого выката и откат — в [DEPLOY_NOW.md](../../DEPLOY_NOW.md).
+сервере — по [pre-deploy-checklist.md](pre-deploy-checklist.md); процедура
+самого выката и откат — в [deployment.md](../deployment.md) (раздел «Обновление»).
 
 ## 1. Контейнеры подняты
 
@@ -60,7 +60,7 @@ docker compose logs caddy --tail=20          # сертификат получе
 ## 6. Бизнес-сценарии (smoke)
 
 Автоматически — через post-deploy smoke (Playwright), см.
-[TESTING_GUIDE.md](../TESTING_GUIDE.md):
+[testing.md](../testing.md):
 
 ```bash
 export GITHUB_DISPATCH_TOKEN="<github_token>"
@@ -76,6 +76,6 @@ bash scripts/trigger_post_deploy_smoke.sh
 
 ## 7. Если что-то сломалось
 
-Откат — по [DEPLOY_NOW.md](../../DEPLOY_NOW.md) (раздел «Откат»): `git reset`
-на предыдущий SHA, пересборка, при необходимости — восстановление БД из дампа
-в `backups/`.
+Откат — `git reset --hard` на предыдущий SHA, пересборка, при необходимости
+восстановление БД из дампа в `backups/` (см. [deployment.md](../deployment.md),
+раздел «Обновление»).
