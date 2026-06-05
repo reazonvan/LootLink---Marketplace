@@ -91,6 +91,6 @@
 </style>
 
 {% block extra_js %}
-<script>lucide.createIcons();</script>
+<script nonce="{{ request.csp_nonce }}">lucide.createIcons();</script>
 {% endblock %}
 {% endblock %}

@@ -195,7 +195,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ request.csp_nonce }}">
 lucide.createIcons();
 
 function openImageModal(src) {

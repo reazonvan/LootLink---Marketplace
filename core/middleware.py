@@ -3,6 +3,7 @@ Middleware для rate limiting и защиты от брутфорса.
 """
 
 import logging
+import secrets
 import time
 
 from django.conf import settings
@@ -115,6 +116,10 @@ class SecurityHeadersMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        # CSP-nonce генерируем ДО get_response, чтобы шаблоны успели подставить
+        # его в инлайн-<script nonce="{{ request.csp_nonce }}">.
+        request.csp_nonce = secrets.token_urlsafe(16)
+
         response = self.get_response(request)
 
         # Заголовки безопасности.
@@ -127,33 +132,41 @@ class SecurityHeadersMiddleware:
         response["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
 
-        # Content Security Policy
-        # В production - строже, в development - разрешаем eval для отладки
-        if not settings.DEBUG:
-            # Production CSP - разрешаем Bootstrap, CDN и Google Fonts
-            response["Content-Security-Policy"] = (
-                "default-src 'self'; "
-                "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
-                "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; "
-                "img-src 'self' data: https: blob:; "
-                "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; "
-                "connect-src 'self' wss://lootlink.ru https://cdn.jsdelivr.net; "
-                "frame-ancestors 'none'; "
-                "base-uri 'self'; "
-                "form-action 'self';"
-            )
+        # Content Security Policy.
+        # В dev мягче (http:, unsafe-eval для отладки), в prod — строже.
+        if settings.DEBUG:
+            img_src = "img-src 'self' data: https: blob: http:; "
+            connect_src = "connect-src 'self'; "
+            enforce_script_extra = " 'unsafe-eval'"
         else:
-            # Development CSP - более мягкий для удобства разработки
-            response["Content-Security-Policy"] = (
-                "default-src 'self'; "
-                "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; "
-                "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; "
-                "img-src 'self' data: https: blob: http:; "
-                "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; "
-                "connect-src 'self'; "
-                "frame-ancestors 'none'; "
-                "base-uri 'self'; "
-                "form-action 'self';"
-            )
+            img_src = "img-src 'self' data: https: blob:; "
+            connect_src = "connect-src 'self' wss://lootlink.ru https://cdn.jsdelivr.net; "
+            enforce_script_extra = ""
+
+        common = (
+            "default-src 'self'; "
+            "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; "
+            + img_src
+            + "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; "
+            + connect_src
+            + "frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+        )
+
+        # Enforcing: 'unsafe-inline' для script сохранён — в шаблонах ещё
+        # остаются инлайн-обработчики (onclick=/onchange=...), которые nonce не
+        # покрывает. ВАЖНО: nonce-source в enforcing НЕ добавляем, иначе браузер
+        # проигнорирует 'unsafe-inline' и обработчики сломаются.
+        response["Content-Security-Policy"] = (
+            f"script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'{enforce_script_extra}; "
+            + common
+        )
+
+        # Report-Only: строгая политика без script 'unsafe-inline' (только nonce).
+        # Ничего не блокирует — лишь репортит оставшиеся нарушения (инлайн
+        # on*=-обработчики), чтобы их вычистить и затем перенести strict-политику
+        # в enforcing (убрав 'unsafe-inline').
+        response["Content-Security-Policy-Report-Only"] = (
+            f"script-src 'self' https://cdn.jsdelivr.net 'nonce-{request.csp_nonce}'; " + common
+        )
 
         return response

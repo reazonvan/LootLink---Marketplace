@@ -52,7 +52,7 @@
 </div>
 {% endblock %}
 {% block extra_js %}
-<script>
+<script nonce="{{ request.csp_nonce }}">
 lucide.createIcons();
 document.querySelectorAll('.faq-item').forEach(function(item) {
     item.querySelector('.faq-question').addEventListener('click', function() {

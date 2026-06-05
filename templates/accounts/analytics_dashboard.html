@@ -3,7 +3,7 @@
 {% block title %}Аналитика - LootLink{% endblock %}
 
 {% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script nonce="{{ request.csp_nonce }}" src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -117,7 +117,7 @@
 
 {% block extra_js %}
 {{ sales_by_day|json_script:"sales-chart-data" }}
-<script>
+<script nonce="{{ request.csp_nonce }}">
 lucide.createIcons();
 document.addEventListener('DOMContentLoaded', function() {
     var ctx = document.getElementById('salesChart');

@@ -58,8 +58,8 @@
     </div>
 </div>
 
-<script src="{% static 'js/push-notifications.js' %}"></script>
-<script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/push-notifications.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}">
 document.addEventListener('DOMContentLoaded', async function() {
     var statusDiv = document.getElementById('notification-status');
     if (!('serviceWorker' in navigator && 'PushManager' in window)) {

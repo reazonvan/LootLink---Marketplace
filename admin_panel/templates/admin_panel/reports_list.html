@@ -43,7 +43,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ request.csp_nonce }}">
 lucide.createIcons();
 async function processReport(id, action) {
     var msgs = { 'approve': 'Заблокировать объявление?', 'reject': 'Жалоба необоснована?' };

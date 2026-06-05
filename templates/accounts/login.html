@@ -14,21 +14,21 @@
                 </svg>
                 <span>LootLink</span>
             </a>
-            
+
             <h2 class="auth-page__title">С возвращением</h2>
             <p class="auth-page__subtitle">Войдите, чтобы продолжить торговлю</p>
-            
+
             {% if form.non_field_errors %}
             <div class="alert alert-danger">
                 <i data-lucide="alert-circle"></i>
                 {{ form.non_field_errors }}
             </div>
             {% endif %}
-            
+
             <form method="post" action="{% url 'accounts:login' %}" class="auth-page__form">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
-                
+
                 <div class="form-group">
                     <label for="{{ form.username.id_for_label }}" class="form-label">Имя пользователя или Email</label>
                     {{ form.username }}
@@ -36,7 +36,7 @@
                     <div class="form-error">{{ form.username.errors }}</div>
                     {% endif %}
                 </div>
-                
+
                 <div class="form-group">
                     <label for="{{ form.password.id_for_label }}" class="form-label">Пароль</label>
                     {{ form.password }}
@@ -44,13 +44,13 @@
                     <div class="form-error">{{ form.password.errors }}</div>
                     {% endif %}
                 </div>
-                
+
                 <a href="{% url 'accounts:password_reset_request' %}" class="auth-page__forgot">Забыли пароль?</a>
-                
+
                 <button type="submit" class="btn btn-primary btn-lg auth-page__submit">
                     <i data-lucide="log-in"></i> Войти
                 </button>
-                
+
                 <p class="auth-page__alt">
                     Нет аккаунта? <a href="{% url 'accounts:register' %}">Зарегистрироваться</a>
                 </p>
@@ -108,7 +108,7 @@
 </style>
 
 {% block extra_js %}
-<script src="{% static 'js/registration-validator.js' %}"></script>
-<script>lucide.createIcons();</script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/registration-validator.js' %}"></script>
+<script nonce="{{ request.csp_nonce }}">lucide.createIcons();</script>
 {% endblock %}
 {% endblock %}

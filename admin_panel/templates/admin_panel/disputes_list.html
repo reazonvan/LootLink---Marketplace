@@ -56,7 +56,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ request.csp_nonce }}">
 lucide.createIcons();
 var currentDisputeId = null;
 function openResolveModal(id) { currentDisputeId = id; document.getElementById('resolveWinner').value=''; document.getElementById('resolveText').value=''; document.getElementById('resolveModal').classList.add('open'); }

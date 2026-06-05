@@ -58,5 +58,5 @@
         {% endif %}
     </div>
 </div>
-{% block extra_js %}<script>lucide.createIcons();</script>{% endblock %}
+{% block extra_js %}<script nonce="{{ request.csp_nonce }}">lucide.createIcons();</script>{% endblock %}
 {% endblock %}

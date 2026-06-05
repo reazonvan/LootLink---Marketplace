@@ -93,6 +93,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>window.LL_CATALOG_CATEGORIES_URL = "{% url 'listings:api_game_categories' game_slug='__SLUG__' %}".replace('__SLUG__', '__slug__');</script>
-<script src="{% static 'js/catalog.js' %}?v=20260516" defer></script>
+<script nonce="{{ request.csp_nonce }}">window.LL_CATALOG_CATEGORIES_URL = "{% url 'listings:api_game_categories' game_slug='__SLUG__' %}".replace('__SLUG__', '__slug__');</script>
+<script nonce="{{ request.csp_nonce }}" src="{% static 'js/catalog.js' %}?v=20260516" defer></script>
 {% endblock %}
