@@ -6,7 +6,7 @@ app_name = "listings"
 
 urlpatterns = [
     path("", views.landing_page, name="home"),
-    path("catalog/", views.games_catalog, name="catalog"),  # Каталог игр (как на Funpay)
+    path("catalog/", views.games_catalog, name="catalog"),  # Каталог игр
     path("listing/<int:pk>/", views.listing_detail, name="listing_detail"),
     path("listing/create/", views.listing_create, name="listing_create"),
     path("listing/<int:pk>/edit/", views.listing_edit, name="listing_edit"),

@@ -12,7 +12,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("listings", "0018_category_funpay_id_game_funpay_id"),
+        ("listings", "0018_add_external_id"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

@@ -1,15 +1,16 @@
 """
-Импорт каталога игр и категорий из JSON, спарсенного с funpay.com.
+Импорт каталога игр и категорий из JSON.
 
 Использование:
-    python manage.py import_funpay_catalog
-    python manage.py import_funpay_catalog --clean
-    python manage.py import_funpay_catalog --dry-run
-    python manage.py import_funpay_catalog --json path/to/games.json
+    python manage.py import_catalog
+    python manage.py import_catalog --clean
+    python manage.py import_catalog --dry-run
+    python manage.py import_catalog --json path/to/games.json
 
-Идемпотентен: повторный запуск обновит существующие записи (по funpay_id),
+Идемпотентен: повторный запуск обновит существующие записи (по external_id),
 не создаст дубликатов. Флаг --clean удаляет всё перед загрузкой.
 """
+
 from __future__ import annotations
 
 import html
@@ -23,7 +24,6 @@ from django.utils.text import slugify
 
 from listings.models import Category, Game, Listing
 from listings.models_filters import CategoryFilter
-
 
 # Маппинг ключевых слов в названии категории -> Bootstrap Icon.
 # Перебирается по порядку, первое совпадение выигрывает.
@@ -131,11 +131,39 @@ def pick_icon(category_name: str) -> str:
 
 # Транслитерация для slug
 TRANSLIT = {
-    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "yo",
-    "ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
-    "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
-    "ф": "f", "х": "h", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sch",
-    "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+    "а": "a",
+    "б": "b",
+    "в": "v",
+    "г": "g",
+    "д": "d",
+    "е": "e",
+    "ё": "yo",
+    "ж": "zh",
+    "з": "z",
+    "и": "i",
+    "й": "y",
+    "к": "k",
+    "л": "l",
+    "м": "m",
+    "н": "n",
+    "о": "o",
+    "п": "p",
+    "р": "r",
+    "с": "s",
+    "т": "t",
+    "у": "u",
+    "ф": "f",
+    "х": "h",
+    "ц": "ts",
+    "ч": "ch",
+    "ш": "sh",
+    "щ": "sch",
+    "ъ": "",
+    "ы": "y",
+    "ь": "",
+    "э": "e",
+    "ю": "yu",
+    "я": "ya",
 }
 
 
@@ -153,12 +181,12 @@ def normalize(text: str) -> str:
 
 
 class Command(BaseCommand):
-    help = "Импорт игр и категорий из JSON, спарсенного с funpay.com"
+    help = "Импорт игр и категорий из JSON каталога"
 
     def add_arguments(self, parser) -> None:
         parser.add_argument(
             "--json",
-            default="scripts/funpay_data/games.json",
+            default="scripts/catalog_data/games.json",
             help="Путь к JSON со спарсенными данными",
         )
         parser.add_argument(
@@ -189,9 +217,9 @@ class Command(BaseCommand):
 
         total_games = len(data)
         total_cats = sum(len(g["categories"]) for g in data)
-        self.stdout.write(self.style.SUCCESS(
-            f"[i] Загружено из JSON: {total_games} игр / {total_cats} категорий"
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(f"[i] Загружено из JSON: {total_games} игр / {total_cats} категорий")
+        )
 
         if opts["dry_run"]:
             self.stdout.write(self.style.WARNING("[i] DRY-RUN — изменения в БД не пишутся"))
@@ -206,8 +234,9 @@ class Command(BaseCommand):
         # Сбрасываем кэш каталога — иначе пользователи увидят старое до 5 минут.
         try:
             from listings.signals import invalidate_catalog_cache
+
             invalidate_catalog_cache()
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001  # nosec
             pass
 
         self.stdout.write(self.style.SUCCESS("[OK] Импорт завершён"))
@@ -222,7 +251,11 @@ class Command(BaseCommand):
             )
         new_g = updated_g = 0
         for g in data:
-            qs = Game.objects.filter(funpay_id=g["funpay_id"]) if g["funpay_id"] else Game.objects.filter(name=g["name"])
+            qs = (
+                Game.objects.filter(external_id=g["external_id"])
+                if g["external_id"]
+                else Game.objects.filter(name=g["name"])
+            )
             if qs.exists():
                 updated_g += 1
             else:
@@ -233,7 +266,7 @@ class Command(BaseCommand):
         )
         self.stdout.write("\n  Sample (first 3 games):")
         for g in data[:3]:
-            self.stdout.write(f"    [{g['funpay_id']}] {g['name']}")
+            self.stdout.write(f"    [{g['external_id']}] {g['name']}")
             for c in g["categories"][:5]:
                 self.stdout.write(f"        - {c['name']} -> icon {pick_icon(c['name'])}")
 
@@ -248,10 +281,12 @@ class Command(BaseCommand):
         Category.objects.all().delete()
         # У Game.delete есть собственная проверка active listings — обходим напрямую через QuerySet
         Game.objects.all().delete()
-        self.stdout.write(self.style.WARNING(
-            f"[clean] удалено: {l_count} listings, {f_count} filters, "
-            f"{c_count} categories, {g_count} games"
-        ))
+        self.stdout.write(
+            self.style.WARNING(
+                f"[clean] удалено: {l_count} listings, {f_count} filters, "
+                f"{c_count} categories, {g_count} games"
+            )
+        )
 
     def _import(self, data: list) -> None:
         existing_slugs: set[str] = set(Game.objects.values_list("slug", flat=True))
@@ -269,9 +304,9 @@ class Command(BaseCommand):
                 "is_active": True,
                 "order": order,
             }
-            if g.get("funpay_id"):
+            if g.get("external_id"):
                 game, created = Game.objects.update_or_create(
-                    funpay_id=g["funpay_id"],
+                    external_id=g["external_id"],
                     defaults=game_defaults,
                 )
             else:
@@ -300,10 +335,10 @@ class Command(BaseCommand):
                     "is_active": True,
                     "order": cat_order,
                 }
-                if c.get("funpay_id"):
+                if c.get("external_id"):
                     cat, c_created = Category.objects.update_or_create(
                         game=game,
-                        funpay_id=c["funpay_id"],
+                        external_id=c["external_id"],
                         defaults=cat_defaults,
                     )
                 else:
@@ -317,10 +352,12 @@ class Command(BaseCommand):
                 else:
                     updated_c += 1
 
-        self.stdout.write(self.style.SUCCESS(
-            f"[done] games: +{created_g} created, ~{updated_g} updated; "
-            f"categories: +{created_c} created, ~{updated_c} updated"
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"[done] games: +{created_g} created, ~{updated_g} updated; "
+                f"categories: +{created_c} created, ~{updated_c} updated"
+            )
+        )
 
     @staticmethod
     def _unique_slug(base: str, taken: set[str]) -> str:
@@ -333,4 +370,6 @@ class Command(BaseCommand):
 
     def _summary(self) -> None:
         self.stdout.write("")
-        self.stdout.write(f"  Итого в БД: {Game.objects.count()} игр, {Category.objects.count()} категорий")
+        self.stdout.write(
+            f"  Итого в БД: {Game.objects.count()} игр, {Category.objects.count()} категорий"
+        )

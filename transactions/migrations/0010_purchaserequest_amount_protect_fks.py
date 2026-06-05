@@ -30,7 +30,7 @@ def noop_reverse(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("listings", "0018_category_funpay_id_game_funpay_id"),
+        ("listings", "0018_add_external_id"),
         ("transactions", "0009_remove_disputemessage_dispute_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]

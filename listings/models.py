@@ -55,13 +55,13 @@ class Game(models.Model):
     order = models.PositiveIntegerField(
         default=0, verbose_name="Порядок сортировки", help_text="Меньше число = выше в списке"
     )
-    funpay_id = models.CharField(
+    external_id = models.CharField(
         max_length=20,
         blank=True,
         default="",
         db_index=True,
-        verbose_name="FunPay ID",
-        help_text="Идентификатор игры на funpay.com (для импорта/синхронизации)",
+        verbose_name="ID в каталоге",
+        help_text="Идентификатор игры для импорта и синхронизации каталога",
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата добавления")
 
@@ -114,13 +114,13 @@ class Category(models.Model):
     order = models.PositiveIntegerField(
         default=0, verbose_name="Порядок сортировки", help_text="Меньше число = выше в списке"
     )
-    funpay_id = models.CharField(
+    external_id = models.CharField(
         max_length=20,
         blank=True,
         default="",
         db_index=True,
-        verbose_name="FunPay ID",
-        help_text="Идентификатор категории на funpay.com (для импорта/синхронизации)",
+        verbose_name="ID в каталоге",
+        help_text="Идентификатор категории для импорта и синхронизации каталога",
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
 
